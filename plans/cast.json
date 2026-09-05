@@ -1,0 +1,16 @@
+{
+  "tilth-core": { "provider": "claude", "model": "opus" },
+  "core": { "provider": "claude", "model": "opus" },
+  "sarif": { "provider": "claude", "model": "opus" },
+  "check-face": { "provider": "claude", "model": "opus" },
+  "rules-block": { "provider": "claude", "model": "opus" },
+  "rules-tests": { "provider": "claude", "model": "opus" },
+  "rules-prod": { "provider": "claude", "model": "opus" },
+  "guard": { "provider": "claude", "model": "opus" },
+  "hooks": { "provider": "claude", "model": "opus" },
+  "scan": { "provider": "claude", "model": "opus" },
+  "calibration": { "provider": "claude", "model": "opus" },
+  "bite": { "provider": "claude", "model": "opus" },
+  "garden-fit": { "provider": "claude", "model": "opus" },
+  "weed": { "provider": "claude", "model": "opus" }
+}
