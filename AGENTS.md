@@ -7,11 +7,11 @@ The map in `docs/tend2/` is the plan and the proof. Read the project loop (`docs
 ## Layout
 
 ```
-src/core/      pure: parse_diff → Hunks · classify_file → kind + lang · change (a changed file with both sides read) · syntax (code vs comment vs literal, per line) · rules/check/<id>.rs → Vec<Finding> · sarif::render → Log · catalogue (rule ids, defaults, descriptions) · config · suppress
+src/core/      pure: parse_diff → Hunks · classify_file → kind + lang · change (a changed file with both sides read) · tree (the repository a scan rule reads) · syntax (code vs comment vs literal, per line) · rules/check/<id>.rs and rules/scan/<id>.rs → Vec<Finding> · sarif::render → Log · catalogue (rule ids, defaults, descriptions) · config · suppress · help (a command's own --help, parsed) · registry (manifest pins, the committed snapshot, lag)
 src/seams/     I/O behind small functions, injected by faces: git (diff, file at ref, refs, hooks path), exec (a command with a timeout), fs, reader (tilth-core: language detection, outlines, test shape, imports, callers)
 src/faces/     the CLI subcommands: check, scan, guard, bite, hook, rules
 tests/         integration tests that drive the real `weed` binary on real git repositories in temp dirs (assert_cmd + tempfile); tests/common/ holds the fixture harness
-fixtures/adversarial/<RULE>/<lang>/{fire,silent}/{before,after}/   one minimal repo history per rule per language: `before/` is committed as HEAD, `after/` is the working tree; a file `after/.weed-commit` carries the commit message (for trailers) and is never copied
+fixtures/adversarial/<RULE>/<lang>/{fire,silent}/{before,after}/   one minimal repo history per rule per language: `before/` is committed as HEAD, `after/` is the working tree; a file `after/.weed-commit` carries the commit message (for trailers) and is never copied. A scan rule judges one state, so its fixture carries `before/` alone and the tree is left as `before/` committed it
 schemas/       vendored official schemas (sarif-schema-2.1.0.json)
 scripts/check/ evidence scripts a loop cites; run.sh is the runner tend2 verify uses
 scripts/proof/ evidence that starts a real agent session and writes what happened into docs/proof-2026-09.md

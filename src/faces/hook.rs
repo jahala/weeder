@@ -104,7 +104,7 @@ fn judge(
         staged,
         scope: Vec::new(),
         strict: true,
-        format: check::Format::Table,
+        format: crate::faces::Format::Table,
         config: None,
         message_file: None,
         version: request.version.clone(),

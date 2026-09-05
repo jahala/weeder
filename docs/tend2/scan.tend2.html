@@ -5,7 +5,7 @@
 <title>scan · weed</title>
 <link rel="stylesheet" href="loop.css">
 <body>
-<noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
 <script type="text/markdown" id="loop">
 # scan — the tree judged, never blocked
 **Goal.** `weed scan` reads the repository as it is, not a diff, and names repo-state hygiene: a path, command, flag or symbol cited in the docs that no longer exists; a public symbol nothing references; a TODO older than the configured age; a dependency pin far behind the registry. It never blocks: exit 0 or 3 only, findings at warning level. tend2's hygiene loop is its first consumer, citing `weed scan --format sarif` as evidence; `docs/tend2-seam.md` is the proposal for that seam.
@@ -26,12 +26,12 @@ weed scan [--rules <ids>] [--format sarif|table] [--refresh-snapshot]
 Keep-your-place applies: a scan rule that names no hot spot confirmed by a later loop in a season is demoted to off by default. That is a decision for a later loop, recorded here so the rule set is known to be provisional.
 
 ## Tests
-- [ ] (code) `weed scan` reads the tree rather than the diff (an unstaged and an uncommitted change make no difference), exits 0 with warnings and 3 when it cannot run, and prints SARIF or a table like `check` · tests/scan_face.rs
-- [ ] (code) R1 warns on a cited path, command, flag and symbol that no longer resolve, one fixture each, and stays silent when they all resolve · tests/rule_r1.rs
-- [ ] (code) R2 warns on an exported symbol nothing references in each of ts, py, rs and go and stays silent on a referenced one and on the exempt entry points · tests/rule_r2.rs
-- [ ] (code) R3 warns on a TODO whose blame date is older than the threshold and stays silent on a fresh one · tests/rule_r3.rs
-- [ ] (code) R4 warns on a pin behind the committed snapshot beyond the threshold for each manifest kind and stays silent within it, with no network reached · tests/rule_r4.rs
-- [ ] (code) `docs/tend2-seam.md` shows a tend2 check citing `weed scan --format sarif` as evidence and proposes how tend2's verifier could call `weed check` in place of its `mock.ts`; the commands it shows run and exit as it says · scripts/check/docs-tend2-seam.sh
+- [x] (code) `weed scan` reads the tree rather than the diff (an unstaged and an uncommitted change make no difference), exits 0 with warnings and 3 when it cannot run, and prints SARIF or a table like `check` · tests/scan_face.rs @40f8cb7 · by cli
+- [x] (code) R1 warns on a cited path, command, flag and symbol that no longer resolve, one fixture each, and stays silent when they all resolve · tests/rule_r1.rs @84ffd44 · by cli
+- [x] (code) R2 warns on an exported symbol nothing references in each of ts, py, rs and go and stays silent on a referenced one and on the exempt entry points · tests/rule_r2.rs @b0c9af4 · by cli
+- [x] (code) R3 warns on a TODO whose blame date is older than the threshold and stays silent on a fresh one · tests/rule_r3.rs @9a17686 · by cli
+- [x] (code) R4 warns on a pin behind the committed snapshot beyond the threshold for each manifest kind and stays silent within it, with no network reached · tests/rule_r4.rs @5c69d13 · by cli
+- [x] (code) `docs/tend2-seam.md` shows a tend2 check citing `weed scan --format sarif` as evidence and proposes how tend2's verifier could call `weed check` in place of its `mock.ts`; the commands it shows run and exit as it says · scripts/check/docs-tend2-seam.sh @51b4db7 · by cli
 
 ## Needs #check-face #tilth-core
 

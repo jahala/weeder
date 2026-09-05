@@ -17,6 +17,10 @@ languages whose runners collect a case by the name it is declared under. Every
 directory holding a `before/` and an `after/` is a fixture, whatever it is
 called, and `tests/determinism.rs` replays all of them.
 
+A rule on the `scan` face judges the tree rather than a diff, so its fixture has
+one state and not two: `before/` alone, committed as HEAD and left in place as
+the working tree. `after/` is absent, and the harness knows to stop there.
+
 `tests/common/mod.rs` builds the repository. Nothing here is copied by hand.
 
 ## Conflict markers

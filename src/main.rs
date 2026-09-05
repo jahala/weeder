@@ -9,7 +9,7 @@ use std::process::ExitCode;
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use weed::core::hook::Harness;
 use weed::core::sarif::EXIT_COULD_NOT_RUN;
-use weed::faces::{check, guard, hook, rules, Answer};
+use weed::faces::{check, format_for, guard, hook, rules, scan, Answer, Format};
 
 #[derive(Debug, Parser)]
 #[command(name = "weed", version, about = "the judge of the diff")]
@@ -22,6 +22,9 @@ struct Cli {
 enum Command {
     /// Judge a diff: the index and the working tree against HEAD by default.
     Check(CheckArgs),
+    /// Judge the repository as it is: what the docs cite and the tree no longer
+    /// has, exports nothing references, stale work markers, lagging pins.
+    Scan(ScanArgs),
     /// Put weed's judgement in git itself, through hooks git cannot be talked
     /// out of running.
     Guard(GuardArgs),
@@ -116,6 +119,24 @@ struct CheckArgs {
 }
 
 #[derive(Debug, Args)]
+struct ScanArgs {
+    /// The rules to run, by id. Repeat the flag or separate ids with a comma;
+    /// leaving it out runs every scan rule weed.toml leaves on.
+    #[arg(long, value_name = "ids")]
+    rules: Vec<String>,
+    /// Write SARIF or a table, rather than choosing by what stdout is.
+    #[arg(long, value_enum, value_name = "format")]
+    format: Option<CheckFormat>,
+    /// Read weed.toml from here instead of the repository root.
+    #[arg(long, value_name = "path")]
+    config: Option<PathBuf>,
+    /// Ask the registries for the latest release of everything the manifests
+    /// pin, write .weed/registry-snapshot.json, and scan against it.
+    #[arg(long)]
+    refresh_snapshot: bool,
+}
+
+#[derive(Debug, Args)]
 struct RulesArgs {
     /// Print the catalogue as a table or as json.
     #[arg(long, value_enum, value_name = "format", default_value_t = RulesFormat::Table)]
@@ -146,6 +167,7 @@ fn main() -> ExitCode {
 
     let answer = match cli.command {
         Command::Check(args) => run_check(args),
+        Command::Scan(args) => run_scan(args),
         Command::Guard(args) => run_guard(args),
         Command::Hook(args) => run_hook(args),
         Command::Rules(args) => rules::run(match args.format {
@@ -158,10 +180,10 @@ fn main() -> ExitCode {
 }
 
 fn run_check(args: CheckArgs) -> Answer {
-    let format = check::format_for(
+    let format = format_for(
         args.format.map(|format| match format {
-            CheckFormat::Sarif => check::Format::Sarif,
-            CheckFormat::Table => check::Format::Table,
+            CheckFormat::Sarif => Format::Sarif,
+            CheckFormat::Table => Format::Table,
         }),
         std::io::stdout().is_terminal(),
     );
@@ -185,6 +207,34 @@ fn run_check(args: CheckArgs) -> Answer {
         format,
         config: args.config,
         message_file: args.message_file,
+        version: env!("CARGO_PKG_VERSION").to_string(),
+    })
+}
+
+fn run_scan(args: ScanArgs) -> Answer {
+    let format = format_for(
+        args.format.map(|format| match format {
+            CheckFormat::Sarif => Format::Sarif,
+            CheckFormat::Table => Format::Table,
+        }),
+        std::io::stdout().is_terminal(),
+    );
+
+    let cwd = match std::env::current_dir() {
+        Ok(cwd) => cwd,
+        Err(error) => {
+            return could_not_run(format!(
+                "weed could not read the directory it was called from: {error}. run it from a directory that exists."
+            ))
+        }
+    };
+
+    scan::run(&scan::Request {
+        cwd,
+        rules: args.rules,
+        format,
+        config: args.config,
+        refresh_snapshot: args.refresh_snapshot,
         version: env!("CARGO_PKG_VERSION").to_string(),
     })
 }
