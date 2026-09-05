@@ -10,6 +10,13 @@ the rules that read trailers; it never reaches the tree.
 the change that looks like the offence and is not one. A rule with no `silent/`
 fixture has not been shown to discriminate.
 
+A rule with more than one shape to prove carries more than one of each, named
+for what it holds: T5 has a `silent-code/` for the half where the code moves
+without the expectation, and T7 has `fire-case/` and `silent-case/` for the
+languages whose runners collect a case by the name it is declared under. Every
+directory holding a `before/` and an `after/` is a fixture, whatever it is
+called, and `tests/determinism.rs` replays all of them.
+
 `tests/common/mod.rs` builds the repository. Nothing here is copied by hand.
 
 ## Conflict markers

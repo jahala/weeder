@@ -12,9 +12,16 @@ use crate::core::rules::configured_level;
 
 pub mod c1;
 pub mod g1;
+pub mod m1;
 pub mod s1;
 pub mod t1;
+pub mod t2;
 pub mod t3;
+pub mod t4;
+pub mod t5;
+pub mod t6;
+pub mod t7;
+pub mod vocab;
 pub mod x1;
 
 type Detector = fn(&[Change]) -> Vec<Finding>;
@@ -23,7 +30,13 @@ type Detector = fn(&[Change]) -> Vec<Finding>;
 /// is not run; the loop that lands its detector adds the entry here.
 const DETECTORS: &[(&str, Detector)] = &[
     ("T1", t1::evaluate),
+    ("T2", t2::evaluate),
     ("T3", t3::evaluate),
+    ("T4", t4::evaluate),
+    ("T5", t5::evaluate),
+    ("T6", t6::evaluate),
+    ("T7", t7::evaluate),
+    ("M1", m1::evaluate),
     ("S1", s1::evaluate),
     ("X1", x1::evaluate),
     ("C1", c1::evaluate),
