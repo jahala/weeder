@@ -32,13 +32,13 @@ weed rules [--format table|json]
 Not a git repository, an unreadable ref, a config error, or a reader failure under `--strict` is exit 3, one line on stderr saying what could not be done and what to try, and a SARIF log on stdout with `executionSuccessful: false`. A gate that cannot run must never look like a gate that passed.
 
 ## Tests
-- [ ] (code) with no flags weed judges index plus working tree against HEAD, `--staged` judges the index only, and `--base <ref>` judges the tree against that ref, proven on a temp repo carrying a distinct change in each zone · tests/check_scopes.rs
-- [ ] (code) exit 0 on a clean diff and on warnings only, 2 with at least one block-level result, 3 outside a git repository, on an unknown ref, and on a malformed `weed.toml`, each with one stderr line naming the cause · tests/check_exit.rs
-- [ ] (code) SARIF on stdout when it is not a terminal, a table when it is, and `--format` overrides both · tests/check_format.rs
-- [ ] (code) G1 fires at block level on conflict markers at line start (`<<<<<<<`, `=======`, `>>>>>>>`) in each of ts, py, rs and go through the real binary, and stays silent on a neighbour that carries `=======` inside a string and a markdown table rule · tests/rule_g1.rs
-- [ ] (code) `weed rules` prints every rule with id, default level, face and one-line finding, and the levels match `Config::default()` · tests/rules_catalogue.rs
-- [ ] (code) `--strict` reports a suppressed block finding at its original level and exits 2, while without `--strict` the same diff exits 0 with the finding as a note · tests/check_strict.rs
-- [ ] (code) `examples/pleach/plan.json` declares `"accept": { "smoke": "weed check --strict" }` and passes `pleach validate`; `docs/pleach.md` explains that weed sees the staged files plus the tree against HEAD, so no base argument is needed · scripts/check/pleach-example.sh
+- [x] (code) with no flags weed judges index plus working tree against HEAD, `--staged` judges the index only, and `--base <ref>` judges the tree against that ref, proven on a temp repo carrying a distinct change in each zone · tests/check_scopes.rs @bef0624 · by cli
+- [x] (code) exit 0 on a clean diff and on warnings only, 2 with at least one block-level result, 3 outside a git repository, on an unknown ref, and on a malformed `weed.toml`, each with one stderr line naming the cause · tests/check_exit.rs @aeb605a · by cli
+- [x] (code) SARIF on stdout when it is not a terminal, a table when it is, and `--format` overrides both · tests/check_format.rs @338ecef · by cli
+- [x] (code) G1 fires at block level on conflict markers at line start (`<<<<<<<`, `=======`, `>>>>>>>`) in each of ts, py, rs and go through the real binary, and stays silent on a neighbour that carries `=======` inside a string and a markdown table rule · tests/rule_g1.rs @9571b4e · by cli
+- [x] (code) `weed rules` prints every rule with id, default level, face and one-line finding, and the levels match `Config::default()` · tests/rules_catalogue.rs @9be4a4d · by cli
+- [x] (code) `--strict` reports a suppressed block finding at its original level and exits 2, while without `--strict` the same diff exits 0 with the finding as a note · tests/check_strict.rs @58dd84b · by cli
+- [x] (code) `examples/pleach/plan.json` declares `"accept": { "smoke": "weed check --strict" }` and passes `pleach validate`; `docs/pleach.md` explains that weed sees the staged files plus the tree against HEAD, so no base argument is needed · scripts/check/pleach-example.sh @156ff30 · by cli
 
 ## Needs #core #sarif
 
