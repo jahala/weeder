@@ -8,7 +8,8 @@
 //! only in a file whose new content carries an opener or a closer as well: a
 //! separator with no conflict around it is punctuation, not a conflict.
 
-use crate::core::diff::{FileDiff, LineKind};
+use crate::core::change::Change;
+use crate::core::diff::LineKind;
 use crate::core::finding::{Finding, Fix, Level, Message, Region};
 
 /// How many times a marker repeats its character.
@@ -18,14 +19,14 @@ const BASE: char = '|';
 const SEPARATOR: char = '=';
 const THEIRS: char = '>';
 
-pub fn evaluate(files: &[FileDiff]) -> Vec<Finding> {
+pub fn evaluate(changes: &[Change]) -> Vec<Finding> {
     let mut findings = Vec::new();
-    for file in files {
-        let Some(path) = file.new_path.as_deref() else {
+    for change in changes {
+        let Some(path) = change.diff.new_path.as_deref() else {
             continue;
         };
-        let conflicted = new_content(file).any(|text| marker(text).is_some_and(is_unambiguous));
-        for hunk in &file.hunks {
+        let conflicted = new_content(change).any(|text| marker(text).is_some_and(is_unambiguous));
+        for hunk in &change.diff.hunks {
             for line in &hunk.lines {
                 if line.kind != LineKind::Added {
                     continue;
@@ -73,8 +74,10 @@ fn is_unambiguous(marker: char) -> bool {
 
 /// Every line the change leaves in the file: what it added, and the context it
 /// kept. A conflict opened before the hunk still shows here as context.
-fn new_content(file: &FileDiff) -> impl Iterator<Item = &str> {
-    file.hunks
+fn new_content(change: &Change) -> impl Iterator<Item = &str> {
+    change
+        .diff
+        .hunks
         .iter()
         .flat_map(|hunk| hunk.lines.iter())
         .filter(|line| matches!(line.kind, LineKind::Added | LineKind::Context))

@@ -1,39 +1,14 @@
-//! The check-face detectors, and the level each one reports at.
+//! The detectors, kept apart by the face that runs them.
 //!
-//! A detector is pure: it reads a parsed diff and returns findings carrying the
-//! rule's catalogue default level. `evaluate` replaces that level with the one
-//! the config sets, and drops the rules the config turns off.
+//! `check` judges a diff and `scan` judges a tree; the two read different things
+//! and land on their own schedules, so each face owns its registry and neither
+//! can quietly start running the other's rules.
 
-use crate::core::catalogue::{self, Rule};
+use crate::core::catalogue::Rule;
 use crate::core::config::{Config, RuleSetting};
-use crate::core::diff::FileDiff;
-use crate::core::finding::{Finding, Level};
+use crate::core::finding::Level;
 
-pub mod g1;
-
-type Detector = fn(&[FileDiff]) -> Vec<Finding>;
-
-/// The detectors weed has. A catalogue rule absent from this table is not run;
-/// the loop that lands its detector adds the entry here.
-const DETECTORS: &[(&str, Detector)] = &[("G1", g1::evaluate)];
-
-/// Every enabled detector's findings, in catalogue order, at the configured level.
-pub fn evaluate(files: &[FileDiff], config: &Config) -> Vec<Finding> {
-    let mut findings = Vec::new();
-    for (id, detect) in DETECTORS {
-        let Some(rule) = catalogue::rule(id) else {
-            continue;
-        };
-        let Some(level) = configured_level(rule, config) else {
-            continue;
-        };
-        for mut finding in detect(files) {
-            finding.level = level;
-            findings.push(finding);
-        }
-    }
-    findings
-}
+pub mod check;
 
 /// The level a rule reports at, or `None` when the config turns it off.
 pub fn configured_level(rule: &Rule, config: &Config) -> Option<Level> {

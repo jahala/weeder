@@ -110,24 +110,44 @@ pub fn diff_range(root: &Path, base: &str, tip: &str) -> Result<String, GitError
     diff(root, &[&base, &tip])
 }
 
-/// A file's contents at a ref, or `None` where the ref does not carry it.
+/// A file's text at a ref: `None` where the ref does not carry the file, and
+/// `None` where what it carries is not text. weed judges lines, and bytes that
+/// are not text carry none; G2 is the rule that reports a binary blob.
 pub fn file_at_ref(root: &Path, reference: &str, path: &str) -> Result<Option<String>, GitError> {
     let object = format!("{reference}:{path}");
-    // A file's own bytes, read the way the diff is read: a byte that is not
-    // utf-8 must not make a file that is there look like a file that is not.
-    match run_lossy(root, &["show", &object]) {
-        Ok(contents) => Ok(Some(contents)),
-        Err(GitError::Refused { .. }) => Ok(None),
-        Err(other) => Err(other),
-    }
+    text(root, &["show", &object])
 }
 
-/// A file's contents in the working tree, or `None` where there is no such file.
+/// A file's text in the index: what a commit would carry. git spells the index
+/// as a ref with no name in front of the colon.
+pub fn file_in_index(root: &Path, path: &str) -> Result<Option<String>, GitError> {
+    let object = format!(":{path}");
+    text(root, &["show", &object])
+}
+
+/// A file's text in the working tree, or `None` where there is no such file.
 pub fn file_in_tree(root: &Path, path: &str) -> Result<Option<String>, GitError> {
-    fs::read_if_present(&root.join(path)).map_err(|error| GitError::Refused {
+    fs::read_text_if_present(&root.join(path)).map_err(|error| GitError::Refused {
         command: format!("show :{path}"),
         message: error.message,
     })
+}
+
+/// What a git invocation wrote, where it wrote text and worked. A refusal — no
+/// such object — and bytes that are not text both answer `None`, because both
+/// mean there is nothing for a rule to read.
+fn text(root: &Path, arguments: &[&str]) -> Result<Option<String>, GitError> {
+    let attempt = attempt(root, arguments)?;
+    if attempt.code != 0 {
+        return Ok(None);
+    }
+    // git's own test for a binary blob: a NUL byte. Anything else is text a rule
+    // can read, and a stray byte that is not utf-8 is replaced rather than
+    // letting one latin-1 character make a file look like it is not there.
+    if attempt.stdout.contains(&0) {
+        return Ok(None);
+    }
+    Ok(Some(String::from_utf8_lossy(&attempt.stdout).into_owned()))
 }
 
 /// The messages of the commits a range carries, newest first, for the trailers

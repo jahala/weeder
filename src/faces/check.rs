@@ -12,8 +12,11 @@
 
 use std::path::{Path, PathBuf};
 
+use crate::core::change::{Change, Side};
+use crate::core::classify::{classify_file, FileKind};
 use crate::core::diff::{parse_diff, FileDiff};
 use crate::core::finding::{Finding, Level};
+use crate::core::read::{Outline, TestShape};
 use crate::core::rules;
 use crate::core::sarif::{self, Context, EXIT_BLOCKED, EXIT_CLEAN, EXIT_COULD_NOT_RUN, RULES_DOC};
 use crate::core::suppress::{
@@ -21,7 +24,7 @@ use crate::core::suppress::{
     InlineSuppressionError, Suppression,
 };
 use crate::faces::{read_config, Answer};
-use crate::seams::{fs, git};
+use crate::seams::{fs, git, reader};
 
 /// How the findings are written.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -76,13 +79,14 @@ pub fn run(request: &Request) -> Answer {
 fn judge(request: &Request) -> Result<Answer, String> {
     let root = git::repository_root(&request.cwd).map_err(|error| error.to_string())?;
     let config = read_config(&root, request.config.as_deref())?;
-    let diff = read_diff(request, &root)?;
+    let range = range(request)?;
+    let diff = read_diff(&root, &range)?;
     let judged: Vec<FileDiff> = parse_diff(&diff).map_err(|error| {
         format!("weed could not read the diff git produced: {error}. report it with the change that caused it.")
     })?;
-
-    let findings = rules::evaluate(&judged, &config);
     let (inline, malformed) = parse_inline_suppressions(&judged);
+
+    let findings = rules::check::evaluate(&gather(&root, &range, judged)?, &config);
     if request.strict {
         if let Some(unreadable) = malformed.first() {
             return Err(refusal(unreadable));
@@ -122,26 +126,118 @@ fn judge(request: &Request) -> Result<Answer, String> {
     })
 }
 
-fn read_diff(request: &Request, root: &Path) -> Result<String, String> {
+/// The two states a run compares. The state a change starts from is always a
+/// commit — git has nothing else to compare against — and what it ends in is
+/// whichever of the three places the caller asked weed to judge.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Range {
+    base: String,
+    after: Source,
+}
+
+/// Where a version of a file is to be found.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Source {
+    /// A commit, by whatever name the caller gave it.
+    Reference(String),
+    /// The index: what a commit would carry.
+    Index,
+    /// The working tree, as it sits on disk.
+    Tree,
+}
+
+/// What this run compares against what. A run that names two states weed cannot
+/// judge together stops here rather than guessing which one was meant.
+fn range(request: &Request) -> Result<Range, String> {
     if request.staged && (request.base.is_some() || request.tip.is_some()) {
         return Err(
             "--base judges the tree against a ref and --staged judges the index, so weed cannot do both. pass one."
                 .to_string(),
         );
     }
-    let diff = match (&request.base, &request.tip) {
-        (Some(base), Some(tip)) => git::diff_range(root, base, tip),
-        (Some(base), None) => git::diff_ref(root, base),
-        (None, Some(_)) => {
-            return Err(
-                "a tip with no base names no range to judge, and weed will not guess one."
-                    .to_string(),
-            )
-        }
-        (None, None) if request.staged => git::diff_index(root),
-        (None, None) => git::diff_head(root),
+    if request.base.is_none() && request.tip.is_some() {
+        return Err(
+            "a tip with no base names no range to judge, and weed will not guess one.".to_string(),
+        );
+    }
+    let base = request.base.clone().unwrap_or_else(|| "HEAD".to_string());
+    let after = match (&request.tip, request.staged) {
+        (Some(tip), _) => Source::Reference(tip.clone()),
+        (None, true) => Source::Index,
+        (None, false) => Source::Tree,
+    };
+    Ok(Range { base, after })
+}
+
+fn read_diff(root: &Path, range: &Range) -> Result<String, String> {
+    let head = range.base == "HEAD";
+    let diff = match &range.after {
+        Source::Reference(tip) => git::diff_range(root, &range.base, tip),
+        Source::Index if head => git::diff_index(root),
+        Source::Tree if head => git::diff_head(root),
+        // A base other than HEAD is a ref, and git compares the tree against a
+        // ref the same way whether or not the index is part of the question.
+        _ => git::diff_ref(root, &range.base),
     };
     diff.map_err(|error| error.to_string())
+}
+
+/// Each changed file with both of its sides read: the text, what the path is,
+/// and what the reader makes of the inside of it. This is the one place weed
+/// touches a file for the rules, so a detector stays pure and testable whole.
+fn gather(root: &Path, range: &Range, judged: Vec<FileDiff>) -> Result<Vec<Change>, String> {
+    judged
+        .into_iter()
+        .map(|diff| {
+            let before = side(
+                root,
+                &Source::Reference(range.base.clone()),
+                diff.old_path.as_deref(),
+            )?;
+            let after = side(root, &range.after, diff.new_path.as_deref())?;
+            Ok(Change {
+                diff,
+                before,
+                after,
+            })
+        })
+        .collect()
+}
+
+/// One side of one file. A side with no file, and a file that is not text, are
+/// both nothing to read: weed judges lines, and neither carries any.
+fn side(root: &Path, source: &Source, path: Option<&str>) -> Result<Side, String> {
+    let Some(path) = path else {
+        return Ok(Side::default());
+    };
+    let content = match source {
+        Source::Reference(reference) => git::file_at_ref(root, reference, path),
+        Source::Index => git::file_in_index(root, path),
+        Source::Tree => git::file_in_tree(root, path),
+    }
+    .map_err(|error| error.to_string())?;
+    let Some(content) = content else {
+        return Ok(Side::default());
+    };
+
+    let classification = classify_file(path, &content);
+    let file = Path::new(path);
+    let tests = if classification.kind == FileKind::Test || classification.has_inline_tests {
+        reader::test_shape(file, &content)
+    } else {
+        TestShape::default()
+    };
+    let outline = if classification.kind == FileKind::Prod {
+        reader::outline(file, &content)
+    } else {
+        Outline::default()
+    };
+    Ok(Side {
+        content: Some(content),
+        classification: Some(classification),
+        tests,
+        outline,
+    })
 }
 
 /// The `Weed-allow:` trailers travelling with the change: the message handed in

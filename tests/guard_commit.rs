@@ -8,14 +8,27 @@ mod common;
 
 use common::{conflicted_parser, Repo};
 
+/// A repository with the hooks installed and already committed.
+///
+/// `install` writes the hooks into the working tree so a clone gets them, and
+/// a hook is a guardrail, so the commit that first carries them is a C1 finding
+/// the gate itself would refuse. Installing weed is therefore one deliberate
+/// commit that skips the gate; everything after it goes through.
+fn guarded() -> Repo {
+    let repo = Repo::init();
+    repo.weed(&["guard", "install"]);
+    repo.stage_all();
+    repo.git(&["commit", "--no-verify", "-m", "weed guard installed"]);
+    repo
+}
+
 /// The parser once the merge is finished: one side kept, no marker left.
 const RESOLVED: &str = "export function parse(input: string): string[] {\n  \
                         return input.split(\";\");\n}\n";
 
 #[test]
 fn the_pre_commit_hook_refuses_an_index_that_blocks_and_lets_a_clean_one_through() {
-    let repo = Repo::init();
-    repo.weed(&["guard", "install"]);
+    let repo = guarded();
     let before = repo.head();
 
     repo.write("src/parser.ts", &conflicted_parser(None));
@@ -59,8 +72,7 @@ fn the_pre_commit_hook_refuses_an_index_that_blocks_and_lets_a_clean_one_through
 
 #[test]
 fn the_pre_commit_hook_judges_the_index_and_not_the_working_tree() {
-    let repo = Repo::init();
-    repo.weed(&["guard", "install"]);
+    let repo = guarded();
 
     repo.write("src/parser.ts", RESOLVED);
     repo.stage_all();
