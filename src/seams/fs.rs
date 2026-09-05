@@ -29,7 +29,7 @@ pub fn read(path: &Path) -> Result<String, FsError> {
 pub fn read_if_present(path: &Path) -> Result<Option<String>, FsError> {
     match std::fs::read_to_string(path) {
         Ok(contents) => Ok(Some(contents)),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(error) if is_nothing_to_read(&error) => Ok(None),
         Err(error) => Err(FsError {
             path: path.display().to_string(),
             message: error.to_string(),
@@ -41,13 +41,26 @@ pub fn read_if_present(path: &Path) -> Result<Option<String>, FsError> {
 /// is not text. weed judges lines, and bytes that are not text carry none.
 pub fn read_text_if_present(path: &Path) -> Result<Option<String>, FsError> {
     match std::fs::read(path) {
-        Ok(bytes) => Ok(String::from_utf8(bytes).ok()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        // git's own test for a binary blob: a NUL byte. Anything else is text a
+        // rule can read, with a stray byte that is not utf-8 replaced rather
+        // than letting one latin-1 character make the file read as absent.
+        Ok(bytes) if bytes.contains(&0) => Ok(None),
+        Ok(bytes) => Ok(Some(String::from_utf8_lossy(&bytes).into_owned())),
+        Err(error) if is_nothing_to_read(&error) => Ok(None),
         Err(error) => Err(FsError {
             path: path.display().to_string(),
             message: error.to_string(),
         }),
     }
+}
+
+/// A path with no file to read at it: nothing there, or a directory — a symlink
+/// to one, a submodule — which has no lines and is not an error to be at.
+fn is_nothing_to_read(error: &std::io::Error) -> bool {
+    matches!(
+        error.kind(),
+        std::io::ErrorKind::NotFound | std::io::ErrorKind::IsADirectory
+    )
 }
 
 /// Whether a path is there at all.
