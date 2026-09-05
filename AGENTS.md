@@ -8,7 +8,7 @@ The map in `docs/tend2/` is the plan and the proof. Read the project loop (`docs
 
 ```
 src/core/      pure: parse_diff → Hunks · classify_file → kind + lang · rules → Vec<Finding> · sarif::render → Log · catalogue (rule ids, defaults, descriptions) · config · suppress
-src/seams/     I/O behind small functions, injected by faces: git (diff, file at ref, refs, hooks path), exec (a command with a timeout), fs, reader (tilth-core: outlines, test-file classification, imports, callers)
+src/seams/     I/O behind small functions, injected by faces: git (diff, file at ref, refs, hooks path), exec (a command with a timeout), fs, reader (tilth-core: language detection, outlines, test shape, imports, callers)
 src/faces/     the CLI subcommands: check, scan, guard, bite, hook, rules
 tests/         integration tests that drive the real `weed` binary on real git repositories in temp dirs (assert_cmd + tempfile); tests/common/ holds the fixture harness
 fixtures/adversarial/<RULE>/<lang>/{fire,silent}/{before,after}/   one minimal repo history per rule per language: `before/` is committed as HEAD, `after/` is the working tree; a file `after/.weed-commit` carries the commit message (for trailers) and is never copied
