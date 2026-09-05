@@ -1,0 +1,59 @@
+{
+  "goal": "A static Rust binary that reads what an agent produced and refuses the growth that should not be there — deleted or weakened tests, skips, stubs, swallowed errors, secrets, guardrail edits, dependency-direction violations — in milliseconds, with zero tokens, every finding as SARIF 2.1.0. `weed check` judges a diff and may block; `weed scan` judges the tree and never blocks; `weed guard` is the law in git through hooks; `weed bite` proves a test fails without its change. For maintainers drowning in agent-authored pull requests who need a deterministic gate before they read, for teams running agents on several harnesses who want one law, and for the garden's own fleets through pleach.",
+  "source": "docs/tend2#tilth-core",
+  "nodes": [
+    {
+      "id": "tilth-core",
+      "work": {
+        "prompt": "You are a worker in a build loop. Make the checks below pass, honestly.\nNobody reviews your prose — only the verifier's verdict counts, so put all effort into the work itself.\n\n## The goal\nweed reads code through `tilth-core`, a library crate extracted from tilth that owns tree-sitter outlines, file-type and language detection, test-file classification, import extraction and resolution, and caller search across fourteen languages. weed does not parse anything itself. All of that reading sits behind one seam module, `src/seams/reader.rs`, so the core stays pure and the dependency can be swapped or upgraded mechanically.\n\n## Your environment\n- You are at the repository root of an isolated git worktree. Work here directly.\n- Leave your changes in the working tree; do not create branches, commit, or push.\n- The loop file (docs/tend2/tilth-core.tend2.html) is your full context — read it, including its narrative. It is READ-ONLY for you.\n\n## Checks to close\n- (code) weed's `Cargo.toml` depends on `tilth-core` as a git dependency on `https://github.com/jahala/tilth` pinned to rev `7f38db58696e16c2df2be71da985f47097f34920`, with no local patch anywhere, and `cargo build` succeeds · evidence expected at: scripts/check/tilth-core-dep.sh\n- (code) `src/seams/reader.rs` is the only file in `src/` that references `tilth_core`, and `src/core/` compiles with the reader's data types only · evidence expected at: tests/reader_seam.rs\n- (code) the reader returns outline entries, test shape, imports and callers for one small file in each of ts, py, rs and go, asserted against the fixture's known contents · evidence expected at: tests/reader_langs.rs\n\n## Definition of done — verify yourself before finishing\nYou are done when this exact command exits 0 (it is the gate the conductor will run):\n\n    tend2 verify docs/tend2/tilth-core.tend2.html --repo-root . --force --expect-payload 05553d1f87de --runner 'bash scripts/check/run.sh {evidence}'\n\nRun it yourself. If it does not exit 0, you are not done. Do not declare success in prose that a command disagrees with.\n\n## Already tried (do not repeat)\n- 2026-09-05 the brief named the modules on an older branch of tilth (`src/read/outline/`, `src/search/symbol.rs`, `src/search/deps.rs`, `src/types.rs::is_test_file`, `src/search/blast.rs`); on main the shared language infrastructure has since moved to `src/lang/`, so the extraction follows main's layout, not the brief's file list\n- 2026-09-05 tilth's `main` trips one clippy lint on rustc 1.98 (`manual_is_variant_and` in `src/overview.rs:693`) that its CI toolchain did not know; the extraction plan fixes that one line so the CI trio can be the gate\n- 2026-09-05 decided: weed does not fork or vendor any tilth parsing code; if the crate is not green, weed waits, and the reader seam is the only place the wait is felt\n- 2026-09-05 base corrected: the worktree was cut from a stale local `main` (v0.9.0); origin/main is v0.10.1 (f5c0afa), 132 commits and 74 source files later, with per-language modules under `src/lang/`. The branch was fast-forwarded before any work landed on it\n- 2026-09-05 division settled on the channel with cape-town and almaty (the tilth agent): almaty implements and lands the workspace split in tilth with zero behaviour change; weed sends the exact API surface and the acceptance test `crates/tilth-core/tests/api.rs` as the spec; the pleach plan in `plans/tilth-core.plan.json` is kept as the record of the surface and is not run. Two agents on one crate was the failure mode being avoided\n- 2026-09-05 the first check's evidence will track the branch and commit almaty names, not this worktree's own history\n- 2026-09-05 almaty landed the crate and pushed it, so the git dependency resolves from GitHub by rev and the `.cargo/config.toml` bridge this map planned for is never written. Surface notes from almaty, all accepted: `TestEntry` carries an extra `callee` field; `#[test]` attributes are not visible through `OutlineEntry` (the seam reads the lines above `start_line`); `test_entries` is empty for Rust, Python and Go; `analyze_deps` drops single-character symbol names and wants a canonical scope; `find_callers_batch` keeps its signature and `BloomFilterCache::new()` is pub; `TilthError` is `Error + Send + Sync + 'static`\n\n## Rules\n- Write the failing test first where it does not exist; then make it pass.\n- You must not edit the loop file — check states belong to the verifier.\n- You must not weaken, skip, or mock the unit under test to force a green; mocked-unit evidence is detected and refused.\n- Solve the CLASS of problem the claim names, not the test's example inputs. Hardcoding fixture strings, phrases, or patterns from the check or its tests into source (lookup tables, regex lists, phrase maps) is refused work even when the test goes green — it is an answer key, not a product.\n- If the claim cannot be met generically with what you have, that is a real finding: write BLOCKED.md naming the missing capability (a model, a library, a redesign, a split of the check into honest tiers) instead of faking generality.\n- Production quality only: no stubs, no TODOs, no placeholder implementations; match the style of the surrounding code.\n- Probe/scratch files (toolchain checks, experiments) go in `.loop-scratch/` only — it is never collected; scratch files elsewhere pollute the delivery.\n- If you are genuinely blocked, write BLOCKED.md at the repo root — what you tried, what stopped you, what a fix needs. An honest BLOCKED.md is a good outcome; a faked green is the worst possible one."
+      },
+      "accept": {
+        "smoke": "tend2 verify docs/tend2/tilth-core.tend2.html --repo-root . --force --expect-payload 05553d1f87de --runner 'bash scripts/check/run.sh {evidence}'",
+        "audit": {
+          "command": "tend2 verify docs/tend2/tilth-core.tend2.html --repo-root . --force --expect-payload 05553d1f87de --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
+          "provider": "codex",
+          "selfIntegrity": true
+        }
+      },
+      "policy": {
+        "timeoutMs": 5400000
+      },
+      "worker": {
+        "provider": "claude",
+        "model": "opus"
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "loopId": "core",
+      "code": "unwired-modules",
+      "message": "5 checks cite 4 src modules (Cargo.toml, AGENTS.md, CLAUDE.md, src/core/), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "rules-block",
+      "code": "unwired-modules",
+      "message": "6 checks cite 2 src modules (AGENTS.md, CLAUDE.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "rules-prod",
+      "code": "unwired-modules",
+      "message": "7 checks cite 2 src modules (Cargo.toml, .gitignore), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "sarif",
+      "code": "unwired-modules",
+      "message": "4 checks cite 2 src modules (schemas/sarif-schema-2.1.0.json, docs/sarif.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "scan",
+      "code": "unwired-modules",
+      "message": "6 checks cite 4 src modules (CLAUDE.md, AGENTS.md, /, Cargo.toml), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "tilth-core",
+      "code": "unwired-modules",
+      "message": "4 checks cite 4 src modules (.context/tilth-core, Cargo.toml, src/, src/core/), but no single check's evidence spans 2+ of them"
+    }
+  ]
+}
