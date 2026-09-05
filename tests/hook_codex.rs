@@ -22,7 +22,7 @@ const REFUSED: i32 = 2;
 const ALLOWED: i32 = 0;
 
 /// The heading in the proof document that owns codex's hook contract.
-const SECTION: &str = "## codex, what a hook may refuse";
+const SECTION: &str = "## codex: what a hook may refuse";
 /// What the doc's middle column says of an event that takes no decision.
 const NO_DECISION: &str = "no decision";
 /// The two events weed stands at, and so the two the rest of the contract is
