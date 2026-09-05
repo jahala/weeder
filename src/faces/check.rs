@@ -16,7 +16,7 @@ use crate::core::change::{Change, Side};
 use crate::core::classify::{classify_file, FileKind};
 use crate::core::diff::{parse_diff, FileDiff};
 use crate::core::finding::{Finding, Level};
-use crate::core::read::{Outline, TestShape};
+use crate::core::read::TestShape;
 use crate::core::rules;
 use crate::core::sarif::{self, Context, EXIT_BLOCKED, EXIT_CLEAN, EXIT_COULD_NOT_RUN, RULES_DOC};
 use crate::core::suppress::{
@@ -227,11 +227,10 @@ fn side(root: &Path, source: &Source, path: Option<&str>) -> Result<Side, String
     } else {
         TestShape::default()
     };
-    let outline = if classification.kind == FileKind::Prod {
-        reader::outline(file, &content)
-    } else {
-        Outline::default()
-    };
+    // Every side is outlined, test file and production file alike: a rule that
+    // asks what a rename did to a case, or which unit a double stands in for,
+    // is asking about a declaration on whichever side of the suite it sits.
+    let outline = reader::outline(file, &content);
     Ok(Side {
         content: Some(content),
         classification: Some(classification),

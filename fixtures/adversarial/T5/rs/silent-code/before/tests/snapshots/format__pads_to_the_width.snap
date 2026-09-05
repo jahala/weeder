@@ -1,0 +1,5 @@
+---
+source: tests/format.rs
+expression: format_value("a", 4)
+---
+a   

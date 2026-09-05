@@ -51,18 +51,28 @@ fn t1_fires_at_block_level_on_a_deleted_test_file_and_a_thinned_one() {
         let name = language.name;
 
         assert_eq!(run.code, 2, "{name}: a deleted test blocks\n{}", run.stderr);
-        let findings = run.findings();
+        let (findings, others): (Vec<common::Finding>, Vec<common::Finding>) = run
+            .findings()
+            .into_iter()
+            .partition(|finding| finding.rule == "T1");
         assert_eq!(
             findings.len(),
             2,
             "{name}: the file that went and the file that shrank, and nothing else: {findings:#?}"
         );
         for finding in &findings {
-            assert_eq!(finding.rule, "T1", "{name}: the rule is T1");
             assert_eq!(finding.level, "error", "{name}: T1 blocks");
         }
+        // A case that goes takes its assertions with it, so T2 reads the file
+        // that shrank and says its own thing about it. Nothing else may.
+        assert!(
+            others
+                .iter()
+                .all(|finding| finding.rule == "T2" && finding.path == language.thinned),
+            "{name}: the only other reading of this change is the assertions that went with the case: {others:#?}"
+        );
         assert_eq!(
-            run.paths(),
+            sorted_paths(&findings),
             sorted(vec![language.deleted, language.thinned]),
             "{name}: both files are named"
         );
@@ -125,6 +135,17 @@ fn finding_on(findings: &[common::Finding], path: &str) -> common::Finding {
         .find(|finding| finding.path == path)
         .unwrap_or_else(|| panic!("a finding on {path}, among {findings:#?}"))
         .clone()
+}
+
+/// The files a set of findings named, sorted and without repeats.
+fn sorted_paths(findings: &[common::Finding]) -> Vec<String> {
+    let mut paths: Vec<String> = findings
+        .iter()
+        .map(|finding| finding.path.clone())
+        .collect();
+    paths.sort();
+    paths.dedup();
+    paths
 }
 
 fn sorted(mut paths: Vec<&str>) -> Vec<String> {

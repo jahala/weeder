@@ -52,7 +52,7 @@ fn cases_gone(path: &str, change: &Change, before: usize, after: usize) -> Findi
         rule: "T1".to_string(),
         level: Level::Block,
         path: path.to_string(),
-        region: first_edit(change).map(|line| Region {
+        region: change.first_edit().map(|line| Region {
             start_line: line,
             end_line: line,
         }),
@@ -67,19 +67,6 @@ fn cases_gone(path: &str, change: &Change, before: usize, after: usize) -> Findi
         fix: None,
         suppressed: None,
     }
-}
-
-/// Where in the new file the change first touched something, so the finding
-/// points at the edit rather than at the top of a file nobody edited there.
-fn first_edit(change: &Change) -> Option<u32> {
-    let added = change.added().map(|(line, _)| line).min();
-    let hunks = change
-        .diff
-        .hunks
-        .iter()
-        .map(|hunk| hunk.new_start.max(1))
-        .min();
-    added.or(hunks)
 }
 
 fn counted(cases: usize) -> String {
