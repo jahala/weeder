@@ -1,0 +1,43 @@
+{
+  "goal": "A static Rust binary that reads what an agent produced and refuses the growth that should not be there — deleted or weakened tests, skips, stubs, swallowed errors, secrets, guardrail edits, dependency-direction violations — in milliseconds, with zero tokens, every finding as SARIF 2.1.0. `weed check` judges a diff and may block; `weed scan` judges the tree and never blocks; `weed guard` is the law in git through hooks; `weed bite` proves a test fails without its change. For maintainers drowning in agent-authored pull requests who need a deterministic gate before they read, for teams running agents on several harnesses who want one law, and for the garden's own fleets through pleach.",
+  "source": "docs/tend2",
+  "nodes": [
+    {
+      "id": "core",
+      "work": {
+        "prompt": "You are a worker in a build loop. Make the checks below pass, honestly.\nNobody reviews your prose — only the verifier's verdict counts, so put all effort into the work itself.\n\n## The goal\nA crate whose core does no I/O and never panics on input: `parse_diff` turns unified diff text into hunks with old and new line numbers; `classify_file` names a path's kind and language; `Finding` is the one shape every rule produces; `weed.toml` parses into a typed config with defaults that ship in the binary; suppressions parse from commit trailers and inline comments. Everything a rule needs is a value handed in, so a rule is a function from data to findings.\n\n## Your environment\n- You are at the repository root of an isolated git worktree. Work here directly.\n- Leave your changes in the working tree; do not create branches, commit, or push.\n- The loop file (docs/tend2/core.tend2.html) is your full context — read it, including its narrative. It is READ-ONLY for you.\n\n## Checks to close\n- (code) `parse_diff` reproduces the files, change kinds, hunks and per-line old/new numbers of captured `git diff` outputs covering adds, deletes, modifications, renames with edits, binary files, mode-only changes, several hunks, and the no-newline marker · evidence expected at: tests/core_diff.rs\n- (code) `classify_file` names kind and language for the four v1 languages and every guardrail, manifest and generated path the catalogue lists, and returns `Other` rather than guessing on anything else · evidence expected at: tests/core_classify.rs\n- (code) `weed.toml` parses rule levels, scope globs, dependency directions, thresholds and protected branches; an unknown key, an invalid level, or a scan rule given `block` is an error naming the key; an absent file yields the defaults · evidence expected at: tests/core_config.rs\n- (code) suppressions parse from a commit message trailer and from an inline comment, require a reason, and turn a matching finding into a note that carries the reason and the original level · evidence expected at: tests/core_suppress.rs\n- (code) `src/core/` imports neither `std::fs`, `std::process`, `std::env`, `git2`, nor anything from `crate::seams` or `crate::faces`, checked by a test that reads the source tree · evidence expected at: tests/core_purity.rs\n\n## Definition of done — verify yourself before finishing\nYou are done when this exact command exits 0 (it is the gate the conductor will run):\n\n    tend2 verify docs/tend2/core.tend2.html --repo-root . --force --expect-payload 25183d537229 --runner 'bash scripts/check/run.sh {evidence}'\n\nRun it yourself. If it does not exit 0, you are not done. Do not declare success in prose that a command disagrees with.\n\n## Already tried (do not repeat)\n- 2026-09-05 this loop creates the crate: `Cargo.toml` (package `weed`, bin `weed`, edition 2021, release profile copied from tilth: opt-level 3, fat lto, one codegen unit, strip, panic abort), `src/lib.rs`, `src/main.rs` printing version and usage, `src/core/`; `tests/common/mod.rs` with the fixture harness other loops reuse (temp git repo from `before/`, working tree from `after/`, run the built binary, parse SARIF)\n- 2026-09-05 chose our own diff parser over shelling to a library: the input is always git's own unified format and the parser is a few hundred lines that the tests pin exactly\n- 2026-09-05 chose `git2` for the seams later, not here; core never sees a repository\n\n## Rules\n- Write the failing test first where it does not exist; then make it pass.\n- You must not edit the loop file — check states belong to the verifier.\n- You must not weaken, skip, or mock the unit under test to force a green; mocked-unit evidence is detected and refused.\n- Solve the CLASS of problem the claim names, not the test's example inputs. Hardcoding fixture strings, phrases, or patterns from the check or its tests into source (lookup tables, regex lists, phrase maps) is refused work even when the test goes green — it is an answer key, not a product.\n- If the claim cannot be met generically with what you have, that is a real finding: write BLOCKED.md naming the missing capability (a model, a library, a redesign, a split of the check into honest tiers) instead of faking generality.\n- Production quality only: no stubs, no TODOs, no placeholder implementations; match the style of the surrounding code.\n- Probe/scratch files (toolchain checks, experiments) go in `.loop-scratch/` only — it is never collected; scratch files elsewhere pollute the delivery.\n- If you are genuinely blocked, write BLOCKED.md at the repo root — what you tried, what stopped you, what a fix needs. An honest BLOCKED.md is a good outcome; a faked green is the worst possible one."
+      },
+      "accept": {
+        "smoke": "tend2 verify docs/tend2/core.tend2.html --repo-root . --force --expect-payload 25183d537229 --runner 'bash scripts/check/run.sh {evidence}'"
+      },
+      "policy": {
+        "timeoutMs": 5400000
+      },
+      "worker": {
+        "provider": "codex"
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "loopId": "core",
+      "code": "unwired-modules",
+      "message": "5 checks cite 2 src modules (AGENTS.md, CLAUDE.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "rules-block",
+      "code": "unwired-modules",
+      "message": "6 checks cite 2 src modules (AGENTS.md, CLAUDE.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "scan",
+      "code": "unwired-modules",
+      "message": "6 checks cite 3 src modules (CLAUDE.md, AGENTS.md, /), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "tilth-core",
+      "code": "unwired-modules",
+      "message": "4 checks cite 2 src modules (.context/tilth-core, plans/tilth-core.plan.json), but no single check's evidence spans 2+ of them"
+    }
+  ]
+}
