@@ -24,6 +24,8 @@ When stdout is a terminal, or `--format table` is given, one line per finding: l
 - [ ] (code) the table renders one line per finding in level-then-path-then-line order and ends with a count per level · tests/sarif_table.rs
 - [ ] (code) `docs/sarif.md` names every convention above and, for each, the test function that pins it; a script checks each named test exists · scripts/check/docs-sarif.sh
 
+## Needs #core
+
 ## Tried
 - 2026-09-05 schema validation runs in-process with the `jsonschema` crate against the vendored file, never against the network; the schema is draft-04 and the crate supports it
 - 2026-09-05 no `partialFingerprints` in v1: GitHub derives them from location when absent, and a stable fingerprint across renames is a later loop
