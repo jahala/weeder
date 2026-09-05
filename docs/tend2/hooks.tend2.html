@@ -27,10 +27,12 @@ Gemini CLI: `BeforeTool` with the same command test, answered with Gemini's deci
 - [ ] (code) a real Claude Code run with the Stop hook refuses a premature done with weed's findings as the reason and allows it once the tree is clean, captured into `docs/proof-2026-09.md` · scripts/proof/claude-stop.sh
 - [ ] (code) a real Gemini CLI run with the AfterAgent hook does the same, captured into `docs/proof-2026-09.md` · scripts/proof/gemini-stop.sh
 
-## Needs #rules-block
+## Needs #check-face
 
 ## Tried
 - 2026-09-05 the harness hook is the second line, not the first: `guard` is the law in git; the hook denies the bypass (`--no-verify`) and blocks a premature stop, which git hooks cannot see
 - 2026-09-05 the proof scripts run real harness sessions and are cited as evidence rather than folded into `cargo test`, so the Rust suite stays runnable on a machine with no agent CLI
+- 2026-09-05 re-pointed from rules-block to check-face for the same reason as guard: a red index or tree is red by G1 today; the hook does not care which rule made it so
+- 2026-09-05 the pending commit message reaches `weed check` through `--message-file` (check-face); the claude hook can extract `-m` text from the `git commit` command it sees and hand it over, which is the only way a `Weed-allow:` trailer counts before the commit exists
 </script>
 <script src="loop.js"></script>

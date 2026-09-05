@@ -26,15 +26,16 @@ Pre-commit: any block-level finding in the index. Pre-push: any block-level find
 
 ## Tests
 - [ ] (code) `install` writes the three hooks, sets `core.hooksPath`, and records the previous value; `status` reports each hook live; `uninstall` restores the previous `core.hooksPath` and removes only the files it wrote · tests/guard_install.rs
-- [ ] (code) in a fixture repo the installed pre-commit refuses a commit that deletes a test, prints the findings, and allows a clean commit · tests/guard_commit.rs
+- [ ] (code) in a fixture repo the installed pre-commit refuses a commit whose index carries a block-level finding (proven with a conflict marker; a deleted test travels the same path once T1 lands), prints the findings, and allows a clean commit · tests/guard_commit.rs
 - [ ] (code) against a real bare remote the installed pre-push refuses a non-fast-forward push to a protected branch and a push whose range carries a block-level finding, and allows a clean fast-forward · tests/guard_push.rs
 - [ ] (code) the installed pre-rebase refuses rebasing a protected branch and allows rebasing a feature branch · tests/guard_rebase.rs
 - [ ] (code) `status` exits 2 and names the miss when a hook is missing, not executable, or `core.hooksPath` points elsewhere · tests/guard_status.rs
 
-## Needs #rules-block
+## Needs #check-face
 
 ## Tried
 - 2026-09-05 hooks are shell scripts calling the binary rather than copies of the binary: a copied binary goes stale on upgrade, a script that names a path fails loudly
 - 2026-09-05 the earlier hedge bed's deny list of shell patterns was folded into this loop and the harness hooks (umbrella Tried, 2026-09-05): a pattern list loses to `bash -c`, git hooks do not
+- 2026-09-05 re-pointed from rules-block to check-face: the hooks refuse whatever `weed check --strict` blocks, and G1 is a block-level rule already live, so the mechanism is proven now and covers T1 the day it lands. Waiting on the reader seam for a proof that does not need it was idling the map
 </script>
 <script src="loop.js"></script>
