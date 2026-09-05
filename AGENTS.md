@@ -15,8 +15,14 @@ fixtures/adversarial/<RULE>/<lang>/{fire,silent}/{before,after}/   one minimal r
 schemas/       vendored official schemas (sarif-schema-2.1.0.json)
 scripts/check/ evidence scripts a loop cites; run.sh is the runner tend2 verify uses
 scripts/proof/ evidence that starts a real agent session and writes what happened into docs/proof-2026-09.md
-docs/          sarif.md · pleach.md · tend2-seam.md · calibration-2026-09.md · proof-2026-09.md · dogfood.md · tend2/ (the map)
+docs/          sarif.md · pleach.md · tend2-seam.md · calibration-2026-09.md · proof-2026-09.md · dogfood.md · dogfood/<loop>.md · tend2/ (the map)
 examples/      pleach/plan.json · ci/github.yml
+garden.json    the manifest the umbrella reads (F1); schemas/garden.schema.json is its vendored, flagged schema
+SKILL.md       the whole binary in one file for an agent; its body must name every subcommand and flag `weed --help` prints
+.brand/products/weed/   identity, colours (three measured accent candidates, flagged), voice, the mark in paper and soil-night
+.github/workflows/      ci.yml (fmt, clippy, test, and the suite again on the release profile for the latency budget) · release.yml (version check, platform matrix, crates.io, npm)
+npm/           the wrapper: install.js fetches the release binary, run.js proxies to it
+LICENSE        MIT, naming the owner, flagged until confirmed · README.md carries the garden footer
 ```
 
 Dependency direction is weed's own doctrine and its D2 rule enforces it on itself: `core` imports nothing from `seams` or `faces`; `seams` may import `core` types; `faces` import both. Core does no I/O and never panics on input; failure lives in the return type.
