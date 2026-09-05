@@ -3,6 +3,8 @@ pub mod classify;
 pub mod config;
 pub mod diff;
 pub mod finding;
+pub mod glob;
+pub mod rules;
 pub mod sarif;
 pub mod suppress;
 
