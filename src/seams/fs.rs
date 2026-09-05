@@ -41,3 +41,82 @@ pub fn read_if_present(path: &Path) -> Result<Option<String>, FsError> {
 pub fn exists(path: &Path) -> bool {
     path.exists()
 }
+
+/// A file written whole. The path travels in the error, so a face can say which
+/// file it could not put down.
+pub fn write(path: &Path, contents: &str) -> Result<(), FsError> {
+    std::fs::write(path, contents).map_err(|error| FsError {
+        path: path.display().to_string(),
+        message: error.to_string(),
+    })
+}
+
+/// A directory and every parent it still needs.
+pub fn create_dir_all(path: &Path) -> Result<(), FsError> {
+    std::fs::create_dir_all(path).map_err(|error| FsError {
+        path: path.display().to_string(),
+        message: error.to_string(),
+    })
+}
+
+/// A file taken away. A file that is not there is already gone, so removing it
+/// twice is not a failure.
+pub fn remove_file(path: &Path) -> Result<(), FsError> {
+    match std::fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(FsError {
+            path: path.display().to_string(),
+            message: error.to_string(),
+        }),
+    }
+}
+
+/// A directory taken away, and only when nothing is left in it. A directory that
+/// still holds something is left alone: weed removes what it wrote, not what it
+/// found.
+pub fn remove_dir_if_empty(path: &Path) -> Result<(), FsError> {
+    match std::fs::remove_dir(path) {
+        Ok(()) => Ok(()),
+        Err(error)
+            if matches!(
+                error.kind(),
+                std::io::ErrorKind::NotFound | std::io::ErrorKind::DirectoryNotEmpty
+            ) =>
+        {
+            Ok(())
+        }
+        Err(error) => Err(FsError {
+            path: path.display().to_string(),
+            message: error.to_string(),
+        }),
+    }
+}
+
+/// Whether a path is a file this machine will run. A hook git cannot execute is
+/// a hook git walks past without a word, which is the one thing a gate must not do.
+pub fn is_executable(path: &Path) -> bool {
+    use std::os::unix::fs::PermissionsExt;
+
+    std::fs::metadata(path)
+        .is_ok_and(|metadata| metadata.is_file() && metadata.permissions().mode() & 0o111 != 0)
+}
+
+/// The mode a hook needs: everyone may read it and run it, its owner may rewrite it.
+pub fn make_executable(path: &Path) -> Result<(), FsError> {
+    use std::os::unix::fs::PermissionsExt;
+
+    std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755)).map_err(|error| {
+        FsError {
+            path: path.display().to_string(),
+            message: error.to_string(),
+        }
+    })
+}
+
+/// A path with every symlink and `..` resolved, or `None` where nothing is
+/// there. Two spellings of one directory compare equal once both have been
+/// through here.
+pub fn canonical(path: &Path) -> Option<std::path::PathBuf> {
+    std::fs::canonicalize(path).ok()
+}

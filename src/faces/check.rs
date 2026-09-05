@@ -12,7 +12,6 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::core::config::{parse_config, Config};
 use crate::core::diff::{parse_diff, FileDiff};
 use crate::core::finding::{Finding, Level};
 use crate::core::rules;
@@ -21,7 +20,7 @@ use crate::core::suppress::{
     apply_suppressions, parse_commit_suppressions, parse_inline_suppressions,
     InlineSuppressionError, Suppression,
 };
-use crate::faces::Answer;
+use crate::faces::{read_config, Answer};
 use crate::seams::{fs, git};
 
 /// How the findings are written.
@@ -47,6 +46,10 @@ pub struct Request {
     pub cwd: PathBuf,
     /// Judge the tree against this ref instead of `HEAD`.
     pub base: Option<String>,
+    /// Judge this ref against `base` rather than the working tree. It is the
+    /// view a pre-push hook needs, which must judge the commits being pushed
+    /// and not whatever the checkout happens to be holding.
+    pub tip: Option<String>,
     /// Judge the index alone.
     pub staged: bool,
     /// The paths a change may touch. Every file is judged whatever the scope;
@@ -72,7 +75,7 @@ pub fn run(request: &Request) -> Answer {
 
 fn judge(request: &Request) -> Result<Answer, String> {
     let root = git::repository_root(&request.cwd).map_err(|error| error.to_string())?;
-    let config = read_config(request, &root)?;
+    let config = read_config(&root, request.config.as_deref())?;
     let diff = read_diff(request, &root)?;
     let judged: Vec<FileDiff> = parse_diff(&diff).map_err(|error| {
         format!("weed could not read the diff git produced: {error}. report it with the change that caused it.")
@@ -119,39 +122,24 @@ fn judge(request: &Request) -> Result<Answer, String> {
     })
 }
 
-fn read_config(request: &Request, root: &Path) -> Result<Config, String> {
-    let path = match &request.config {
-        Some(path) => path.clone(),
-        None => root.join("weed.toml"),
-    };
-    let text = match &request.config {
-        // A config the caller pointed at and weed cannot read is a run that
-        // never happened; a repository with no weed.toml simply takes the defaults.
-        Some(_) => Some(
-            fs::read(&path)
-                .map_err(|error| format!("{error} --config must name a file weed can read."))?,
-        ),
-        None => fs::read_if_present(&path).map_err(|error| error.to_string())?,
-    };
-    parse_config(text.as_deref()).map_err(|error| {
-        format!(
-            "{} is not valid: {error}. fix that key, or drop it for the default.",
-            path.display()
-        )
-    })
-}
-
 fn read_diff(request: &Request, root: &Path) -> Result<String, String> {
-    let diff = match (&request.base, request.staged) {
-        (Some(base), false) => git::diff_ref(root, base),
-        (Some(_), true) => {
+    if request.staged && (request.base.is_some() || request.tip.is_some()) {
+        return Err(
+            "--base judges the tree against a ref and --staged judges the index, so weed cannot do both. pass one."
+                .to_string(),
+        );
+    }
+    let diff = match (&request.base, &request.tip) {
+        (Some(base), Some(tip)) => git::diff_range(root, base, tip),
+        (Some(base), None) => git::diff_ref(root, base),
+        (None, Some(_)) => {
             return Err(
-                "--base judges the tree against a ref and --staged judges the index, so weed cannot do both. pass one."
+                "a tip with no base names no range to judge, and weed will not guess one."
                     .to_string(),
             )
         }
-        (None, true) => git::diff_index(root),
-        (None, false) => git::diff_head(root),
+        (None, None) if request.staged => git::diff_index(root),
+        (None, None) => git::diff_head(root),
     };
     diff.map_err(|error| error.to_string())
 }
@@ -170,7 +158,8 @@ fn trailers(request: &Request, root: &Path) -> Result<Vec<Suppression>, String> 
         );
     }
     if let Some(base) = &request.base {
-        messages.extend(git::commit_messages(root, base).map_err(|error| error.to_string())?);
+        let tip = request.tip.as_deref().unwrap_or("HEAD");
+        messages.extend(git::commit_messages(root, base, tip).map_err(|error| error.to_string())?);
     }
     Ok(messages
         .iter()

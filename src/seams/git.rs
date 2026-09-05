@@ -97,8 +97,17 @@ pub fn diff_index(root: &Path) -> Result<String, GitError> {
 
 /// The tree against a ref — what a branch changed, as CI reads it.
 pub fn diff_ref(root: &Path, reference: &str) -> Result<String, GitError> {
-    let commit = resolve_ref(root, reference)?;
-    diff(root, &[&commit])
+    let base = resolve_base(root, reference)?;
+    diff(root, &[&base])
+}
+
+/// One ref against another — the commits a range carries, with the working tree
+/// having nothing to say about it. This is the view a pre-push hook needs: it
+/// judges what is being pushed, not whatever the checkout happens to hold.
+pub fn diff_range(root: &Path, base: &str, tip: &str) -> Result<String, GitError> {
+    let base = resolve_base(root, base)?;
+    let tip = resolve_ref(root, tip)?;
+    diff(root, &[&base, &tip])
 }
 
 /// A file's contents at a ref, or `None` where the ref does not carry it.
@@ -120,13 +129,19 @@ pub fn file_in_tree(root: &Path, path: &str) -> Result<Option<String>, GitError>
 }
 
 /// The messages of the commits a range carries, newest first, for the trailers
-/// an author wrote there.
-pub fn commit_messages(root: &Path, base: &str) -> Result<Vec<String>, GitError> {
-    let commit = resolve_ref(root, base)?;
-    if !has_ref(root, "HEAD")? {
+/// an author wrote there. A base of the empty tree names no commit to start
+/// after, so the range is the tip's whole history.
+pub fn commit_messages(root: &Path, base: &str, tip: &str) -> Result<Vec<String>, GitError> {
+    let commit = resolve_base(root, base)?;
+    if !has_ref(root, tip)? {
         return Ok(Vec::new());
     }
-    let range = format!("{commit}..HEAD");
+    let tip = resolve_ref(root, tip)?;
+    let range = if commit == EMPTY_TREE {
+        tip
+    } else {
+        format!("{commit}..{tip}")
+    };
     let output = run(root, &["log", "--format=%B%x00", &range])?;
     Ok(output
         .split('\u{0}')
@@ -142,12 +157,105 @@ pub fn hooks_path(root: &Path) -> Result<PathBuf, GitError> {
     Ok(root.join(path.trim_end()))
 }
 
+/// Whether one commit is already in another's history. git answers this with an
+/// exit code rather than a refusal, so a "no" is an answer and not a failure.
+pub fn is_ancestor(root: &Path, ancestor: &str, descendant: &str) -> Result<bool, GitError> {
+    let arguments = ["merge-base", "--is-ancestor", ancestor, descendant];
+    let attempt = attempt(root, &arguments)?;
+    match attempt.code {
+        0 => Ok(true),
+        1 => Ok(false),
+        _ => Err(attempt.refusal(&arguments)),
+    }
+}
+
+/// The last commit two refs share, or `None` where they share none at all.
+pub fn merge_base(root: &Path, left: &str, right: &str) -> Result<Option<String>, GitError> {
+    let arguments = ["merge-base", left, right];
+    let attempt = attempt(root, &arguments)?;
+    match attempt.code {
+        0 => Ok(Some(attempt.text(&arguments)?)),
+        1 => Ok(None),
+        _ => Err(attempt.refusal(&arguments)),
+    }
+}
+
+/// The commit just outside what `tip` adds to everything the remotes already
+/// carry — where a branch no remote has seen begins. `None` when the whole
+/// history is still unpublished.
+pub fn unpublished_boundary(root: &Path, tip: &str) -> Result<Option<String>, GitError> {
+    let output = run(root, &["rev-list", "--boundary", tip, "--not", "--remotes"])?;
+    Ok(output
+        .lines()
+        .find_map(|line| line.strip_prefix('-'))
+        .map(|commit| commit.trim().to_string()))
+}
+
+/// The branch that is checked out, or `None` on a detached HEAD, which is no
+/// branch at all.
+pub fn current_branch(root: &Path) -> Result<Option<String>, GitError> {
+    let arguments = ["symbolic-ref", "--quiet", "--short", "HEAD"];
+    let attempt = attempt(root, &arguments)?;
+    match attempt.code {
+        0 => Ok(Some(attempt.text(&arguments)?)),
+        1 => Ok(None),
+        _ => Err(attempt.refusal(&arguments)),
+    }
+}
+
+/// This repository's own directory, where weed keeps what must never reach a
+/// commit and never travel with a clone.
+pub fn git_dir(root: &Path) -> Result<PathBuf, GitError> {
+    let path = run(root, &["rev-parse", "--absolute-git-dir"])?;
+    Ok(PathBuf::from(path.trim_end()))
+}
+
+/// A setting in this repository's own configuration, or `None` where it carries
+/// none. The repository's file alone is read: a setting a person keeps in their
+/// global configuration is theirs, and weed must not put it back as if it were
+/// this repository's.
+pub fn config_get(root: &Path, key: &str) -> Result<Option<String>, GitError> {
+    let arguments = ["config", "--local", "--get", key];
+    let attempt = attempt(root, &arguments)?;
+    match attempt.code {
+        0 => Ok(Some(attempt.text(&arguments)?)),
+        1 => Ok(None),
+        _ => Err(attempt.refusal(&arguments)),
+    }
+}
+
+/// A setting written into this repository's own configuration.
+pub fn config_set(root: &Path, key: &str, value: &str) -> Result<(), GitError> {
+    run(root, &["config", "--local", key, value]).map(|_| ())
+}
+
+/// A setting taken out of this repository's own configuration. A setting that
+/// was not there is already gone; git spells that refusal 5.
+pub fn config_unset(root: &Path, key: &str) -> Result<(), GitError> {
+    let arguments = ["config", "--local", "--unset", key];
+    let attempt = attempt(root, &arguments)?;
+    match attempt.code {
+        0 | 5 => Ok(()),
+        _ => Err(attempt.refusal(&arguments)),
+    }
+}
+
 fn head_or_empty_tree(root: &Path) -> Result<String, GitError> {
     match resolve_ref(root, "HEAD") {
         Ok(commit) => Ok(commit),
         Err(GitError::UnknownRef { .. }) => Ok(EMPTY_TREE.to_string()),
         Err(other) => Err(other),
     }
+}
+
+/// A base a diff can start from. The empty tree is not a commit, so
+/// `rev-parse --verify <it>^{commit}` refuses it, and it is still the state a
+/// repository before its first commit is diffed against.
+fn resolve_base(root: &Path, base: &str) -> Result<String, GitError> {
+    if base == EMPTY_TREE {
+        return Ok(EMPTY_TREE.to_string());
+    }
+    resolve_ref(root, base)
 }
 
 fn diff(root: &Path, revisions: &[&str]) -> Result<String, GitError> {
@@ -163,9 +271,53 @@ fn diff(root: &Path, revisions: &[&str]) -> Result<String, GitError> {
     run(root, &arguments)
 }
 
+/// One git invocation that must have worked. Anything but success is a refusal
+/// carrying git's own first line.
+fn run(directory: &Path, arguments: &[&str]) -> Result<String, GitError> {
+    let attempt = attempt(directory, arguments)?;
+    if attempt.code == 0 {
+        String::from_utf8(attempt.stdout).map_err(|error| GitError::Refused {
+            command: arguments.join(" "),
+            message: error.to_string(),
+        })
+    } else {
+        Err(attempt.refusal(arguments))
+    }
+}
+
+/// What one git invocation left behind, exit code and all. Some questions weed
+/// asks — is this an ancestor, is this setting there — git answers by leaving
+/// with a code, and those are answers rather than failures.
+struct Attempt {
+    code: i32,
+    stdout: Vec<u8>,
+    stderr: String,
+}
+
+impl Attempt {
+    /// git's answer as one line of text. Every question asked this way has a
+    /// sha, a ref or a setting for an answer; bytes weed cannot read as utf-8
+    /// are a refusal rather than a guess.
+    fn text(&self, arguments: &[&str]) -> Result<String, GitError> {
+        String::from_utf8(self.stdout.clone())
+            .map(|text| text.trim_end().to_string())
+            .map_err(|error| GitError::Refused {
+                command: arguments.join(" "),
+                message: error.to_string(),
+            })
+    }
+
+    fn refusal(&self, arguments: &[&str]) -> GitError {
+        GitError::Refused {
+            command: arguments.join(" "),
+            message: first_line(&self.stderr),
+        }
+    }
+}
+
 /// One git invocation. Its config comes from the repository alone: a global
 /// `quotepath` or an external diff driver must not change what weed judges.
-fn run(directory: &Path, arguments: &[&str]) -> Result<String, GitError> {
+fn attempt(directory: &Path, arguments: &[&str]) -> Result<Attempt, GitError> {
     let output = Command::new("git")
         .arg("-C")
         .arg(directory.as_os_str())
@@ -176,17 +328,13 @@ fn run(directory: &Path, arguments: &[&str]) -> Result<String, GitError> {
             message: error.to_string(),
         })?;
 
-    if output.status.success() {
-        String::from_utf8(output.stdout).map_err(|error| GitError::Refused {
-            command: arguments.join(" "),
-            message: error.to_string(),
-        })
-    } else {
-        Err(GitError::Refused {
-            command: arguments.join(" "),
-            message: first_line(&String::from_utf8_lossy(&output.stderr)),
-        })
-    }
+    Ok(Attempt {
+        // A git killed by a signal leaves with no code of its own, and weed
+        // must read that as a refusal rather than as any particular answer.
+        code: output.status.code().unwrap_or(-1),
+        stdout: output.stdout,
+        stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+    })
 }
 
 fn first_line(text: &str) -> String {

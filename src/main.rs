@@ -2,13 +2,13 @@
 //! an `Answer`, writes it, and leaves with the code the contract names: 0 clean
 //! or warnings only, 2 at least one block-level result, 3 weed could not run.
 
-use std::io::{IsTerminal, Write};
+use std::io::{IsTerminal, Read, Write};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use weed::core::sarif::EXIT_COULD_NOT_RUN;
-use weed::faces::{check, rules, Answer};
+use weed::faces::{check, guard, rules, Answer};
 
 #[derive(Debug, Parser)]
 #[command(name = "weed", version, about = "the judge of the diff")]
@@ -21,8 +21,55 @@ struct Cli {
 enum Command {
     /// Judge a diff: the index and the working tree against HEAD by default.
     Check(CheckArgs),
+    /// Put weed's judgement in git itself, through hooks git cannot be talked
+    /// out of running.
+    Guard(GuardArgs),
     /// Print the rule catalogue and the level each rule carries.
     Rules(RulesArgs),
+}
+
+#[derive(Debug, Args)]
+struct GuardArgs {
+    #[command(subcommand)]
+    command: GuardCommand,
+}
+
+#[derive(Debug, Subcommand)]
+enum GuardCommand {
+    /// Write the hooks and point core.hooksPath at them.
+    Install(InstallArgs),
+    /// Say whether every hook is still live, and name what is not.
+    Status,
+    /// Take the hooks away and put back the hooks path that was there.
+    Uninstall,
+    /// The pre-commit hook: judge the index. git runs this.
+    PreCommit,
+    /// The pre-push hook: judge what is being pushed, and keep protected
+    /// branches from being rewritten. git runs this, and writes the refs on stdin.
+    PrePush(HookArgs),
+    /// The pre-rebase hook: refuse rewriting a protected branch. git runs this.
+    PreRebase(HookArgs),
+}
+
+#[derive(Debug, Args)]
+struct InstallArgs {
+    /// Write the hooks here instead of .githooks.
+    #[arg(long, value_name = "dir")]
+    hooks_dir: Option<PathBuf>,
+    /// A branch the hooks refuse to rewrite. Repeat it for more; leaving it out
+    /// leaves the hooks reading weed.toml every time git runs them.
+    #[arg(long, value_name = "branch")]
+    protect: Vec<String>,
+}
+
+#[derive(Debug, Args)]
+struct HookArgs {
+    /// A branch the hook refuses to rewrite, as the installed bundle names them.
+    #[arg(long, value_name = "branch")]
+    protect: Vec<String>,
+    /// What git puts after the hook's name.
+    #[arg(value_name = "argument")]
+    arguments: Vec<String>,
 }
 
 #[derive(Debug, Args)]
@@ -77,6 +124,7 @@ fn main() -> ExitCode {
 
     let answer = match cli.command {
         Command::Check(args) => run_check(args),
+        Command::Guard(args) => run_guard(args),
         Command::Rules(args) => rules::run(match args.format {
             RulesFormat::Table => rules::Format::Table,
             RulesFormat::Json => rules::Format::Json,
@@ -98,19 +146,16 @@ fn run_check(args: CheckArgs) -> Answer {
     let cwd = match std::env::current_dir() {
         Ok(cwd) => cwd,
         Err(error) => {
-            return Answer {
-                code: EXIT_COULD_NOT_RUN,
-                stdout: String::new(),
-                stderr: vec![format!(
-                    "weed could not read the directory it was called from: {error}. run it from a directory that exists."
-                )],
-            }
+            return could_not_run(format!(
+                "weed could not read the directory it was called from: {error}. run it from a directory that exists."
+            ))
         }
     };
 
     check::run(&check::Request {
         cwd,
         base: args.base,
+        tip: None,
         staged: args.staged,
         scope: args.scope,
         strict: args.strict,
@@ -119,6 +164,73 @@ fn run_check(args: CheckArgs) -> Answer {
         message_file: args.message_file,
         version: env!("CARGO_PKG_VERSION").to_string(),
     })
+}
+
+fn run_guard(args: GuardArgs) -> Answer {
+    let cwd = match std::env::current_dir() {
+        Ok(cwd) => cwd,
+        Err(error) => {
+            return could_not_run(format!(
+                "weed could not read the directory it was called from: {error}. run it from a directory that exists."
+            ))
+        }
+    };
+
+    let command = match args.command {
+        GuardCommand::Install(args) => {
+            // The path weed is running from is what the hooks will name, and it
+            // is resolved here rather than inside the face: asking the operating
+            // system where this process came from is I/O like any other.
+            let binary = match std::env::current_exe() {
+                Ok(binary) => binary,
+                Err(error) => {
+                    return could_not_run(format!(
+                        "weed could not find out where it is running from: {error}. a hook has to name the binary by its path, so install it from a weed on disk."
+                    ))
+                }
+            };
+            guard::Command::Install(guard::Install {
+                hooks_dir: args.hooks_dir,
+                protect: args.protect,
+                binary,
+            })
+        }
+        GuardCommand::Status => guard::Command::Status,
+        GuardCommand::Uninstall => guard::Command::Uninstall,
+        GuardCommand::PreCommit => guard::Command::PreCommit,
+        GuardCommand::PrePush(args) => {
+            let mut refs = String::new();
+            if let Err(error) = std::io::stdin().read_to_string(&mut refs) {
+                return could_not_run(format!(
+                    "weed could not read the refs git writes on a pre-push hook's stdin: {error}. the push is refused rather than judged on nothing."
+                ));
+            }
+            guard::Command::PrePush(guard::PrePush {
+                protect: args.protect,
+                arguments: args.arguments,
+                refs,
+            })
+        }
+        GuardCommand::PreRebase(args) => guard::Command::PreRebase(guard::PreRebase {
+            protect: args.protect,
+            arguments: args.arguments,
+        }),
+    };
+
+    guard::run(&guard::Request {
+        cwd,
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        command,
+    })
+}
+
+/// A run that never happened: exit 3, and one line saying what stopped it.
+fn could_not_run(reason: String) -> Answer {
+    Answer {
+        code: EXIT_COULD_NOT_RUN,
+        stdout: String::new(),
+        stderr: vec![reason],
+    }
 }
 
 /// `--help` and `--version` are answers, not failures. Anything else weed could
