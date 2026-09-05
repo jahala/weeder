@@ -103,11 +103,24 @@ pub struct Repo {
 impl Repo {
     /// A git repository with one empty commit, so HEAD resolves.
     pub fn init() -> Repo {
-        let directory = TempDir::new().expect("a temp directory for the repository");
-        let repo = Repo { directory };
+        let repo = Repo::empty();
         repo.git(&["init", "--initial-branch=main"]);
         repo.git(&["commit", "--allow-empty", "-m", "the repository begins"]);
         repo
+    }
+
+    /// A bare repository: the thing a push goes to. It has no working tree and
+    /// no first commit, so a test pushes one into it and reads back what arrived.
+    pub fn bare() -> Repo {
+        let repo = Repo::empty();
+        repo.git(&["init", "--bare", "--initial-branch=main"]);
+        repo
+    }
+
+    fn empty() -> Repo {
+        Repo {
+            directory: TempDir::new().expect("a temp directory for the repository"),
+        }
     }
 
     pub fn root(&self) -> &Path {
@@ -153,6 +166,23 @@ impl Repo {
 
     /// git, in this repository, with the caller's own configuration kept out.
     pub fn git(&self, arguments: &[&str]) -> String {
+        let run = self.try_git(arguments);
+        assert_eq!(
+            run.code,
+            0,
+            "git {} failed in {}: {}{}",
+            arguments.join(" "),
+            self.root().display(),
+            run.stdout,
+            run.stderr
+        );
+        run.stdout
+    }
+
+    /// git, in this repository, where the test is asking whether it worked. A
+    /// commit or a push a hook refuses leaves with a code, and that code is the
+    /// answer the test came for.
+    pub fn try_git(&self, arguments: &[&str]) -> Run {
         let output = isolated(Command::new("git"))
             .arg("-C")
             .arg(self.root())
@@ -161,14 +191,11 @@ impl Repo {
             .args(arguments)
             .output()
             .expect("git should be on PATH");
-        assert!(
-            output.status.success(),
-            "git {} failed in {}: {}",
-            arguments.join(" "),
-            self.root().display(),
-            String::from_utf8_lossy(&output.stderr)
-        );
-        String::from_utf8(output.stdout).expect("git should write utf-8")
+        Run {
+            code: code(output.status),
+            stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+            stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+        }
     }
 
     /// The built binary, run in this repository with stdout on a pipe.
@@ -233,7 +260,13 @@ pub fn weed_in(directory: &Path, arguments: &[&str]) -> Run {
 }
 
 pub fn weed_command_in(directory: &Path, arguments: &[&str]) -> Command {
-    let mut command = isolated(Command::new(binary()));
+    command_in(&binary(), directory, arguments)
+}
+
+/// A weed binary a test put somewhere of its own — a copy, so the test can take
+/// it away again and see what weed says about a hook naming a binary that is gone.
+pub fn command_in(binary: &Path, directory: &Path, arguments: &[&str]) -> Command {
+    let mut command = isolated(Command::new(binary));
     command
         .current_dir(directory)
         .args(arguments.iter().map(OsStr::new));
@@ -277,6 +310,12 @@ impl Run {
         paths.sort();
         paths.dedup();
         paths
+    }
+
+    /// Everything the run wrote, whichever stream it chose. git hands a hook's
+    /// output straight through, and which stream it lands on is git's business.
+    pub fn output(&self) -> String {
+        format!("{}{}", self.stdout, self.stderr)
     }
 
     pub fn stderr_lines(&self) -> Vec<&str> {
