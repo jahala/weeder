@@ -29,12 +29,12 @@ TypeScript/JavaScript: a call to `it`, `test`, `describe` (and their `.each` for
 Each rule has a neighbour that looks close and is honest: a test renamed in place, a `skip` inside a string, a `TODO` in a comment inside a test file, a `key` variable holding a short config name, a workflow file added rather than edited (still C1: any change to a guardrail path is the finding, and the neighbour for C1 is an edit to `.github/CODEOWNERS`, which is not a guardrail).
 
 ## Tests
-- [ ] (code) T1 fires at block level when a test file is deleted and when a test case is removed from a changed test file, in ts, py, rs and go, and stays silent when a case is renamed in place or a new case is added · tests/rule_t1.rs
-- [ ] (code) T3 fires at block level on each added skip or focus form per language and stays silent when the same token sits inside a string or a comment · tests/rule_t3.rs
-- [ ] (code) S1 fires at block level on each stub form per language in production files, including the body-only shapes, and stays silent on the same tokens in test files and on a `TODO` inside a string literal · tests/rule_s1.rs
-- [ ] (code) X1 fires at block level on each known prefix and on a high-entropy literal assigned to a key-like name, and stays silent on a short name, on a placeholder like `<your-key-here>`, and on a hash in a lockfile · tests/rule_x1.rs
-- [ ] (code) C1 fires at block level on every listed guardrail path and on a hunk touching the hard-limits section of `AGENTS.md`, and stays silent on `.github/CODEOWNERS` and on a hunk elsewhere in `AGENTS.md` · tests/rule_c1.rs
-- [ ] (code) every block rule's result carries a what/why/next message and, for T3 and G1, a `fixes` entry that removes the added line · tests/rule_messages.rs
+- [x] (code) T1 fires at block level when a test file is deleted and when a test case is removed from a changed test file, in ts, py, rs and go, and stays silent when a case is renamed in place or a new case is added · tests/rule_t1.rs @85c7ad1 · by cli
+- [x] (code) T3 fires at block level on each added skip or focus form per language and stays silent when the same token sits inside a string or a comment · tests/rule_t3.rs @dd20ecb · by cli
+- [x] (code) S1 fires at block level on each stub form per language in production files, including the body-only shapes, and stays silent on the same tokens in test files and on a `TODO` inside a string literal · tests/rule_s1.rs @574c751 · by cli
+- [x] (code) X1 fires at block level on each known prefix and on a high-entropy literal assigned to a key-like name, and stays silent on a short name, on a placeholder like `<your-key-here>`, and on a hash in a lockfile · tests/rule_x1.rs @8b36fe5 · by cli
+- [x] (code) C1 fires at block level on every listed guardrail path and on a hunk touching the hard-limits section of `AGENTS.md`, and stays silent on `.github/CODEOWNERS` and on a hunk elsewhere in `AGENTS.md` · tests/rule_c1.rs @4b6a0b9 · by cli
+- [x] (code) every block rule's result carries a what/why/next message and, for T3 and G1, a `fixes` entry that removes the added line · tests/rule_messages.rs @6ba8276 · by cli
 
 ## Needs #check-face #tilth-core
 

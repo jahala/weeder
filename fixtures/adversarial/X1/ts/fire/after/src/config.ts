@@ -1,0 +1,12 @@
+export const region = "eu-west-1";
+export const accessKeyId = "{{weed:cloud-id}}";
+export const forgeToken = "{{weed:forge-token}}";
+export const forgePat = "{{weed:forge-pat}}";
+export const modelKey = "{{weed:model-key}}";
+export const chatToken = "{{weed:chat-token}}";
+export const mapsKey = "{{weed:maps-key}}";
+export const pipelineToken = "{{weed:pipeline-token}}";
+export const registryToken = "{{weed:registry-token}}";
+export const bearer = "{{weed:signed-token}}";
+export const signingKey = "{{weed:key-block}}";
+export const sessionToken = "{{weed:disordered}}";
