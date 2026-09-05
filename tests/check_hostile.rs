@@ -344,10 +344,16 @@ fn a_binary_file_is_judged() {
     every_view(&repo, &base, "a repository with a binary file");
     let run = repo.weed(&["check", "--format", "sarif"]);
     assert_eq!(run.code, 2, "the conflict is still found: {}", run.stderr);
-    assert!(
-        !run.paths().contains(&"assets/blob.bin".to_string()),
-        "a binary file has no lines, so nothing is reported on it: {:?}",
-        run.paths()
+    let blob: Vec<String> = run
+        .findings()
+        .into_iter()
+        .filter(|finding| finding.path == "assets/blob.bin")
+        .map(|finding| finding.rule)
+        .collect();
+    assert_eq!(
+        blob,
+        vec!["G2".to_string()],
+        "a binary file has no lines, so the only thing weed says about it is that it arrived"
     );
 }
 

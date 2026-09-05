@@ -15,8 +15,8 @@
 //! short readable string under a key name is a setting, and the digests filling
 //! a lockfile are named for what they are and never for a credential.
 
-use crate::core::change::Change;
 use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::rules::check::Judgement;
 
 /// The prefixes an issuer stamps on a credential, and how much opaque tail one
 /// carries before weed will call it a credential rather than a coincidence.
@@ -77,7 +77,8 @@ const ENTROPY_BITS: f64 = 4.0;
 /// issues a credential with a bracket in it.
 const SLOT_CHARACTERS: &[char] = &['<', '>', '{', '}'];
 
-pub fn evaluate(changes: &[Change]) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+    let changes = judged.changes;
     let mut findings = Vec::new();
     for change in changes {
         let Some(path) = change.diff.new_path.as_deref() else {

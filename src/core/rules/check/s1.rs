@@ -19,6 +19,8 @@ use crate::core::change::Change;
 use crate::core::classify::{FileKind, Lang};
 use crate::core::finding::{Finding, Level, Message, Region};
 use crate::core::read::{Definition, DefinitionKind};
+use crate::core::rules::check::idiom;
+use crate::core::rules::check::Judgement;
 use crate::core::syntax::{words, Mask};
 
 /// The words that mark work left for later, written as they are meant to be
@@ -40,18 +42,8 @@ const RAISING: &[&str] = &["throw", "raise", "panic"];
 /// taken out, so spelling and punctuation stop mattering.
 const UNFINISHED_PHRASES: &[&str] = &["notimplemented", "notyetimplemented", "unimplemented"];
 
-/// The statements that are a body doing nothing, whichever language wrote them.
-const DO_NOTHING: &[&str] = &[
-    "pass",
-    "...",
-    "return",
-    "return null",
-    "return nil",
-    "return None",
-    "return undefined",
-];
-
-pub fn evaluate(changes: &[Change]) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+    let changes = judged.changes;
     let mut findings = Vec::new();
     for change in changes {
         let Some(path) = change.diff.new_path.as_deref() else {
@@ -153,93 +145,28 @@ fn empty_bodies(lang: Lang, mask: &Mask, change: &Change) -> Vec<(u32, Stub)> {
 }
 
 /// The one statement a function's body holds and the line it is written on,
-/// where that statement does nothing at all. A body with anything else in it
-/// answers `None`.
+/// where that statement does nothing at all. A body with anything else in it,
+/// and a body with nothing in it at all, both answer `None`: this rule is about
+/// a function that answers, and an empty one has not been written yet.
 fn does_nothing(lang: Lang, mask: &Mask, definition: &Definition) -> Option<(u32, String)> {
-    let body = body(lang, mask, definition)?;
-    let statements: Vec<String> = body
-        .lines()
-        .map(normalize)
-        .filter(|statement| !statement.is_empty() && !is_punctuation(statement))
-        .collect();
+    let span = idiom::Block {
+        first: definition.start_line,
+        last: definition.end_line,
+    };
+    let statements = idiom::statements(&idiom::body(lang, mask, span)?);
     let [only] = statements.as_slice() else {
         return None;
     };
-    if !DO_NOTHING.contains(&only.as_str()) {
+    if !idiom::does_nothing(&statements) {
         return None;
     }
     // Where the statement is written on a line of its own, that is the line
     // the finding points at; a body written on the declaration's own line has
     // nowhere else to point than the declaration.
     let line = (definition.start_line..=definition.end_line)
-        .find(|line| normalize(&mask.outside_comments(*line)) == *only)
+        .find(|line| idiom::normalize(&mask.outside_comments(*line)) == *only)
         .unwrap_or(definition.start_line);
     Some((line, only.to_string()))
-}
-
-/// What a definition writes between the start of its body and the end of it.
-///
-/// Comments are blanked and literals are not: a body whose only statement is a
-/// comment is a body that does nothing, and a body that returns a literal is a
-/// body that returns something.
-fn body(lang: Lang, mask: &Mask, definition: &Definition) -> Option<String> {
-    let lines: Vec<String> = (definition.start_line..=definition.end_line)
-        .map(|line| mask.outside_comments(line))
-        .collect();
-    match lang {
-        Lang::Python => indented_body(&lines),
-        _ => braced_body(&lines),
-    }
-}
-
-/// A body that begins after the colon closing the declaration, whether the
-/// statements follow on that line or under it.
-fn indented_body(lines: &[String]) -> Option<String> {
-    let mut depth = 0_i32;
-    for (offset, line) in lines.iter().enumerate() {
-        for (index, character) in line.char_indices() {
-            match character {
-                '(' | '[' | '{' => depth += 1,
-                ')' | ']' | '}' => depth -= 1,
-                ':' if depth <= 0 => {
-                    let mut body = line[index + 1..].trim().to_string();
-                    for later in &lines[offset + 1..] {
-                        body.push('\n');
-                        body.push_str(later);
-                    }
-                    return Some(body);
-                }
-                _ => {}
-            }
-        }
-    }
-    None
-}
-
-/// A body that begins at the brace opening it and ends at the one closing it.
-fn braced_body(lines: &[String]) -> Option<String> {
-    let text = lines.join("\n");
-    let open = text.find('{')?;
-    let close = text.rfind('}')?;
-    (close > open).then(|| text[open + 1..close].to_string())
-}
-
-/// One line of a body with its spacing and its terminator taken off, so the same
-/// statement written two ways compares equal.
-fn normalize(line: &str) -> String {
-    line.trim()
-        .trim_end_matches(';')
-        .split_whitespace()
-        .collect::<Vec<&str>>()
-        .join(" ")
-}
-
-/// Whether a line is only the punctuation that holds a body together.
-fn is_punctuation(statement: &str) -> bool {
-    !statement.is_empty()
-        && statement
-            .chars()
-            .all(|character| matches!(character, '{' | '}' | '(' | ')' | ',' | ':'))
 }
 
 /// A stub, as it will be quoted back to the reader.

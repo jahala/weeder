@@ -1,0 +1,19 @@
+# weed, judged by weed.
+#
+# The layers below are this repository's own doctrine, and D2 is what holds
+# them: core computes and reaches nothing, the seams reach the world, the faces
+# put the two together. Every arrow runs downwards, and the ones written here
+# are the only ones there are.
+
+[deps]
+layers = { core = ["src/core/**"], seams = ["src/seams/**"], faces = ["src/faces/**"] }
+allow = [
+    { from = "faces", to = "core" },
+    { from = "faces", to = "seams" },
+    { from = "seams", to = "core" },
+]
+
+# `weed check` on this repository judges its own source, and the command line is
+# the one place in it that prints for a person to read.
+[entrypoints]
+cli = ["src/main.rs"]

@@ -37,15 +37,11 @@ pub fn read_if_present(path: &Path) -> Result<Option<String>, FsError> {
     }
 }
 
-/// A file's text, or `None` where there is no such file and where what is there
-/// is not text. weed judges lines, and bytes that are not text carry none.
-pub fn read_text_if_present(path: &Path) -> Result<Option<String>, FsError> {
+/// A file's bytes, or `None` where there is no such file. What those bytes are,
+/// text a rule can read or a blob nobody can, is the caller's question to ask.
+pub fn read_bytes_if_present(path: &Path) -> Result<Option<Vec<u8>>, FsError> {
     match std::fs::read(path) {
-        // git's own test for a binary blob: a NUL byte. Anything else is text a
-        // rule can read, with a stray byte that is not utf-8 replaced rather
-        // than letting one latin-1 character make the file read as absent.
-        Ok(bytes) if bytes.contains(&0) => Ok(None),
-        Ok(bytes) => Ok(Some(String::from_utf8_lossy(&bytes).into_owned())),
+        Ok(bytes) => Ok(Some(bytes)),
         Err(error) if is_nothing_to_read(&error) => Ok(None),
         Err(error) => Err(FsError {
             path: path.display().to_string(),

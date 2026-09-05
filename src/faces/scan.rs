@@ -157,7 +157,11 @@ fn gather(root: &Path, config: &Config) -> Result<Tree, String> {
 }
 
 fn read_file(root: &Path, path: String) -> Result<TreeFile, String> {
-    let content = git::file_in_tree(root, &path).map_err(|error| error.to_string())?;
+    // A blob that is not text has no lines for a scan rule to read; it is still
+    // a file of the tree, and reads as one with nothing in it.
+    let content = git::file_in_tree(root, &path)
+        .map_err(|error| error.to_string())?
+        .and_then(|blob| blob.text());
     let classification = content
         .as_deref()
         .map(|content| classify_file(&path, content));
@@ -242,7 +246,9 @@ fn refresh(root: &Path, version: &str) -> Result<Vec<String>, String> {
         let Some(registry) = registry::registry_of(&path) else {
             continue;
         };
-        let Some(content) = git::file_in_tree(root, &path).map_err(|error| error.to_string())?
+        let Some(content) = git::file_in_tree(root, &path)
+            .map_err(|error| error.to_string())?
+            .and_then(|blob| blob.text())
         else {
             continue;
         };

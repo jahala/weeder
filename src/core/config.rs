@@ -37,6 +37,9 @@ pub struct Config {
     pub layers: BTreeMap<String, Vec<String>>,
     /// `[deps] allow`: the import directions between layers that are permitted; D2 flags the rest.
     pub dependency_directions: Vec<DependencyDirection>,
+    /// `[entrypoints] cli`: the modules that are the command line itself, where
+    /// printing is the product rather than something left behind. S3 reads these.
+    pub cli_entrypoints: Vec<String>,
     pub thresholds: Thresholds,
     /// `[docs] commands`: the commands R1 resolves a cited command and flag
     /// against, by reading each one's own `--help`. Empty leaves a cited
@@ -72,6 +75,7 @@ impl Default for Config {
             scope_globs: vec!["**/*".to_string()],
             layers: BTreeMap::new(),
             dependency_directions: Vec::new(),
+            cli_entrypoints: Vec::new(),
             thresholds: Thresholds {
                 todo_age_days: 30,
                 dependency_lag: 3,
@@ -125,6 +129,11 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
                     });
                 }
             }
+        }
+    }
+    if let Some(entrypoints) = raw.entrypoints {
+        if let Some(cli) = entrypoints.cli {
+            config.cli_entrypoints = cli;
         }
     }
     if let Some(thresholds) = raw.thresholds {
@@ -205,6 +214,7 @@ struct RawConfig {
     rules: Option<BTreeMap<String, String>>,
     scope: Option<RawScope>,
     deps: Option<RawDeps>,
+    entrypoints: Option<RawEntrypoints>,
     thresholds: Option<RawThresholds>,
     docs: Option<RawDocs>,
     guard: Option<RawGuard>,
@@ -228,6 +238,12 @@ struct RawDeps {
 struct DependencyDirectionToml {
     from: String,
     to: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawEntrypoints {
+    cli: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]

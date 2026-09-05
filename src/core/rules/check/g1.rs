@@ -11,6 +11,7 @@
 use crate::core::change::Change;
 use crate::core::diff::LineKind;
 use crate::core::finding::{Finding, Fix, Level, Message, Region};
+use crate::core::rules::check::Judgement;
 
 /// How many times a marker repeats its character.
 const WIDTH: usize = 7;
@@ -19,7 +20,8 @@ const BASE: char = '|';
 const SEPARATOR: char = '=';
 const THEIRS: char = '>';
 
-pub fn evaluate(changes: &[Change]) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+    let changes = judged.changes;
     let mut findings = Vec::new();
     for change in changes {
         let Some(path) = change.diff.new_path.as_deref() else {

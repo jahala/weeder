@@ -1,0 +1,3 @@
+# The change was scoped to the source of one feature and to nothing else.
+[scope]
+allow = ["src/**"]

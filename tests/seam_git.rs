@@ -112,11 +112,15 @@ fn a_file_is_read_at_a_ref_and_in_the_tree() {
     repo.write("src/parser.ts", "export const version = 2;\n");
 
     assert_eq!(
-        git::file_at_ref(repo.root(), "HEAD", "src/parser.ts").expect("HEAD carries it"),
+        git::file_at_ref(repo.root(), "HEAD", "src/parser.ts")
+            .expect("HEAD carries it")
+            .and_then(|blob| blob.text()),
         Some("export const version = 1;\n".to_string())
     );
     assert_eq!(
-        git::file_in_tree(repo.root(), "src/parser.ts").expect("the tree carries it"),
+        git::file_in_tree(repo.root(), "src/parser.ts")
+            .expect("the tree carries it")
+            .and_then(|blob| blob.text()),
         Some("export const version = 2;\n".to_string())
     );
     assert_eq!(
@@ -127,6 +131,28 @@ fn a_file_is_read_at_a_ref_and_in_the_tree() {
         git::file_in_tree(repo.root(), "src/absent.ts").expect("asking is not an error"),
         None
     );
+}
+
+#[test]
+fn a_blob_answers_what_it_weighs_and_whether_it_carries_lines() {
+    let repo = Repo::init();
+    repo.write("notes.txt", "one line\n");
+    repo.write("mark.bin", "WEED\u{0}\u{1}\u{2}");
+    repo.commit("a file to read, and a file to weigh");
+
+    let text = git::file_in_tree(repo.root(), "notes.txt")
+        .expect("the tree carries it")
+        .expect("the file is there");
+    assert_eq!(text.size(), 9, "the weight is the bytes on disk");
+    assert!(!text.is_binary());
+    assert_eq!(text.text().as_deref(), Some("one line\n"));
+
+    let blob = git::file_at_ref(repo.root(), "HEAD", "mark.bin")
+        .expect("HEAD carries it")
+        .expect("the file is there");
+    assert!(blob.is_binary(), "a NUL byte is what makes a blob a blob");
+    assert_eq!(blob.text(), None, "there are no lines in it to judge");
+    assert!(blob.size() > 0, "and it still weighs something");
 }
 
 #[test]

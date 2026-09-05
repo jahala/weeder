@@ -12,12 +12,14 @@
 //! any is a different claim, a kind swapped for another kind, a message
 //! rewritten, and weed leaves it alone rather than guessing which is narrower.
 
-use crate::core::change::{Change, Replacement};
+use crate::core::change::Replacement;
 use crate::core::finding::{Finding, Level, Message, Region};
 use crate::core::rules::check::vocab::{failure_qualifiers, mentions_failure};
+use crate::core::rules::check::Judgement;
 use crate::core::syntax::Mask;
 
-pub fn evaluate(changes: &[Change]) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+    let changes = judged.changes;
     let mut findings = Vec::new();
     for change in changes {
         let Some(path) = change.diff.new_path.as_deref() else {
