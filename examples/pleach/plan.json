@@ -1,0 +1,33 @@
+{
+  "goal": "A CSV importer that reads the supplier feed, validates every row, and reports what it refused. For the operations team who currently re-key the feed by hand.",
+  "source": "docs/tend2",
+  "nodes": [
+    {
+      "id": "parser",
+      "work": {
+        "prompt": "Write the row parser and its tests in src/importer/. A row is valid when every declared column parses; anything else is a refusal carrying the row number and the column that failed. Leave your changes in the working tree."
+      },
+      "accept": {
+        "smoke": "weed check --strict"
+      },
+      "worker": {
+        "provider": "claude",
+        "model": "opus"
+      }
+    },
+    {
+      "id": "reporter",
+      "needs": ["parser"],
+      "work": {
+        "prompt": "Write the refusal report over the parser's output: one line per refused row, and a count. Leave your changes in the working tree."
+      },
+      "accept": {
+        "smoke": "weed check --strict"
+      },
+      "worker": {
+        "provider": "claude",
+        "model": "opus"
+      }
+    }
+  ]
+}
