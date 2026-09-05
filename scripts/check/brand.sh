@@ -55,40 +55,45 @@ if ! grep -qF "## Terminology" "$layer/voice.md"; then
   echo "$layer/voice.md has no terminology table: the voice delta is the terminology" >&2
   status=1
 fi
-for term in finding block warn note gate honest growth; do
+for term in finding block warn note rule judge allowance guard honest; do
   if ! grep -qE "^\| .*\b${term}\b.*\|.*\|" "$layer/voice.md"; then
     echo "$layer/voice.md never says which word '$term' is" >&2
     status=1
   fi
 done
-for banned in violation error failure; do
+for banned in violation error suppression lint; do
   if ! grep -qE "^\|[^|]*\|[^|]*\b${banned}\b[^|]*\|" "$layer/voice.md"; then
     echo "$layer/voice.md does not rule out '$banned' in its Not column" >&2
     status=1
   fi
 done
 
-# The name and the accent are the owner's to settle, and say so where they are
-# claimed.
-if ! grep -qF "[flagged]" "$layer/identity.md"; then
-  echo "$layer/identity.md marks nothing [flagged]: the name and the accent are the owner's call" >&2
+# The accent is decided (bramble, 2026-09-05) and is one value everywhere it is
+# claimed: the identity table, the colour delta, and both marks' fills.
+accent="$(grep -E '^\| Accent \|' "$layer/identity.md" | grep -oE '#[0-9A-Fa-f]{6}' | head -1 || true)"
+if [ -z "$accent" ]; then
+  echo "$layer/identity.md names no accent hex in its Accent row" >&2
   status=1
-fi
-for claim in name accent; do
-  if ! grep -iE "\[flagged\]" "$layer/identity.md" "$layer/colors.md" | grep -qi "$claim"; then
-    echo "the $claim is not marked [flagged] in $layer" >&2
+else
+  if ! grep -qiF "$accent" "$layer/colors.md"; then
+    echo "$layer/colors.md never names the accent $accent the identity claims" >&2
     status=1
   fi
-done
-
-# Three candidates, no more and no fewer: a proposal the owner chooses from.
-candidates="$(awk '
-  /^## Accent candidates/ { inside = 1; next }
-  /^## / { inside = 0 }
-  inside && /^\| / && !/^\| *-/ && !/^\| Candidate/ { print }
-' "$layer/colors.md" | wc -l | tr -d ' ')"
-if [ "$candidates" != "3" ]; then
-  echo "$layer/colors.md offers $candidates accent candidates under '## Accent candidates', and the owner chooses from three" >&2
+  for mark in weed-mark.svg weed-mark-night.svg; do
+    if ! grep -qiF "$accent" "$layer/assets/$mark"; then
+      echo "$layer/assets/$mark does not use the accent $accent" >&2
+      status=1
+    fi
+    for hex in $(grep -oE '#[0-9A-Fa-f]{6}' "$layer/assets/$mark" | tr 'a-f' 'A-F' | sort -u); do
+      case "$hex" in
+        "$(printf '%s' "$accent" | tr 'a-f' 'A-F')"|"#357E2C"|"#84C56A") ;;
+        *) echo "$layer/assets/$mark uses $hex, which is neither the accent nor the plant's two greens" >&2; status=1 ;;
+      esac
+    done
+  done
+fi
+if grep -qF "[flagged]" "$layer/identity.md" "$layer/colors.md"; then
+  echo "$layer still marks something [flagged]; the name, the accent and the licence are settled" >&2
   status=1
 fi
 
@@ -169,6 +174,6 @@ if ! grep -qF "product: weed" "$layer/petalsrc.example"; then
 fi
 
 if [ "$status" -eq 0 ]; then
-  echo ".brand/products/weed: the shape is whole, 3 accent candidates, $measured contrast ratios measured and correct"
+  echo ".brand/products/weed: the shape is whole, the accent $accent is one value everywhere, $measured contrast ratios measured and correct"
 fi
 exit "$status"

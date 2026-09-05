@@ -129,9 +129,7 @@ def blocks(lines):
 
 marked_blocks = [block for block in blocks(lines) if "[flagged]" in block.lower()]
 for claim, pattern in (
-    ("the licence", r"\b(MIT|licen[cs]e)\b"),
-    ("the name", r"\bname\b"),
-    ("the accent", r"\baccent\b"),
+    ("the manifest schema", r"\bschema\b"),
 ):
     if not any(re.search(pattern, block, re.I) for block in marked_blocks):
         complaints.append(f"README.md does not mark {claim} as [flagged]")
