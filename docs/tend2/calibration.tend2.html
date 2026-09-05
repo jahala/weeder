@@ -8,7 +8,7 @@
 <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
 <script type="text/markdown" id="loop">
 # calibration — does the gate deserve to exist
-**Goal.** Before weed is allowed to block anyone, it runs over real history: `weed check --base <parent> --strict` on up to the last 200 commits of the default branch in tilth, pleach, tend2, copeca and umbel. `docs/calibration-2026-09.md` records per repo the commits judged, blocked and warned, and classifies every blocked commit as true positive, acceptable, or false positive. The ship bar is block-level false positives under two percent of commits per repo. The kill bar is reaching that bar only by disabling T1, T2, T3 or S1; then the verdict is written in the file's first sentence and weed does not ship as a gate. The metric command `garden.json` names is this measurement.
+**Goal.** Before weed is allowed to block anyone, it runs over real history: `weed check --base <parent> --strict` on up to the last 200 commits of the default branch in tilth, pleach, tend2, copeca and umbel. `docs/calibration-2026-09.md` records per repo the commits judged, blocked and warned, and classifies every blocked commit as true positive, acceptable, or false positive. The ship bar is block-level false positives under two percent of the pooled commits across the five repos, with per-repo counts shown; a repo with fewer than 50 commits is reported, not judged alone. The kill bar is reaching that bar only by disabling T1, T2, T3 or S1; then the verdict is written in the file's first sentence and weed does not ship as a gate. The metric command `garden.json` names is this measurement.
 
 ## Repos
 
@@ -28,7 +28,7 @@ A repo with fewer than 200 commits contributes every commit it has, and the file
 
 ## Tests
 - [ ] (code) `cargo xtask calibrate` judges up to the last 200 commits of each listed repo against their parents, writes `docs/calibration-2026-09.md` in the described shape with the verdict first, and leaves the source repositories untouched · scripts/check/calibrate.sh
-- [ ] (code) the calibration file's per-repo block-level false-positive share is under two percent of commits judged, and no line of it records T1, T2, T3 or S1 turned off to get there · scripts/check/calibration-bar.sh
+- [ ] (code) the calibration file's pooled block-level false-positive share is under two percent of commits judged across the repos, every repo's own count and share is shown, and no line of it records T1, T2, T3 or S1 turned off to get there · scripts/check/calibration-bar.sh
 - [ ] (code) `garden.json`'s metric command runs `scripts/check/calibration-bar.sh` and its latest result is committed · scripts/check/metric.sh
 
 ## Needs #rules-prod
@@ -36,5 +36,6 @@ A repo with fewer than 200 commits contributes every commit it has, and the file
 ## Tried
 - 2026-09-05 repos follow the umbrella loop's list; the brief's rctrl is umbel's former name and the same repository
 - 2026-09-05 `xtask` over a script so the calibration runs the same core the binary ships, with no second implementation of the diff walk
+- 2026-09-05 bar refined on the channel by cape-town: the two percent applies to the pooled total across repos, with per-repo counts shown; a repo under 50 commits is reported, not judged alone
 </script>
 <script src="loop.js"></script>

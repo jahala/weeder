@@ -42,5 +42,6 @@ Modules live on the children. [tilth-core](tilth-core.tend2.html) is the parsing
 - 2026-09-05 the check rules are split across three sequential loops (block, tests, prod) rather than parallel siblings: they share the rule registry file and parallel edits there would merge-conflict on every join; guard, hooks and scan run in parallel with rules-tests since they own disjoint files
 - 2026-09-05 calibration repos follow the fit loop (tilth, pleach, tend2, copeca, umbel) rather than the brief's list with rctrl; several have fewer than 200 commits on their default branch, so the run takes every commit available and reports the count
 - 2026-09-05 scope-out: no rules that name vendors or products; no inbound injection quarantine; no spend rules (settled on the umbrella loop, not re-argued here)
+- 2026-09-05 `--strict` accepted by the umbrella with one refinement recorded in the brief: strict never escalates warn-level results to block; severity is the rule's, not the flag's
 </script>
 <script src="loop.js"></script>
