@@ -22,7 +22,7 @@
 #![allow(dead_code)]
 
 use std::ffi::OsStr;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
@@ -211,6 +211,13 @@ impl Repo {
         }
     }
 
+    /// The built binary, run with an event written on its stdin. A harness hook
+    /// is handed its event that way, so a test that asks what weed does about
+    /// one has to hand it over the same channel.
+    pub fn weed_reading(&self, arguments: &[&str], stdin: &str) -> Run {
+        read_from(self.weed_command(arguments), stdin)
+    }
+
     /// The built binary, run with a real pseudo-terminal on stdout, so it
     /// answers the question a terminal asks rather than being told the answer.
     pub fn weed_on_a_terminal(&self, arguments: &[&str]) -> Run {
@@ -252,6 +259,56 @@ pub fn weed_in(directory: &Path, arguments: &[&str]) -> Run {
     let output = weed_command_in(directory, arguments)
         .output()
         .expect("the weed binary should run");
+    Run {
+        code: code(output.status),
+        stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+        stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+    }
+}
+
+/// The built binary, run in a directory the caller made, with an event on its
+/// stdin. A hook is handed its event that way even where no `Repo` built the
+/// directory — a turn can end anywhere, including outside a repository.
+pub fn weed_reading_in(directory: &Path, arguments: &[&str], stdin: &str) -> Run {
+    read_from(weed_command_in(directory, arguments), stdin)
+}
+
+/// git, in a directory the caller made, with the caller's own configuration
+/// kept out. A test that builds a second repository inside the first needs it.
+pub fn git_in(directory: &Path, arguments: &[&str]) -> Run {
+    let output = isolated(Command::new("git"))
+        .arg("-C")
+        .arg(directory)
+        .args(["-c", &format!("user.name={AUTHOR_NAME}")])
+        .args(["-c", &format!("user.email={AUTHOR_EMAIL}")])
+        .args(arguments)
+        .output()
+        .expect("git should be on PATH");
+    Run {
+        code: code(output.status),
+        stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+        stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+    }
+}
+
+/// A prepared command, run with `stdin` written into it and everything it wrote
+/// read back.
+fn read_from(mut command: Command, stdin: &str) -> Run {
+    let mut child = command
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("the weed binary should run");
+    child
+        .stdin
+        .take()
+        .expect("the child should have a stdin")
+        .write_all(stdin.as_bytes())
+        .expect("the event should be writable");
+    let output = child
+        .wait_with_output()
+        .expect("the weed binary should finish");
     Run {
         code: code(output.status),
         stdout: String::from_utf8_lossy(&output.stdout).to_string(),

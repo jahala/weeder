@@ -7,8 +7,9 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
+use weed::core::hook::Harness;
 use weed::core::sarif::EXIT_COULD_NOT_RUN;
-use weed::faces::{check, guard, rules, Answer};
+use weed::faces::{check, guard, hook, rules, Answer};
 
 #[derive(Debug, Parser)]
 #[command(name = "weed", version, about = "the judge of the diff")]
@@ -24,8 +25,25 @@ enum Command {
     /// Put weed's judgement in git itself, through hooks git cannot be talked
     /// out of running.
     Guard(GuardArgs),
+    /// Answer an agent harness's hook event, read as JSON on stdin, in the
+    /// shape that harness reads its hooks' answers in.
+    Hook(HarnessArgs),
     /// Print the rule catalogue and the level each rule carries.
     Rules(RulesArgs),
+}
+
+#[derive(Debug, Args)]
+struct HarnessArgs {
+    /// The harness whose event is on stdin.
+    #[arg(value_enum, value_name = "harness")]
+    harness: HookHarness,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum HookHarness {
+    Claude,
+    Gemini,
+    Codex,
 }
 
 #[derive(Debug, Args)]
@@ -125,6 +143,7 @@ fn main() -> ExitCode {
     let answer = match cli.command {
         Command::Check(args) => run_check(args),
         Command::Guard(args) => run_guard(args),
+        Command::Hook(args) => run_hook(args),
         Command::Rules(args) => rules::run(match args.format {
             RulesFormat::Table => rules::Format::Table,
             RulesFormat::Json => rules::Format::Json,
@@ -221,6 +240,35 @@ fn run_guard(args: GuardArgs) -> Answer {
         cwd,
         version: env!("CARGO_PKG_VERSION").to_string(),
         command,
+    })
+}
+
+fn run_hook(args: HarnessArgs) -> Answer {
+    let cwd = match std::env::current_dir() {
+        Ok(cwd) => cwd,
+        Err(error) => {
+            return could_not_run(format!(
+                "weed could not read the directory it was called from: {error}. run it from a directory that exists."
+            ))
+        }
+    };
+
+    let mut event = String::new();
+    if let Err(error) = std::io::stdin().read_to_string(&mut event) {
+        return could_not_run(format!(
+            "weed could not read the event its harness wrote on stdin: {error}. a hook is asked on stdin, and weed will not answer a question it did not hear."
+        ));
+    }
+
+    hook::run(&hook::Request {
+        cwd,
+        harness: match args.harness {
+            HookHarness::Claude => Harness::Claude,
+            HookHarness::Gemini => Harness::Gemini,
+            HookHarness::Codex => Harness::Codex,
+        },
+        event,
+        version: env!("CARGO_PKG_VERSION").to_string(),
     })
 }
 
