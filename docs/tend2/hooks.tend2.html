@@ -23,7 +23,7 @@ Gemini CLI: `BeforeTool` with the same command test, answered with Gemini's deci
 ## Tests
 - [x] (code) `weed hook claude` denies a `PreToolUse` Bash event whose command runs `git commit` over a red index with the table as the reason, denies `--no-verify` outright, blocks a `Stop` over a red tree and allows it over a clean one, and passes every other event through · tests/hook_claude.rs @192932c · by cli
 - [x] (code) `weed hook gemini` handles `BeforeTool` and `AfterAgent` the same way in Gemini's JSON shapes · tests/hook_gemini.rs @aae14ef · by cli
-- [!] (code) `weed hook codex` implements the events Codex can deny and prints a one-line note for the ones it cannot; the note matches the section in `docs/proof-2026-09.md` · tests/hook_codex.rs
+- [x] (code) `weed hook codex` implements the events Codex can deny and prints a one-line note for the ones it cannot; the note matches the section in `docs/proof-2026-09.md` · tests/hook_codex.rs @b142228 · by cli
 - [x] (code) a real Claude Code run with the Stop hook refuses a premature done with weed's findings as the reason and allows it once the tree is clean, captured into `docs/proof-2026-09.md` · scripts/proof/claude-stop.sh @e63bbd5 · by cli
 - [ ] (human) the owner signs in to Gemini CLI on this machine and runs `scripts/proof/gemini-stop.sh`, which captures a real AfterAgent run refusing a premature done and allowing a clean one into `docs/proof-2026-09.md` · scripts/proof/gemini-stop.sh
 
