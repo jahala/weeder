@@ -1,6 +1,9 @@
 use serde::Deserialize;
 use std::collections::{BTreeMap, HashMap};
 
+use crate::core::catalogue::{self, Face, Rule};
+use crate::core::finding::Level;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RuleSetting {
     Off,
@@ -51,16 +54,10 @@ impl std::error::Error for ConfigError {}
 
 impl Default for Config {
     fn default() -> Self {
-        let mut rules = HashMap::new();
-        for rule in ["T1", "T2", "T3", "T7", "S1", "D2", "X1", "X2", "C1", "G1"] {
-            rules.insert(rule.to_string(), RuleSetting::Block);
-        }
-        for rule in ["T4", "T5", "T6", "M1", "S2", "S3", "D1", "C2", "G2"] {
-            rules.insert(rule.to_string(), RuleSetting::Warn);
-        }
-        for rule in ["R1", "R2", "R3", "R4"] {
-            rules.insert(rule.to_string(), RuleSetting::On);
-        }
+        let rules = catalogue::rules()
+            .iter()
+            .map(|rule| (rule.id.to_string(), default_setting(rule)))
+            .collect();
 
         Self {
             rules,
@@ -162,8 +159,20 @@ fn parse_rule_setting(rule: &str, value: &str) -> Result<RuleSetting, ConfigErro
     }
 }
 
+/// What the catalogue's default level means as a config setting: scan rules are
+/// on or off, check rules carry a level.
+fn default_setting(rule: &Rule) -> RuleSetting {
+    match rule.face {
+        Face::Scan => RuleSetting::On,
+        Face::Check => match rule.default_level {
+            Level::Block => RuleSetting::Block,
+            Level::Warn | Level::Note => RuleSetting::Warn,
+        },
+    }
+}
+
 fn is_scan_rule(rule: &str) -> bool {
-    matches!(rule, "R1" | "R2" | "R3" | "R4")
+    catalogue::rule(rule).is_some_and(|rule| rule.face == Face::Scan)
 }
 
 #[derive(Debug, Deserialize)]

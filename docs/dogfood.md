@@ -66,3 +66,9 @@ Running log. One dated entry per observation: the exact command, what happened, 
 - Conductor review found three real defects the gate could not: a classification that would blind a rule, two spellings for one config key, a missing helper. None of them fails a test that a builder wrote to its own understanding; the second party reading the diff is still the thing that catches them. The cross-provider audit as emitted (re-running the same verifier) would not have caught them either — it checks that the evidence runs, not that the evidence is right.
 - `scripts/emit-plan.sh` now wraps emit-plan plus the `jq` patch for the audit runner, so the bug cannot bite the next wave; it is the kind of wrapper a repo should not need.
 - `tend2 verify --force` on the landed tree re-stamped all five checks in one command; the stamps in the quarantined loop file matched, so the sha law transfers across worktrees exactly as FORMAT.md says.
+
+### sarif: the loop as a work order, from inside the worktree
+
+- `scripts/check/run.sh` earned its keep: four checks, three of them `tests/<name>.rs` and one a shell script, and the runner mapped every one without an edit. A worker never has to know how the verifier invokes it.
+- `tend2 verify --force --expect-payload` stamped all four checks in one call and printed `c1 stamped` … `c4 stamped`. The check ids alone do not say which evidence produced which stamp; printing the evidence path beside the id would let a worker read the result without opening the loop file.
+- The loop's conventions and the SARIF schema disagreed on one point, and the loop had no room to say so: `helpUri` is `format: uri` in the vendored schema, so the `docs/rules.md#<id>` the loop names cannot be written as-is. The fix is in `docs/sarif.md` (the face hands `render` a documentation base). A worker cannot write to `## Tried`, which is the right law, so a decision like this reaches the map only through the conductor's read of the diff.
