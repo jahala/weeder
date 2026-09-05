@@ -21,4 +21,4 @@ cargo fmt --check
 cargo clippy --workspace -- -D warnings
 cargo test --workspace
 cargo test -p tilth-core --test api
-echo "tilth-core: $(git branch --show-current) at $(git rev-parse --short HEAD) green"
+echo "tilth-core: $(git rev-parse --short HEAD) green"
