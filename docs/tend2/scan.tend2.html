@@ -26,11 +26,11 @@ weed scan [--rules <ids>] [--format sarif|table] [--refresh-snapshot]
 Keep-your-place applies: a scan rule that names no hot spot confirmed by a later loop in a season is demoted to off by default. That is a decision for a later loop, recorded here so the rule set is known to be provisional.
 
 ## Tests
-- [x] (code) `weed scan` reads the tree rather than the diff (an unstaged and an uncommitted change make no difference), exits 0 with warnings and 3 when it cannot run, and prints SARIF or a table like `check` · tests/scan_face.rs @40f8cb7 · by cli
-- [x] (code) R1 warns on a cited path, command, flag and symbol that no longer resolve, one fixture each, and stays silent when they all resolve · tests/rule_r1.rs @84ffd44 · by cli
-- [x] (code) R2 warns on an exported symbol nothing references in each of ts, py, rs and go and stays silent on a referenced one and on the exempt entry points · tests/rule_r2.rs @b0c9af4 · by cli
-- [x] (code) R3 warns on a TODO whose blame date is older than the threshold and stays silent on a fresh one · tests/rule_r3.rs @9a17686 · by cli
-- [x] (code) R4 warns on a pin behind the committed snapshot beyond the threshold for each manifest kind and stays silent within it, with no network reached · tests/rule_r4.rs @5c69d13 · by cli
+- [x] (code) `weed scan` reads the tree rather than the diff (an unstaged and an uncommitted change make no difference), exits 0 with warnings and 3 when it cannot run, and prints SARIF or a table like `check` · tests/scan_face.rs @6ce3f6f · by cli
+- [x] (code) R1 warns on a cited path, command, flag and symbol that no longer resolve, one fixture each, and stays silent when they all resolve · tests/rule_r1.rs @3593b3e · by cli
+- [x] (code) R2 warns on an exported symbol nothing references in each of ts, py, rs and go and stays silent on a referenced one and on the exempt entry points · tests/rule_r2.rs @7cbe342 · by cli
+- [x] (code) R3 warns on a TODO whose blame date is older than the threshold and stays silent on a fresh one · tests/rule_r3.rs @24cafca · by cli
+- [x] (code) R4 warns on a pin behind the committed snapshot beyond the threshold for each manifest kind and stays silent within it, with no network reached · tests/rule_r4.rs @eb2cb9e · by cli
 - [x] (code) `docs/tend2-seam.md` shows a tend2 check citing `weed scan --format sarif` as evidence and proposes how tend2's verifier could call `weed check` in place of its `mock.ts`; the commands it shows run and exit as it says · scripts/check/docs-tend2-seam.sh @51b4db7 · by cli
 
 ## Needs #check-face #tilth-core
@@ -41,5 +41,7 @@ Keep-your-place applies: a scan rule that names no hot spot confirmed by a later
 - 2026-09-05 cape-town: tend2 is scan's first consumer and is on pollen; before R1 to R4 are finalised, ask tend2 which SARIF fields its hygiene loop reads (asked the same day; the answer goes here, and this loop is not dispatched until it lands or tend2 says it has no preference)
 - 2026-09-05 `garden.json` lists the faces the binary answers and `tests/garden_manifest.rs` holds it equal to `weed --help`; this loop adds `scan` to the manifest's `faces` and to `SKILL.md`, or that test fails at its own gate
 - 2026-09-05 cape-town: do not wait on tend2. Emit the minimal SARIF every consumer reads (ruleId, level, message.text, locations[0].physicalLocation.artifactLocation.uri, region.startLine) plus `properties.path` on each result for per-path aggregation; tend2's eventual answer is additive fields, never a change to those. Dispatched on that
+- 2026-09-05 built by pleach node `scan` (claude/opus, codex audit) in one attempt, 45 minutes, landed by hand after `pleach land` met the rules-tests landing in `src/core/syntax.rs` and the fixtures README. The face reads the tree as it sits and leaves with 0 or 3; R1 resolves paths against the tree and commands against their own help through a new exec seam with a five-second deadline (`[docs] commands` names which); R2 exempts entry files, `main`, dunder names and runner prefixes; R3 asks git to blame only the files that carry a marker; R4 measures against `.weed/registry-snapshot.json` and `--refresh-snapshot` fetches through curl so the binary stays a judge. Every result carries `properties.path`. Conductor review found nothing to fix
+- 2026-09-05 `garden.json` and `SKILL.md` now name `scan`; `docs/tend2-seam.md` shows tend2's hygiene loop citing `weed scan --format sarif` and proposes `weed check` in place of its `mock.ts`, with `scripts/check/docs-tend2-seam.sh` running the commands it shows
 </script>
 <script src="loop.js"></script>

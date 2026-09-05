@@ -22,7 +22,7 @@ When stdout is a terminal, or `--format table` is given, one line per finding: l
 - [x] (code) `sarif::render` output validates against `schemas/sarif-schema-2.1.0.json` for an empty log, a single finding, many findings across levels, a finding with a fix, a suppressed finding, and a could-not-run log · tests/sarif_schema.rs @c7bed83 · by cli
 - [x] (code) each result carries rule id and index, the level mapping (block→error, warn→warning, suppressed→note), a repo-relative uri with a region, a what/why/next message, `fixes` when mechanical, and `suppressions` with the reason when suppressed; the tool component lists every catalogue rule with its default level · tests/sarif_shape.rs @849a867 · by cli
 - [x] (code) the table renders one line per finding in level-then-path-then-line order and ends with a count per level · tests/sarif_table.rs @3cd3011 · by cli
-- [x] (code) `docs/sarif.md` names every convention above and, for each, the test function that pins it; a script checks each named test exists · scripts/check/docs-sarif.sh @755b936 · by cli
+- [x] (code) `docs/sarif.md` names every convention above and, for each, the test function that pins it; a script checks each named test exists · scripts/check/docs-sarif.sh @22b48dc · by cli
 
 ## Needs #core
 
