@@ -25,6 +25,9 @@ pub enum Lang {
 pub struct Classification {
     pub kind: FileKind,
     pub lang: Lang,
+    /// A production file that also carries an inline test module (`#[cfg(test)]`
+    /// in Rust). The file stays `Prod`; rules that count or read tests look here.
+    pub has_inline_tests: bool,
 }
 
 pub fn classify_file(path: impl AsRef<Path>, content: &str) -> Classification {
@@ -39,15 +42,22 @@ pub fn classify_file(path: impl AsRef<Path>, content: &str) -> Classification {
         FileKind::Generated
     } else if is_config(&path_text) {
         FileKind::Config
-    } else if is_test(path, &path_text, content, lang) {
+    } else if is_test(path, &path_text, lang) {
         FileKind::Test
     } else if lang != Lang::Other {
         FileKind::Prod
     } else {
         FileKind::Other
     };
+    let has_inline_tests = kind == FileKind::Prod
+        && lang == Lang::Rust
+        && (content.contains("#[cfg(test)]") || content.contains("#[test]"));
 
-    Classification { kind, lang }
+    Classification {
+        kind,
+        lang,
+        has_inline_tests,
+    }
 }
 
 fn normalize(path: &Path) -> String {
@@ -137,7 +147,7 @@ fn is_config(path: &str) -> bool {
         )
 }
 
-fn is_test(path: &Path, path_text: &str, content: &str, lang: Lang) -> bool {
+fn is_test(path: &Path, path_text: &str, lang: Lang) -> bool {
     let name = path
         .file_name()
         .and_then(|name| name.to_str())
@@ -150,7 +160,8 @@ fn is_test(path: &Path, path_text: &str, content: &str, lang: Lang) -> bool {
         || (lang == Lang::Python && (name.starts_with("test_") || name.ends_with("_test.py")))
         || (lang == Lang::Go && name.ends_with("_test.go"))
         || (lang == Lang::Rust
-            && (path_text.contains("/tests/")
-                || content.contains("#[cfg(test)]")
-                || content.contains("#[test]")))
+            && (path_text.starts_with("benches/")
+                || path_text.contains("/benches/")
+                || name.ends_with("_test.rs")
+                || name == "tests.rs"))
 }

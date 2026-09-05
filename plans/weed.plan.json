@@ -10,7 +10,7 @@
       "accept": {
         "smoke": "tend2 verify docs/tend2/bite.tend2.html --repo-root . --force --expect-payload af456bdb6208 --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
-          "command": "tend2 verify docs/tend2/bite.tend2.html --repo-root . --force --expect-payload af456bdb6208 --audit-egress",
+          "command": "tend2 verify docs/tend2/bite.tend2.html --repo-root . --force --expect-payload af456bdb6208 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
           "provider": "codex",
           "selfIntegrity": true
         }
@@ -34,7 +34,7 @@
       "accept": {
         "smoke": "tend2 verify docs/tend2/calibration.tend2.html --repo-root . --force --expect-payload 56fdeaacdb3f --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
-          "command": "tend2 verify docs/tend2/calibration.tend2.html --repo-root . --force --expect-payload 56fdeaacdb3f --audit-egress",
+          "command": "tend2 verify docs/tend2/calibration.tend2.html --repo-root . --force --expect-payload 56fdeaacdb3f --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
           "provider": "codex",
           "selfIntegrity": true
         }
@@ -58,7 +58,7 @@
       "accept": {
         "smoke": "tend2 verify docs/tend2/check-face.tend2.html --repo-root . --force --expect-payload fb4fbe592559 --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
-          "command": "tend2 verify docs/tend2/check-face.tend2.html --repo-root . --force --expect-payload fb4fbe592559 --audit-egress",
+          "command": "tend2 verify docs/tend2/check-face.tend2.html --repo-root . --force --expect-payload fb4fbe592559 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
           "provider": "codex",
           "selfIntegrity": true
         }
@@ -83,7 +83,7 @@
       "accept": {
         "smoke": "tend2 verify docs/tend2/core.tend2.html --repo-root . --force --expect-payload 25183d537229 --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
-          "command": "tend2 verify docs/tend2/core.tend2.html --repo-root . --force --expect-payload 25183d537229 --audit-egress",
+          "command": "tend2 verify docs/tend2/core.tend2.html --repo-root . --force --expect-payload 25183d537229 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
           "provider": "codex",
           "selfIntegrity": true
         }
@@ -104,7 +104,7 @@
       "accept": {
         "smoke": "tend2 verify docs/tend2/garden-fit.tend2.html --repo-root . --force --expect-payload 0eb4c478620a --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
-          "command": "tend2 verify docs/tend2/garden-fit.tend2.html --repo-root . --force --expect-payload 0eb4c478620a --audit-egress",
+          "command": "tend2 verify docs/tend2/garden-fit.tend2.html --repo-root . --force --expect-payload 0eb4c478620a --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
           "provider": "codex",
           "selfIntegrity": true
         }
@@ -129,7 +129,7 @@
       "accept": {
         "smoke": "tend2 verify docs/tend2/guard.tend2.html --repo-root . --force --expect-payload 2da745be73b3 --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
-          "command": "tend2 verify docs/tend2/guard.tend2.html --repo-root . --force --expect-payload 2da745be73b3 --audit-egress",
+          "command": "tend2 verify docs/tend2/guard.tend2.html --repo-root . --force --expect-payload 2da745be73b3 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
           "provider": "codex",
           "selfIntegrity": true
         }
@@ -153,7 +153,7 @@
       "accept": {
         "smoke": "tend2 verify docs/tend2/hooks.tend2.html --repo-root . --force --expect-payload 795c46fd018a --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
-          "command": "tend2 verify docs/tend2/hooks.tend2.html --repo-root . --force --expect-payload 795c46fd018a --audit-egress",
+          "command": "tend2 verify docs/tend2/hooks.tend2.html --repo-root . --force --expect-payload 795c46fd018a --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
           "provider": "codex",
           "selfIntegrity": true
         }
@@ -177,7 +177,7 @@
       "accept": {
         "smoke": "tend2 verify docs/tend2/rules-block.tend2.html --repo-root . --force --expect-payload d488c34b86d9 --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
-          "command": "tend2 verify docs/tend2/rules-block.tend2.html --repo-root . --force --expect-payload d488c34b86d9 --audit-egress",
+          "command": "tend2 verify docs/tend2/rules-block.tend2.html --repo-root . --force --expect-payload d488c34b86d9 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
           "provider": "codex",
           "selfIntegrity": true
         }
@@ -202,7 +202,7 @@
       "accept": {
         "smoke": "tend2 verify docs/tend2/rules-prod.tend2.html --repo-root . --force --expect-payload ee57e2e792d2 --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
-          "command": "tend2 verify docs/tend2/rules-prod.tend2.html --repo-root . --force --expect-payload ee57e2e792d2 --audit-egress",
+          "command": "tend2 verify docs/tend2/rules-prod.tend2.html --repo-root . --force --expect-payload ee57e2e792d2 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
           "provider": "codex",
           "selfIntegrity": true
         }
@@ -226,7 +226,7 @@
       "accept": {
         "smoke": "tend2 verify docs/tend2/rules-tests.tend2.html --repo-root . --force --expect-payload ddf4647f0225 --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
-          "command": "tend2 verify docs/tend2/rules-tests.tend2.html --repo-root . --force --expect-payload ddf4647f0225 --audit-egress",
+          "command": "tend2 verify docs/tend2/rules-tests.tend2.html --repo-root . --force --expect-payload ddf4647f0225 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
           "provider": "codex",
           "selfIntegrity": true
         }
@@ -250,7 +250,7 @@
       "accept": {
         "smoke": "tend2 verify docs/tend2/sarif.tend2.html --repo-root . --force --expect-payload 1c6929baea87 --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
-          "command": "tend2 verify docs/tend2/sarif.tend2.html --repo-root . --force --expect-payload 1c6929baea87 --audit-egress",
+          "command": "tend2 verify docs/tend2/sarif.tend2.html --repo-root . --force --expect-payload 1c6929baea87 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
           "provider": "codex",
           "selfIntegrity": true
         }
@@ -274,7 +274,7 @@
       "accept": {
         "smoke": "tend2 verify docs/tend2/scan.tend2.html --repo-root . --force --expect-payload c7a030177d12 --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
-          "command": "tend2 verify docs/tend2/scan.tend2.html --repo-root . --force --expect-payload c7a030177d12 --audit-egress",
+          "command": "tend2 verify docs/tend2/scan.tend2.html --repo-root . --force --expect-payload c7a030177d12 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
           "provider": "codex",
           "selfIntegrity": true
         }
@@ -299,7 +299,7 @@
       "accept": {
         "smoke": "tend2 verify docs/tend2/tilth-core.tend2.html --repo-root . --force --expect-payload 524a785fdf0b --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
-          "command": "tend2 verify docs/tend2/tilth-core.tend2.html --repo-root . --force --expect-payload 524a785fdf0b --audit-egress",
+          "command": "tend2 verify docs/tend2/tilth-core.tend2.html --repo-root . --force --expect-payload 524a785fdf0b --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
           "provider": "codex",
           "selfIntegrity": true
         }
@@ -323,7 +323,7 @@
       "accept": {
         "smoke": "tend2 verify docs/tend2/weed.tend2.html --repo-root . --force --expect-payload 5adb335edcb1 --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
-          "command": "tend2 verify docs/tend2/weed.tend2.html --repo-root . --force --expect-payload 5adb335edcb1 --audit-egress",
+          "command": "tend2 verify docs/tend2/weed.tend2.html --repo-root . --force --expect-payload 5adb335edcb1 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
           "provider": "codex",
           "selfIntegrity": true
         }

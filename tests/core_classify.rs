@@ -11,10 +11,12 @@ fn classifies_v1_languages_tests_manifests_guardrails_and_generated_files() {
     assert_eq!(classify_file("src/app.test.ts", "").kind, FileKind::Test);
     assert_eq!(classify_file("tests/core_test.py", "").kind, FileKind::Test);
     assert_eq!(classify_file("pkg/foo_test.go", "").kind, FileKind::Test);
-    assert_eq!(
-        classify_file("src/lib.rs", "#[cfg(test)] mod tests {}").kind,
-        FileKind::Test
-    );
+    assert_eq!(classify_file("tests/cli.rs", "").kind, FileKind::Test);
+    assert_eq!(classify_file("src/parse_test.rs", "").kind, FileKind::Test);
+    let inline = classify_file("src/lib.rs", "pub fn f() {}\n#[cfg(test)] mod tests {}");
+    assert_eq!(inline.kind, FileKind::Prod);
+    assert!(inline.has_inline_tests);
+    assert!(!classify_file("src/lib.rs", "pub fn f() {}").has_inline_tests);
 
     for path in [
         "package.json",

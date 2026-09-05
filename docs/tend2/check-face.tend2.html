@@ -23,6 +23,10 @@ weed rules [--format table|json]
 
 `src/seams/git.rs` answers: the repository root for a path; the diff for each mode (index and tree against HEAD, index against HEAD, tree against a ref) as unified text with renames detected; a file's content at a ref and in the tree; whether a ref resolves; the commit message for trailers when a range is judged. It shells out to `git` with argument arrays, never a shell string, and every failure is a typed error the face turns into exit 3 with the reason on stderr.
 
+## The fixture harness
+
+`tests/common/mod.rs` is the one way every rule test builds its world: given `fixtures/adversarial/<RULE>/<lang>/<fire|silent>/`, it creates a temp git repository, copies `before/` in and commits it as HEAD (with a fixed author and date so runs are reproducible), replaces the tree with `after/` (files absent from `after/` are deleted; `after/.weed-commit` becomes the pending commit message and is never copied), stages everything, runs the built `weed` binary with `--format sarif` in that repository, and parses the log into results. Every rule loop after this one calls it; none re-implements it. The G1 check below is its first user.
+
 ## Fail closed
 
 Not a git repository, an unreadable ref, a config error, or a reader failure under `--strict` is exit 3, one line on stderr saying what could not be done and what to try, and a SARIF log on stdout with `executionSuccessful: false`. A gate that cannot run must never look like a gate that passed.
@@ -42,5 +46,6 @@ Not a git repository, an unreadable ref, a config error, or a reader failure und
 - 2026-09-05 default mode chosen from pleach's own gate: `accept.smoke` runs in the node worktree after scoped staging, exit-code gated, no arguments passed (`~/conductor/workspaces/pleach-v1/cayenne/src/loop/run-node.ts`, the smoke block)
 - 2026-09-05 G1 lands here, not in rules-block, so the pipeline is proven end to end by the simplest rule before the catalogue is built on it
 - 2026-09-05 the CLI is `clap` with derive; subcommands for scan, guard, bite and hook are added by their own loops, each in its own file under `src/faces/`
+- 2026-09-05 the fixture harness moved here from core's Tried: core delivered no `tests/common/mod.rs`, and this is the first loop that needs one
 </script>
 <script src="loop.js"></script>
