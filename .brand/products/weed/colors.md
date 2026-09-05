@@ -2,7 +2,7 @@
 
 Inherits the full plotplot palette. One product claim:
 
-- **Accent — bramble `#8E3B5E`** (umbrella Product Accents table). weed uses it for its mark,
+- **Accent: bramble `#8E3B5E`** (umbrella Product Accents table). weed uses it for its mark,
   the bloom dot in the garden row, rule ids and the `[weed]` prefix, and the block-level
   marker in its table output. It **reads as a word on paper** (6.6:1), so weed needs no
   second ink colour there: kickers, labels and inline product mentions set in bramble are

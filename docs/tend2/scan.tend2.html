@@ -40,5 +40,6 @@ Keep-your-place applies: a scan rule that names no hot spot confirmed by a later
 - 2026-09-05 R4 never reaches the network during `scan`; the snapshot is a committed file so the rule is reproducible in CI
 - 2026-09-05 cape-town: tend2 is scan's first consumer and is on pollen; before R1 to R4 are finalised, ask tend2 which SARIF fields its hygiene loop reads (asked the same day; the answer goes here, and this loop is not dispatched until it lands or tend2 says it has no preference)
 - 2026-09-05 `garden.json` lists the faces the binary answers and `tests/garden_manifest.rs` holds it equal to `weed --help`; this loop adds `scan` to the manifest's `faces` and to `SKILL.md`, or that test fails at its own gate
+- 2026-09-05 cape-town: do not wait on tend2. Emit the minimal SARIF every consumer reads (ruleId, level, message.text, locations[0].physicalLocation.artifactLocation.uri, region.startLine) plus `properties.path` on each result for per-path aggregation; tend2's eventual answer is additive fields, never a change to those. Dispatched on that
 </script>
 <script src="loop.js"></script>

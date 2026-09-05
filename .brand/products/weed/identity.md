@@ -6,8 +6,8 @@ A product layer over the plotplot umbrella. Deltas only; everything absent inher
 |---|---|
 | Product | weed |
 | Tagline | tests still mean what they meant. |
-| Accent | #8E3B5E bramble — the weed that stops you (from the umbrella Product Accents table) |
-| Faces | `weed check` · `weed guard` · `weed hook` · `weed rules` — `scan` and `bite` join when they land |
+| Accent | #8E3B5E bramble, the weed that stops you (from the umbrella Product Accents table) |
+| Faces | `weed check` · `weed guard` · `weed hook` · `weed rules`; `scan` and `bite` join when they land |
 | Commands | `weed check --format sarif` · `weed guard install --protect main` |
 
 ## Positioning
@@ -46,7 +46,7 @@ Files: `assets/weed-mark.svg` (paper) · `assets/weed-mark-night.svg` (soil-nigh
   leaves flatten and the handle loops close up, and the shears-on-a-stem reading survives. At
   16px it does not; use the wordmark below 20.
 - Clear space: half the mark height on every side.
-- Fills are exact — growth green `#357E2C` and bramble `#8E3B5E` on paper; on soil-night the
+- Fills are exact: growth green `#357E2C` and bramble `#8E3B5E` on paper; on soil-night the
   plant brightens to `#84C56A` and the shears stay bramble `#8E3B5E` as a fill, while any bramble
   **word** on night lifts to `#B85C82` (the umbrella's night rule). Never recolour outside those
   four values.

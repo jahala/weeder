@@ -1,9 +1,9 @@
 # weed
 
-weed is a gate for code an agent wrote. It reads a diff and refuses the growth that should
-not be there — deleted or weakened tests, skips, stubs, swallowed errors, secrets, guardrail
-edits, dependency-direction violations — and leaves with an exit code that says whether the
-change goes through. A static Rust binary, milliseconds, no tokens spent, every finding as
+weed is a gate for code an agent wrote. It reads the diff, refuses dishonest growth, and leaves
+with an exit code that says whether the change goes through. Deleted or weakened tests, skips,
+stubs, swallowed errors, secrets, guardrail edits and dependency-direction violations are the
+shapes it refuses. A static Rust binary, milliseconds, no tokens spent, every finding as
 SARIF 2.1.0.
 
 ```
@@ -70,7 +70,7 @@ at their own level, which is how a reviewer sees what an agent waved through.
 | 3 | weed could not run, and the message says why |
 
 Exit 3 is a refusal, not a pass: weed judged nothing, so nothing was cleared. Only the
-unambiguous rules block by default — the rest warn, and warnings are for the human at the
+unambiguous rules block by default. The rest warn, and warnings are for the human at the
 pull request rather than for the agent.
 
 ## In CI
@@ -91,14 +91,14 @@ explains why that gate needs no base argument.
 
 ## Reading the output
 
-The SARIF weed writes is plain SARIF 2.1.0 — one run per invocation, one result per finding,
+The SARIF weed writes is plain SARIF 2.1.0: one run per invocation, one result per finding,
 rules declared in the tool component, suppressions carried as SARIF suppressions rather than
 dropped. `docs/sarif.md` names every convention and the test that pins it, and
 `schemas/sarif-schema-2.1.0.json` is the official schema the tests validate against.
 
 ## For agents
 
-`SKILL.md` is the whole binary in one file — every command, every flag, and how to work
+`SKILL.md` is the whole binary in one file: every command, every flag, and how to work
 against a gate rather than around it. Install it into your harness's skill directory, or read
 it as-is.
 
@@ -124,7 +124,7 @@ umbrella reads to verify weed belongs to the garden.
 
 ## The garden
 
-**plotplot** — a garden of small, sharp tools for building with AI. → [plotplot.ai](https://plotplot.ai)
+**plotplot** is a garden of small, sharp tools for building with AI: [plotplot.ai](https://plotplot.ai)
 
 [tilth](https://github.com/jahala/tilth) · [tend](https://github.com/jahala/tend) ·
 [petals](https://github.com/jahala/petals) · [pleach](https://github.com/jahala/pleach) ·

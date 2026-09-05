@@ -1,6 +1,6 @@
 ---
 name: weed
-description: Run weed to judge a diff before a human reads it — deleted or weakened tests, skips, stubs, swallowed errors, secrets, guardrail edits and dependency-direction violations, reported as SARIF and decided by an exit code.
+description: Run weed to judge a diff before a human reads it, refusing deleted or weakened tests, skips, stubs, swallowed errors, secrets, guardrail edits and dependency-direction violations, reported as SARIF and decided by an exit code.
 ---
 
 # weed
@@ -21,7 +21,7 @@ Exit codes carry the verdict, and they are the same on every face:
 Anything reading weed reads the code first. A run that ends 3 has judged nothing,
 so treat it as a refusal to proceed rather than as a pass.
 
-## check — judge a diff
+## check: judge a diff
 
 `weed check` compares the index and the working tree against HEAD and writes what
 it found. On a terminal it writes a table; on a pipe it writes SARIF 2.1.0. Pass
@@ -44,7 +44,7 @@ weed check --staged
 weed check --scope 'src/parser/**' --scope 'tests/parser/**'
 ```
 
-## guard — the law in git
+## guard: the law in git
 
 `weed guard` installs hooks git cannot be talked out of running, by pointing
 `core.hooksPath` at them. The six commands under it are the installer and the
@@ -71,7 +71,7 @@ weed guard status
 weed guard uninstall
 ```
 
-## hook — answer a harness
+## hook: answer a harness
 
 `weed hook <harness>` reads one hook event as JSON on stdin and answers in the
 shape that harness reads. The harness is `claude`, `gemini` or `codex`. Wire it
@@ -82,7 +82,7 @@ judgement rather than the agent's own account of it.
 weed hook claude < event.json
 ```
 
-## rules — the catalogue
+## rules: the catalogue
 
 `weed rules` prints every rule and the level it carries. `--format table` is the
 default and `--format json` is for a program. Only unambiguous rules block by

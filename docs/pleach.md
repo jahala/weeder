@@ -37,9 +37,9 @@ Suppressions are written for the human reading the pull request, and `--strict` 
 
 | Exit | What it means to pleach |
 |---|---|
-| 0 | clean, or warnings and notes only — the node lands |
-| 2 | at least one block-level finding — the node goes back to its worker |
-| 3 | weed could not run, and the reason is the one line on stderr — the node goes back too |
+| 0 | clean, or warnings and notes only; the node lands |
+| 2 | at least one block-level finding; the node goes back to its worker |
+| 3 | weed could not run, and the reason is the one line on stderr; the node goes back too |
 
 Exit 3 fails closed on purpose. A gate that could not run must never look like a gate that passed, so
 a missing repository, an unreadable ref or a `weed.toml` weed cannot parse stops the node exactly as
