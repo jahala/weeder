@@ -18,7 +18,7 @@ Gemini CLI: `BeforeTool` with the same command test, answered with Gemini's deci
 
 ## Proof
 
-`scripts/proof/claude-stop.sh` starts a real Claude Code session with `--settings` carrying the Stop hook against a fixture repo whose tree deletes a test, asks it to say done, and asserts the transcript shows the block with weed's reason; then repairs the tree and asserts the stop is allowed. `scripts/proof/gemini-stop.sh` does the same on Gemini CLI. Both write their captured output into `docs/proof-2026-09.md` under a dated heading.
+`scripts/proof/claude-stop.sh` starts a real Claude Code session with `--settings` carrying the Stop hook against a fixture repo whose tree carries a block-level finding (a half-finished merge today; a deleted test rides the same path once T1 lands), asks it to say done, and asserts the transcript shows the block with weed's reason; then repairs the tree and asserts the stop is allowed. `scripts/proof/gemini-stop.sh` does the same on Gemini CLI. Both write their captured output into `docs/proof-2026-09.md` under a dated heading.
 
 ## Tests
 - [ ] (code) `weed hook claude` denies a `PreToolUse` Bash event whose command runs `git commit` over a red index with the table as the reason, denies `--no-verify` outright, blocks a `Stop` over a red tree and allows it over a clean one, and passes every other event through · tests/hook_claude.rs
@@ -38,5 +38,8 @@ Gemini CLI: `BeforeTool` with the same command test, answered with Gemini's deci
 - 2026-09-05 the Gemini proof is a human check until the owner signs in: `~/.gemini/settings.json` carries no auth type on this machine, so no worker can run a real Gemini session here. The script is still built here; the owner runs it
 - 2026-09-05 a Claude Code session started from inside another one refuses to run while the `CLAUDECODE` environment variable is set; the proof script must start `claude` with that variable unset (`env -u CLAUDECODE claude -p ...`) and pass the Stop hook through `--settings`. tilth's benchmark runner does the same
 - 2026-09-05 a worker's dogfood notes go in `docs/dogfood/hooks.md`, not `docs/dogfood.md` (AGENTS.md)
+- 2026-09-05 built by pleach node `hooks` (claude/opus, codex audit) in one attempt on the retry, 28 minutes, landed through `pleach land`. `src/core/shell.rs` reads a command line the way a shell would (quotes, `&&`, pipes, `cd`, `sh -c` to eight levels) so `git commit` is found wherever it hides and left alone inside an `echo`; codex's decision table is read from the JSON schemas inside its binary and pinned by a test that reads `docs/proof-2026-09.md` back; the real Claude Code Stop run is captured there verbatim on 2.1.261
+- 2026-09-05 decided by the worker and kept: `weed hook` refuses at exit 2 when it could not judge, never 3, because Claude Code reads a hook's exit 3 as a non-blocking error and would let the commit through; the reason goes on both stdout (the harness's JSON) and stderr. The 0/2/3 contract stays whole for `check`; the hook face is a different caller with a different protocol, and docs/proof-2026-09.md says so
+- 2026-09-05 superseded: the Tried line above about `--message-file` being how a trailer counts before the commit exists. The hooks judge with `--strict`, under which a trailer changes nothing, so the hook lifts no message off the command line; plumbing whose effect no test can observe was left out on purpose
 </script>
 <script src="loop.js"></script>
