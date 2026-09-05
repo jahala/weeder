@@ -54,5 +54,16 @@
   "weed": {
     "provider": "claude",
     "model": "opus"
+  },
+  "hardening": {
+    "provider": "claude",
+    "model": "opus"
+  },
+  "recall": {
+    "provider": "claude",
+    "model": "opus"
+  },
+  "calibration-audit": {
+    "provider": "codex"
   }
 }

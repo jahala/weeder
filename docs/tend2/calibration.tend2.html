@@ -30,6 +30,7 @@ A repo with fewer than 200 commits contributes every commit it has, and the file
 - [ ] (code) `cargo xtask calibrate` judges up to the last 200 commits of each listed repo against their parents, writes `docs/calibration-2026-09.md` in the described shape with the verdict first, and leaves the source repositories untouched · scripts/check/calibrate.sh
 - [ ] (code) the calibration file's pooled block-level false-positive share is under two percent of commits judged across the repos, every repo's own count and share is shown, and no line of it records T1, T2, T3 or S1 turned off to get there · scripts/check/calibration-bar.sh
 - [ ] (code) `garden.json`'s metric command runs `scripts/check/calibration-bar.sh` and its latest result is committed · scripts/check/metric.sh
+- [ ] (code) `cargo xtask suppressions` counts `Weed-allow:` trailers per hundred commits on each garden repo from the day guard is installed (zero before), and the calibration file reports the rate beside precision with the true-positive count on the same line · scripts/check/suppression-rate.sh
 
 ## Needs #rules-prod
 
@@ -37,5 +38,6 @@ A repo with fewer than 200 commits contributes every commit it has, and the file
 - 2026-09-05 repos follow the umbrella loop's list; the brief's rctrl is umbel's former name and the same repository
 - 2026-09-05 `xtask` over a script so the calibration runs the same core the binary ships, with no second implementation of the diff walk
 - 2026-09-05 bar refined on the channel by cape-town: the two percent applies to the pooled total across repos, with per-repo counts shown; a repo under 50 commits is reported, not judged alone
+- 2026-09-05 cape-town: track the suppression rate from the day guard is installed and report it beside precision; rising suppressions with flat true positives means the gate is gamed or mis-tuned. The recall section of the same file belongs to the recall loop, and the second party's classification to calibration-audit
 </script>
 <script src="loop.js"></script>
