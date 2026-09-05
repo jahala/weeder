@@ -110,44 +110,84 @@ pub fn diff_range(root: &Path, base: &str, tip: &str) -> Result<String, GitError
     diff(root, &[&base, &tip])
 }
 
-/// A file's text at a ref: `None` where the ref does not carry the file, and
-/// `None` where what it carries is not text. weed judges lines, and bytes that
-/// are not text carry none; G2 is the rule that reports a binary blob.
-pub fn file_at_ref(root: &Path, reference: &str, path: &str) -> Result<Option<String>, GitError> {
+/// One version of a file as a repository carries it, read once. What a rule
+/// asks about a file, its lines, its weight, whether it carries lines at all,
+/// is all answered from the same bytes rather than from a second read.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Blob {
+    pub bytes: Vec<u8>,
+}
+
+impl Blob {
+    /// What the file weighs.
+    #[must_use]
+    pub fn size(&self) -> u64 {
+        self.bytes.len() as u64
+    }
+
+    /// git's own test for a blob that is not text: a NUL byte. weed judges
+    /// lines, and these bytes carry none; G2 is the rule that reports one.
+    #[must_use]
+    pub fn is_binary(&self) -> bool {
+        self.bytes.contains(&0)
+    }
+
+    /// The file as text, or `None` where its bytes carry none. A byte that is
+    /// not utf-8 is replaced rather than letting one latin-1 character make a
+    /// file look like it is not there.
+    #[must_use]
+    pub fn text(&self) -> Option<String> {
+        (!self.is_binary()).then(|| String::from_utf8_lossy(&self.bytes).into_owned())
+    }
+}
+
+/// A file at a ref: `None` where the ref does not carry the file.
+pub fn file_at_ref(root: &Path, reference: &str, path: &str) -> Result<Option<Blob>, GitError> {
     let object = format!("{reference}:{path}");
-    text(root, &["show", &object])
+    blob(root, &["show", &object])
 }
 
-/// A file's text in the index: what a commit would carry. git spells the index
-/// as a ref with no name in front of the colon.
-pub fn file_in_index(root: &Path, path: &str) -> Result<Option<String>, GitError> {
+/// A file in the index: what a commit would carry. git spells the index as a
+/// ref with no name in front of the colon.
+pub fn file_in_index(root: &Path, path: &str) -> Result<Option<Blob>, GitError> {
     let object = format!(":{path}");
-    text(root, &["show", &object])
+    blob(root, &["show", &object])
 }
 
-/// A file's text in the working tree, or `None` where there is no such file.
-pub fn file_in_tree(root: &Path, path: &str) -> Result<Option<String>, GitError> {
-    fs::read_text_if_present(&root.join(path)).map_err(|error| GitError::Refused {
+/// A file in the working tree, or `None` where there is no such file.
+pub fn file_in_tree(root: &Path, path: &str) -> Result<Option<Blob>, GitError> {
+    let bytes = fs::read_bytes_if_present(&root.join(path)).map_err(|error| GitError::Refused {
         command: format!("show :{path}"),
         message: error.message,
-    })
+    })?;
+    Ok(bytes.map(|bytes| Blob { bytes }))
 }
 
-/// What a git invocation wrote, where it wrote text and worked. A refusal, no
-/// such object, and bytes that are not text both answer `None`, because both
-/// mean there is nothing for a rule to read.
-fn text(root: &Path, arguments: &[&str]) -> Result<Option<String>, GitError> {
+/// What a git invocation wrote, where it worked. A refusal, no such object,
+/// answers `None`: there is no version of the file to read.
+fn blob(root: &Path, arguments: &[&str]) -> Result<Option<Blob>, GitError> {
     let attempt = attempt(root, arguments)?;
     if attempt.code != 0 {
         return Ok(None);
     }
-    // git's own test for a binary blob: a NUL byte. Anything else is text a rule
-    // can read, and a stray byte that is not utf-8 is replaced rather than
-    // letting one latin-1 character make a file look like it is not there.
-    if attempt.stdout.contains(&0) {
-        return Ok(None);
-    }
-    Ok(Some(String::from_utf8_lossy(&attempt.stdout).into_owned()))
+    Ok(Some(Blob {
+        bytes: attempt.stdout,
+    }))
+}
+
+/// Every path the repository holds, as the index carries them: what a commit
+/// built from this change would have in it. A rule that asks what a pattern
+/// covers, or what an import points at, is asking about these.
+pub fn tracked_paths(root: &Path) -> Result<Vec<String>, GitError> {
+    let output = run_lossy(root, &["ls-files", "-z"])?;
+    let mut paths: Vec<String> = output
+        .split('\u{0}')
+        .filter(|path| !path.is_empty())
+        .map(ToString::to_string)
+        .collect();
+    paths.sort();
+    paths.dedup();
+    Ok(paths)
 }
 
 /// The messages of the commits a range carries, newest first, for the trailers

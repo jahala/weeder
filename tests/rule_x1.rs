@@ -11,7 +11,7 @@
 
 mod common;
 
-use common::{fixture, fixture_file};
+use common::{fixture, fixture_file, Finding};
 
 /// The languages the rule is proven in, and the file the credentials land in.
 const LANGUAGES: [(&str, &str); 4] = [
@@ -100,9 +100,17 @@ fn x1_stays_silent_on_a_short_value_a_placeholder_and_a_lockfile_digest() {
             "{name}: the neighbour has to carry a placeholder"
         );
 
+        // The lockfile has to be in the diff for the digest to be judged at
+        // all, and a changed lockfile is D1's business (rules-prod). What this
+        // case is about is that none of the three is read as a credential.
         let run = repo.weed(&["check"]);
+        let credentials: Vec<Finding> = run
+            .findings()
+            .into_iter()
+            .filter(|finding| finding.rule == "X1")
+            .collect();
         assert_eq!(
-            run.findings(),
+            credentials,
             Vec::new(),
             "{name}: a setting, a slot to fill in and a digest are not credentials"
         );

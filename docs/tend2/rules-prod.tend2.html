@@ -23,18 +23,21 @@
 | G2 | large or binary file added | warn | size above 1 MiB, or binary content detection, on added files not already tracked |
 
 ## Tests
-- [ ] (code) S2 warns on each swallowed-error shape per language in prod files and stays silent when the error is logged, wrapped, rethrown, or the empty catch carries a comment naming why · tests/rule_s2.rs
-- [ ] (code) S3 warns on each debug leftover shape per language in prod files and stays silent in test files, in `main.rs`, and in a module the config names as a CLI entry · tests/rule_s3.rs
-- [ ] (code) D1 warns on each manifest and lockfile per language, blocks when a scope excludes the manifest, and stays silent on a README that mentions a package · tests/rule_d1.rs
-- [ ] (code) D2 fires at block level on a fixture where a layer imports from a layer `[deps]` forbids, per language, and on weed's own tree when a core file imports from seams; stays silent on allowed directions · tests/rule_d2.rs
-- [ ] (code) X2 fires at block level on a file outside the given scope globs, names the callers of its changed definitions, and stays silent without `--scope` and on files inside the scope · tests/rule_x2.rs
-- [ ] (code) C2 warns when an ignore file gains a pattern matching source or test paths and stays silent on build-output patterns · tests/rule_c2.rs
-- [ ] (code) G2 warns on an added file above 1 MiB and on an added binary, and stays silent on a small text file and on a tracked binary that only changes · tests/rule_g2.rs
+- [x] (code) S2 warns on each swallowed-error shape per language in prod files and stays silent when the error is logged, wrapped, rethrown, or the empty catch carries a comment naming why · tests/rule_s2.rs @5faf3b8 · by cli
+- [x] (code) S3 warns on each debug leftover shape per language in prod files and stays silent in test files, in `main.rs`, and in a module the config names as a CLI entry · tests/rule_s3.rs @f57f1ae · by cli
+- [x] (code) D1 warns on each manifest and lockfile per language, blocks when a scope excludes the manifest, and stays silent on a README that mentions a package · tests/rule_d1.rs @18f6a62 · by cli
+- [x] (code) D2 fires at block level on a fixture where a layer imports from a layer `[deps]` forbids, per language, and on weed's own tree when a core file imports from seams; stays silent on allowed directions · tests/rule_d2.rs @df85697 · by cli
+- [x] (code) X2 fires at block level on a file outside the given scope globs, names the callers of its changed definitions, and stays silent without `--scope` and on files inside the scope · tests/rule_x2.rs @74eb044 · by cli
+- [x] (code) C2 warns when an ignore file gains a pattern matching source or test paths and stays silent on build-output patterns · tests/rule_c2.rs @4be775d · by cli
+- [x] (code) G2 warns on an added file above 1 MiB and on an added binary, and stays silent on a small text file and on a tracked binary that only changes · tests/rule_g2.rs @451a2a1 · by cli
 
 ## Needs #rules-tests
 
 ## Tried
 - 2026-09-05 the catalogue is complete after this loop: eighteen check rules with G1 on check-face; `docs/rules.md` is written here and `weed rules` reads from the same table, so the two cannot drift
 - 2026-09-05 S2's Go shape is deliberately narrow (`return nil` after a nil check with nothing else in the block) because Go's idiom makes wider shapes noisy; calibration decides whether it stays a warning
+- 2026-09-06 built by pleach node `rules-prod` (claude/opus, codex audit) in one attempt, 65 minutes; the land gate refused the composition with scan (both landings added a `comments` view to the mask, and scan still read the tree as text where rules-prod now reads a blob), resolved by hand. Every detector is a pure function of one `Judgement` the face gathers once: changes, config, scope, tracked paths, callers. D1 warns and blocks when a scope excludes the manifest, and the registry keeps a level a detector chose above its default; D2 resolves a module name by matching its segments against the repository's own paths and refuses to guess between two layers; X2 names the blast radius through the reader's callers; C2 turns an ignore pattern into globs and reports what it hides; G2 reads size and binariness off the same bytes; S3 reads `[entrypoints] cli`; the vendor name the brief listed became the shape `dump`. weed.toml now states weed's own layers, so D2 holds weed to its doctrine
+- 2026-09-06 the catalogue is complete: eighteen check rules and four scan rules, `docs/rules.md` written from the same table and pinned to it by `tests/docs_rules.rs`, so every SARIF helpUri lands somewhere
+- 2026-09-06 left for calibration: D2 reads every import of a changed file, so touching a file that already reaches the wrong way blocks the change that touched it. Right for a clean tree, wrong for a repository adopting the rule with a mess; whether existing arrows need an allowance is calibration's call. S2's Go shape is narrow on purpose, and calibration decides if it is still too wide
 </script>
 <script src="loop.js"></script>

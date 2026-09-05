@@ -67,6 +67,14 @@ impl Mask {
         self.view(line, |syntax| syntax != Syntax::Comment)
     }
 
+    /// What the 1-based line's comments hold, with the code and the literals
+    /// blanked. This is what the author said to the next reader, which is how a
+    /// rule tells a body left empty by accident from one left empty on purpose.
+    #[must_use]
+    pub fn comments(&self, line: u32) -> String {
+        self.view(line, |syntax| syntax == Syntax::Comment)
+    }
+
     /// What the 1-based line's literals hold, with the code and the comments
     /// blanked. This is what the program says, as opposed to what it does.
     #[must_use]
@@ -109,13 +117,6 @@ impl Mask {
         u32::try_from(self.lines.len()).unwrap_or(u32::MAX)
     }
 
-    /// What the 1-based line's comments hold, with the program blanked. This is
-    /// what somebody wrote to whoever reads the file next.
-    #[must_use]
-    pub fn comments(&self, line: u32) -> String {
-        self.view(line, |syntax| syntax == Syntax::Comment)
-    }
-
     fn view(&self, line: u32, keep: impl Fn(Syntax) -> bool) -> String {
         let Some(index) = (line as usize).checked_sub(1) else {
             return String::new();
@@ -146,6 +147,10 @@ pub struct Literal {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Word<'a> {
     pub text: &'a str,
+    /// Where the word begins in the line, in bytes.
+    pub start: usize,
+    /// Where it ends.
+    pub end: usize,
     /// The nearest character before the word that is not a space.
     pub before: Option<char>,
     /// The nearest character after the word that is not a space.
@@ -195,6 +200,8 @@ pub fn is_identifier(character: char) -> bool {
 fn word(line: &str, from: usize, to: usize) -> Word<'_> {
     Word {
         text: &line[from..to],
+        start: from,
+        end: to,
         before: line[..from].chars().rev().find(|c| !c.is_whitespace()),
         after: line[to..].chars().find(|c| !c.is_whitespace()),
     }

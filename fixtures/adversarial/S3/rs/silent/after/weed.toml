@@ -1,0 +1,3 @@
+# The modules that are the command line itself, where printing is the product.
+[entrypoints]
+cli = ["src/cli/**", "cli/**"]
