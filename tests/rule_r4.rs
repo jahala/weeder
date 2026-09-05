@@ -5,15 +5,17 @@
 //! default allowance of three; `silent/` is pinned two back, inside it. Nothing
 //! else about the two differs, so the rule has to be reading the versions.
 //!
-//! The last test is the one that matters most: a scan reaches no registry. It
-//! puts a fetcher on PATH that records having been called and then runs a scan,
-//! and the recording never appears.
+//! The tests after those are the ones that matter most. A scan reaches no
+//! registry: a fetcher on PATH records having been called, and the recording
+//! never appears. A refresh is the one command that does reach one, so it is
+//! asked what it does when the fetcher is missing, and what it keeps when one
+//! registry answers and another cannot be reached.
 
 mod common;
 
 use std::path::Path;
 
-use common::{fixture, Finding};
+use common::{fixture, install_script, link_git, shell_word, Finding};
 use tempfile::TempDir;
 
 /// The manifest kinds R4 reads, the package each fixture pins, and the release
@@ -136,6 +138,56 @@ fn a_refresh_says_so_when_this_machine_has_no_fetcher() {
     );
 }
 
+/// A refresh that reached one registry and not the other keeps what the
+/// committed snapshot already held for the packages it could not ask about. A
+/// snapshot with nothing in it for a package is a rule with nothing to say, so
+/// dropping the entry would turn a network failure into a clean bill of health.
+#[test]
+fn a_refresh_keeps_what_it_could_not_get_a_fresh_answer_about() {
+    let bin = TempDir::new().expect("a directory for the fetcher");
+    link_git(bin.path());
+    install_script(bin.path(), "curl", ONE_REGISTRY_ANSWERS);
+
+    let repo = fixture("R4", "rs", "fire");
+    repo.write(
+        "package.json",
+        "{\n  \"dependencies\": {\n    \"left-pad\": \"1.0.0\"\n  }\n}\n",
+    );
+    repo.write(
+        ".weed/registry-snapshot.json",
+        "{\n  \"cargo\": {\n    \"ordered-float\": \"1.9.0\"\n  },\n  \"npm\": {\n    \"left-pad\": \"1.1.0\"\n  }\n}\n",
+    );
+
+    let path = bin.path().display().to_string();
+    let run = repo.weed_with(
+        &["scan", "--refresh-snapshot", "--format", "sarif"],
+        &[("PATH", &path)],
+    );
+
+    assert_eq!(
+        run.code, 0,
+        "one registry answered, so the refresh happened: {}{}",
+        run.stdout, run.stderr
+    );
+    assert!(
+        run.stderr.contains("could not reach crates.io"),
+        "the registry weed could not reach is named: {}",
+        run.stderr
+    );
+
+    let written = std::fs::read_to_string(repo.root().join(".weed/registry-snapshot.json"))
+        .expect("the snapshot should have been written");
+    let snapshot: serde_json::Value = serde_json::from_str(&written).expect("json is json");
+    assert_eq!(
+        snapshot["npm"]["left-pad"], "2.0.0",
+        "the registry that answered is what the snapshot now holds: {written}"
+    );
+    assert_eq!(
+        snapshot["cargo"]["ordered-float"], "1.9.0",
+        "the registry weed could not reach leaves its package as the repository committed it: {written}"
+    );
+}
+
 /// A fetcher that writes down having been asked and then refuses, so a scan
 /// that reached for it is recorded whatever it does with the answer.
 fn fetcher(directory: &Path, recorded: &Path) {
@@ -143,44 +195,21 @@ fn fetcher(directory: &Path, recorded: &Path) {
         "#!/bin/sh\ntouch {}\nexit 1\n",
         shell_word(&recorded.display().to_string())
     );
-    let path = directory.join("curl");
-    std::fs::write(&path, script).expect("the fetcher should be writable");
-    make_executable(&path);
+    install_script(directory, "curl", &script);
 }
 
-/// git, where a test has taken everything else off PATH. weed asks git what the
-/// tree holds before any rule runs, so a PATH without it is a scan that never
-/// starts and proves nothing.
-fn link_git(directory: &Path) {
-    let found = which("git").expect("git should be on PATH");
-    let script = format!(
-        "#!/bin/sh\nexec {} \"$@\"\n",
-        shell_word(&found.display().to_string())
-    );
-    let path = directory.join("git");
-    std::fs::write(&path, script).expect("the git shim should be writable");
-    make_executable(&path);
-}
-
-fn make_executable(path: &Path) {
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755))
-        .expect("the script should be runnable");
-}
-
-/// Where a program on PATH is, asked of the shell that owns the question.
-fn which(program: &str) -> Option<std::path::PathBuf> {
-    let found = std::process::Command::new("/usr/bin/env")
-        .args(["sh", "-c", &format!("command -v {program}")])
-        .output()
-        .ok()?;
-    found
-        .status
-        .success()
-        .then(|| std::path::PathBuf::from(String::from_utf8_lossy(&found.stdout).trim()))
-}
-
-/// A path as one word a shell cannot take apart.
-fn shell_word(text: &str) -> String {
-    format!("'{}'", text.replace('\'', "'\\''"))
-}
+/// A fetcher one registry answers through and the other refuses: the npm reply
+/// is the shape that registry writes, and everything else is a host that does
+/// not resolve, which is what a machine with no network says.
+const ONE_REGISTRY_ANSWERS: &str = r#"#!/bin/sh
+for word in "$@"; do
+  case "$word" in
+    *registry.npmjs.org*)
+      printf '%s' '{"dist-tags":{"latest":"2.0.0"}}'
+      exit 0
+      ;;
+  esac
+done
+echo "curl: (6) Could not resolve host" >&2
+exit 6
+"#;

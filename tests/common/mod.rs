@@ -568,6 +568,51 @@ pub fn path_with_weed() -> String {
     }
 }
 
+/// A script a test owns, written into a directory it owns and made runnable.
+/// A PATH built out of these is how a test sees which programs weed reached
+/// for: the program it would have run is right there, and it answers.
+pub fn install_script(directory: &Path, name: &str, body: &str) -> PathBuf {
+    use std::os::unix::fs::PermissionsExt;
+
+    let path = directory.join(name);
+    std::fs::write(&path, body).expect("the script should be writable");
+    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755))
+        .expect("the script should be runnable");
+    path
+}
+
+/// git, where a test has taken everything else off PATH. weed asks git what the
+/// tree holds before any rule runs, so a PATH without it is a scan that never
+/// starts and proves nothing.
+pub fn link_git(directory: &Path) {
+    let found = which("git").expect("git should be on PATH");
+    install_script(
+        directory,
+        "git",
+        &format!(
+            "#!/bin/sh\nexec {} \"$@\"\n",
+            shell_word(&found.display().to_string())
+        ),
+    );
+}
+
+/// Where a program on PATH is, asked of the shell that owns the question.
+pub fn which(program: &str) -> Option<PathBuf> {
+    let found = Command::new("/usr/bin/env")
+        .args(["sh", "-c", &format!("command -v {program}")])
+        .output()
+        .ok()?;
+    found
+        .status
+        .success()
+        .then(|| PathBuf::from(String::from_utf8_lossy(&found.stdout).trim()))
+}
+
+/// A path as one word a shell cannot take apart.
+pub fn shell_word(text: &str) -> String {
+    format!("'{}'", text.replace('\'', "'\\''"))
+}
+
 /// Every file in the working tree, gone. What `after/` carries comes back; what
 /// it does not carry stays deleted, which is how a fixture removes a file.
 fn empty_tree(root: &Path) {

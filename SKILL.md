@@ -73,12 +73,18 @@ weed scan --refresh-snapshot
 R4 compares a pin against `.weed/registry-snapshot.json`, a file the repository
 commits, and never against a registry: a scan that reached the network would
 answer differently on every machine. `--refresh-snapshot` is the one command that
-goes and asks, and it asks through `curl`.
+goes and asks, and it asks through `curl`. A refresh that reaches no registry at
+all leaves with 3 and keeps the committed snapshot: a file saying the registries
+have released nothing would read as every pin being current.
 
 R1 resolves a cited command and its flags against that command's own `--help`,
 and only for the commands `[docs] commands` names in `weed.toml`. With none
 named, a cited command is left alone, weed has no authority to resolve it
-against.
+against. What a scan may execute is that list and nothing else: the program is
+run only with `--help`, the subcommands it walks are the ones the help itself
+printed, and no shell and no argument from the document ever reaches a process.
+A line like `some-tool; rm -rf build/` in a document is prose weed reads and
+never a command weed runs.
 
 ## guard: the law in git
 
@@ -120,8 +126,10 @@ weed hook claude < event.json
 
 ## rules: the catalogue
 
-`weed rules` prints every rule and the level it carries. `--format table` is the
-default and `--format json` is for a program. Only unambiguous rules block by
+`weed rules` prints every rule, the level it carries, the face it belongs to and
+what it may reach over the network. Every rule but R4 says `none`, and R4 says
+`registries under --refresh-snapshot`. `--format table` is the default and
+`--format json` is for a program. Only unambiguous rules block by
 default; everything else warns, and a warning is for the human at the pull
 request rather than for the agent.
 

@@ -419,10 +419,19 @@ impl Snapshot {
     /// none for that package.
     #[must_use]
     pub fn latest(&self, registry: Registry, package: &str) -> Option<Version> {
+        self.recorded(registry, package).and_then(parse_version)
+    }
+
+    /// The release the snapshot recorded, as the registry spelled it. A refresh
+    /// that could not reach a registry carries the old answer across rather than
+    /// dropping the package: a snapshot with nothing in it for a package is a
+    /// rule with nothing to say about it.
+    #[must_use]
+    pub fn recorded(&self, registry: Registry, package: &str) -> Option<&str> {
         self.entries
             .get(registry.key())
             .and_then(|packages| packages.get(package))
-            .and_then(|version| parse_version(version))
+            .map(String::as_str)
     }
 
     pub fn record(&mut self, registry: Registry, package: &str, version: &str) {

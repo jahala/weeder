@@ -49,7 +49,7 @@ are plain `weed`.
 | `weed scan` | judges the repository as it is and never blocks: rotted docs, dead exports, stale work markers, lagging pins |
 | `weed guard` | puts that judgement inside git, through hooks git cannot be talked out of running |
 | `weed hook` | answers an agent harness's hook event, so a turn ends against weed's verdict |
-| `weed rules` | prints the catalogue and the level each rule carries |
+| `weed rules` | prints the catalogue, the level each rule carries, and what it may reach over the network |
 
 ```bash
 weed check --staged

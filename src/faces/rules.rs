@@ -36,6 +36,7 @@ struct Row {
     id: String,
     level: String,
     face: String,
+    network: String,
     finding: String,
     description: String,
 }
@@ -45,6 +46,7 @@ fn row(rule: &Rule, defaults: &Config) -> Row {
         id: rule.id.to_string(),
         level: level_word(defaults.rules.get(rule.id)).to_string(),
         face: face_word(rule.face).to_string(),
+        network: rule.network.spelled(),
         finding: rule.short_description.to_string(),
         description: rule.full_description.to_string(),
     }
@@ -72,14 +74,16 @@ fn table(rows: &[Row]) -> String {
     let id_width = width(rows.iter().map(|row| row.id.len()));
     let level_width = width(rows.iter().map(|row| row.level.len()));
     let face_width = width(rows.iter().map(|row| row.face.len()));
+    let network_width = width(rows.iter().map(|row| row.network.len()));
 
     let mut table = String::new();
     for row in rows {
         let line = format!(
-            "{id:<id_width$}  {level:<level_width$}  {face:<face_width$}  {finding}",
+            "{id:<id_width$}  {level:<level_width$}  {face:<face_width$}  {network:<network_width$}  {finding}",
             id = row.id,
             level = row.level,
             face = row.face,
+            network = row.network,
             finding = row.finding,
         );
         table.push_str(line.trim_end());
@@ -96,6 +100,7 @@ fn json(rows: &[Row]) -> String {
                 "id": row.id,
                 "level": row.level,
                 "face": row.face,
+                "network": row.network,
                 "finding": row.finding,
                 "description": row.description,
             })
