@@ -28,7 +28,7 @@ Modules live on the children. [tilth-core](tilth-core.tend2.html) is the parsing
 - [ ] (code) every rule the catalogue prints (`weed rules`) has a fire and a silent fixture for each of ts, py, rs and go under `fixtures/adversarial/`, and one test walks that matrix, replays each fixture through the real binary and asserts the expected result set · tests/catalogue_matrix.rs
 - [ ] (code) `weed check --base <root-commit> --format sarif` on weed's own tree reports nothing at block level, and the log validates against the vendored SARIF schema · tests/self_check.rs
 - [ ] (code) `weed check` on a fixture repo finishes in under 200 milliseconds wall-clock for a 50-file diff, measured by the test on the release binary · tests/speed.rs
-- [ ] (human) the owner confirms the name weed, chooses its accent from the measured candidates in `.brand/products/weed/colors.md`, confirms MIT, and pushes the `tilth-core` branch of tilth so the git dependency resolves without the local patch [flagged]
+- [ ] (human) the owner confirms the name weed, chooses its accent from the measured candidates in `.brand/products/weed/colors.md`, and confirms MIT [flagged]
 
 ## Children #tilth-core #core #sarif #check-face #rules-block #rules-tests #rules-prod #guard #hooks #scan #calibration #bite #garden-fit
 
@@ -44,5 +44,6 @@ Modules live on the children. [tilth-core](tilth-core.tend2.html) is the parsing
 - 2026-09-05 scope-out: no rules that name vendors or products; no inbound injection quarantine; no spend rules (settled on the umbrella loop, not re-argued here)
 - 2026-09-05 `--strict` accepted by the umbrella with one refinement recorded in the brief: strict never escalates warn-level results to block; severity is the rule's, not the flag's
 - 2026-09-05 with core, sarif and check-face landed and the reader seam waiting on almaty, guard, hooks and garden-fit were re-pointed to run on G1 rather than wait for rules-block; the rule loops and scan still wait for the seam
+- 2026-09-05 milestone 1 met by almaty: tilth-core exists on `garden/tilth-core` at 7f38db5, pushed, so weed pins a rev and carries no machine-specific line; the push the owner was asked for is done by the tilth agent's PR
 </script>
 <script src="loop.js"></script>

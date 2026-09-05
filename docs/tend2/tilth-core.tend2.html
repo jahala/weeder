@@ -12,7 +12,7 @@
 
 ## The extraction lives in tilth
 
-The crate does not exist when this loop is shaped. The proposal is a branch `tilth-core` in the tilth repository (worktree at `.context/tilth-core`), conducted by its own pleach plan (`plans/tilth-core.plan.json`): a Cargo workspace whose root package stays `tilth` (so the fuzz crate, the release workflow and `cargo install --path .` keep working) and whose new member `crates/tilth-core` holds the parsing modules, with tilth's binary consuming it and tilth's CI trio (`cargo fmt --check`, `cargo clippy --workspace -- -D warnings`, `cargo test --workspace`) green. The tilth agent owns landing it on main; this loop records that the proposal exists and is green.
+The crate did not exist when this loop was shaped. almaty, the tilth agent, landed it on 2026-09-05 as branch `garden/tilth-core` at commit 7f38db58696e16c2df2be71da985f47097f34920 (PR #210 on github.com/jahala/tilth): a Cargo workspace whose root package stays `tilth` and whose member `crates/tilth-core` holds the parsing substrate, version 0.10.1 in lockstep with tilth, with tilth's CI trio green, 654 of 654 old tests passing and output parity proven against the v0.10.1 binary. Weed pins that commit as a git dependency; the worktree at `.context/tilth-core` checks out the same commit so the evidence script can run the crate's own suite here.
 
 ## What weed asks of the crate
 
@@ -28,8 +28,8 @@ The crate does not exist when this loop is shaped. The proposal is a branch `til
 `src/seams/reader.rs` is the only module in weed that names `tilth_core`. It exposes plain data to the core — `Outline`, `TestShape`, `Import`, `CallerSite`, `FileKind` hints — and nothing tree-sitter-shaped leaks past it. Core rules take those values as arguments; faces call the seam and hand the values in. A test reads the source tree and refuses any other `tilth_core` reference.
 
 ## Tests
-- [ ] (code) the tilth worktree at `.context/tilth-core` is on branch `tilth-core`, holds `crates/tilth-core` exposing detection, outline entries, test-file classification, test structure, imports and callers, tilth's binary consumes it, and tilth's CI trio is green there · scripts/check/tilth-core.sh
-- [ ] (code) weed's `Cargo.toml` depends on `tilth-core` as a git dependency on the tilth repository, `.cargo/config.toml` patches it to the local worktree, and `cargo build` succeeds · scripts/check/tilth-core-dep.sh
+- [ ] (code) the tilth worktree at `.context/tilth-core` is at the commit weed pins, holds `crates/tilth-core` exposing detection, outline entries, test-file classification, test structure, imports and callers, tilth's binary consumes it, and tilth's CI trio plus the crate's acceptance test are green there · scripts/check/tilth-core.sh
+- [ ] (code) weed's `Cargo.toml` depends on `tilth-core` as a git dependency on `https://github.com/jahala/tilth` pinned to rev `7f38db58696e16c2df2be71da985f47097f34920`, with no local patch anywhere, and `cargo build` succeeds · scripts/check/tilth-core-dep.sh
 - [ ] (code) `src/seams/reader.rs` is the only file in `src/` that references `tilth_core`, and `src/core/` compiles with the reader's data types only · tests/reader_seam.rs
 - [ ] (code) the reader returns outline entries, test shape, imports and callers for one small file in each of ts, py, rs and go, asserted against the fixture's known contents · tests/reader_langs.rs
 
@@ -42,5 +42,6 @@ The crate does not exist when this loop is shaped. The proposal is a branch `til
 - 2026-09-05 base corrected: the worktree was cut from a stale local `main` (v0.9.0); origin/main is v0.10.1 (f5c0afa), 132 commits and 74 source files later, with per-language modules under `src/lang/`. The branch was fast-forwarded before any work landed on it
 - 2026-09-05 division settled on the channel with cape-town and almaty (the tilth agent): almaty implements and lands the workspace split in tilth with zero behaviour change; weed sends the exact API surface and the acceptance test `crates/tilth-core/tests/api.rs` as the spec; the pleach plan in `plans/tilth-core.plan.json` is kept as the record of the surface and is not run. Two agents on one crate was the failure mode being avoided
 - 2026-09-05 the first check's evidence will track the branch and commit almaty names, not this worktree's own history
+- 2026-09-05 almaty landed the crate and pushed it, so the git dependency resolves from GitHub by rev and the `.cargo/config.toml` bridge this map planned for is never written. Surface notes from almaty, all accepted: `TestEntry` carries an extra `callee` field; `#[test]` attributes are not visible through `OutlineEntry` (the seam reads the lines above `start_line`); `test_entries` is empty for Rust, Python and Go; `analyze_deps` drops single-character symbol names and wants a canonical scope; `find_callers_batch` keeps its signature and `BloomFilterCache::new()` is pub; `TilthError` is `Error + Send + Sync + 'static`
 </script>
 <script src="loop.js"></script>
