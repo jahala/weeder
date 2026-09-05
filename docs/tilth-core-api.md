@@ -75,3 +75,14 @@ Used for: X2 naming the blast radius of an out-of-scope change, R2 dead exports 
 ## How weed depends on it
 
 `Cargo.toml`: `tilth-core = { git = "https://github.com/jahala/tilth", rev = "<the commit you name>" }`. Until that commit is on GitHub, `.cargo/config.toml` in weed patches the dependency to a local checkout of your branch. Version policy: lockstep with tilth is fine; weed pins a rev either way.
+
+## What landed, and what weed does with it
+
+almaty landed the crate on `garden/tilth-core` at `7f38db58696e16c2df2be71da985f47097f34920` and pushed it, so weed's `Cargo.toml` pins that commit as a git dependency and no local patch is needed anywhere. `src/seams/reader.rs` is the only module in weed that names `tilth_core`; it returns the plain data in `src/core/read.rs` — `Outline`, `TestShape`, `Import`, `CallerSite` — and the core compiles with those and no parser behind them. `tests/reader_seam.rs` reads the source tree and refuses a second reference.
+
+Four things about the surface as it shipped shape how the seam reads a file, and a rule that reads through the seam inherits them:
+
+- **`test_entries` walks calls, not declarations.** It returns suites and cases for `describe`/`it`/`test`, and an empty vector for Python, Rust and Go. The seam reads those three from the outline by their own convention: a class named `Test…` holding functions named `test_…`, a function under a `#[test]` attribute inside a `#[cfg(test)]` module, a function named `TestX` that takes the handle from `testing`. Attributes are not visible through `OutlineEntry`, so the seam reads the lines above `start_line`.
+- **Python's `from x import y` carries no outline entry**, while `import x` does. The seam finds import statements by scanning lines with `is_import_line`, which is how tilth resolves them itself, and uses the outline only to learn where a statement written across several lines ends.
+- **One statement names one source.** A Go `import ( … )` block is therefore one import whose source tilth does not name; its module paths read as external, which is all a Go file alone says about them. weed adds no parser to improve on that.
+- **Python's absolute imports read as external.** A bare module name needs the interpreter's path to resolve, so a sibling file that answers to it is still external. `is_test_file` stays the JavaScript convention and weed's own `classify_file` is what decides whether a path is a test.
