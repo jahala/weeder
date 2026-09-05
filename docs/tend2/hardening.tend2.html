@@ -31,5 +31,6 @@
 - 2026-09-05 shaped from cape-town's six binding checks (determinism, never panic, and the order law they need); the umbrella's fit script re-runs these from the pinned version
 - 2026-09-05 tilth found ten order-only differences against itself the same day; weed sorts before it writes so it cannot inherit that
 - 2026-09-05 the panic hook is a last resort, never a licence: core still returns errors, and a panic that the hook catches is a bug to fix, reported as one
+- 2026-09-05 built by pleach node `hardening` (claude/opus, codex audit) in one attempt, 24 minutes, landed by hand after `pleach land` met the hook subcommand in `src/main.rs` and a lockfile with two new dependencies. The property test found two real panics in code that already had tests: a hunk counter running off `u32`, and a slice through the middle of a character in the header split written for this same loop. `git diff` output is now read lossily so one latin-1 file cannot stop a whole judgement; shas, refs and settings are still read strictly
 </script>
 <script src="loop.js"></script>
