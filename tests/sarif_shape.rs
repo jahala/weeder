@@ -119,7 +119,7 @@ fn levels_map_block_to_error_warn_to_warning_and_a_suppressed_finding_to_note() 
     assert_eq!(
         levels,
         vec!["note", "error", "error", "warning"],
-        "the order law reads line 2 first — the honoured suppression, then the same finding under --strict — and then lines 4 and 6"
+        "the order law reads line 2 first, the honoured suppression, then the same finding under --strict, and then lines 4 and 6"
     );
     let strict = results
         .iter()

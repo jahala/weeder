@@ -2,7 +2,7 @@
 # Evidence for garden-fit: F3, as far as it can be proved on one machine.
 #
 # The claim is that somebody who clones this repository can build it. What is
-# copied into the temp directory is what a clone would carry — every tracked
+# copied into the temp directory is what a clone would carry, every tracked
 # file, plus the untracked files git is not ignoring, which is the working tree
 # as it will be committed. Nothing else comes along: no target directory, no
 # .context worktree, no cargo config from this repo. If the build there needs a
@@ -10,7 +10,7 @@
 #
 # What this cannot prove is the network half. weed pins tilth-core by git rev,
 # and until that rev is on the remote the build resolves it from the local cargo
-# cache — the same cache a clean machine would fill on its first fetch. That is
+# cache, the same cache a clean machine would fill on its first fetch. That is
 # the gap between this check and F3, and it closes when the branch is pushed.
 #
 # The copy is left where it was made. This check never deletes anything; the

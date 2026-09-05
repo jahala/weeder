@@ -2,7 +2,7 @@
 //!
 //! A detector is pure, so whatever it needs about a file has to arrive as data.
 //! That is a [`Change`]: the hunks git wrote, and each side of the change as the
-//! face gathered it — the text, what the path classifies as, the tests the file
+//! face gathered it, the text, what the path classifies as, the tests the file
 //! declares and what it defines. The face reads those through the seams; core
 //! only ever looks at them, which is what keeps a rule runnable on a diff that
 //! never touched a disk.
@@ -15,8 +15,8 @@ use crate::core::syntax::Mask;
 /// One side of a change: the file as a ref carries it, or as the tree does.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Side {
-    /// The file's text. `None` where this side has no such file — an added file
-    /// has no before, a deleted one has no after — and where what it carries is
+    /// The file's text. `None` where this side has no such file, an added file
+    /// has no before, a deleted one has no after, and where what it carries is
     /// not text, because weed judges lines and bytes carry none.
     pub content: Option<String>,
     /// What the path is, or `None` where this side has no file at all.

@@ -1,4 +1,4 @@
-//! S1 — a stub or a TODO reached production code.
+//! S1, a stub or a TODO reached production code.
 //!
 //! The fire fixture writes every stub form the rule names into a production
 //! file: the work markers, the language's own word for a body nobody wrote, and

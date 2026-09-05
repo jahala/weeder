@@ -9,7 +9,7 @@
 //! Every fixture under `fixtures/adversarial/` is replayed three times through
 //! the real binary, each run in a different locale and time zone, and the three
 //! answers must match to the byte. Each run is its own process, so Rust's hash
-//! maps are seeded differently every time — a map iterated into the log would
+//! maps are seeded differently every time, a map iterated into the log would
 //! come apart here on its own.
 //!
 //! weed writes no timestamp. If a later loop adds one, this is the test that
@@ -167,7 +167,7 @@ fn every_hash_container_in_core_says_why_its_order_never_reaches_the_output() {
     assert!(
         undocumented.is_empty(),
         "a HashMap or a HashSet in core needs a comment on it, or just above it, \
-         saying what keeps its order out of the output — it hands its keys back \
+         saying what keeps its order out of the output, it hands its keys back \
          in a different order in every process:\n{}",
         undocumented.join("\n")
     );
@@ -272,7 +272,7 @@ fn names_a_hash_container(line: &str) -> bool {
     code.contains("HashMap") || code.contains("HashSet")
 }
 
-/// Whether the use carries a comment that speaks about order — on the line
+/// Whether the use carries a comment that speaks about order, on the line
 /// itself, or in the run of comment lines directly above it.
 fn documented(lines: &[&str], index: usize) -> bool {
     let mut comment = String::new();

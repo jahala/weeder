@@ -1,4 +1,4 @@
-//! X1 — a secret-looking string was added.
+//! X1, a secret-looking string was added.
 //!
 //! Two paths to the same finding, and neither of them ever repeats the value it
 //! found: a credential printed into a report is a credential published twice.
@@ -136,8 +136,8 @@ fn named_and_disordered(line: &str) -> Option<String> {
 /// The name a credential was assigned to, where what an assignment was written
 /// in front of names one.
 ///
-/// A language may write a keyword and a type around the name — `pub const NAME:
-/// &str`, `const name: string`, `"name"` — so every word of the declaration is a
+/// A language may write a keyword and a type around the name, `pub const NAME:
+/// &str`, `const name: string`, `"name"`, so every word of the declaration is a
 /// candidate, and any one of them reading as a credential is enough. The search
 /// stops at the punctuation that ends a statement or opens a list, so the name
 /// of one entry never speaks for the next.
@@ -249,7 +249,7 @@ fn tokens(line: &str) -> Vec<&str> {
 
 /// Whether a token is an issued credential: the issuer's stamp, then a tail
 /// long enough and mixed enough to be the opaque part. A name that happens to
-/// start the same way — a setting, a path — spells its tail in words alone.
+/// start the same way, a setting, a path, spells its tail in words alone.
 fn is_issued(token: &str, prefix: &str) -> bool {
     let Some(tail) = token.strip_prefix(prefix) else {
         return false;

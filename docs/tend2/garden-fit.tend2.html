@@ -5,7 +5,7 @@
 <title>garden-fit · weed</title>
 <link rel="stylesheet" href="loop.css">
 <body>
-<noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
 <script type="text/markdown" id="loop">
 # garden-fit — what makes weed a bed of the garden
 **Goal.** The umbrella verifies every bed against a fit contract, F1 to F6. This loop ships what those checks read: `garden.json` at the root; a `SKILL.md` with a one-sentence description; the brand layer at `.brand/products/weed/` with the name and accent marked flagged; a `LICENSE` (MIT, flagged until the owner confirms); a `README.md`; the release pipeline copied from tilth's (CI, multi-platform binaries, crates.io, an npm wrapper); and the GitHub Action example that is weed's first distribution, `examples/ci/github.yml`.
@@ -23,13 +23,13 @@ Name `weed`; kind `["gate", "hook"]`; version equal to `Cargo.toml`; install per
 `.github/workflows/ci.yml` runs `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test` on push and pull request. `.github/workflows/release.yml` mirrors tilth's: a version check across `Cargo.toml` and `npm/package.json`, a build matrix (x86_64 and aarch64 for linux-musl, macos, windows), crates.io publish, npm publish of the wrapper. `npm/` holds `package.json`, `install.js` and `run.js` in tilth's shape. Nothing here is run against GitHub; `actionlint` proves the workflows parse.
 
 ## Tests
-- [x] (code) `garden.json` validates against `schemas/garden.schema.json`, its version equals `Cargo.toml`'s, its check command runs and emits valid SARIF, its metric command names `scripts/check/calibration-bar.sh` (calibration proves it runs), and its declared context cost is 0 · tests/garden_manifest.rs @8667d85 · by cli
-- [x] (code) `SKILL.md` has a one-sentence description and its body names every subcommand and flag `weed --help` and each `weed <face> --help` print · tests/skill_md.rs @4bf8615 · by cli
+- [x] (code) `garden.json` validates against `schemas/garden.schema.json`, its version equals `Cargo.toml`'s, its check command runs and emits valid SARIF, its metric command names `scripts/check/calibration-bar.sh` (calibration proves it runs), and its declared context cost is 0 · tests/garden_manifest.rs @de73c9d · by cli
+- [x] (code) `SKILL.md` has a one-sentence description and its body names every subcommand and flag `weed --help` and each `weed <face> --help` print · tests/skill_md.rs @b5812b1 · by cli
 - [x] (code) `.brand/products/weed/` holds identity, colours, voice, a petalsrc example and the mark in paper and soil-night in the pollen shape, the accent bramble `#8E3B5E` is one value across the identity table, the colour delta and both marks, and every recorded contrast ratio is recomputed · scripts/check/brand.sh @d986298 · by cli
-- [x] (code) both workflows pass `actionlint`, `ci.yml` runs the latency test on a release build so a regression fails the build, `release.yml` carries the version check and the platform matrix, and `npm/package.json` names the same version as `Cargo.toml` · scripts/check/release.sh @f686609 · by cli
+- [x] (code) both workflows pass `actionlint`, `ci.yml` runs the latency test on a release build so a regression fails the build, `release.yml` carries the version check and the platform matrix, and `npm/package.json` names the same version as `Cargo.toml` · scripts/check/release.sh @3fb5c7d · by cli
 - [x] (code) `examples/ci/github.yml` runs `weed check --base origin/${{ github.base_ref }} --strict --format sarif` into `weed.sarif` and uploads it with `github/codeql-action/upload-sarif`, and passes `actionlint` · scripts/check/ci-example.sh @cc2dbeb · by cli
-- [x] (code) `LICENSE` is MIT naming the owner, `README.md` opens with what weed is and marks the manifest schema as the one flagged claim, and `README.md` cites only commands and paths that exist · scripts/check/readme.sh @32f6848 · by cli
-- [x] (code) a fresh clone of this repository into a temp dir builds with `cargo build --release` and `weed --version` runs, on this machine (F3 as far as it can be proven before the tilth-core branch is pushed) · scripts/check/clean-install.sh @54e562a · by cli
+- [x] (code) `LICENSE` is MIT naming the owner, `README.md` opens with what weed is and marks the manifest schema as the one flagged claim, and `README.md` cites only commands and paths that exist · scripts/check/readme.sh @2901b7a · by cli
+- [x] (code) a fresh clone of this repository into a temp dir builds with `cargo build --release` and `weed --version` runs, on this machine (F3 as far as it can be proven before the tilth-core branch is pushed) · scripts/check/clean-install.sh @0e93654 · by cli
 
 ## Needs #check-face #guard #hooks
 

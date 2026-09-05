@@ -6,7 +6,7 @@
 //! upgrade of the substrate is a change to this file and to nothing else.
 //!
 //! Reading is by path and content: the path names the language, the content is
-//! what the caller already holds — a file from the working tree, or a blob at a
+//! what the caller already holds, a file from the working tree, or a blob at a
 //! ref that no longer exists on disk. Only [`related_files`] and [`callers`]
 //! touch the filesystem, because only they answer questions about other files.
 
@@ -77,7 +77,7 @@ pub fn outline(path: &Path, content: &str) -> Outline {
 
 /// The tests a file declares.
 ///
-/// Languages that spell a test as a call — `describe`, `it`, `test` — are read
+/// Languages that spell a test as a call, `describe`, `it`, `test`, are read
 /// from those calls, with the title the call was given. Languages that spell a
 /// test as a declaration are read from the outline by their own convention: a
 /// Python class named `Test…` holding functions named `test_…`, a Rust function
@@ -122,7 +122,7 @@ pub fn test_shape(path: &Path, content: &str) -> TestShape {
 /// tilth judges an import by the line it starts on, and so does weed: a
 /// statement written across several lines carries the range it spans and the
 /// source read off the whole of it. A language that lists several sources in
-/// one statement — Go's parenthesised block — is one import here, because the
+/// one statement, Go's parenthesised block, is one import here, because the
 /// substrate names one source per statement and weed adds no parser of its own.
 #[must_use]
 pub fn imports(path: &Path, content: &str) -> Vec<Import> {

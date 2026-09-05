@@ -148,7 +148,7 @@ pub fn parse_diff(input: &str) -> Result<Vec<FileDiff>, DiffError> {
 /// and `b/<path>`, and quotes a side whose path holds a quote, a backslash, a
 /// control character or a byte outside ascii. It decides that for each side on
 /// its own, so either, both or neither arrives quoted. An unquoted path may hold
-/// spaces, which leaves the line ambiguous — and the split that gives both sides
+/// spaces, which leaves the line ambiguous, and the split that gives both sides
 /// the same path is the one git meant, because only a rename or a copy gives
 /// them different ones, and those say so on their own lines further down.
 fn parse_diff_git_paths(line: &str) -> Result<(String, String), DiffError> {
@@ -179,8 +179,8 @@ fn split_header_sides(rest: &str) -> Option<(String, String)> {
         };
         return Some((old, new));
     }
-    // An unquoted path carries no quote of its own — a path with one in it is
-    // always quoted — so the first `"` on the line opens the second side.
+    // An unquoted path carries no quote of its own, a path with one in it is
+    // always quoted, so the first `"` on the line opens the second side.
     if let Some(at) = rest.find(" \"") {
         if let Some((new, tail)) = read_quoted(&rest[at + 1..]) {
             if tail.is_empty() {
@@ -205,7 +205,7 @@ fn split_header_sides(rest: &str) -> Option<(String, String)> {
             }
         }
     }
-    // Two different plain paths — a rename or a copy. Where one of them holds
+    // Two different plain paths, a rename or a copy. Where one of them holds
     // " b/" itself the split can only be guessed at, and the `rename from` and
     // `rename to` lines under the header put both paths right whatever is
     // guessed here.
@@ -277,7 +277,7 @@ enum MarkerPath {
     /// `/dev/null`: the side of the change where the file is not there at all.
     NoFile,
     /// A line weed could not read. The path the `diff --git` line already gave
-    /// stands rather than being thrown away — a file with no path goes unjudged,
+    /// stands rather than being thrown away, a file with no path goes unjudged,
     /// which is the one direction a gate must not fail in.
     Unreadable,
 }
@@ -336,7 +336,7 @@ fn parse_hunk(lines: &[&str], start: usize) -> Result<(Hunk, usize), DiffError> 
     let (old_start, old_count, new_start, new_count, section) = parse_hunk_header(header)?;
     // A header that starts a hunk at the end of the range git counts lines in
     // runs off that range on the first line of the body. git never writes such
-    // a header, so weed does not have to make sense of one — it only has to
+    // a header, so weed does not have to make sense of one, it only has to
     // keep counting rather than wrap round to line one, which would put a
     // finding somewhere a reader would believe.
     let mut old_line = old_start;

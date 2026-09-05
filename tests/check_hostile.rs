@@ -5,8 +5,8 @@
 //! changes nothing, a file too big to read twice, CRLF line ends, bytes that are
 //! not text, bytes that are not utf-8, and paths with spaces and quotes in them.
 //!
-//! Every run has to leave with a code the contract names — 0 clean, 2 blocked,
-//! 3 could not run — and a 3 has to say why on one line. A status of 101 is a
+//! Every run has to leave with a code the contract names, 0 clean, 2 blocked,
+//! 3 could not run, and a 3 has to say why on one line. A status of 101 is a
 //! Rust panic, and a panic is a gate that stopped judging without saying so.
 //!
 //! Where weed can judge, this file also says what it must find. A test that only
@@ -19,8 +19,8 @@ use std::path::Path;
 
 use common::{ours, separator, theirs, Repo, Run, BRANCH};
 
-/// The codes weed's contract names. Anything else — above all 101, which is what
-/// a panicking Rust binary leaves with — is a run nobody can read.
+/// The codes weed's contract names. Anything else, above all 101, which is what
+/// a panicking Rust binary leaves with, is a run nobody can read.
 const ALLOWED: [i32; 3] = [0, 2, 3];
 
 /// The one thing every run in this file has to do, whatever it made of the
@@ -33,7 +33,7 @@ fn survives(run: &Run, what: &str) {
         "{what}: weed left with {}, which its contract does not name{}\n{}\n{}",
         run.code,
         if run.code == 101 {
-            " — 101 is a panic"
+            ", 101 is a panic"
         } else {
             ""
         },

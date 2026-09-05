@@ -78,7 +78,7 @@ Used for: X2 naming the blast radius of an out-of-scope change, R2 dead exports 
 
 ## What landed, and what weed does with it
 
-almaty landed the crate on `garden/tilth-core` at `7f38db58696e16c2df2be71da985f47097f34920` and pushed it, so weed's `Cargo.toml` pins that commit as a git dependency and no local patch is needed anywhere. `src/seams/reader.rs` is the only module in weed that names `tilth_core`; it returns the plain data in `src/core/read.rs` — `Outline`, `TestShape`, `Import`, `CallerSite` — and the core compiles with those and no parser behind them. `tests/reader_seam.rs` reads the source tree and refuses a second reference.
+almaty landed the crate on `garden/tilth-core` at `7f38db58696e16c2df2be71da985f47097f34920` and pushed it, so weed's `Cargo.toml` pins that commit as a git dependency and no local patch is needed anywhere. `src/seams/reader.rs` is the only module in weed that names `tilth_core`; it returns the plain data in `src/core/read.rs`, `Outline`, `TestShape`, `Import`, `CallerSite`, and the core compiles with those and no parser behind them. `tests/reader_seam.rs` reads the source tree and refuses a second reference.
 
 Four things about the surface as it shipped shape how the seam reads a file, and a rule that reads through the seam inherits them:
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Evidence for hooks.tend2.html c4: a real Claude Code session, with weed on the
-# Stop hook, refuses a premature done and says why in weed's own words — and
+# Stop hook, refuses a premature done and says why in weed's own words, and
 # ends on its own once the tree is clean.
 #
 # Nothing here is simulated. The session is started with `claude -p`, the hook is
@@ -14,7 +14,7 @@ root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
 
 doc="docs/proof-2026-09.md"
-heading="## claude code — the stop hook, run for real"
+heading="## claude code, the stop hook, run for real"
 # The model the proof runs on. It is a proof of the hook, not of the model, so
 # the cheapest one that can read a sentence will do.
 model="${WEED_PROOF_MODEL:-haiku}"
@@ -137,7 +137,7 @@ fi
 # What happened, written where the loop cites it.
 capture="$work/capture.md"
 {
-  echo "### $(date +%Y-%m-%d) — $(claude --version | head -1), $("$weed" --version)"
+  echo "### $(date +%Y-%m-%d), $(claude --version | head -1), $("$weed" --version)"
   echo
   echo "Both halves ran \`claude -p\` in a temporary repository with the Stop hook"
   echo "pointed at \`weed hook claude\` through \`--settings\`, on model \`$model\`."

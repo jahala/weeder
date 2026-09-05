@@ -1,6 +1,6 @@
-//! The manifest the umbrella reads. F1 asks a bed to declare itself — name,
+//! The manifest the umbrella reads. F1 asks a bed to declare itself, name,
 //! kind, version, install per platform, faces, the check command, the metric
-//! command, the context cost — and the umbrella verifies the bed against what
+//! command, the context cost, and the umbrella verifies the bed against what
 //! it declared. A manifest is only worth reading if what it says is true, so
 //! every claim here is checked against the thing it describes: the version
 //! against `Cargo.toml`, the faces against what the binary prints, the check
@@ -171,7 +171,7 @@ fn the_declared_check_command_emits_sarif_that_validates() {
         "`{declared}` wrote a log that does not validate against SARIF 2.1.0:\n{}",
         complaints.join("\n")
     );
-    // The declared format names a standard and its version — `sarif-2.1.0`.
+    // The declared format names a standard and its version, `sarif-2.1.0`.
     // The log carries that version in its own field, so the two are read
     // against each other rather than both being taken on trust.
     let declared_format = string(&manifest["check"], "format");

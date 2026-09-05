@@ -6,7 +6,7 @@ the working tree, and a file `after/` does not carry is a file the change
 deleted. `after/.weed-commit` is the message of the commit being prepared, for
 the rules that read trailers; it never reaches the tree.
 
-`fire/` is a change the rule must report. `silent/` is its nearest neighbour —
+`fire/` is a change the rule must report. `silent/` is its nearest neighbour , 
 the change that looks like the offence and is not one. A rule with no `silent/`
 fixture has not been shown to discriminate.
 
@@ -29,5 +29,5 @@ repository:
 A label follows the placeholder as it follows the marker, so
 `{{weed:ours}} HEAD` becomes the line git wrote. The binary under test reads the
 real bytes; only the file on disk here is spelled differently. A separator in
-the middle of a line — the one a `silent/` fixture keeps inside a string — is
+the middle of a line, the one a `silent/` fixture keeps inside a string, is
 written out, because that is the case the rule has to let through.

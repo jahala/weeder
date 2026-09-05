@@ -1,4 +1,4 @@
-//! `weed rules` — the catalogue, as weed will apply it.
+//! `weed rules`, the catalogue, as weed will apply it.
 //!
 //! The face and the judgement read the same catalogue and the same defaults, so
 //! this test compares what the binary printed against `Config::default()` rather

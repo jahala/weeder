@@ -1,9 +1,9 @@
-//! T1 — a test was deleted.
+//! T1, a test was deleted.
 //!
 //! Two shapes, in four languages. A test file removed takes every case it held;
 //! a test file that stayed and declares fewer cases lost the difference. The
-//! neighbour does the two honest things that look the same from a distance — a
-//! case renamed where it stands, and a case added — and weed says nothing.
+//! neighbour does the two honest things that look the same from a distance, a
+//! case renamed where it stands, and a case added, and weed says nothing.
 //!
 //! Every number here is counted off the fixture by this file's own reading of
 //! what a case looks like, so the expectation is written independently of the

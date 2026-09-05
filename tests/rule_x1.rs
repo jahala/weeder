@@ -1,4 +1,4 @@
-//! X1 — a secret-looking string was added.
+//! X1, a secret-looking string was added.
 //!
 //! The fire fixture assigns one credential per line: every prefix an issuer
 //! stamps, a private key block, a signed token, and a value that is secret by

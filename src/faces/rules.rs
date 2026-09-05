@@ -1,4 +1,4 @@
-//! `weed rules` — the catalogue, as weed will apply it.
+//! `weed rules`, the catalogue, as weed will apply it.
 //!
 //! Every rule, its default level, the face it belongs to, and the one line it
 //! reports. The levels are read from `Config::default()`, so this face and the

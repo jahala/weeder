@@ -5,7 +5,7 @@
 <title>hooks · weed</title>
 <link rel="stylesheet" href="loop.css">
 <body>
-<noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
 <script type="text/markdown" id="loop">
 # hooks — the harness asks, weed answers
 **Goal.** `weed hook <claude|gemini|codex>` reads a harness hook event as JSON on stdin and answers in the harness's own shape. For a tool call that runs `git commit`, it judges the index and denies with the findings as the reason; for the end of a turn (Stop on Claude Code, AfterAgent on Gemini CLI), it judges the working tree and blocks the stop with the findings, so an agent cannot declare done over a dishonest tree. Codex gets whatever its hook events can deny, and the rest is written down. Every hook is proven with a real harness run recorded in `docs/proof-2026-09.md`.
@@ -21,10 +21,10 @@ Gemini CLI: `BeforeTool` with the same command test, answered with Gemini's deci
 `scripts/proof/claude-stop.sh` starts a real Claude Code session with `--settings` carrying the Stop hook against a fixture repo whose tree carries a block-level finding (a half-finished merge today; a deleted test rides the same path once T1 lands), asks it to say done, and asserts the transcript shows the block with weed's reason; then repairs the tree and asserts the stop is allowed. `scripts/proof/gemini-stop.sh` does the same on Gemini CLI. Both write their captured output into `docs/proof-2026-09.md` under a dated heading.
 
 ## Tests
-- [x] (code) `weed hook claude` denies a `PreToolUse` Bash event whose command runs `git commit` over a red index with the table as the reason, denies `--no-verify` outright, blocks a `Stop` over a red tree and allows it over a clean one, and passes every other event through · tests/hook_claude.rs @74cf803 · by cli
-- [x] (code) `weed hook gemini` handles `BeforeTool` and `AfterAgent` the same way in Gemini's JSON shapes · tests/hook_gemini.rs @7d4b3b7 · by cli
-- [x] (code) `weed hook codex` implements the events Codex can deny and prints a one-line note for the ones it cannot; the note matches the section in `docs/proof-2026-09.md` · tests/hook_codex.rs @610b6f2 · by cli
-- [x] (code) a real Claude Code run with the Stop hook refuses a premature done with weed's findings as the reason and allows it once the tree is clean, captured into `docs/proof-2026-09.md` · scripts/proof/claude-stop.sh @029f703 · by cli
+- [x] (code) `weed hook claude` denies a `PreToolUse` Bash event whose command runs `git commit` over a red index with the table as the reason, denies `--no-verify` outright, blocks a `Stop` over a red tree and allows it over a clean one, and passes every other event through · tests/hook_claude.rs @192932c · by cli
+- [x] (code) `weed hook gemini` handles `BeforeTool` and `AfterAgent` the same way in Gemini's JSON shapes · tests/hook_gemini.rs @aae14ef · by cli
+- [!] (code) `weed hook codex` implements the events Codex can deny and prints a one-line note for the ones it cannot; the note matches the section in `docs/proof-2026-09.md` · tests/hook_codex.rs
+- [x] (code) a real Claude Code run with the Stop hook refuses a premature done with weed's findings as the reason and allows it once the tree is clean, captured into `docs/proof-2026-09.md` · scripts/proof/claude-stop.sh @e63bbd5 · by cli
 - [ ] (human) the owner signs in to Gemini CLI on this machine and runs `scripts/proof/gemini-stop.sh`, which captures a real AfterAgent run refusing a premature done and allowing a clean one into `docs/proof-2026-09.md` · scripts/proof/gemini-stop.sh
 
 ## Needs #check-face

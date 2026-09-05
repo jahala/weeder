@@ -3,12 +3,12 @@
 //! `parse_diff` and `classify_file` are the two doors every face pushes its
 //! input through, and neither may panic: a gate that dies on a shape it did not
 //! expect is a gate that stopped judging without saying so. The property is
-//! always the same — the call returns, with an answer or with an error, and the
+//! always the same, the call returns, with an answer or with an error, and the
 //! answer it returns is consistent with itself.
 //!
-//! The corpus is real. A git repository is built with the shapes that hurt —
+//! The corpus is real. A git repository is built with the shapes that hurt ,
 //! renames, a symlink, a binary file, CRLF, a mode change, a file with no
-//! newline at the end, a deletion — and git's own diffs of it are what the
+//! newline at the end, a deletion, and git's own diffs of it are what the
 //! mutations start from. Bytes weed cannot read as utf-8 arrive as the seam
 //! hands them over: lossy text, with the replacement character where the byte
 //! was.
@@ -69,7 +69,7 @@ proptest! {
 /// the end of the range a line number lives in: counting on from there leaves it.
 const PARSEABLE_NUMBERS: &[&str] = &["0", "1", "7", "4294967294", "4294967295"];
 
-/// Numbers a hunk header can carry that weed cannot read at all — too large for
+/// Numbers a hunk header can carry that weed cannot read at all, too large for
 /// the range, negative, empty, or not a number.
 const UNREADABLE_NUMBERS: &[&str] = &[
     "4294967296",
@@ -91,7 +91,7 @@ fn hostile_number() -> impl Strategy<Value = &'static str> {
     ]
 }
 
-/// The whole diff at once — no fixture is this big, and weed must not care.
+/// The whole diff at once, no fixture is this big, and weed must not care.
 #[test]
 fn a_huge_diff_is_judged_without_falling_over() {
     let mut huge = String::from("diff --git a/src/huge.ts b/src/huge.ts\n");
@@ -223,8 +223,8 @@ fn classify(path: &str, content: &str) {
     }
 }
 
-/// Text made of the pieces a unified diff is built from — whole files with
-/// hunks under them, hunks on their own, and loose lines — so the parser meets
+/// Text made of the pieces a unified diff is built from, whole files with
+/// hunks under them, hunks on their own, and loose lines, so the parser meets
 /// hunks that follow a header as often as hunks that do not, headers with no
 /// file, bodies with no hunk, and every other half-formed shape. Loose lines
 /// alone almost never reach the line counter inside a hunk; a header with a

@@ -5,7 +5,7 @@
 //! work marker in a string is a message, and either one in code is a finding.
 //! weed parses nothing to decide that. The delimiters each language spells its
 //! comments and its literals with are enough to tell the three apart, and the
-//! scan is total — a file that ends inside a string simply ends there.
+//! scan is total, a file that ends inside a string simply ends there.
 //!
 //! The same scan gives a rule its words: an identifier with the character
 //! before it and the one after it, which is what separates `skip` the member
@@ -169,7 +169,7 @@ struct Dialect {
     /// What a backtick opens, where the language has one.
     backtick: Option<Backtick>,
     /// A `'` opens a character literal rather than a string, and only where it
-    /// closes again — anything else is a lifetime.
+    /// closes again, anything else is a lifetime.
     character_literal: bool,
     /// `r"…"`, `r#"…"#`, `br##"…"##`: no escapes, and the hashes decide the end.
     hashed_raw: bool,

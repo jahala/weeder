@@ -7,7 +7,7 @@
 //! `fixture(rule, lang, case)` builds the repository from
 //! `fixtures/adversarial/<RULE>/<lang>/<case>/`: `before/` is committed as HEAD,
 //! `after/` replaces the tree, and files that `after/` does not carry are
-//! deleted. `after/.weed-commit` is the message of the commit being prepared —
+//! deleted. `after/.weed-commit` is the message of the commit being prepared ,
 //! the harness hands it to weed with `--message-file` and never copies it into
 //! the tree, because a pre-commit gate has no commit to read a trailer from.
 //!
@@ -313,7 +313,7 @@ impl Repo {
     }
 }
 
-/// The built binary, run in a directory the caller made — a repository or not.
+/// The built binary, run in a directory the caller made, a repository or not.
 pub fn weed_in(directory: &Path, arguments: &[&str]) -> Run {
     let output = weed_command_in(directory, arguments)
         .output()
@@ -327,7 +327,7 @@ pub fn weed_in(directory: &Path, arguments: &[&str]) -> Run {
 
 /// The built binary, run in a directory the caller made, with an event on its
 /// stdin. A hook is handed its event that way even where no `Repo` built the
-/// directory — a turn can end anywhere, including outside a repository.
+/// directory, a turn can end anywhere, including outside a repository.
 pub fn weed_reading_in(directory: &Path, arguments: &[&str], stdin: &str) -> Run {
     read_from(weed_command_in(directory, arguments), stdin)
 }
@@ -379,7 +379,7 @@ pub fn weed_command_in(directory: &Path, arguments: &[&str]) -> Command {
     command_in(&binary(), directory, arguments)
 }
 
-/// A weed binary a test put somewhere of its own — a copy, so the test can take
+/// A weed binary a test put somewhere of its own, a copy, so the test can take
 /// it away again and see what weed says about a hook naming a binary that is gone.
 pub fn command_in(binary: &Path, directory: &Path, arguments: &[&str]) -> Command {
     let mut command = isolated(Command::new(binary));
@@ -496,8 +496,8 @@ pub fn fixture_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures/adversarial")
 }
 
-/// One file of a fixture, read as the repository will hold it — placeholders
-/// expanded — so a test can work out what it expects from the fixture itself.
+/// One file of a fixture, read as the repository will hold it, placeholders
+/// expanded, so a test can work out what it expects from the fixture itself.
 pub fn fixture_file(rule: &str, lang: &str, case: &str, path: &str) -> String {
     let file = fixture_root().join(rule).join(lang).join(case).join(path);
     let contents = std::fs::read_to_string(&file)

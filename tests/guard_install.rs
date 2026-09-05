@@ -1,4 +1,4 @@
-//! `weed guard install` — the hooks written, and whatever was there kept.
+//! `weed guard install`, the hooks written, and whatever was there kept.
 //!
 //! Every case runs the built binary in a real temp repository and then asks git
 //! itself what it now believes, so the proof is git's configuration and the

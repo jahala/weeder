@@ -1,4 +1,4 @@
-//! C1 — a guardrail was edited.
+//! C1, a guardrail was edited.
 //!
 //! A guardrail decides what the other checks do, so any change to one is the
 //! finding: the workflow, the harness settings, the hook, weed's own law. The

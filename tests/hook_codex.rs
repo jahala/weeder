@@ -1,10 +1,10 @@
-//! `weed hook codex` — the Codex CLI hook event, and the events it cannot refuse.
+//! `weed hook codex`, the Codex CLI hook event, and the events it cannot refuse.
 //!
 //! Codex ships a JSON schema for every hook event's input and output inside its
 //! own binary, and those schemas say plainly which events carry a decision. Two
 //! of them are where weed stands: `PreToolUse` refuses a tool call, `Stop`
 //! refuses the end of a turn. Four carry no decision at all, and a hook wired to
-//! one of those can be heard but cannot refuse — so weed says one line and
+//! one of those can be heard but cannot refuse, so weed says one line and
 //! judges nothing, rather than looking like a gate that is not there.
 //!
 //! `docs/proof-2026-09.md` is where that reading is written down. This file
@@ -22,7 +22,7 @@ const REFUSED: i32 = 2;
 const ALLOWED: i32 = 0;
 
 /// The heading in the proof document that owns codex's hook contract.
-const SECTION: &str = "## codex — what a hook may refuse";
+const SECTION: &str = "## codex, what a hook may refuse";
 /// What the doc's middle column says of an event that takes no decision.
 const NO_DECISION: &str = "no decision";
 /// The two events weed stands at, and so the two the rest of the contract is

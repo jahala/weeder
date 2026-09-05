@@ -29,11 +29,11 @@ jobs:
             exit 1
           fi
           if [ "$NPM_VER" != "$TAG" ]; then
-            echo "::error::npm/package.json is $NPM_VER and the tag is $TAG — the wrapper would fetch a release that is not this one"
+            echo "::error::npm/package.json is $NPM_VER and the tag is $TAG, the wrapper would fetch a release that is not this one"
             exit 1
           fi
           if [ "$GARDEN_VER" != "$TAG" ]; then
-            echo "::error::garden.json is $GARDEN_VER and the tag is $TAG — the umbrella reads the manifest to know what it verified"
+            echo "::error::garden.json is $GARDEN_VER and the tag is $TAG, the umbrella reads the manifest to know what it verified"
             exit 1
           fi
 

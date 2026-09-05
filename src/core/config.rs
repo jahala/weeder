@@ -28,7 +28,7 @@ pub struct Thresholds {
 pub struct Config {
     /// `[rules]`: what the repository set each rule to. It is only ever asked
     /// about a rule by id, never walked, so the order it holds its keys in
-    /// reaches no output — the rules that run and the order they report in come
+    /// reaches no output, the rules that run and the order they report in come
     /// from the catalogue, which is a slice.
     pub rules: HashMap<String, RuleSetting>,
     /// `[scope] allow`: the globs a change may touch; everything else is X2.

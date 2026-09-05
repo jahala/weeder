@@ -1,4 +1,4 @@
-//! `weed hook claude` — the Claude Code hook event, answered in Claude's shape.
+//! `weed hook claude`, the Claude Code hook event, answered in Claude's shape.
 //!
 //! Nothing here is mocked: the events are the JSON Claude Code writes on a
 //! hook's stdin, the repository is real, and what the tests read is the JSON

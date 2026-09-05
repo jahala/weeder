@@ -279,8 +279,8 @@ fn run_hook(args: HarnessArgs) -> Answer {
 /// A panic is a bug in weed, never a verdict, and a gate that dies part way
 /// through judging still has to fail closed: exit 3, one line, and the line says
 /// whose fault it is. The hook leaves through `exit` rather than by letting the
-/// panic unwind, so a release build — which aborts on a panic and would
-/// otherwise leave with a signal — leaves with the same code a debug build does.
+/// panic unwind, so a release build, which aborts on a panic and would
+/// otherwise leave with a signal, leaves with the same code a debug build does.
 fn install_panic_hook() {
     std::panic::set_hook(Box::new(|panic| {
         let mut stderr = std::io::stderr().lock();

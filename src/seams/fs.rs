@@ -54,8 +54,8 @@ pub fn read_text_if_present(path: &Path) -> Result<Option<String>, FsError> {
     }
 }
 
-/// A path with no file to read at it: nothing there, or a directory — a symlink
-/// to one, a submodule — which has no lines and is not an error to be at.
+/// A path with no file to read at it: nothing there, or a directory, a symlink
+/// to one, a submodule, which has no lines and is not an error to be at.
 fn is_nothing_to_read(error: &std::io::Error) -> bool {
     matches!(
         error.kind(),

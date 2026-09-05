@@ -5,7 +5,7 @@
 <title>calibration · weed</title>
 <link rel="stylesheet" href="loop.css">
 <body>
-<noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
 <script type="text/markdown" id="loop">
 # calibration — does the gate deserve to exist
 **Goal.** Before weed is allowed to block anyone, it runs over real history: `weed check --base <parent> --strict` on up to the last 200 commits of the default branch in tilth, pleach, tend2, copeca and umbel. `docs/calibration-2026-09.md` records per repo the commits judged, blocked and warned, and classifies every blocked commit as true positive, acceptable, or false positive. The ship bar is block-level false positives under two percent of the pooled commits across the five repos, with per-repo counts shown; a repo with fewer than 50 commits is reported, not judged alone. The kill bar is reaching that bar only by disabling T1, T2, T3 or S1; then the verdict is written in the file's first sentence and weed does not ship as a gate. The metric command `garden.json` names is this measurement.

@@ -1,9 +1,9 @@
-//! C1 — a guardrail was edited.
+//! C1, a guardrail was edited.
 //!
 //! A guardrail is a file that decides what the other checks do: the workflow
 //! that runs them, the settings an agent harness reads, the hook git calls,
 //! weed's own law. A change there can turn every gate off without touching a
-//! single test, which is why any change to one is the finding — added, edited or
+//! single test, which is why any change to one is the finding, added, edited or
 //! taken away, and whatever it says.
 //!
 //! One file under `.githooks/` is not an edit: the bundle weed itself writes,

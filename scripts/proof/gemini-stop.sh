@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Evidence for hooks.tend2.html c5: a real Gemini CLI session, with weed on the
-# AfterAgent hook, refuses a premature done and says why in weed's own words —
+# AfterAgent hook, refuses a premature done and says why in weed's own words,
 # and ends on its own once the tree is clean.
 #
 # This is the owner's to run. Gemini CLI on this machine has no auth method set,
@@ -16,7 +16,7 @@ root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
 
 doc="docs/proof-2026-09.md"
-heading="## gemini cli — the after-agent hook, run for real"
+heading="## gemini cli, the after-agent hook, run for real"
 limit="${WEED_PROOF_LIMIT:-90}"
 marker="weed hook refused"
 
@@ -135,7 +135,7 @@ fi
 
 capture="$work/capture.md"
 {
-  echo "### $(date +%Y-%m-%d) — gemini-cli $(gemini --version | head -1), $("$weed" --version)"
+  echo "### $(date +%Y-%m-%d), gemini-cli $(gemini --version | head -1), $("$weed" --version)"
   echo
   echo "Both halves ran \`gemini -p\` in a temporary repository, with the AfterAgent"
   echo "hook handed over through \`GEMINI_CLI_SYSTEM_SETTINGS_PATH\`."

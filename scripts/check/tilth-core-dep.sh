@@ -2,7 +2,7 @@
 # Evidence for tilth-core.tend2.html c2: weed reads code through the crate it
 # pins, and through nothing else. The manifest names the git dependency and the
 # commit; the resolved graph agrees, which is what catches a patch or a path
-# override wherever it was written — a `[patch]` table, a `[replace]` entry, or
+# override wherever it was written, a `[patch]` table, a `[replace]` entry, or
 # a .cargo/config.toml on this machine. Then the build runs, because a pin that
 # does not compile is not a dependency.
 set -euo pipefail

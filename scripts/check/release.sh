@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Evidence for garden-fit: the release pipeline, in tilth's shape.
 #
-# Nothing here is run against GitHub — that is the owner's action — so the
+# Nothing here is run against GitHub, that is the owner's action, so the
 # workflows are proved the only ways they can be proved on this machine: they
 # parse and pass actionlint, and the claims that matter are read out of the yaml
 # and checked against the repository they release. A workflow that names a
@@ -146,7 +146,7 @@ for _, job, _ in steps(release):
             matrix.add(entry["target"])
 if matrix != set(declared):
     complaints.append(
-        "release.yml's build matrix and garden.json's install targets disagree — "
+        "release.yml's build matrix and garden.json's install targets disagree, "
         f"only in the workflow: {sorted(matrix - set(declared))}; "
         f"only in the manifest: {sorted(set(declared) - matrix)}"
     )

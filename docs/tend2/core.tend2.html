@@ -5,7 +5,7 @@
 <title>core · weed</title>
 <link rel="stylesheet" href="loop.css">
 <body>
-<noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
 <script type="text/markdown" id="loop">
 # core — the pure model of a diff
 **Goal.** A crate whose core does no I/O and never panics on input: `parse_diff` turns unified diff text into hunks with old and new line numbers; `classify_file` names a path's kind and language; `Finding` is the one shape every rule produces; `weed.toml` parses into a typed config with defaults that ship in the binary; suppressions parse from commit trailers and inline comments. Everything a rule needs is a value handed in, so a rule is a function from data to findings.
@@ -34,7 +34,7 @@ Suppressions: a commit trailer `Weed-allow: T2 <reason>` or an inline `weed-allo
 - 2026-09-05 chose our own diff parser over shelling to a library: the input is always git's own unified format and the parser is a few hundred lines that the tests pin exactly
 - 2026-09-05 chose `git2` for the seams later, not here; core never sees a repository
 - 2026-09-05 built by pleach node `core` (codex builder, gpt-5.5 default) in two attempts, 6 minutes; the smoke gate stamped all five checks and the node was quarantined only because the emitted audit command lacked the runner template (tend2 emit-plan bug, patched in the plans). Landed from `quarantine/core` after the conductor's review
-- 2026-09-05 review fixes applied inline by the conductor and re-verified: a Rust file with an inline `#[cfg(test)]` module was classified as a test file, which would have blinded S1 on its production code — now `prod` with `has_inline_tests`; the config accepted two spellings for each of scope, deps and guard keys — now one, and `[deps]` gained the `layers` map D2 needs; a helper that returned the same string on both branches was removed
+- 2026-09-05 review fixes applied inline by the conductor and re-verified: a Rust file with an inline `#[cfg(test)]` module was classified as a test file, which would have blinded S1 on its production code, now `prod` with `has_inline_tests`; the config accepted two spellings for each of scope, deps and guard keys, now one, and `[deps]` gained the `layers` map D2 needs; a helper that returned the same string on both branches was removed
 - 2026-09-05 known limit, kept honest: a `diff --git` header with quoted paths (spaces or unusual bytes) fails the whole parse, which the face turns into exit 3 rather than a partial judgement; lifting it is a later loop
 - 2026-09-05 the shared fixture harness `tests/common/mod.rs` was named in this loop's first Tried line but not delivered, because a Tried line is not a check; it moves to check-face, the first loop that drives the binary on fixture repos
 </script>

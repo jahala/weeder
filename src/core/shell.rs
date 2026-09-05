@@ -2,7 +2,7 @@
 //!
 //! weed runs nothing here. A harness hands its hook the text of a command an
 //! agent is about to run, and weed has to know whether that text asks git for a
-//! commit — behind an `&&`, down a pipe, inside a `bash -lc` a wrapper built, or
+//! commit, behind an `&&`, down a pipe, inside a `bash -lc` a wrapper built, or
 //! nowhere at all because the words only sit inside an `echo`. Quoting is what
 //! makes that question hard, so quoting is what this module does: the words a
 //! shell would build, grouped into the commands it would run.
@@ -54,8 +54,8 @@ enum Token {
 }
 
 /// The words and the breaks between them, with quoting taken off and the parts
-/// a shell would not hand the program — redirections, here-document bodies,
-/// comments — left out.
+/// a shell would not hand the program, redirections, here-document bodies,
+/// comments, left out.
 fn tokens(line: &str) -> Vec<Token> {
     let chars: Vec<char> = line.chars().collect();
     let mut tokens = Vec::new();
