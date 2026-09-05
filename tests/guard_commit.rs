@@ -10,15 +10,14 @@ use common::{conflicted_parser, Repo};
 
 /// A repository with the hooks installed and already committed.
 ///
-/// `install` writes the hooks into the working tree so a clone gets them, and
-/// a hook is a guardrail, so the commit that first carries them is a C1 finding
-/// the gate itself would refuse. Installing weed is therefore one deliberate
-/// commit that skips the gate; everything after it goes through.
+/// `install` writes the hooks into the working tree so a clone gets them. A
+/// hook is a guardrail path, but C1 knows the bundle weed writes byte for byte,
+/// so the commit that first carries the hooks goes through the gate the hooks
+/// themselves run: adopting weed is an ordinary commit.
 fn guarded() -> Repo {
     let repo = Repo::init();
     repo.weed(&["guard", "install"]);
-    repo.stage_all();
-    repo.git(&["commit", "--no-verify", "-m", "weed guard installed"]);
+    repo.commit("weed guard installed");
     repo
 }
 
