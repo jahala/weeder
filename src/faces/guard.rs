@@ -412,7 +412,7 @@ fn judgement(
         tip,
         scope: Vec::new(),
         strict: true,
-        format: check::Format::Table,
+        format: crate::faces::Format::Table,
         config: None,
         message_file: None,
         version: version.to_string(),

@@ -175,6 +175,54 @@ pub fn commit_messages(root: &Path, base: &str, tip: &str) -> Result<Vec<String>
         .collect())
 }
 
+/// Every file the tree holds, as git sees it: what is tracked, and what is
+/// untracked and not ignored. A scan judges the repository as it is, so a file
+/// a worker wrote and never staged counts, and a file the ignore rules hide is
+/// not part of the tree at all.
+pub fn tree_files(root: &Path) -> Result<Vec<String>, GitError> {
+    let listed = run_lossy(
+        root,
+        &[
+            "ls-files",
+            "-z",
+            "--cached",
+            "--others",
+            "--exclude-standard",
+        ],
+    )?;
+    // `-z` so a path with a newline or a quote in it arrives whole. git lists
+    // a path once per index entry, and a file staged in more than one is still
+    // one file.
+    let mut paths: Vec<String> = listed
+        .split('\u{0}')
+        .filter(|path| !path.is_empty())
+        .map(ToString::to_string)
+        .collect();
+    paths.sort();
+    paths.dedup();
+    Ok(paths)
+}
+
+/// When each line of a file was last touched, as seconds since the epoch, in
+/// line order. A path git will not blame — untracked, or gone — has no ages,
+/// and a rule that needs one reports nothing rather than guessing.
+pub fn blame_line_times(root: &Path, path: &str) -> Result<Vec<i64>, GitError> {
+    let arguments = ["blame", "--line-porcelain", "--", path];
+    let attempt = attempt(root, &arguments)?;
+    if attempt.code != 0 {
+        return Ok(Vec::new());
+    }
+    // The porcelain form writes one header block per line of the file, and
+    // `author-time` inside it. The file's own text arrives on lines opening
+    // with a tab, so a source line that itself starts with `author-time` can
+    // never be read as a header.
+    Ok(String::from_utf8_lossy(&attempt.stdout)
+        .lines()
+        .filter_map(|line| line.strip_prefix("author-time "))
+        .filter_map(|seconds| seconds.trim().parse::<i64>().ok())
+        .collect())
+}
+
 /// Where this repository looks for its hooks.
 pub fn hooks_path(root: &Path) -> Result<PathBuf, GitError> {
     let path = run(root, &["rev-parse", "--git-path", "hooks"])?;

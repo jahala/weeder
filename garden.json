@@ -25,7 +25,8 @@
     "check",
     "guard",
     "hook",
-    "rules"
+    "rules",
+    "scan"
   ],
   "skill": "SKILL.md",
   "check": {

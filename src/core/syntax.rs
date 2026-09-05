@@ -74,6 +74,13 @@ impl Mask {
         self.view(line, |syntax| syntax == Syntax::Literal)
     }
 
+    /// What the 1-based line's comments hold, with the program blanked. This is
+    /// what somebody wrote to whoever reads the file next.
+    #[must_use]
+    pub fn comments(&self, line: u32) -> String {
+        self.view(line, |syntax| syntax == Syntax::Comment)
+    }
+
     fn view(&self, line: u32, keep: impl Fn(Syntax) -> bool) -> String {
         let Some(index) = (line as usize).checked_sub(1) else {
             return String::new();

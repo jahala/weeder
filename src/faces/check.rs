@@ -23,25 +23,8 @@ use crate::core::suppress::{
     apply_suppressions, parse_commit_suppressions, parse_inline_suppressions,
     InlineSuppressionError, Suppression,
 };
-use crate::faces::{read_config, Answer};
+use crate::faces::{read_config, Answer, Format};
 use crate::seams::{fs, git, reader};
-
-/// How the findings are written.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Format {
-    Sarif,
-    Table,
-}
-
-/// SARIF when stdout is not a terminal, a table when it is, and `--format`
-/// overrides both. A machine reading a pipe gets the log; a person gets the table.
-pub fn format_for(requested: Option<Format>, stdout_is_terminal: bool) -> Format {
-    match requested {
-        Some(format) => format,
-        None if stdout_is_terminal => Format::Table,
-        None => Format::Sarif,
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Request {

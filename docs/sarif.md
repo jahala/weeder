@@ -21,9 +21,10 @@ the test fails, so a consumer never has to guess what weed meant.
 | the region | `region.startLine`, plus `endLine` when the finding spans lines | `tests/sarif_shape.rs::location_is_a_repo_relative_uri_with_a_region` |
 | fixes | a `fixes` entry over the finding's region when the fix is mechanical | `tests/sarif_shape.rs::a_mechanical_fix_becomes_a_fixes_entry_over_the_finding_s_region` |
 | suppressions | a `suppressions` entry of kind `inSource` carrying the reason as `justification` | `tests/sarif_shape.rs::a_suppressed_result_carries_the_reason_as_an_in_source_justification` |
+| the result's own path | `properties.path`, the same uri the location carries, so a consumer aggregating per file never reaches three levels into a location to do it | `tests/scan_face.rs::every_result_carries_its_path_for_a_consumer_that_aggregates_by_file` |
 | the invocation | `executionSuccessful`, the `exitCode`, and `toolExecutionNotifications` when weed could not run | `tests/sarif_shape.rs::the_invocation_reports_the_exit_code_and_the_reason_weed_could_not_run` |
 | the order of results | sorted by `artifactLocation.uri`, then `region.startLine`, then `ruleId`, then the message | `tests/sarif_order.rs::results_are_ordered_by_file_then_line_then_rule` |
-| the same bytes twice | the same diff, tree and config write the same log in any locale, any time zone, any process | `tests/determinism.rs::every_fixture_answers_the_same_bytes_in_every_locale_and_time_zone` |
+| the same bytes twice | the same diff, tree and config write the same log in any locale, any time zone, any process | `tests/determinism.rs::every_fixture_answers_the_same_bytes_in_every_locale_and_time_zone` and `tests/scan_face.rs::a_scan_writes_the_same_bytes_in_every_locale_and_time_zone` |
 | schema validity | an empty log validates | `tests/sarif_schema.rs::empty_log_validates_against_the_vendored_schema` |
 | schema validity | a single finding validates | `tests/sarif_schema.rs::single_finding_log_validates_against_the_vendored_schema` |
 | schema validity | many findings across levels validate | `tests/sarif_schema.rs::many_findings_across_levels_validate_against_the_vendored_schema` |
