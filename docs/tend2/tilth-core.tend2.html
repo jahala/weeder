@@ -33,6 +33,8 @@ The crate does not exist when this loop is shaped. The proposal is a branch `til
 - [ ] (code) `src/seams/reader.rs` is the only file in `src/` that references `tilth_core`, and `src/core/` compiles with the reader's data types only · tests/reader_seam.rs
 - [ ] (code) the reader returns outline entries, test shape, imports and callers for one small file in each of ts, py, rs and go, asserted against the fixture's known contents · tests/reader_langs.rs
 
+## Needs #core
+
 ## Tried
 - 2026-09-05 the brief named the modules on an older branch of tilth (`src/read/outline/`, `src/search/symbol.rs`, `src/search/deps.rs`, `src/types.rs::is_test_file`, `src/search/blast.rs`); on main the shared language infrastructure has since moved to `src/lang/`, so the extraction follows main's layout, not the brief's file list
 - 2026-09-05 tilth's `main` trips one clippy lint on rustc 1.98 (`manual_is_variant_and` in `src/overview.rs:693`) that its CI toolchain did not know; the extraction plan fixes that one line so the CI trio can be the gate
