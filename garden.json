@@ -2,7 +2,10 @@
   "$schema": "schemas/garden.schema.json",
   "name": "weed",
   "summary": "weed reads what an agent produced and refuses dishonest growth, as SARIF, in milliseconds.",
-  "kind": ["gate", "hook"],
+  "kind": [
+    "gate",
+    "hook"
+  ],
   "version": "0.1.0",
   "install": {
     "npm": "npm install -g weed",
@@ -18,7 +21,12 @@
       }
     }
   },
-  "faces": ["check", "guard", "hook", "rules"],
+  "faces": [
+    "check",
+    "guard",
+    "hook",
+    "rules"
+  ],
   "skill": "SKILL.md",
   "check": {
     "command": "weed check --format sarif",
@@ -30,18 +38,6 @@
   },
   "context_cost": 0,
   "flagged": [
-    {
-      "what": "the name weed",
-      "why": "the bed is named for what it does to a diff; the owner has not confirmed it, and the npm and crates.io names follow whatever is settled."
-    },
-    {
-      "what": "the accent bramble #8E3B5E",
-      "why": "three candidates are measured in .brand/products/weed/colors.md; the umbrella's Product Accents table is where a claim becomes real, and the owner writes that row."
-    },
-    {
-      "what": "the licence, MIT",
-      "why": "LICENSE carries MIT and names the owner. The owner confirms the licence before anything is published."
-    },
     {
       "what": "schemas/garden.schema.json",
       "why": "the manifest schema belongs to the contracts repository, which does not exist yet. This copy is the proposal, and the shape may still move."

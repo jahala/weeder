@@ -28,7 +28,7 @@ Modules live on the children. [tilth-core](tilth-core.tend2.html) is the parsing
 - [ ] (code) every rule the catalogue prints (`weed rules`) has a fire and a silent fixture for each of ts, py, rs and go under `fixtures/adversarial/`, and one test walks that matrix, replays each fixture through the real binary and asserts the expected result set · tests/catalogue_matrix.rs
 - [ ] (code) `weed check --base <root-commit> --format sarif` on weed's own tree reports nothing at block level, and the log validates against the vendored SARIF schema · tests/self_check.rs
 - [ ] (code) `weed check --staged` finishes in under 200 milliseconds wall-clock on a typical fixture diff and under 2 seconds on the worst case (a 50-file diff, a 20 MiB file), measured on the release binary, and the CI workflow runs this test so a regression fails the build · tests/speed.rs
-- [ ] (human) the owner confirms the name weed, chooses its accent from the measured candidates in `.brand/products/weed/colors.md`, and confirms MIT [flagged]
+- [x] (human) the owner confirms the name weed, chooses its accent, and confirms MIT @2ea01bc · by human:human:owner
 
 ## Children #tilth-core #core #sarif #check-face #rules-block #rules-tests #rules-prod #guard #hooks #scan #hardening #calibration #recall #calibration-audit #bite #garden-fit
 
@@ -46,5 +46,6 @@ Modules live on the children. [tilth-core](tilth-core.tend2.html) is the parsing
 - 2026-09-05 with core, sarif and check-face landed and the reader seam waiting on almaty, guard, hooks and garden-fit were re-pointed to run on G1 rather than wait for rules-block; the rule loops and scan still wait for the seam
 - 2026-09-05 milestone 1 met by almaty: tilth-core exists on `garden/tilth-core` at 7f38db5, pushed, so weed pins a rev and carries no machine-specific line; the push the owner was asked for is done by the tilth agent's PR
 - 2026-09-05 cape-town added six binding checks on the umbrella loop (determinism, recall by mutation injection, never panic, a latency budget, independent classification, suppression-rate tracking); they landed here as the hardening, recall and calibration-audit loops, a suppression-rate check on calibration, the latency budget above, and a CI clause on garden-fit
+- 2026-09-05 the owner settled all three reserved decisions through cape-town on the channel: the name weed, the accent bramble `#8E3B5E`, the licence MIT. The human check is approved on that word; the only owner-only actions left are on GitHub (publish, Pages), and the owner asked for the branch to be pushed and a draft pull request opened, which is done (#1)
 </script>
 <script src="loop.js"></script>

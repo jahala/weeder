@@ -3,7 +3,7 @@ brand:
   # plotplot is the umbrella brand and the brand repo.
   source: https://github.com/jahala/plotplot-ai.git
   version: v2.0.0
-  # weed's product layer is authored in the umbrella at .brand/products/weed/
-  # and arrives with the fetch — do not re-author it here.
+  # weed's product layer is canonical in the weed repo at .brand/products/weed/;
+  # the umbrella holds a staging copy. Commit the layer here; ignore the rest of .brand/.
   product: weed
   overrides: {}

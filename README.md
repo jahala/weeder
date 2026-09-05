@@ -104,16 +104,9 @@ it as-is.
 
 ## What is not settled
 
-This repository carries four claims the owner has not confirmed. Each is marked **[flagged]**
-where it is made, and none of them should be treated as final:
+The name weed, the accent bramble and the MIT licence were confirmed by the owner on
+2026-09-05. One claim is still open, marked **[flagged]** where it is made:
 
-- **The licence.** `LICENSE` is MIT and names the owner, and MIT is the working assumption
-  rather than a decision. **[flagged]**
-- **The name.** `weed` reads as the verb, and nothing has been published under it.
-  **[flagged]**
-- **The accent.** Three candidates are measured against the palette in
-  `.brand/products/weed/colors.md`; bramble is the proposal. A product accent is only real
-  once it is written into the umbrella's own table. **[flagged]**
 - **The manifest schema.** `schemas/garden.schema.json` is a vendored proposal. The real one
   belongs to a contracts repository that does not exist yet. **[flagged]**
 
