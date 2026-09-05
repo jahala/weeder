@@ -38,6 +38,10 @@ pub struct Config {
     /// `[deps] allow`: the import directions between layers that are permitted; D2 flags the rest.
     pub dependency_directions: Vec<DependencyDirection>,
     pub thresholds: Thresholds,
+    /// `[docs] commands`: the commands R1 resolves a cited command and flag
+    /// against, by reading each one's own `--help`. Empty leaves a cited
+    /// command alone: weed has no authority to resolve it against.
+    pub doc_commands: Vec<String>,
     /// `[guard] protected`: branches guard refuses to rewrite or push non-fast-forward to.
     pub protected_branches: Vec<String>,
 }
@@ -72,6 +76,7 @@ impl Default for Config {
                 todo_age_days: 30,
                 dependency_lag: 3,
             },
+            doc_commands: Vec::new(),
             protected_branches: vec!["main".to_string(), "master".to_string()],
         }
     }
@@ -130,6 +135,21 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
             config.thresholds.dependency_lag = value;
         }
     }
+    if let Some(docs) = raw.docs {
+        if let Some(commands) = docs.commands {
+            for command in &commands {
+                if command.trim().is_empty() || command.split_whitespace().count() != 1 {
+                    return Err(ConfigError {
+                        key: "docs.commands".to_string(),
+                        message: format!(
+                            "`{command}` is not a command weed can run. name the program alone; weed passes its own arguments and never goes through a shell"
+                        ),
+                    });
+                }
+            }
+            config.doc_commands = commands;
+        }
+    }
     if let Some(guard) = raw.guard {
         if let Some(branches) = guard.protected {
             config.protected_branches = branches;
@@ -186,6 +206,7 @@ struct RawConfig {
     scope: Option<RawScope>,
     deps: Option<RawDeps>,
     thresholds: Option<RawThresholds>,
+    docs: Option<RawDocs>,
     guard: Option<RawGuard>,
 }
 
@@ -214,6 +235,12 @@ struct DependencyDirectionToml {
 struct RawThresholds {
     todo_age_days: Option<u32>,
     dependency_lag: Option<u32>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawDocs {
+    commands: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]

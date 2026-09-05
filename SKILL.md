@@ -1,14 +1,15 @@
 ---
 name: weed
-description: Run weed to judge a diff before a human reads it, refusing deleted or weakened tests, skips, stubs, swallowed errors, secrets, guardrail edits and dependency-direction violations, reported as SARIF and decided by an exit code.
+description: Run weed to judge a diff or a whole repository before a human reads it, refusing deleted or weakened tests, skips, stubs, swallowed errors, secrets, guardrail edits and dependency-direction violations, reported as SARIF and decided by an exit code.
 ---
 
 # weed
 
 weed reads what an agent produced and refuses growth that should not be there. It
-parses nothing itself, spends no tokens, and answers in milliseconds. Three faces
-sit on one core: `check` judges a diff and may block, `guard` puts that judgement
-inside git, `hook` answers an agent harness. `rules` prints the catalogue.
+parses nothing itself, spends no tokens, and answers in milliseconds. Four faces
+sit on one core: `check` judges a diff and may block, `scan` judges the repository
+as it is and never blocks, `guard` puts that judgement inside git, `hook` answers
+an agent harness. `rules` prints the catalogue.
 
 Exit codes carry the verdict, and they are the same on every face:
 
@@ -43,6 +44,41 @@ weed check --base origin/main --strict --format sarif > weed.sarif
 weed check --staged
 weed check --scope 'src/parser/**' --scope 'tests/parser/**'
 ```
+
+## scan: judge the repository as it is
+
+`weed scan` reads the tree rather than a diff, and reports what the repository
+has become: documentation citing a path, command, flag or symbol that no longer
+resolves, an export nothing references, a work marker older than the configured
+age, a dependency pin the registry left behind. None of that is one change's
+fault, so none of it may stop one — every finding is a warning and the run leaves
+with 0, or with 3 when weed could not read the repository at all.
+
+Whether a change is staged, unstaged or committed makes no difference: a scan is
+about the state, not about the change.
+
+| Flag | What it does |
+|---|---|
+| `--rules <ids>` | run these scan rules alone. Repeat the flag, or separate ids with a comma |
+| `--format <format>` | `sarif` or `table`, rather than choosing by what stdout is |
+| `--config <path>` | read `weed.toml` from here instead of the repository root |
+| `--refresh-snapshot` | ask the registries for the latest release of everything the manifests pin, write `.weed/registry-snapshot.json`, then scan against it |
+
+```bash
+weed scan --format sarif > hygiene.sarif
+weed scan --rules R1,R3
+weed scan --refresh-snapshot
+```
+
+R4 compares a pin against `.weed/registry-snapshot.json`, a file the repository
+commits, and never against a registry: a scan that reached the network would
+answer differently on every machine. `--refresh-snapshot` is the one command that
+goes and asks, and it asks through `curl`.
+
+R1 resolves a cited command and its flags against that command's own `--help`,
+and only for the commands `[docs] commands` names in `weed.toml`. With none
+named, a cited command is left alone — weed has no authority to resolve it
+against.
 
 ## guard: the law in git
 

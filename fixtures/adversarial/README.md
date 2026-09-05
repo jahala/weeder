@@ -10,6 +10,10 @@ the rules that read trailers; it never reaches the tree.
 the change that looks like the offence and is not one. A rule with no `silent/`
 fixture has not been shown to discriminate.
 
+A rule on the `scan` face judges the tree rather than a diff, so its fixture has
+one state and not two: `before/` alone, committed as HEAD and left in place as
+the working tree. `after/` is absent, and the harness knows to stop there.
+
 `tests/common/mod.rs` builds the repository. Nothing here is copied by hand.
 
 ## Conflict markers

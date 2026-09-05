@@ -170,6 +170,16 @@ pub struct SarifResult {
     pub fixes: Option<Vec<SarifFix>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub suppressions: Option<Vec<SarifSuppression>>,
+    pub properties: ResultProperties,
+}
+
+/// What a consumer needs about a result that SARIF has no field of its own for.
+/// The path is already in the location; it is repeated here because aggregating
+/// per file is the first thing every consumer does, and reaching three levels
+/// into a location to do it is how a consumer ends up parsing weed wrong.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ResultProperties {
+    pub path: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -437,6 +447,9 @@ fn result(finding: &Finding, catalogue: &[Rule]) -> SarifResult {
                 justification: suppression.reason.clone(),
             }]
         }),
+        properties: ResultProperties {
+            path: finding.path.clone(),
+        },
     }
 }
 

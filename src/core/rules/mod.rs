@@ -9,6 +9,7 @@ use crate::core::config::{Config, RuleSetting};
 use crate::core::finding::Level;
 
 pub mod check;
+pub mod scan;
 
 /// The level a rule reports at, or `None` when the config turns it off.
 pub fn configured_level(rule: &Rule, config: &Config) -> Option<Level> {
