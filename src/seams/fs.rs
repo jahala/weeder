@@ -37,6 +37,19 @@ pub fn read_if_present(path: &Path) -> Result<Option<String>, FsError> {
     }
 }
 
+/// A file's text, or `None` where there is no such file and where what is there
+/// is not text. weed judges lines, and bytes that are not text carry none.
+pub fn read_text_if_present(path: &Path) -> Result<Option<String>, FsError> {
+    match std::fs::read(path) {
+        Ok(bytes) => Ok(String::from_utf8(bytes).ok()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(FsError {
+            path: path.display().to_string(),
+            message: error.to_string(),
+        }),
+    }
+}
+
 /// Whether a path is there at all.
 pub fn exists(path: &Path) -> bool {
     path.exists()

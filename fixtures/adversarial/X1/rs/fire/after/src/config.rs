@@ -1,0 +1,12 @@
+pub const REGION: &str = "eu-west-1";
+pub const ACCESS_KEY_ID: &str = "{{weed:cloud-id}}";
+pub const FORGE_TOKEN: &str = "{{weed:forge-token}}";
+pub const FORGE_PAT: &str = "{{weed:forge-pat}}";
+pub const MODEL_KEY: &str = "{{weed:model-key}}";
+pub const CHAT_TOKEN: &str = "{{weed:chat-token}}";
+pub const MAPS_KEY: &str = "{{weed:maps-key}}";
+pub const PIPELINE_TOKEN: &str = "{{weed:pipeline-token}}";
+pub const REGISTRY_TOKEN: &str = "{{weed:registry-token}}";
+pub const BEARER: &str = "{{weed:signed-token}}";
+pub const SIGNING_KEY: &str = "{{weed:key-block}}";
+pub const SESSION_TOKEN: &str = "{{weed:disordered}}";
