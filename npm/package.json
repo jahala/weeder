@@ -1,5 +1,5 @@
 {
-  "name": "weed",
+  "name": "@plotplot/weed",
   "version": "0.1.0",
   "description": "The judge of the diff, refuses deleted tests, skips, stubs, swallowed errors and secrets, as SARIF",
   "bin": {
@@ -24,5 +24,8 @@
     "static-analysis",
     "ai-agents"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

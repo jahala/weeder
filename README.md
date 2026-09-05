@@ -32,12 +32,14 @@ implementation belongs.
 ## Install
 
 ```bash
-npm install -g weed
+npm install -g @plotplot/weed
 cargo install weed
 ```
 
 Release binaries are published for linux, macos and windows on x86_64 and aarch64; the npm
-wrapper in `npm/` fetches the one for your platform.
+wrapper in `npm/` fetches the one for your platform. The npm package is scoped under the garden's
+org because the bare name was taken years ago by an empty placeholder; the crate and the binary
+are plain `weed`.
 
 ## The faces
 
@@ -121,6 +123,14 @@ itself, and the rules any change here is held to. The plan and the proof live as
 `docs/tend2/`; evidence scripts a loop cites live in `scripts/check/`; the adversarial
 fixtures every rule is built from live in `fixtures/adversarial/`. `garden.json` is what the
 umbrella reads to verify weed belongs to the garden.
+
+## Support
+
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/jahala)
+
+## License
+
+MIT. See [LICENSE](./LICENSE).
 
 ## The garden
 
