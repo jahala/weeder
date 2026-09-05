@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>guard · weed</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# guard — the law in git
+**Goal.** `weed guard install` puts weed's judgement where no harness can route around it: git hooks through `core.hooksPath`. Pre-commit runs `weed check --staged --strict`; pre-push runs `weed check --strict --base <upstream>` and refuses a non-fast-forward push to a protected branch; pre-rebase refuses rewriting protected history. `guard status` proves each hook is live; `guard uninstall` restores what was there. The only bypass, `--no-verify`, is denied by the harness hook (the hooks loop) and by the bundle the stem generates.
+
+## Shape
+
+```
+weed guard install [--hooks-dir .githooks] [--protect <branch>...]
+weed guard status
+weed guard uninstall
+```
+
+`install` writes `.githooks/pre-commit`, `.githooks/pre-push` and `.githooks/pre-rebase` as small POSIX shell scripts that call the `weed` binary by the absolute path it resolves at install time (with a fallback lookup on `PATH` named in the script so a moved binary is a clear error, not a silent skip), sets `core.hooksPath` to the directory, and records the previous `core.hooksPath` in `.git/weed/previous-hooks-path` so `uninstall` can restore it. Protected branches come from `weed.toml` `[guard].protected` and default to the repository's default branch. `status` reports for each hook: present, executable, points at a binary that runs, and `core.hooksPath` set; any miss is named and the exit code is 2.
+
+## What each hook refuses
+
+Pre-commit: any block-level finding in the index. Pre-push: any block-level finding between the upstream and the pushed ref, and any push to a protected branch whose remote ref is not an ancestor of the local ref (a non-fast-forward, including force). Pre-rebase: any rebase whose upstream or branch is protected. Each refusal prints the table and one line naming the hook and what to do.
+
+## Tests
+- [ ] (code) `install` writes the three hooks, sets `core.hooksPath`, and records the previous value; `status` reports each hook live; `uninstall` restores the previous `core.hooksPath` and removes only the files it wrote · tests/guard_install.rs
+- [ ] (code) in a fixture repo the installed pre-commit refuses a commit that deletes a test, prints the findings, and allows a clean commit · tests/guard_commit.rs
+- [ ] (code) against a real bare remote the installed pre-push refuses a non-fast-forward push to a protected branch and a push whose range carries a block-level finding, and allows a clean fast-forward · tests/guard_push.rs
+- [ ] (code) the installed pre-rebase refuses rebasing a protected branch and allows rebasing a feature branch · tests/guard_rebase.rs
+- [ ] (code) `status` exits 2 and names the miss when a hook is missing, not executable, or `core.hooksPath` points elsewhere · tests/guard_status.rs
+
+## Needs #rules-block
+
+## Tried
+- 2026-09-05 hooks are shell scripts calling the binary rather than copies of the binary: a copied binary goes stale on upgrade, a script that names a path fails loudly
+- 2026-09-05 the earlier hedge bed's deny list of shell patterns was folded into this loop and the harness hooks (umbrella Tried, 2026-09-05): a pattern list loses to `bash -c`, git hooks do not
+</script>
+<script src="loop.js"></script>

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sarif · weed</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# sarif — every finding in the format everyone already reads
+**Goal.** weed has no findings schema of its own. `sarif::render(findings, context) -> Log` produces SARIF 2.1.0 that validates against the official schema vendored at `schemas/sarif-schema-2.1.0.json`, so GitHub code scanning, every editor and every CI read weed without an adapter. A terminal gets a table instead. `docs/sarif.md` records the conventions so a consumer never guesses.
+
+## Conventions
+
+One run per invocation. The tool component is `weed` with its version and a `rules` array listing every rule in the catalogue with `id`, `shortDescription`, `fullDescription`, `defaultConfiguration.level` (`error` for block, `warning` for warn) and `helpUri` pointing at `docs/rules.md#<id>`. Each result carries `ruleId`, `ruleIndex`, `level` (`error` for block, `warning` for warn, `note` for a suppressed finding), `message.text` in the what/why/next shape, one `physicalLocation` with a repo-relative `artifactLocation.uri` and a `region` (`startLine`, and `endLine` when the finding spans lines), and `fixes` when the fix is mechanical (a removed skip, a removed conflict marker). A suppressed finding also carries a `suppressions` entry of kind `inSource` with the reason as `justification`. `invocations[0].executionSuccessful` is false and `exitCode` is 3 when weed could not run, and the reason is in `toolExecutionNotifications`.
+
+## The table
+
+When stdout is a terminal, or `--format table` is given, one line per finding: level, rule id, `path:line`, then the message's what. Block findings first, then warnings, then notes; within a level by path then line. A final line counts each level. Nothing else.
+
+## Tests
+- [ ] (code) `sarif::render` output validates against `schemas/sarif-schema-2.1.0.json` for an empty log, a single finding, many findings across levels, a finding with a fix, a suppressed finding, and a could-not-run log · tests/sarif_schema.rs
+- [ ] (code) each result carries rule id and index, the level mapping (block→error, warn→warning, suppressed→note), a repo-relative uri with a region, a what/why/next message, `fixes` when mechanical, and `suppressions` with the reason when suppressed; the tool component lists every catalogue rule with its default level · tests/sarif_shape.rs
+- [ ] (code) the table renders one line per finding in level-then-path-then-line order and ends with a count per level · tests/sarif_table.rs
+- [ ] (code) `docs/sarif.md` names every convention above and, for each, the test function that pins it; a script checks each named test exists · scripts/check/docs-sarif.sh
+
+## Tried
+- 2026-09-05 schema validation runs in-process with the `jsonschema` crate against the vendored file, never against the network; the schema is draft-04 and the crate supports it
+- 2026-09-05 no `partialFingerprints` in v1: GitHub derives them from location when absent, and a stable fingerprint across renames is a later loop
+</script>
+<script src="loop.js"></script>
