@@ -1,11 +1,11 @@
-//! T5 — expected values were regenerated.
+//! T5, expected values were regenerated.
 //!
 //! A snapshot is an expectation nobody typed: the runner wrote it down the
 //! first time and compares against it forever after. Accepting a new one is a
 //! single keystroke, and it turns a failing test green without anyone deciding
 //! that the new output is right.
 //!
-//! On its own that is housekeeping — a file renamed, a fixture extended — so
+//! On its own that is housekeeping, a file renamed, a fixture extended, so
 //! weed says nothing. It is the pairing that reads badly: the code changed and
 //! the expectation moved with it, in the same change, which is the shape of an
 //! expectation that was made to agree rather than checked. The finding lands on

@@ -77,7 +77,7 @@ impl Mask {
     /// The literals of the 1-based line, one at a time, delimiters included and
     /// each with the character it starts at. A literal holds spaces of its own,
     /// so a caller that needs them apart cannot get them by splitting
-    /// [`Mask::literals`] — the run is the boundary, and the count of characters
+    /// [`Mask::literals`], the run is the boundary, and the count of characters
     /// is what a caller compares against, because a blanked view is the same
     /// characters and not the same bytes.
     #[must_use]

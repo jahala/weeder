@@ -1,4 +1,4 @@
-//! T6 — an error assertion was weakened.
+//! T6, an error assertion was weakened.
 //!
 //! "It fails" is the weakest claim a test can make about a failure. The strong
 //! ones name the kind and quote the message, and both are one edit away from
@@ -9,8 +9,8 @@
 //! Both have to be about a failure at all, and what they claim is read as a set
 //! of qualifiers: the error kinds they name, and the messages they match on. A
 //! pair that lost qualifiers and gained none was weakened. A pair that gained
-//! any is a different claim — a kind swapped for another kind, a message
-//! rewritten — and weed leaves it alone rather than guessing which is narrower.
+//! any is a different claim, a kind swapped for another kind, a message
+//! rewritten, and weed leaves it alone rather than guessing which is narrower.
 
 use crate::core::change::{Change, Replacement};
 use crate::core::finding::{Finding, Level, Message, Region};
