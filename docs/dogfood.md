@@ -115,3 +115,7 @@ Running log. One dated entry per observation: the exact command, what happened, 
 - `pleach land` for guard refused with "land conflict on node/guard — repository left untouched: docs/dogfood.md", which is correct and clear. The cause is mine: workers append to the same running log the conductor writes. AGENTS.md now sends workers to `docs/dogfood/<loop>.md`.
 - hooks failed with 0 attempts: "catastrophic isolate failure at ref git add -A -- … BLOCKED.md … The following paths are ignored by one of your .gitignore files". The worker did the honest thing and wrote BLOCKED.md; my `.gitignore` ignored it (so it could never be committed by accident); pleach's scoped staging named it explicitly; git refused; pleach disposed the tree. Forty minutes and the block reason gone. Un-ignored now, reported to pleach as P7 with the `git check-ignore` fix.
 - The 0-attempts path minted no receipt even on 49c9177's "receipt on every terminal settle": a catastrophic isolate failure settles outside the attempt ladder. Asked pleach whether the new rule reaches it.
+
+### 2026-09-05 — the first garden gate in running code
+
+- On 2026-09-05 `weed check` refused a conflict marker at block level through the real binary on a real git repository, in TypeScript, Python, Rust and Go, with a SARIF log that validates against the official schema. cape-town notes it is the first garden gate that exists in running code rather than on a page. The date is recorded here because the garden's claims are meant to be dated.

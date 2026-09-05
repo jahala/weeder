@@ -38,5 +38,6 @@ Keep-your-place applies: a scan rule that names no hot spot confirmed by a later
 ## Tried
 - 2026-09-05 settled with tend2 on the channel (umbrella loop, 2026-09-05): `scan` owns repo-state hygiene and never blocks; tend2 keeps doc-evidence staleness and its hygiene loop pattern; `tend2 gate` and `weed check` are different questions and both emit SARIF
 - 2026-09-05 R4 never reaches the network during `scan`; the snapshot is a committed file so the rule is reproducible in CI
+- 2026-09-05 cape-town: tend2 is scan's first consumer and is on pollen; before R1 to R4 are finalised, ask tend2 which SARIF fields its hygiene loop reads (asked the same day; the answer goes here, and this loop is not dispatched until it lands or tend2 says it has no preference)
 </script>
 <script src="loop.js"></script>
