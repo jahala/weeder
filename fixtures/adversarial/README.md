@@ -4,10 +4,12 @@ One minimal repository history per rule per language, at
 `<RULE>/<lang>/<fire|silent>/`. `before/` is committed as HEAD, `after/` replaces
 the working tree, and a file `after/` does not carry is a file the change
 deleted. `after/.weed-commit` is the message of the commit being prepared, for
-the rules that read trailers; it never reaches the tree.
+the rules that read trailers; it never reaches the tree. An ignore file is
+written as `weed.gitignore` and copied in as `.gitignore`: named literally, it
+would govern the fixture's own directory and hide its sources from git.
 
-`fire/` is a change the rule must report. `silent/` is its nearest neighbour , 
-the change that looks like the offence and is not one. A rule with no `silent/`
+`fire/` is a change the rule must report. `silent/` is its nearest neighbour, the
+change that looks like the offence and is not one. A rule with no `silent/`
 fixture has not been shown to discriminate.
 
 A rule with more than one shape to prove carries more than one of each, named

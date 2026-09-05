@@ -10,7 +10,7 @@
 
 mod common;
 
-use common::{fixture, fixture_file};
+use common::{fixture, fixture_file, IGNORE_FILE_IN_FIXTURE};
 
 /// The ignore file the fixture changes.
 const IGNORE: &str = ".gitignore";
@@ -74,7 +74,7 @@ fn c2_stays_silent_on_build_output() {
 
 /// Where the fixture writes each pattern, counted from one.
 fn pattern_lines(patterns: &[&str]) -> Vec<u64> {
-    let after = fixture_file("C2", "paths", "fire/after", IGNORE);
+    let after = fixture_file("C2", "paths", "fire/after", IGNORE_FILE_IN_FIXTURE);
     let mut lines: Vec<u64> = patterns
         .iter()
         .map(|pattern| {

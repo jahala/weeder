@@ -38,6 +38,12 @@ const AUTHOR_NAME: &str = "weed fixtures";
 const AUTHOR_EMAIL: &str = "fixtures@weed.invalid";
 /// The file `after/` uses to carry the pending commit message.
 const COMMIT_MESSAGE_FILE: &str = ".weed-commit";
+/// The name a fixture gives an ignore file. Written as `.gitignore`, the file
+/// would govern the fixture's own directory and hide from git the very sources
+/// the fixture carries next to it; under this name it is inert until copied.
+pub const IGNORE_FILE_IN_FIXTURE: &str = "weed.gitignore";
+/// What that file is called once it is in the repository under test.
+pub const IGNORE_FILE: &str = ".gitignore";
 /// Where the harness keeps that message, outside the tree, until weed is run.
 const PENDING_MESSAGE_FILE: &str = "weed-pending-message";
 
@@ -639,7 +645,12 @@ fn copy_tree(source: &Path, target: &Path) {
     for entry in std::fs::read_dir(source).expect("the fixture should be readable") {
         let entry = entry.expect("a fixture entry should be readable");
         let from = entry.path();
-        let to = target.join(entry.file_name());
+        let name = if entry.file_name() == OsStr::new(IGNORE_FILE_IN_FIXTURE) {
+            OsStr::new(IGNORE_FILE).to_os_string()
+        } else {
+            entry.file_name()
+        };
+        let to = target.join(name);
         if from.is_dir() {
             std::fs::create_dir_all(&to).expect("a fixture directory should be creatable");
             copy_tree(&from, &to);
