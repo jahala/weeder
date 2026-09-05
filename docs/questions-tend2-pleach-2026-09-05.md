@@ -20,6 +20,9 @@ Written 2026-09-05 after reading FORMAT.md, tend2-ARCHITECTURE.md, emit.ts, veri
 11. **`pleach --version`** is "unknown flag". Same pinning need as tend2.
 12. **Worker model names.** `"worker": { "provider": "claude", "model": "opus" }` validates; if the runtime rejects the alias I will report it.
 
+15. **A blocked node keeps nothing.** When the worker stopped at Claude's session-limit dialog, pleach recorded `blocked` and discarded the worktree: no quarantine branch, no receipt. A failed node gets `quarantine/<id>`; a blocked one deserves the same, since its work is unfinished rather than wrong.
+16. **`blockedReason` carries the harness's generic line** ("Claude is waiting for your input"), not the prompt text umbel's `wait` returns in `message`. The text would have said "session limit" and saved a manual look.
+
 ## umbel
 
 13. **The Claude workspace-trust dismissal exits the worker.** `startupDialogs` for Claude sends a bare `Enter`, but on Claude Code 2.1.261 the highlighted default is "No, exit". Every fresh, untrusted cwd (every pleach worktree) dies in seconds and pleach reports `dead` with no reason. Details and a fix suggestion are in `docs/dogfood.md` under "The first pleach run died in 18 seconds".
