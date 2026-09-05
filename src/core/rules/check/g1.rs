@@ -1,4 +1,4 @@
-//! G1 — a conflict marker was committed.
+//! G1, a conflict marker was committed.
 //!
 //! git writes four markers into a conflicted file, each exactly seven of its
 //! character at the start of a line, alone or followed by a space and a label.

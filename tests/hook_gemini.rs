@@ -1,4 +1,4 @@
-//! `weed hook gemini` — the Gemini CLI hook event, answered in Gemini's shape.
+//! `weed hook gemini`, the Gemini CLI hook event, answered in Gemini's shape.
 //!
 //! Gemini names the same two moments differently: `BeforeTool` is where a tool
 //! call can still be refused, and `AfterAgent` is where a turn tries to end. Its

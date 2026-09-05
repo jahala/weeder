@@ -1,4 +1,4 @@
-//! `weed guard status` — every way a hook stops being the law, named.
+//! `weed guard status`, every way a hook stops being the law, named.
 //!
 //! A gate that has quietly stopped running is worse than no gate, so each case
 //! breaks the installation in one way and asks status what it can see.

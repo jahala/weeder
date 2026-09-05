@@ -142,7 +142,7 @@ pub fn answer(harness: Harness, refusal: Refusal, reason: &str) -> Value {
 }
 
 /// The one line weed prints at an event its harness takes no decision from. It
-/// is not an answer — there is nowhere to put one — so it says where a hook that
+/// is not an answer, there is nowhere to put one, so it says where a hook that
 /// is meant to refuse belongs instead.
 pub fn note(harness: Harness, event: &str) -> String {
     let cli = harness.name();
@@ -276,7 +276,7 @@ const COMMIT_VALUE_LONG: [&str; 14] = [
 
 /// The commit this command makes, or `None` where it makes none. `git` is the
 /// program, `commit` is the subcommand, and everything between them is git's own
-/// options — which is where a command can move git somewhere else, or take its
+/// options, which is where a command can move git somewhere else, or take its
 /// hooks away without ever writing `--no-verify`.
 fn commit(command: &[String]) -> Option<Commit> {
     if shell::program(command) != "git" {

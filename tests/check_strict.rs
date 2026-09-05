@@ -1,4 +1,4 @@
-//! `--strict` — suppressions visible, and not honoured.
+//! `--strict`, suppressions visible, and not honoured.
 //!
 //! A suppression travels with the change: a `Weed-allow:` trailer on the commit
 //! being prepared, or an inline `weed-allow` comment beside the line. Both turn

@@ -3,7 +3,7 @@
 #
 # LICENSE is compared against the MIT text word for word, so a paraphrase or a
 # quietly altered clause cannot pass as MIT. README.md is read the way a
-# newcomer reads it — the first paragraph has to say what weed is — and then the
+# newcomer reads it, the first paragraph has to say what weed is, and then the
 # way a machine reads it: every path it cites exists, and every weed command it
 # cites is a command the binary answers, with flags the binary prints. A readme
 # that names a file nobody wrote is the first lie a reader is told.
@@ -72,7 +72,7 @@ else:
     named = holder.group(1).strip()
     if not re.match(r"^\d{4}(-\d{4})? +\S", named):
         complaints.append(f"LICENSE's copyright line is `{named}`, which names no year and owner")
-    # Whitespace is where licence files differ innocently — the wrapping — so
+    # Whitespace is where licence files differ innocently, the wrapping, so
     # the comparison is on words. Everything else has to match exactly.
     if words(licence) != words(MIT.format(holder=named)):
         complaints.append(
@@ -109,8 +109,8 @@ else:
             complaints.append(f"README.md's opening paragraph is too thin to say what weed is: `{paragraph}`")
 
 # The claims the owner has not settled, each marked where it is made. A mark
-# belongs to the block it sits in — a bullet with its continuation lines, or a
-# paragraph — because that is the unit a reader takes a claim from.
+# belongs to the block it sits in, a bullet with its continuation lines, or a
+# paragraph, because that is the unit a reader takes a claim from.
 def blocks(lines):
     out = []
     current = []

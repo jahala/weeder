@@ -2,8 +2,8 @@
 //!
 //! Every rule that stops a commit has to earn it in one message: what was found,
 //! why it matters, and what to do next, in that order and nothing else. Two of
-//! them can also hand back the edit that clears the finding — a marker and a
-//! conflict marker are both a line that should not be there — and that arrives
+//! them can also hand back the edit that clears the finding, a marker and a
+//! conflict marker are both a line that should not be there, and that arrives
 //! as a SARIF fix deleting exactly the line the change added.
 
 mod common;

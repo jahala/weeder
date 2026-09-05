@@ -2,7 +2,7 @@
 //! worth installing: a description short enough to sit in a listing without
 //! costing a paragraph, and a body that covers the whole binary. The second is
 //! the one that rots, so it is checked against the binary rather than against a
-//! list written down beside it — every command and every flag weed prints, all
+//! list written down beside it, every command and every flag weed prints, all
 //! the way down the tree, has to appear in SKILL.md.
 
 mod common;
@@ -52,7 +52,7 @@ fn front_matter(source: &str) -> (Vec<(String, String)>, String) {
 }
 
 /// How many sentences a piece of prose carries. A sentence ends at `.`, `?` or
-/// `!` — at the end of the text, or before whitespace and the capital that
+/// `!`, at the end of the text, or before whitespace and the capital that
 /// opens the next one.
 fn sentences(text: &str) -> usize {
     let characters: Vec<char> = text.trim().chars().collect();

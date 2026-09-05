@@ -5,7 +5,7 @@
 <title>tilth-core · weed</title>
 <link rel="stylesheet" href="loop.css">
 <body>
-<noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
 <script type="text/markdown" id="loop">
 # tilth-core — the parsing substrate, and the one seam that touches it
 **Goal.** weed reads code through `tilth-core`, a library crate extracted from tilth that owns tree-sitter outlines, file-type and language detection, test-file classification, import extraction and resolution, and caller search across fourteen languages. weed does not parse anything itself. All of that reading sits behind one seam module, `src/seams/reader.rs`, so the core stays pure and the dependency can be swapped or upgraded mechanically.
@@ -25,11 +25,11 @@ The crate did not exist when this loop was shaped. almaty, the tilth agent, land
 
 ## The seam
 
-`src/seams/reader.rs` is the only module in weed that names `tilth_core`. It exposes plain data to the core — `Outline`, `TestShape`, `Import`, `CallerSite`, `FileKind` hints — and nothing tree-sitter-shaped leaks past it. Core rules take those values as arguments; faces call the seam and hand the values in. A test reads the source tree and refuses any other `tilth_core` reference.
+`src/seams/reader.rs` is the only module in weed that names `tilth_core`. It exposes plain data to the core, `Outline`, `TestShape`, `Import`, `CallerSite`, `FileKind` hints, and nothing tree-sitter-shaped leaks past it. Core rules take those values as arguments; faces call the seam and hand the values in. A test reads the source tree and refuses any other `tilth_core` reference.
 
 ## Tests
 - [x] (code) the tilth worktree at `.context/tilth-core` is at the commit weed pins, holds `crates/tilth-core` exposing detection, outline entries, test-file classification, test structure, imports and callers, tilth's binary consumes it, and tilth's CI trio plus the crate's acceptance test are green there · scripts/check/tilth-core.sh @dcfe820 · by cli
-- [x] (code) weed's `Cargo.toml` depends on `tilth-core` as a git dependency on `https://github.com/jahala/tilth` pinned to rev `7f38db58696e16c2df2be71da985f47097f34920`, with no local patch anywhere, and `cargo build` succeeds · scripts/check/tilth-core-dep.sh @36c8b24 · by cli
+- [x] (code) weed's `Cargo.toml` depends on `tilth-core` as a git dependency on `https://github.com/jahala/tilth` pinned to rev `7f38db58696e16c2df2be71da985f47097f34920`, with no local patch anywhere, and `cargo build` succeeds · scripts/check/tilth-core-dep.sh @7549fd2 · by cli
 - [x] (code) `src/seams/reader.rs` is the only file in `src/` that references `tilth_core`, and `src/core/` compiles with the reader's data types only · tests/reader_seam.rs @d4ddb50 · by cli
 - [x] (code) the reader returns outline entries, test shape, imports and callers for one small file in each of ts, py, rs and go, asserted against the fixture's known contents · tests/reader_langs.rs @7c3a32d · by cli
 

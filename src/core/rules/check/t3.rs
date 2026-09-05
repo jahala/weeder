@@ -1,13 +1,13 @@
-//! T3 — a skip or a focus marker was added.
+//! T3, a skip or a focus marker was added.
 //!
 //! Every runner weed reads has two ways to stop a suite reporting: turn a case
 //! off, or turn every other case off. Both leave a green run behind, which is
 //! why the marker itself is the finding.
 //!
 //! The markers are read off the code and nothing else. A line is scanned through
-//! the syntax mask first, so the same characters inside a string or a comment —
+//! the syntax mask first, so the same characters inside a string or a comment ,
 //! a case titled "skip the empty input", a note explaining why a marker was
-//! taken out — say nothing. Each language spells its markers in its own grammar:
+//! taken out, say nothing. Each language spells its markers in its own grammar:
 //! a member on a declarator, a decorator, an attribute, a method on the handle
 //! the runner passes in.
 
@@ -82,7 +82,7 @@ fn marker(lang: Lang, mask: &Mask, line: u32) -> Option<Marker> {
     }
 }
 
-/// A declarator with a marker on it — `it.skip(`, `describe.only(` — or one
+/// A declarator with a marker on it, `it.skip(`, `describe.only(`, or one
 /// written with the prefix that does the same thing, `xit(`, `fdescribe(`.
 ///
 /// The prefixed form is a declarator, so it is only read as one where the line

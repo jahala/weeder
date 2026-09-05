@@ -283,7 +283,7 @@ pub fn render(findings: &[Finding], context: &Context) -> Log {
 /// whatever order suits it, a face may add findings from several passes, and the
 /// log still comes out the same. A finding with no region points at the whole
 /// file and sorts at line zero, above every line in it. The message closes the
-/// order so that no two results can be told apart by position alone — results
+/// order so that no two results can be told apart by position alone, results
 /// that tie on all four are the same bytes, so their order cannot be read.
 fn sort_key(result: &SarifResult) -> (&str, u32, &str, &str) {
     let place = result

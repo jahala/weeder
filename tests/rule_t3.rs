@@ -1,4 +1,4 @@
-//! T3 — a skip or a focus marker was added.
+//! T3, a skip or a focus marker was added.
 //!
 //! Each language spells the marker in its own grammar, and the fire fixture adds
 //! every form the rule names. The lines weed must report are read off the

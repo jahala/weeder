@@ -1,4 +1,4 @@
-//! G1 — a conflict marker was committed.
+//! G1, a conflict marker was committed.
 //!
 //! Every case runs the built binary on a real repository built from
 //! `fixtures/adversarial/G1/`, and reads the SARIF it wrote.

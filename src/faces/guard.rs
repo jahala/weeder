@@ -1,4 +1,4 @@
-//! `weed guard` — weed's judgement put where a harness cannot route around it.
+//! `weed guard`, weed's judgement put where a harness cannot route around it.
 //!
 //! `install` writes three POSIX shell hooks that call this binary and points
 //! `core.hooksPath` at the directory holding them, keeping whatever that setting
@@ -368,7 +368,7 @@ fn pre_rebase(root: &Path, request: &PreRebase) -> Result<Answer, String> {
     let protected = protected(root, &request.protect)?;
     // A rebase rewrites the branch it is given, or the one that is checked out
     // where it is given none. The upstream is only read from, so a protected
-    // upstream is the ordinary case — rebasing your own branch onto main — and
+    // upstream is the ordinary case, rebasing your own branch onto main, and
     // is not history this hook is here to keep.
     let branch = match request.arguments.get(1) {
         Some(branch) => Some(branch.clone()),

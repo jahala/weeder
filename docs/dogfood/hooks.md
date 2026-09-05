@@ -11,7 +11,7 @@ isolated worktree. Written for the people who maintain tend2 and pleach.
   --runner 'bash scripts/check/run.sh {evidence}'` did exactly what the work order
   said it would, in one pass: four code checks stamped, the human check reported
   as `skipped-human`, exit 0. Being handed the gate command verbatim in the work
-  order is the single most useful thing about working a loop — there is no
+  order is the single most useful thing about working a loop, there is no
   guessing about what "done" means.
 - The runner in `scripts/check/run.sh` already mapped `*.sh` to `bash`, so a check
   whose evidence is a shell script that starts a real agent session needed no
@@ -30,7 +30,7 @@ isolated worktree. Written for the people who maintain tend2 and pleach.
   through `--message-file`, "which is the only way a `Weed-allow:` trailer counts
   before the commit exists", does not survive contact with the code. The hooks
   judge with `--strict`, and `--strict` gives a suppressed finding its own level
-  back — so a trailer handed in changes nothing a hook decides. weed therefore
+  back, so a trailer handed in changes nothing a hook decides. weed therefore
   does not lift `-m` text out of the command line, and the reasoning is recorded
   in `docs/proof-2026-09.md` instead. Plumbing whose effect no test can observe is
   plumbing that rots.

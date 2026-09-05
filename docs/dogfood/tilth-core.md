@@ -6,7 +6,7 @@ Notes from the worker on the tilth-core loop, 2026-09-05.
 
 - `tend2 verify … --force --runner 'bash scripts/check/run.sh {evidence}'` was the whole gate and needed no coaxing: three checks, three evidence paths, one command. Re-running it is cheap, which is what made it the thing to run first rather than last.
 - The verifier re-runs every check under `--force`, c1 included. c1 clones tilth and runs its CI trio, so the gate is only fast the second time; the first run on a cold machine pays for a full clone and workspace build. Worth knowing before reading the silence as a hang.
-- `tend2 verify` writes the stamps and the loop file is otherwise read-only for the worker. That split held cleanly here — nothing tempted a hand-flipped checkbox, because running the gate is strictly less work than editing the file.
+- `tend2 verify` writes the stamps and the loop file is otherwise read-only for the worker. That split held cleanly here, nothing tempted a hand-flipped checkbox, because running the gate is strictly less work than editing the file.
 
 ## Where the map earned its keep
 

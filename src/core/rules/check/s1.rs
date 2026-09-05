@@ -1,8 +1,8 @@
-//! S1 — a stub or a work marker reached production code.
+//! S1, a stub or a work marker reached production code.
 //!
 //! Three shapes, all of them a line admitting the work is not done.
 //!
-//! A work marker — one of the shouted words in [`WORK_MARKERS`] — written as a
+//! A work marker, one of the shouted words in [`WORK_MARKERS`], written as a
 //! word of its own, in code or in a comment but never inside a string, where it
 //! is a message the program hands out rather than a note to the author.
 //!
@@ -11,7 +11,7 @@
 //! panic whose message, read as letters alone, says the same thing.
 //!
 //! A body that does nothing: a function whose whole body is the language's word
-//! for "no statements" — `pass`, `...`, a bare return, a return of the language's
+//! for "no statements", `pass`, `...`, a bare return, a return of the language's
 //! empty value. The reader's outline says where each body starts and ends, the
 //! change says the body is new, and the finding lands on the statement itself.
 

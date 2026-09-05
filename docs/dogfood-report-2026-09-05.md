@@ -20,7 +20,7 @@ The pane shows Claude Code's workspace-trust prompt with `❯ No, exit` highligh
 **Cause.** `rctrl/master/src/core/providers/claude.ts:283-285`:
 
 ```
-// Default option is "Yes, I trust this folder" — a single Enter dismisses it.
+// Default option is "Yes, I trust this folder", a single Enter dismisses it.
 startupDialogs: [{ match: /trust this folder|trust this directory/i, keys: ['Enter'] }],
 ```
 
@@ -91,7 +91,7 @@ What worked, so it is on record: the spawn, send, wait, read, kill lifecycle beh
 
 ### P3. An audit that cannot run burns a retry the worker cannot use
 
-**Reproduction.** tend2's `emit-plan` writes the audit command without the `--runner` template it puts on the smoke (a tend2 bug, reported to that agent as question 8b). The `core` node's smoke passed and stamped all five checks; the audit then answered `no runner for tests/core_diff.rs — pass --runner …` for every check. pleach classified that as retryable with evidence, re-prompted the worker with the audit reasons, the worker (correctly) could change nothing about the auditor's command, the audit failed again, and the node was quarantined after attempt 2.
+**Reproduction.** tend2's `emit-plan` writes the audit command without the `--runner` template it puts on the smoke (a tend2 bug, reported to that agent as question 8b). The `core` node's smoke passed and stamped all five checks; the audit then answered `no runner for tests/core_diff.rs, pass --runner …` for every check. pleach classified that as retryable with evidence, re-prompted the worker with the audit reasons, the worker (correctly) could change nothing about the auditor's command, the audit failed again, and the node was quarantined after attempt 2.
 
 **Impact.** One wasted worker attempt and a quarantine for work that was already verified. The receipt made the cause obvious, which is the good news.
 

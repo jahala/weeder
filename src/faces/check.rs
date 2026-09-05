@@ -1,4 +1,4 @@
-//! `weed check` — the diff judged.
+//! `weed check`, the diff judged.
 //!
 //! With no flags weed judges the index plus the working tree against `HEAD`:
 //! everything a worker changed, staged or not, which is what pleach's smoke gate
@@ -6,8 +6,8 @@
 //! view a pre-commit hook has. `--base <ref>` judges the tree against a ref, the
 //! view CI has of a branch.
 //!
-//! A run that cannot reach a judgement — no repository, an unreadable ref, a
-//! config weed cannot parse — leaves with exit 3 and says why on stderr. A gate
+//! A run that cannot reach a judgement, no repository, an unreadable ref, a
+//! config weed cannot parse, leaves with exit 3 and says why on stderr. A gate
 //! that could not run must never look like a gate that passed.
 
 use std::path::{Path, PathBuf};
@@ -127,7 +127,7 @@ fn judge(request: &Request) -> Result<Answer, String> {
 }
 
 /// The two states a run compares. The state a change starts from is always a
-/// commit — git has nothing else to compare against — and what it ends in is
+/// commit, git has nothing else to compare against, and what it ends in is
 /// whichever of the three places the caller asked weed to judge.
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Range {

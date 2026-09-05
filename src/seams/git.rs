@@ -82,26 +82,26 @@ pub fn has_ref(root: &Path, reference: &str) -> Result<bool, GitError> {
     }
 }
 
-/// The index and the working tree against `HEAD` — everything a worker changed,
+/// The index and the working tree against `HEAD`, everything a worker changed,
 /// staged or not. This is what pleach's smoke gate sees.
 pub fn diff_head(root: &Path) -> Result<String, GitError> {
     let head = head_or_empty_tree(root)?;
     diff(root, &[&head])
 }
 
-/// The index alone against `HEAD` — what a commit would carry.
+/// The index alone against `HEAD`, what a commit would carry.
 pub fn diff_index(root: &Path) -> Result<String, GitError> {
     let head = head_or_empty_tree(root)?;
     diff(root, &["--cached", &head])
 }
 
-/// The tree against a ref — what a branch changed, as CI reads it.
+/// The tree against a ref, what a branch changed, as CI reads it.
 pub fn diff_ref(root: &Path, reference: &str) -> Result<String, GitError> {
     let base = resolve_base(root, reference)?;
     diff(root, &[&base])
 }
 
-/// One ref against another — the commits a range carries, with the working tree
+/// One ref against another, the commits a range carries, with the working tree
 /// having nothing to say about it. This is the view a pre-push hook needs: it
 /// judges what is being pushed, not whatever the checkout happens to hold.
 pub fn diff_range(root: &Path, base: &str, tip: &str) -> Result<String, GitError> {
@@ -133,8 +133,8 @@ pub fn file_in_tree(root: &Path, path: &str) -> Result<Option<String>, GitError>
     })
 }
 
-/// What a git invocation wrote, where it wrote text and worked. A refusal — no
-/// such object — and bytes that are not text both answer `None`, because both
+/// What a git invocation wrote, where it wrote text and worked. A refusal, no
+/// such object, and bytes that are not text both answer `None`, because both
 /// mean there is nothing for a rule to read.
 fn text(root: &Path, arguments: &[&str]) -> Result<Option<String>, GitError> {
     let attempt = attempt(root, arguments)?;
@@ -205,7 +205,7 @@ pub fn merge_base(root: &Path, left: &str, right: &str) -> Result<Option<String>
 }
 
 /// The commit just outside what `tip` adds to everything the remotes already
-/// carry — where a branch no remote has seen begins. `None` when the whole
+/// carry, where a branch no remote has seen begins. `None` when the whole
 /// history is still unpublished.
 pub fn unpublished_boundary(root: &Path, tip: &str) -> Result<Option<String>, GitError> {
     let output = run(root, &["rev-list", "--boundary", tip, "--not", "--remotes"])?;
@@ -302,7 +302,7 @@ fn diff(root: &Path, revisions: &[&str]) -> Result<String, GitError> {
 /// matches ascii shapes, and utf-8 never spells an ascii character with a byte
 /// above 127, so a byte that gets replaced was never part of one. Every other
 /// question weed asks git has a sha, a ref or a setting for an answer, and those
-/// are still read strictly — bytes weed cannot read there are a refusal.
+/// are still read strictly, bytes weed cannot read there are a refusal.
 fn run_lossy(directory: &Path, arguments: &[&str]) -> Result<String, GitError> {
     let attempt = attempt(directory, arguments)?;
     if attempt.code == 0 {
@@ -327,7 +327,7 @@ fn run(directory: &Path, arguments: &[&str]) -> Result<String, GitError> {
 }
 
 /// What one git invocation left behind, exit code and all. Some questions weed
-/// asks — is this an ancestor, is this setting there — git answers by leaving
+/// asks, is this an ancestor, is this setting there, git answers by leaving
 /// with a code, and those are answers rather than failures.
 struct Attempt {
     code: i32,

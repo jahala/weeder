@@ -71,7 +71,7 @@ pub fn script(hook: Hook, binary: &Path, protected: &[String]) -> String {
 
     format!(
         "#!/bin/sh\n\
-         # weed guard — the law in git. `weed guard install` wrote this file;\n\
+         # weed guard, the law in git. `weed guard install` wrote this file;\n\
          # `weed guard uninstall` takes it away and puts back what was here.\n\
          {BINARY_MARKER} {named}\n\
          set -eu\n\

@@ -142,7 +142,7 @@ pub struct Import {
     /// The module the statement names: a package, a crate path, a relative path.
     pub source: String,
     /// Whether the source lies outside the project. A language whose module
-    /// paths need a build system to resolve — Go, Java, Kotlin — reads every
+    /// paths need a build system to resolve, Go, Java, Kotlin, reads every
     /// source as external, because from the file alone that is all that is known.
     pub external: bool,
 }

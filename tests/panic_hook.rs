@@ -2,7 +2,7 @@
 //!
 //! Core returns its failures and never panics on input, and the property tests
 //! in `core_hostile.rs` are what holds that up. A panic that gets past them is a
-//! bug in weed — but a gate that dies mid-judgement must still fail closed, and
+//! bug in weed, but a gate that dies mid-judgement must still fail closed, and
 //! must say it was weed's fault and not the diff's. The hook in `main.rs` turns
 //! any panic into exit 3 with one line.
 //!
@@ -85,7 +85,7 @@ fn a_panic_writes_no_log_a_reader_could_mistake_for_a_verdict() {
 }
 
 /// A panic message written across several lines would be several reasons as far
-/// as a reader — or a hook parsing output a line at a time — can tell.
+/// as a reader, or a hook parsing output a line at a time, can tell.
 #[test]
 fn a_panic_that_says_several_lines_still_leaves_one() {
     let repo = Repo::init();

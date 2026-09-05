@@ -1,4 +1,4 @@
-//! `weed hook` — weed standing where the harness still has a choice.
+//! `weed hook`, weed standing where the harness still has a choice.
 //!
 //! A harness writes a hook event as JSON on this face's stdin and reads weed's
 //! answer back off its stdout. Two events matter. At a tool call that runs
@@ -10,7 +10,7 @@
 //! passed through in silence.
 //!
 //! Judgements run `--strict`, so an allowance an agent wrote for itself is
-//! reported and not honoured — the same stance `weed guard` takes in git.
+//! reported and not honoured, the same stance `weed guard` takes in git.
 //!
 //! A hook that could not judge refuses, at the block-level code, rather than
 //! leaving with the could-not-run code: a harness reads only a refusal or

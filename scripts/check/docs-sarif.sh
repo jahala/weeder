@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Evidence for sarif.tend2.html c4: docs/sarif.md names every SARIF convention
-# and, for each, the test that pins it — and every one of those tests exists.
+# and, for each, the test that pins it, and every one of those tests exists.
 # The doc and the tests are checked against each other in both directions, so
 # neither a convention documented without a test nor a test the doc never names
 # survives this script.

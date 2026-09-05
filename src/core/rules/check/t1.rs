@@ -1,4 +1,4 @@
-//! T1 — a test was deleted.
+//! T1, a test was deleted.
 //!
 //! Two shapes say the same thing. A test file removed takes every case it held
 //! with it. A test file that stayed but declares fewer cases than it did lost

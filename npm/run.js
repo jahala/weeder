@@ -12,7 +12,7 @@ const bin = path.join(__dirname, "bin", binName);
 try {
   execFileSync(bin, process.argv.slice(2), { stdio: "inherit" });
 } catch (err) {
-  // weed's own codes are the verdict — 0 clean, 2 blocked, 3 could not run —
+  // weed's own codes are the verdict, 0 clean, 2 blocked, 3 could not run , 
   // and the wrapper passes them through untouched.
   if (err.status != null) {
     process.exit(err.status);
