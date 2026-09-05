@@ -229,8 +229,7 @@
         "smoke": "tend2 verify docs/tend2/sarif.tend2.html --repo-root . --force --expect-payload 1c6929baea87 --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
           "command": "tend2 verify docs/tend2/sarif.tend2.html --repo-root . --force --expect-payload 1c6929baea87 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
-          "provider": "opencode",
-          "model": "opencode/big-pickle",
+          "provider": "codex",
           "selfIntegrity": true
         }
       },
@@ -238,7 +237,8 @@
         "timeoutMs": 5400000
       },
       "worker": {
-        "provider": "codex"
+        "provider": "claude",
+        "model": "opus"
       }
     },
     {
