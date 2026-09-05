@@ -23,11 +23,11 @@
 Suppressions: a commit trailer `Weed-allow: T2 <reason>` or an inline `weed-allow T2: <reason>` on an added line or the line above. Both need a reason; a bare id is not a suppression and is reported as such.
 
 ## Tests
-- [ ] (code) `parse_diff` reproduces the files, change kinds, hunks and per-line old/new numbers of captured `git diff` outputs covering adds, deletes, modifications, renames with edits, binary files, mode-only changes, several hunks, and the no-newline marker · tests/core_diff.rs
-- [ ] (code) `classify_file` names kind and language for the four v1 languages and every guardrail, manifest and generated path the catalogue lists, and returns `Other` rather than guessing on anything else · tests/core_classify.rs
-- [ ] (code) `weed.toml` parses rule levels, scope globs, dependency directions, thresholds and protected branches; an unknown key, an invalid level, or a scan rule given `block` is an error naming the key; an absent file yields the defaults · tests/core_config.rs
-- [ ] (code) suppressions parse from a commit message trailer and from an inline comment, require a reason, and turn a matching finding into a note that carries the reason and the original level · tests/core_suppress.rs
-- [ ] (code) `src/core/` imports neither `std::fs`, `std::process`, `std::env`, `git2`, nor anything from `crate::seams` or `crate::faces`, checked by a test that reads the source tree · tests/core_purity.rs
+- [x] (code) `parse_diff` reproduces the files, change kinds, hunks and per-line old/new numbers of captured `git diff` outputs covering adds, deletes, modifications, renames with edits, binary files, mode-only changes, several hunks, and the no-newline marker · tests/core_diff.rs @18c4c23 · by cli
+- [x] (code) `classify_file` names kind and language for the four v1 languages and every guardrail, manifest and generated path the catalogue lists, and returns `Other` rather than guessing on anything else · tests/core_classify.rs @4efae81 · by cli
+- [x] (code) `weed.toml` parses rule levels, scope globs, dependency directions, thresholds and protected branches; an unknown key, an invalid level, or a scan rule given `block` is an error naming the key; an absent file yields the defaults · tests/core_config.rs @f83abdd · by cli
+- [x] (code) suppressions parse from a commit message trailer and from an inline comment, require a reason, and turn a matching finding into a note that carries the reason and the original level · tests/core_suppress.rs @dba9624 · by cli
+- [x] (code) `src/core/` imports neither `std::fs`, `std::process`, `std::env`, `git2`, nor anything from `crate::seams` or `crate::faces`, checked by a test that reads the source tree · tests/core_purity.rs @b4b3eb7 · by cli
 
 ## Tried
 - 2026-09-05 this loop creates the crate: `Cargo.toml` (package `weed`, bin `weed`, edition 2021, release profile copied from tilth: opt-level 3, fat lto, one codegen unit, strip, panic abort), `src/lib.rs`, `src/main.rs` printing version and usage, `src/core/`; `tests/common/mod.rs` with the fixture harness other loops reuse (temp git repo from `before/`, working tree from `after/`, run the built binary, parse SARIF)
