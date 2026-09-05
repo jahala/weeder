@@ -24,12 +24,12 @@
 tend2's `src/verify/mock.ts` (in `/Users/jahala/conductor/workspaces/feature-map/missoula/`) is prior art for M1 on TypeScript: read it for the shapes it catches, do not port it.
 
 ## Tests
-- [ ] (code) T2 fires at block level when a changed test file's assertion count drops, per language, and stays silent when assertions move between cases with the count unchanged or a `Weed-allow: T2` trailer carries a reason · tests/rule_t2.rs
-- [ ] (code) T4 warns when a paired removed/added line widens an approximate assertion or a timeout, per language, and stays silent when the number tightens or an unrelated literal changes · tests/rule_t4.rs
-- [ ] (code) T5 warns when a snapshot, golden or fixture file changes alongside a prod file, and stays silent when only the snapshot changes or only prod changes · tests/rule_t5.rs
-- [ ] (code) T6 warns on each weakened error assertion shape per language and stays silent when the assertion becomes more specific · tests/rule_t6.rs
-- [ ] (code) T7 fires at block level when a rename takes a test file or case out of the runner's naming convention, per language, and stays silent on a rename that stays inside it · tests/rule_t7.rs
-- [ ] (code) M1 warns when a test in the diff mocks a module whose prod file is also in the diff, per language, and stays silent when the mocked module is outside the diff · tests/rule_m1.rs
+- [x] (code) T2 fires at block level when a changed test file's assertion count drops, per language, and stays silent when assertions move between cases with the count unchanged or a `Weed-allow: T2` trailer carries a reason · tests/rule_t2.rs @e455f19 · by cli
+- [x] (code) T4 warns when a paired removed/added line widens an approximate assertion or a timeout, per language, and stays silent when the number tightens or an unrelated literal changes · tests/rule_t4.rs @7688eeb · by cli
+- [x] (code) T5 warns when a snapshot, golden or fixture file changes alongside a prod file, and stays silent when only the snapshot changes or only prod changes · tests/rule_t5.rs @cb310e7 · by cli
+- [x] (code) T6 warns on each weakened error assertion shape per language and stays silent when the assertion becomes more specific · tests/rule_t6.rs @ab3d8bc · by cli
+- [x] (code) T7 fires at block level when a rename takes a test file or case out of the runner's naming convention, per language, and stays silent on a rename that stays inside it · tests/rule_t7.rs @8b68101 · by cli
+- [x] (code) M1 warns when a test in the diff mocks a module whose prod file is also in the diff, per language, and stays silent when the mocked module is outside the diff · tests/rule_m1.rs @53b0876 · by cli
 
 ## Needs #rules-block
 
