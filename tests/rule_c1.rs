@@ -11,7 +11,7 @@
 
 mod common;
 
-use common::{fixture, fixture_file};
+use common::{fixture, fixture_file, Repo};
 
 /// The fixture's languages folder. C1 reads paths, so one repository proves it.
 const CASE: &str = "paths";
@@ -130,4 +130,42 @@ fn rank(line: &str) -> Option<usize> {
         .take_while(|character| *character == '#')
         .count();
     (hashes > 0 && line[hashes..].starts_with(' ')).then_some(hashes)
+}
+
+#[test]
+fn c1_stays_silent_on_weeds_own_hooks_and_fires_once_one_is_edited() {
+    let repo = Repo::init();
+    let installed = repo.weed(&["guard", "install", "--protect", "main"]);
+    assert_eq!(
+        installed.code, 0,
+        "install runs clean\n{}",
+        installed.stderr
+    );
+    repo.stage_all();
+
+    let adoption = repo.weed(&["check", "--staged", "--strict"]);
+    assert_eq!(
+        adoption.findings(),
+        Vec::new(),
+        "the bundle weed wrote is not a guardrail edit: adopting weed goes through the gate"
+    );
+    assert_eq!(adoption.code, 0);
+
+    let hook = repo.root().join(".githooks/pre-commit");
+    let mut text = std::fs::read_to_string(&hook).expect("the hook weed wrote is readable");
+    text = text.replace("set -eu\n", "set -eu\nexit 0\n");
+    std::fs::write(&hook, text).expect("the hook is writable");
+    repo.stage_all();
+
+    let edited = repo.weed(&["check", "--staged", "--strict"]);
+    assert_eq!(
+        edited.code, 2,
+        "one line added to the bundle is a guardrail edit again"
+    );
+    assert_eq!(
+        edited.paths(),
+        vec![".githooks/pre-commit"],
+        "only the rewritten hook is named; the two untouched bundles stay silent"
+    );
+    assert!(edited.findings().iter().all(|finding| finding.rule == "C1"));
 }

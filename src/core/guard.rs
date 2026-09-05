@@ -102,6 +102,57 @@ pub fn binary_named(script: &str) -> Option<&str> {
         .map(str::trim)
 }
 
+/// The hook a path under `.githooks/` names, or `None` for any other path.
+pub fn hook_named(path: &str) -> Option<Hook> {
+    let name = path.strip_prefix(".githooks/")?;
+    Hook::ALL.into_iter().find(|hook| hook.name() == name)
+}
+
+/// Whether a file is, byte for byte, the bundle weed writes for this hook: the
+/// binary its marker names and the branches its exec line protects, handed back
+/// to [`script`], produce exactly this text. Adopting weed is then a change C1
+/// can tell from a hook someone rewrote, so it goes through the gate rather than
+/// around it; one byte of difference, and the file is a guardrail edit again.
+pub fn is_own_bundle(hook: Hook, text: &str) -> bool {
+    let Some(binary) = binary_named(text) else {
+        return false;
+    };
+    script(hook, Path::new(binary), &protected_in(text)) == text
+}
+
+/// The branches a bundle's exec line protects, read back out of its
+/// `--protect '…'` words in the order they were written.
+fn protected_in(text: &str) -> Vec<String> {
+    let Some(line) = text
+        .lines()
+        .find(|line| line.trim_start().starts_with("exec \"$weed\" guard"))
+    else {
+        return Vec::new();
+    };
+    let mut found = Vec::new();
+    let mut rest = line;
+    while let Some(at) = rest.find("--protect '") {
+        rest = &rest[at + "--protect '".len()..];
+        let mut branch = String::new();
+        loop {
+            let Some(quote) = rest.find('\'') else {
+                return found;
+            };
+            branch.push_str(&rest[..quote]);
+            rest = &rest[quote + 1..];
+            // A single quote inside the word is spelled '\'' by `quote`.
+            if let Some(after) = rest.strip_prefix("\\''") {
+                branch.push('\'');
+                rest = after;
+                continue;
+            }
+            break;
+        }
+        found.push(branch);
+    }
+    found
+}
+
 /// One line of what git feeds a pre-push hook on stdin: the ref being pushed,
 /// the commit it points at, the ref on the remote, and the commit that ref
 /// points at now.

@@ -6,6 +6,11 @@
 //! single test, which is why any change to one is the finding — added, edited or
 //! taken away, and whatever it says.
 //!
+//! One file under `.githooks/` is not an edit: the bundle weed itself writes,
+//! byte for byte, for the binary and the branches it names. Adopting weed is a
+//! change the gate lets through, because weed can tell its own hook from one
+//! somebody rewrote; a hook that differs by one byte is a guardrail edit again.
+//!
 //! The two markdown files are different. `AGENTS.md` and `CLAUDE.md` are mostly
 //! prose that wants editing, and one section of them is law. So weed reads the
 //! headings, finds the section that states the hard limits, and reports only a
@@ -15,6 +20,7 @@
 use crate::core::change::Change;
 use crate::core::classify::{classify_file, FileKind};
 use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::guard;
 
 /// The files whose law lives in one section rather than in the whole file.
 const INSTRUCTIONS: &[&str] = &["AGENTS.md", "CLAUDE.md"];
@@ -30,6 +36,11 @@ fn edit(change: &Change) -> Option<Finding> {
     let path = change.path()?;
     if classify_file(path, "").kind != FileKind::Guardrail {
         return None;
+    }
+    if let Some(hook) = guard::hook_named(path) {
+        if guard::is_own_bundle(hook, change.after.text()) {
+            return None;
+        }
     }
     if !is_instructions(path) {
         return Some(guardrail(path));

@@ -134,35 +134,25 @@ fn a_branch_that_is_not_protected_is_yours_to_rewrite() {
 
 /// The same repository with weed's own hooks installed and published along with
 /// it, which is the state a project is in once it has adopted weed.
-///
-/// The hooks live in the working tree so a clone gets them, and a hook is a
-/// guardrail, so the first commit and the first push that carry them are C1
-/// findings the gate itself refuses. Adopting weed is therefore one deliberate
-/// commit and one deliberate push that go around it, and both happen here,
-/// before there is any published history to protect.
 fn guarded() -> (Repo, Repo) {
     let remote = Repo::bare();
     let repo = Repo::init();
     repo.weed(&["guard", "install"]);
-    repo.stage_all();
-    repo.git(&["commit", "--no-verify", "-m", "weed guard installed"]);
-    publish(repo, remote, Adoption::Skipped)
+    // The hooks are guardrail paths, and C1 knows weed's own bundle byte for
+    // byte, so the commit and the push that first carry them go through the
+    // very hooks they install.
+    repo.commit("weed guard installed");
+    publish(repo, remote)
 }
 
 /// A repository whose main branch is already on a bare remote, with no hooks in
 /// it yet. Both temp directories must outlive the test, so both come back.
 fn published() -> (Repo, Repo) {
-    publish(Repo::init(), Repo::bare(), Adoption::None)
-}
-
-/// Whether the history being published already carries weed's own hooks.
-enum Adoption {
-    None,
-    Skipped,
+    publish(Repo::init(), Repo::bare())
 }
 
 /// One honest commit, and the branch that carries it pushed to the remote.
-fn publish(repo: Repo, remote: Repo, adoption: Adoption) -> (Repo, Repo) {
+fn publish(repo: Repo, remote: Repo) -> (Repo, Repo) {
     repo.write("src/parser.ts", RESOLVED);
     repo.commit("the parser");
     repo.git(&[
@@ -171,10 +161,6 @@ fn publish(repo: Repo, remote: Repo, adoption: Adoption) -> (Repo, Repo) {
         "origin",
         &remote.root().display().to_string(),
     ]);
-    let mut push = vec!["push", "--set-upstream", "origin", "main"];
-    if matches!(adoption, Adoption::Skipped) {
-        push.insert(1, "--no-verify");
-    }
-    repo.git(&push);
+    repo.git(&["push", "--set-upstream", "origin", "main"]);
     (repo, remote)
 }
