@@ -141,7 +141,8 @@ fn the_messages_of_a_range() {
     repo.write("c.ts", "export const c = 3;\n");
     repo.commit("the third change");
 
-    let messages = git::commit_messages(repo.root(), &base).expect("the range has messages");
+    let messages =
+        git::commit_messages(repo.root(), &base, "HEAD").expect("the range has messages");
     assert_eq!(
         messages.len(),
         2,
