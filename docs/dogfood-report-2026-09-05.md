@@ -117,6 +117,14 @@ What worked, so it is on record: the spawn, send, wait, read, kill lifecycle beh
 - The plan contract's v1.3 Tried-handback field the garden law names is not in `pleach schema` yet; plans cannot carry it until it lands.
 - A prerequisite that belongs in the run docs, one line: the repository behind `--repo-root` must be trusted in Claude Code, and trust follows the main checkout, not the worktree.
 
+### P7. The node commit drops what an ignore rule hides, and says nothing
+
+**Reproduction.** The `rules-prod` worker wrote a fixture whose `after/` directory carried a live `.gitignore` with `src/` as its first pattern, and the sources the fixture was about in `after/src/`. Git honours a nested ignore file wherever it sits, so `git status --ignored` in the worker's tree listed `after/src/` as ignored. The smoke gate and the codex audit both passed on that tree. pleach's commit carried the `.gitignore` and skipped the directory, and `tests/rule_c2.rs` fails on the published `node/rules-prod` tip while the receipt says every gate was green.
+
+**Impact.** A branch that does not reproduce its own receipt. It surfaced only because the land gate on the composition ran the suite again; a plan with a single node would have landed it.
+
+**Fix.** Before the node commit, list what `git status --ignored --short` holds under the paths the worker touched. Either refuse the node with those paths as the reason, or carry a line in the receipt and the journal: "n paths under an ignore rule were not committed". The same check would have caught the BLOCKED.md case from the other direction.
+
 What worked: `pleach validate` turns a map's `## Needs` edges into waves with no hand editing; the marker, hygiene and smoke ladder ran in order on every node; receipts froze the facts at classify time and named the failing gate and every reason; quarantine kept failed work; `pleach land` ran the land gate on the merged stack and fast-forwarded the branch; the journal fed `tend2 watch` and `tend2 next` with no configuration; the provider-diversity check refused nothing it should have allowed. Timings for the record: core, codex, 2 attempts, 6 m 21 s; sarif, claude/opus, 1 attempt, 13 m, smoke and codex audit green first pass.
 
 ## tend2, for context

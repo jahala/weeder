@@ -15,6 +15,8 @@ Written 2026-09-05 after reading FORMAT.md, tend2-ARCHITECTURE.md, emit.ts, veri
 
 8b. **`emit-plan` drops `--runner` from the audit command.** `emit.ts` appends the runner template to the smoke (`accept.smoke`) but builds `auditCommand` without it, so an auditor on any non-vitest repo answers "no runner for tests/x.rs, pass --runner" for every check and the node fails after a green smoke. Found on the first real node; patched in my emitted plans with `jq`. One-line fix in `emit.ts`: append the same `--runner` suffix to `auditCommand`.
 
+9. **A stamp pins the evidence file, and `next` calls it fresh.** The sha in `@sha · by cli` is a hash of the evidence file's content, so a fixture or data file the evidence reads can change, or go missing from the branch, without voiding the stamp. On 2026-09-06 `next` reported 69 stamps fresh while `tests/rule_c2.rs` failed deterministically on the landed tree, because the fixture it reads had lost a directory (pleach item P7). This is by design, since only `verify` writes a pass, but the word "fresh" reads as "still passing" to whoever glances at the page. Two small options: say "unchanged" instead of "fresh", or let a check name the paths its evidence depends on so the stamp can hash those too.
+
 ## pleach
 
 9. **`--repo-root` on a linked git worktree**, answered by reading `src/seams/gitdir.ts`: a `.git` file is followed to the real git dir, so journal, lock and receipts land there. Only the `--help` text still says `<repo-root>/.git/pleach/journal.jsonl`; worth updating to `<git-dir>`.
