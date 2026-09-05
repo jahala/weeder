@@ -25,7 +25,7 @@ Gemini CLI: `BeforeTool` with the same command test, answered with Gemini's deci
 - [ ] (code) `weed hook gemini` handles `BeforeTool` and `AfterAgent` the same way in Gemini's JSON shapes · tests/hook_gemini.rs
 - [ ] (code) `weed hook codex` implements the events Codex can deny and prints a one-line note for the ones it cannot; the note matches the section in `docs/proof-2026-09.md` · tests/hook_codex.rs
 - [ ] (code) a real Claude Code run with the Stop hook refuses a premature done with weed's findings as the reason and allows it once the tree is clean, captured into `docs/proof-2026-09.md` · scripts/proof/claude-stop.sh
-- [ ] (code) a real Gemini CLI run with the AfterAgent hook does the same, captured into `docs/proof-2026-09.md` · scripts/proof/gemini-stop.sh
+- [ ] (human) the owner signs in to Gemini CLI on this machine and runs `scripts/proof/gemini-stop.sh`, which captures a real AfterAgent run refusing a premature done and allowing a clean one into `docs/proof-2026-09.md` · scripts/proof/gemini-stop.sh
 
 ## Needs #check-face
 
@@ -34,5 +34,9 @@ Gemini CLI: `BeforeTool` with the same command test, answered with Gemini's deci
 - 2026-09-05 the proof scripts run real harness sessions and are cited as evidence rather than folded into `cargo test`, so the Rust suite stays runnable on a machine with no agent CLI
 - 2026-09-05 re-pointed from rules-block to check-face for the same reason as guard: a red index or tree is red by G1 today; the hook does not care which rule made it so
 - 2026-09-05 the pending commit message reaches `weed check` through `--message-file` (check-face); the claude hook can extract `-m` text from the `git commit` command it sees and hand it over, which is the only way a `Weed-allow:` trailer counts before the commit exists
+- 2026-09-05 first pleach attempt lost: the worker wrote `BLOCKED.md` (the honest path), the repo's `.gitignore` ignored that name, and pleach's scoped `git add` of an ignored path failed catastrophically, disposing the tree and the reason with it. `BLOCKED.md` is no longer ignored; the defect is reported to pleach as P7
+- 2026-09-05 the Gemini proof is a human check until the owner signs in: `~/.gemini/settings.json` carries no auth type on this machine, so no worker can run a real Gemini session here. The script is still built here; the owner runs it
+- 2026-09-05 a Claude Code session started from inside another one refuses to run while the `CLAUDECODE` environment variable is set; the proof script must start `claude` with that variable unset (`env -u CLAUDECODE claude -p ...`) and pass the Stop hook through `--settings`. tilth's benchmark runner does the same
+- 2026-09-05 a worker's dogfood notes go in `docs/dogfood/hooks.md`, not `docs/dogfood.md` (AGENTS.md)
 </script>
 <script src="loop.js"></script>

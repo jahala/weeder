@@ -31,6 +31,8 @@ Dependency direction is weed's own doctrine and its D2 rule enforces it on itsel
 - Voice in every user-facing string: calm, precise, literate, a little wit. Sentence case. Product names lowercase (`weed`, `tilth`, `pleach`). No exclamation marks. A finding states what was found, why it matters, and the next action, in that order. Never: supercharge, unlock, 10x, magic, synergy, revolutionary, game-changing, cutting-edge, seamless, effortless, next-gen, AI-powered.
 - Exit codes: 0 clean or warnings only · 2 at least one block-level result · 3 weed could not run (fail closed; the message says why). `scan` exits 0 or 3 only.
 - Only unambiguous rules block by default: T1, T3, S1, X1, C1, G1. Everything else warns, and warnings are for the human at the pull request, not for the agent.
+- A worker's dogfood notes on tend2, pleach or umbel go in `docs/dogfood/<loop-id>.md`, one file per loop, never in `docs/dogfood.md`, which the conductor owns and folds them into; two writers on one file conflict at every landing.
+- A worker that is genuinely blocked writes `BLOCKED.md` at the repository root, and the file is not ignored, so it reaches the quarantine branch and the conductor can read why.
 
 ## Toolchain
 
