@@ -29,5 +29,8 @@ When stdout is a terminal, or `--format table` is given, one line per finding: l
 ## Tried
 - 2026-09-05 schema validation runs in-process with the `jsonschema` crate against the vendored file, never against the network; the schema is draft-04 and the crate supports it
 - 2026-09-05 no `partialFingerprints` in v1: GitHub derives them from location when absent, and a stable fingerprint across renames is a later loop
+- 2026-09-05 built by pleach node `sarif` (claude/opus, codex audit) in one attempt, 13 minutes; smoke and audit green; landed through `pleach land` as 3bba154. Conductor review found nothing to fix
+- 2026-09-05 decided by the worker and kept: SARIF's `helpUri` is `format: uri`, so the `docs/rules.md#<id>` this loop named cannot be written relative. The face hands `render` a documentation base (the checkout as a `file:` URI, or a published URL) and weed resolves against it; with no base it writes no `helpUri` rather than an invalid one. `docs/sarif.md` records it
+- 2026-09-05 the rule catalogue (`src/core/catalogue.rs`) was born here rather than on check-face: the tool component needs every rule with its default level, and one table now feeds `Config::default()`, `weed rules` and the SARIF driver
 </script>
 <script src="loop.js"></script>
