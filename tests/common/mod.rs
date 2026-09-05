@@ -11,13 +11,14 @@
 //! the harness hands it to weed with `--message-file` and never copies it into
 //! the tree, because a pre-commit gate has no commit to read a trailer from.
 //!
-//! No file in this repository opens a line with a conflict marker. weed does not
-//! carry what it refuses, and a marker at the start of a line in a test file or
-//! a fixture is a conflict committed. Rust tests build their markers with
-//! [`marker`] and its three shorthands; fixture files spell theirs with the
-//! placeholders in `PLACEHOLDERS`, which the harness turns back into bytes on
-//! the way into the temp repository. The binary under test therefore reads
-//! exactly what git writes into a file it could not merge.
+//! weed does not carry what it refuses, so no file in this repository opens a
+//! line with a conflict marker or holds a string shaped like a credential. Rust
+//! tests build their markers with [`marker`] and its three shorthands; fixture
+//! files spell theirs with the placeholders in `PLACEHOLDERS`, and spell a
+//! credential with one from `CREDENTIALS`, whose stamp and tail are written
+//! apart here and joined on the way into the temp repository. The binary under
+//! test therefore reads exactly what git writes into a file it could not merge,
+//! and exactly what an issuer stamps.
 
 #![allow(dead_code)]
 
@@ -48,6 +49,64 @@ const PLACEHOLDERS: &[(&str, char)] = &[
     ("{{weed:separator}}", '='),
     ("{{weed:theirs}}", '>'),
 ];
+
+/// What a fixture writes where a credential belongs: the placeholder, the stamp
+/// an issuer puts on the front, and the opaque tail behind it. Neither half is a
+/// credential on its own, so this repository carries none.
+const CREDENTIALS: &[(&str, &str, &str)] = &[
+    ("{{weed:cloud-id}}", "AKIA", "IOSFODNN7EXAMPLE"),
+    (
+        "{{weed:forge-token}}",
+        "ghp_",
+        "0123456789abcdefghijklmnopqrstuvwx",
+    ),
+    (
+        "{{weed:forge-pat}}",
+        "github_pat_",
+        "11ABCDE0aBcDeFgHiJkLmNoPqRsTuVwXyZ",
+    ),
+    (
+        "{{weed:model-key}}",
+        "sk-",
+        "example0api0key0000000abcdefghij",
+    ),
+    (
+        "{{weed:chat-token}}",
+        "xoxb-",
+        "1111111111-2222222222-abcdefghijklmnopqrst",
+    ),
+    (
+        "{{weed:maps-key}}",
+        "AIza",
+        "SyA0example0key0value00000000000000",
+    ),
+    ("{{weed:pipeline-token}}", "glpat-", "0123456789abcdefghij"),
+    (
+        "{{weed:registry-token}}",
+        "npm_",
+        "0123456789abcdefghijklmnopqrstuvwxyzAB",
+    ),
+    (
+        "{{weed:signed-token}}",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+        ".eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVPmB92K27uhbUJU1p1r-wW1gFWFOEjXk",
+    ),
+    (
+        "{{weed:disordered}}",
+        "",
+        "9f3Kx2Qv7LmT4pR8sN1bY6cZ0dHwJ5eA",
+    ),
+];
+
+/// The placeholder a fixture writes where a private key block belongs.
+const KEY_BLOCK: &str = "{{weed:key-block}}";
+
+/// The line a key file opens with, built from its parts. Written whole it would
+/// be the very thing weed refuses, so it is written in pieces and joined here.
+fn key_block() -> String {
+    let rule = "-".repeat(5);
+    format!("{rule}BEGIN RSA PRIVATE {word}{rule}", word = "KEY")
+}
 
 /// A conflict marker line as git writes it: seven of `character` at the start of
 /// the line, then a space and `label` when the marker carries one.
@@ -431,13 +490,20 @@ fn copy_tree(source: &Path, target: &Path) {
     }
 }
 
-/// A fixture's text with its placeholders turned back into the bytes git writes.
+/// A fixture's text with its placeholders turned back into the bytes git writes
+/// into a file it could not merge, and the strings an issuer stamps.
 fn expand(contents: &str) -> String {
-    PLACEHOLDERS
+    let text = PLACEHOLDERS
         .iter()
         .fold(contents.to_string(), |text, (placeholder, character)| {
             text.replace(placeholder, &marker(*character, ""))
-        })
+        });
+    let text = CREDENTIALS
+        .iter()
+        .fold(text, |text, (placeholder, stamp, tail)| {
+            text.replace(placeholder, &format!("{stamp}{tail}"))
+        });
+    text.replace(KEY_BLOCK, &key_block())
 }
 
 /// The caller's git configuration, their hooks and their template directory stay

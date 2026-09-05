@@ -16,9 +16,8 @@ const NARROWED: &str = "export function parse(input: string): string[] {\n  \
 
 #[test]
 fn the_pre_push_hook_refuses_a_non_fast_forward_to_a_protected_branch() {
-    let (repo, remote) = published();
+    let (repo, remote) = guarded();
     let held = remote.git(&["rev-parse", "main"]).trim().to_string();
-    repo.weed(&["guard", "install"]);
 
     repo.write("src/parser.ts", WIDENED);
     repo.stage_all();
@@ -86,8 +85,7 @@ fn the_pre_push_hook_refuses_a_range_that_carries_a_finding_that_blocks() {
 
 #[test]
 fn the_pre_push_hook_lets_a_clean_fast_forward_through() {
-    let (repo, remote) = published();
-    repo.weed(&["guard", "install"]);
+    let (repo, remote) = guarded();
 
     repo.write("src/parser.ts", WIDENED);
     repo.commit("the parser, widened");
@@ -108,8 +106,7 @@ fn the_pre_push_hook_lets_a_clean_fast_forward_through() {
 
 #[test]
 fn a_branch_that_is_not_protected_is_yours_to_rewrite() {
-    let (repo, _remote) = published();
-    repo.weed(&["guard", "install"]);
+    let (repo, _remote) = guarded();
 
     repo.git(&["checkout", "-b", "feature/split"]);
     repo.write("src/parser.ts", WIDENED);
@@ -135,11 +132,37 @@ fn a_branch_that_is_not_protected_is_yours_to_rewrite() {
     );
 }
 
+/// The same repository with weed's own hooks installed and published along with
+/// it, which is the state a project is in once it has adopted weed.
+///
+/// The hooks live in the working tree so a clone gets them, and a hook is a
+/// guardrail, so the first commit and the first push that carry them are C1
+/// findings the gate itself refuses. Adopting weed is therefore one deliberate
+/// commit and one deliberate push that go around it, and both happen here,
+/// before there is any published history to protect.
+fn guarded() -> (Repo, Repo) {
+    let remote = Repo::bare();
+    let repo = Repo::init();
+    repo.weed(&["guard", "install"]);
+    repo.stage_all();
+    repo.git(&["commit", "--no-verify", "-m", "weed guard installed"]);
+    publish(repo, remote, Adoption::Skipped)
+}
+
 /// A repository whose main branch is already on a bare remote, with no hooks in
 /// it yet. Both temp directories must outlive the test, so both come back.
 fn published() -> (Repo, Repo) {
-    let remote = Repo::bare();
-    let repo = Repo::init();
+    publish(Repo::init(), Repo::bare(), Adoption::None)
+}
+
+/// Whether the history being published already carries weed's own hooks.
+enum Adoption {
+    None,
+    Skipped,
+}
+
+/// One honest commit, and the branch that carries it pushed to the remote.
+fn publish(repo: Repo, remote: Repo, adoption: Adoption) -> (Repo, Repo) {
     repo.write("src/parser.ts", RESOLVED);
     repo.commit("the parser");
     repo.git(&[
@@ -148,6 +171,10 @@ fn published() -> (Repo, Repo) {
         "origin",
         &remote.root().display().to_string(),
     ]);
-    repo.git(&["push", "--set-upstream", "origin", "main"]);
+    let mut push = vec!["push", "--set-upstream", "origin", "main"];
+    if matches!(adoption, Adoption::Skipped) {
+        push.insert(1, "--no-verify");
+    }
+    repo.git(&push);
     (repo, remote)
 }
