@@ -15,7 +15,7 @@ the test fails, so a consumer never has to guess what weed meant.
 | the tool component | `runs[0].tool.driver` with `name` `weed` and the binary's `version` | `tests/sarif_shape.rs::log_holds_one_run_with_the_schema_uri_and_version` |
 | the rules array | every catalogue rule as a reporting descriptor: `id`, `shortDescription`, `fullDescription`, `defaultConfiguration.level`, and `helpUri` | `tests/sarif_shape.rs::tool_component_lists_every_catalogue_rule_with_its_default_level` |
 | rule id and index | `ruleId` and the `ruleIndex` of that rule in the tool component | `tests/sarif_shape.rs::result_carries_its_rule_id_and_the_index_of_that_rule_in_the_tool_component` |
-| the level mapping | block is `error`, warn is `warning`, a suppressed finding is `note` | `tests/sarif_shape.rs::levels_map_block_to_error_warn_to_warning_and_a_suppressed_finding_to_note` |
+| the level mapping | block is `error`, warn is `warning`, a suppressed finding weed honoured is `note`; under `--strict` a finding keeps its level and still carries its `suppressions` entry | `tests/sarif_shape.rs::levels_map_block_to_error_warn_to_warning_and_a_suppressed_finding_to_note` |
 | the message | `message.text` reads what was found, why it matters, then the next action, in that order | `tests/sarif_shape.rs::message_reads_what_then_why_then_next` |
 | the location | one `physicalLocation` per result, with a repo-relative `artifactLocation.uri` | `tests/sarif_shape.rs::location_is_a_repo_relative_uri_with_a_region` |
 | the region | `region.startLine`, plus `endLine` when the finding spans lines | `tests/sarif_shape.rs::location_is_a_repo_relative_uri_with_a_region` |
@@ -128,7 +128,11 @@ why in the same place a SARIF consumer already reads.
 A suppressed finding stays in the log. It becomes a `note` and carries a `suppressions` entry of
 kind `inSource` whose `justification` is the reason the author gave, whether that reason arrived as
 a `Weed-allow:` commit trailer or an inline `weed-allow` comment. Both travel with the change, so
-both are in-source as SARIF means it. The pile stays visible and stops nobody.
+both are in-source as SARIF means it. The pile stays visible and stops nobody. Under `--strict` the
+finding keeps the level its rule carries and still carries the `suppressions` entry: reported, and
+not honoured. A trailer reaches weed through `--message-file` (a hook hands the message in) or
+through the commits of a `--base` range; weed never reads git's own `COMMIT_EDITMSG`, which holds the
+previous commit's message at pre-commit time.
 
 ## Fixes
 

@@ -33,7 +33,7 @@ struct CheckArgs {
     /// Judge the index alone, the view a pre-commit hook has.
     #[arg(long)]
     staged: bool,
-    /// Judge only the paths these globs allow.
+    /// The paths the change may touch; every file is still judged.
     #[arg(long, value_name = "glob")]
     scope: Vec<String>,
     /// Report suppressed findings at their own level, and refuse to guess.
@@ -45,6 +45,9 @@ struct CheckArgs {
     /// Read weed.toml from here instead of the repository root.
     #[arg(long, value_name = "path")]
     config: Option<PathBuf>,
+    /// The message of the commit being prepared, for its Weed-allow trailers.
+    #[arg(long, value_name = "path")]
+    message_file: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]
@@ -113,6 +116,7 @@ fn run_check(args: CheckArgs) -> Answer {
         strict: args.strict,
         format,
         config: args.config,
+        message_file: args.message_file,
         version: env!("CARGO_PKG_VERSION").to_string(),
     })
 }

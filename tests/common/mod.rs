@@ -8,7 +8,8 @@
 //! `fixtures/adversarial/<RULE>/<lang>/<case>/`: `before/` is committed as HEAD,
 //! `after/` replaces the tree, and files that `after/` does not carry are
 //! deleted. `after/.weed-commit` is the message of the commit being prepared —
-//! it goes where git keeps that message and is never copied into the tree.
+//! the harness hands it to weed with `--message-file` and never copies it into
+//! the tree, because a pre-commit gate has no commit to read a trailer from.
 //!
 //! No file in this repository opens a line with a conflict marker. weed does not
 //! carry what it refuses, and a marker at the start of a line in a test file or
@@ -33,6 +34,8 @@ const AUTHOR_NAME: &str = "weed fixtures";
 const AUTHOR_EMAIL: &str = "fixtures@weed.invalid";
 /// The file `after/` uses to carry the pending commit message.
 const COMMIT_MESSAGE_FILE: &str = ".weed-commit";
+/// Where the harness keeps that message, outside the tree, until weed is run.
+const PENDING_MESSAGE_FILE: &str = "weed-pending-message";
 
 /// How many times a conflict marker repeats its character. git writes seven.
 const MARKER_WIDTH: usize = 7;
@@ -136,12 +139,16 @@ impl Repo {
         self.git(&["rev-parse", "HEAD"]).trim().to_string()
     }
 
-    /// The message of the commit being prepared, where git keeps it and where a
-    /// pre-commit gate reads its trailers.
-    pub fn prepare_commit_message(&self, message: &str) {
-        let path = self.git(&["rev-parse", "--git-path", "COMMIT_EDITMSG"]);
-        let path = self.root().join(path.trim());
-        std::fs::write(path, message).expect("the pending message should be writable");
+    /// The message of the commit being prepared. It lives in the git dir, outside
+    /// the tree, and every `weed check` this repo runs passes it with `--message-file`.
+    pub fn pending_message(&self, message: &str) {
+        std::fs::write(self.pending_message_path(), message)
+            .expect("the pending message should be writable");
+    }
+
+    fn pending_message_path(&self) -> PathBuf {
+        let git_dir = self.git(&["rev-parse", "--git-dir"]);
+        self.root().join(git_dir.trim()).join(PENDING_MESSAGE_FILE)
     }
 
     /// git, in this repository, with the caller's own configuration kept out.
@@ -166,7 +173,15 @@ impl Repo {
 
     /// The built binary, run in this repository with stdout on a pipe.
     pub fn weed(&self, arguments: &[&str]) -> Run {
-        weed_in(self.root(), arguments)
+        let output = self
+            .weed_command(arguments)
+            .output()
+            .expect("the weed binary should run");
+        Run {
+            code: code(output.status),
+            stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+            stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+        }
     }
 
     /// The built binary, run with a real pseudo-terminal on stdout, so it
@@ -193,8 +208,15 @@ impl Repo {
         }
     }
 
+    /// The binary in this repository; a pending message, where one was written,
+    /// rides along as `--message-file` on every `check`.
     pub fn weed_command(&self, arguments: &[&str]) -> Command {
-        weed_command_in(self.root(), arguments)
+        let mut command = weed_command_in(self.root(), arguments);
+        let pending = self.pending_message_path();
+        if arguments.first() == Some(&"check") && pending.is_file() {
+            command.arg("--message-file").arg(pending);
+        }
+        command
     }
 }
 
@@ -309,7 +331,7 @@ pub fn fixture(rule: &str, lang: &str, case: &str) -> Repo {
     if pending.is_file() {
         let message = std::fs::read_to_string(&pending).expect("the pending message should read");
         std::fs::remove_file(&pending).expect("the pending message should not reach the tree");
-        repo.prepare_commit_message(&message);
+        repo.pending_message(&message);
     }
     repo.stage_all();
     repo

@@ -14,7 +14,7 @@ const REASON: &str = "the merge finishes in the follow-up commit";
 #[test]
 fn a_commit_trailer_makes_a_block_finding_a_note_and_strict_gives_it_back() {
     let repo = fixture("G1", "ts", "fire");
-    repo.prepare_commit_message(&format!("Split on semicolons\n\nWeed-allow: G1 {REASON}\n"));
+    repo.pending_message(&format!("Split on semicolons\n\nWeed-allow: G1 {REASON}\n"));
 
     let honoured = repo.weed(&["check"]);
     let findings = honoured.findings();
@@ -30,14 +30,47 @@ fn a_commit_trailer_makes_a_block_finding_a_note_and_strict_gives_it_back() {
     assert_eq!(honoured.code, 0);
 
     let strict = repo.weed(&["check", "--strict"]);
+    let findings = strict.findings();
     assert!(
-        strict
-            .findings()
-            .iter()
-            .all(|finding| finding.level == "error"),
+        findings.iter().all(|finding| finding.level == "error"),
         "under --strict a suppressed block finding is a block finding again"
     );
+    assert!(
+        findings.iter().all(|finding| finding.suppressed),
+        "reported, not honoured: the suppression still travels in the log"
+    );
     assert_eq!(strict.code, 2);
+}
+
+#[test]
+fn a_trailer_on_a_commit_in_the_base_range_counts_and_git_s_own_editmsg_never_does() {
+    let repo = Repo::init();
+    let base = repo.head();
+    repo.write("src/parser.ts", &conflicted_parser(None));
+    repo.commit(&format!(
+        "Split on semicolons
+
+Weed-allow: G1 {REASON}
+"
+    ));
+
+    let honoured = repo.weed(&["check", "--base", &base]);
+    assert!(honoured.findings().iter().all(|finding| finding.suppressed));
+    assert_eq!(
+        honoured.code, 0,
+        "the trailer rode in on the commit it was written for"
+    );
+
+    // The same message still sits in git's COMMIT_EDITMSG. A later, unrelated
+    // change must not inherit it.
+    repo.write("src/other.ts", &conflicted_parser(None));
+    repo.stage_all();
+    let later = repo.weed(&["check"]);
+    assert!(
+        later.findings().iter().all(|finding| !finding.suppressed),
+        "a trailer never outlives the change it was written for"
+    );
+    assert_eq!(later.code, 2);
 }
 
 #[test]

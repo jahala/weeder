@@ -136,17 +136,6 @@ pub fn commit_messages(root: &Path, base: &str) -> Result<Vec<String>, GitError>
         .collect())
 }
 
-/// The message of the commit being prepared, where git keeps it. A pre-commit
-/// gate reads its trailers from here because the commit does not exist yet.
-pub fn pending_commit_message(root: &Path) -> Result<Option<String>, GitError> {
-    let path = run(root, &["rev-parse", "--git-path", "COMMIT_EDITMSG"])?;
-    let path = root.join(path.trim_end());
-    fs::read_if_present(&path).map_err(|error| GitError::Refused {
-        command: "rev-parse --git-path COMMIT_EDITMSG".to_string(),
-        message: error.message,
-    })
-}
-
 /// Where this repository looks for its hooks.
 pub fn hooks_path(root: &Path) -> Result<PathBuf, GitError> {
     let path = run(root, &["rev-parse", "--git-path", "hooks"])?;

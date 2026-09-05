@@ -130,7 +130,7 @@ fn a_file_is_read_at_a_ref_and_in_the_tree() {
 }
 
 #[test]
-fn the_messages_of_a_range_and_of_the_commit_being_prepared() {
+fn the_messages_of_a_range() {
     let repo = Repo::init();
     repo.write("a.ts", "export const a = 1;\n");
     repo.commit("the base");
@@ -150,12 +150,6 @@ fn the_messages_of_a_range_and_of_the_commit_being_prepared() {
     assert!(messages
         .iter()
         .any(|message| message.contains("Weed-allow: G1")));
-
-    repo.prepare_commit_message("a message nobody has committed yet\n");
-    assert_eq!(
-        git::pending_commit_message(repo.root()).expect("git keeps it where it keeps it"),
-        Some("a message nobody has committed yet\n".to_string())
-    );
 }
 
 #[test]
