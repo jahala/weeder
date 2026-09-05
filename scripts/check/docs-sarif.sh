@@ -25,6 +25,7 @@ conventions=(
   "the region"
   "fixes"
   "suppressions"
+  "the result's own path"
   "the invocation"
   "schema validity"
   "the table's lines"

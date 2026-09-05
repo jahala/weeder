@@ -6,13 +6,16 @@ pub mod diff;
 pub mod finding;
 pub mod glob;
 pub mod guard;
+pub mod help;
 pub mod hook;
 pub mod read;
+pub mod registry;
 pub mod rules;
 pub mod sarif;
 pub mod shell;
 pub mod suppress;
 pub mod syntax;
+pub mod tree;
 
 pub use catalogue::{Face, Rule};
 pub use change::{Change, Side};
@@ -31,3 +34,4 @@ pub use suppress::{
     InlineSuppressionError, Suppression, SuppressionSource,
 };
 pub use syntax::{Mask, Syntax, Word};
+pub use tree::{CommandListing, Tree, TreeFile};

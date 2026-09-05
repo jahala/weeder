@@ -10,6 +10,9 @@
 //! deleted. `after/.weed-commit` is the message of the commit being prepared ,
 //! the harness hands it to weed with `--message-file` and never copies it into
 //! the tree, because a pre-commit gate has no commit to read a trailer from.
+//! A rule that judges the tree rather than a diff has one state to read and not
+//! two, so its fixture carries `before/` alone and the tree is left as `before/`
+//! committed it.
 //!
 //! weed does not carry what it refuses, so no file in this repository opens a
 //! line with a conflict marker or holds a string shaped like a credential. Rust
@@ -207,6 +210,28 @@ impl Repo {
         self.git(&["commit", "-m", message]);
     }
 
+    /// A commit dated when the caller says, so a test about how old a line is
+    /// can age one without waiting for the calendar. git reads the date from
+    /// the environment, and the harness's own fixed date is overridden here.
+    pub fn commit_dated(&self, message: &str, date: &str) {
+        self.stage_all();
+        let output = isolated(Command::new("git"))
+            .arg("-C")
+            .arg(self.root())
+            .args(["-c", &format!("user.name={AUTHOR_NAME}")])
+            .args(["-c", &format!("user.email={AUTHOR_EMAIL}")])
+            .env("GIT_AUTHOR_DATE", date)
+            .env("GIT_COMMITTER_DATE", date)
+            .args(["commit", "-m", message])
+            .output()
+            .expect("git should be on PATH");
+        assert!(
+            output.status.success(),
+            "the dated commit failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
     pub fn head(&self) -> String {
         self.git(&["rev-parse", "HEAD"]).trim().to_string()
     }
@@ -263,6 +288,22 @@ impl Repo {
             .weed_command(arguments)
             .output()
             .expect("the weed binary should run");
+        Run {
+            code: code(output.status),
+            stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+            stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+        }
+    }
+
+    /// The built binary, run in this repository with something added to its
+    /// environment. A repository whose docs cite a command needs that command
+    /// on PATH, and the binary under test is the command the fixtures cite.
+    pub fn weed_with(&self, arguments: &[&str], environment: &[(&str, &str)]) -> Run {
+        let mut command = self.weed_command(arguments);
+        for (name, value) in environment {
+            command.env(name, value);
+        }
+        let output = command.output().expect("the weed binary should run");
         Run {
             code: code(output.status),
             stdout: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -480,8 +521,12 @@ pub fn fixture(rule: &str, lang: &str, case: &str) -> Repo {
     copy_tree(&source.join("before"), repo.root());
     repo.commit("the state the change starts from");
 
+    let after = source.join("after");
+    if !after.is_dir() {
+        return repo;
+    }
     empty_tree(repo.root());
-    copy_tree(&source.join("after"), repo.root());
+    copy_tree(&after, repo.root());
     let pending = repo.root().join(COMMIT_MESSAGE_FILE);
     if pending.is_file() {
         let message = std::fs::read_to_string(&pending).expect("the pending message should read");
@@ -507,6 +552,20 @@ pub fn fixture_file(rule: &str, lang: &str, case: &str, path: &str) -> String {
 
 pub fn binary() -> PathBuf {
     assert_cmd::cargo::cargo_bin("weed")
+}
+
+/// A PATH with the built binary's own directory in front of it, so a fixture
+/// whose docs cite `weed` is citing the binary under test.
+pub fn path_with_weed() -> String {
+    let directory = binary()
+        .parent()
+        .expect("the built binary should sit in a directory")
+        .display()
+        .to_string();
+    match std::env::var("PATH") {
+        Ok(path) => format!("{directory}:{path}"),
+        Err(_) => directory,
+    }
 }
 
 /// Every file in the working tree, gone. What `after/` carries comes back; what

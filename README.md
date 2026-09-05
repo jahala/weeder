@@ -46,6 +46,7 @@ are plain `weed`.
 | Face | What it does |
 |---|---|
 | `weed check` | judges a diff and may block. This is the one wired into hooks and CI |
+| `weed scan` | judges the repository as it is and never blocks: rotted docs, dead exports, stale work markers, lagging pins |
 | `weed guard` | puts that judgement inside git, through hooks git cannot be talked out of running |
 | `weed hook` | answers an agent harness's hook event, so a turn ends against weed's verdict |
 | `weed rules` | prints the catalogue and the level each rule carries |
@@ -53,6 +54,7 @@ are plain `weed`.
 ```bash
 weed check --staged
 weed check --base origin/main --strict --format sarif
+weed scan --format sarif
 weed guard install --protect main
 weed guard status
 weed hook claude
