@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>garden-fit · weed</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# garden-fit — what makes weed a bed of the garden
+**Goal.** The umbrella verifies every bed against a fit contract, F1 to F6. This loop ships what those checks read: `garden.json` at the root; a `SKILL.md` with a one-sentence description; the brand layer at `.brand/products/weed/` with the name and accent marked flagged; a `LICENSE` (MIT, flagged until the owner confirms); a `README.md`; the release pipeline copied from tilth's (CI, multi-platform binaries, crates.io, an npm wrapper); and the GitHub Action example that is weed's first distribution, `examples/ci/github.yml`.
+
+## garden.json
+
+Name `weed`; kind `["gate", "hook"]`; version equal to `Cargo.toml`; install per platform (the npm wrapper, `cargo install weed`, and the release binaries by target triple); faces (`check`, `scan`, `guard`, `bite`, `hook`, `rules`); check command `weed check --format sarif`; metric command `bash scripts/check/calibration-bar.sh`; declared context cost `0`. The manifest schema belongs to the contracts repository, which does not exist yet; until it does, `schemas/garden.schema.json` here is the vendored proposal and is flagged as such.
+
+## The brand layer
+
+`.brand/products/weed/identity.md`, `colors.md`, `voice.md`, `petalsrc.example` and `assets/` in the shape of the umbrella's `.brand/products/pollen/`. Six accents are taken and pollen has claimed a seventh (see the umbrella's `.brand/colors.md`, Product Accents). Propose three candidates measured with the method in the umbrella's `scripts/palette_contrast.py` (WCAG ratios against paper, band, ink and soil-night), record the numbers in `colors.md`, and mark the accent and the name `[flagged]` for the owner. The voice delta carries weed's terminology: finding, block, warn, note, gate, honest, growth; never violation, error (for a finding), failure (for a block).
+
+## Release pipeline
+
+`.github/workflows/ci.yml` runs `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test` on push and pull request. `.github/workflows/release.yml` mirrors tilth's: a version check across `Cargo.toml` and `npm/package.json`, a build matrix (x86_64 and aarch64 for linux-musl, macos, windows), crates.io publish, npm publish of the wrapper. `npm/` holds `package.json`, `install.js` and `run.js` in tilth's shape. Nothing here is run against GitHub; `actionlint` proves the workflows parse.
+
+## Tests
+- [ ] (code) `garden.json` validates against `schemas/garden.schema.json`, its version equals `Cargo.toml`'s, its check command runs and emits valid SARIF, its metric command runs, and its declared context cost is 0 · tests/garden_manifest.rs
+- [ ] (code) `SKILL.md` has a one-sentence description and its body names every subcommand and flag `weed --help` and each `weed <face> --help` print · tests/skill_md.rs
+- [ ] (code) `.brand/products/weed/` holds identity, colors, voice, a petalsrc example and assets in the pollen shape, three accent candidates with measured contrast ratios, and `[flagged]` on the name and the accent · scripts/check/brand.sh
+- [ ] (code) both workflows pass `actionlint`, `release.yml` carries the version check and the platform matrix, and `npm/package.json` names the same version as `Cargo.toml` · scripts/check/release.sh
+- [ ] (code) `examples/ci/github.yml` runs `weed check --base origin/${{ github.base_ref }} --strict --format sarif` into `weed.sarif` and uploads it with `github/codeql-action/upload-sarif`, and passes `actionlint` · scripts/check/ci-example.sh
+- [ ] (code) `LICENSE` is MIT naming the owner, `README.md` opens with what weed is and marks the license, name and accent as flagged, and `README.md` cites only commands and paths that exist · scripts/check/readme.sh
+- [ ] (code) a fresh clone of this repository into a temp dir builds with `cargo build --release` and `weed --version` runs, on this machine (F3 as far as it can be proven before the tilth-core branch is pushed) · scripts/check/clean-install.sh
+
+## Needs #calibration #check-face
+
+## Tried
+- 2026-09-05 the fit runner `scripts/fit/weed.sh` and `garden.lock` on the umbrella do not exist yet; this loop ships what they will read and the umbrella loop stays open until they do
+- 2026-09-05 a landing page is a later loop; the garden footer with the plotplot band goes on the README until a page exists
+</script>
+<script src="loop.js"></script>

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>calibration · weed</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# calibration — does the gate deserve to exist
+**Goal.** Before weed is allowed to block anyone, it runs over real history: `weed check --base <parent> --strict` on up to the last 200 commits of the default branch in tilth, pleach, tend2, copeca and umbel. `docs/calibration-2026-09.md` records per repo the commits judged, blocked and warned, and classifies every blocked commit as true positive, acceptable, or false positive. The ship bar is block-level false positives under two percent of commits per repo. The kill bar is reaching that bar only by disabling T1, T2, T3 or S1; then the verdict is written in the file's first sentence and weed does not ship as a gate. The metric command `garden.json` names is this measurement.
+
+## Repos
+
+| Repo | Path | Default branch |
+|---|---|---|
+| tilth | `/Users/jahala/CascadeProjects/tilth` | `main` |
+| pleach | `/Users/jahala/conductor/workspaces/pleach-v1/cayenne` | its default branch |
+| tend2 | `/Users/jahala/conductor/workspaces/feature-map/missoula` | its default branch |
+| copeca | `/Users/jahala/conductor/workspaces/copeca/cancun` | its default branch |
+| umbel | `/Users/jahala/conductor/workspaces/rctrl/master` | `master` |
+
+A repo with fewer than 200 commits contributes every commit it has, and the file says so. The run never writes to those repositories: it reads them through `git` with `--base <parent>` against a detached worktree it creates under a temp dir and removes.
+
+## The file
+
+`docs/calibration-2026-09.md` opens with the verdict sentence: ship, or kill with the rules that would have to go. Then one table per repo (commit, rules fired at block level, classification, one line of reasoning), then totals, then the rule-level view: for each block rule, fires, true positives, false positives, and the false-positive share. Classification is a judgement written by whoever runs the calibration; the script checks the arithmetic and the bar, never the judgement.
+
+## Tests
+- [ ] (code) `cargo xtask calibrate` judges up to the last 200 commits of each listed repo against their parents, writes `docs/calibration-2026-09.md` in the described shape with the verdict first, and leaves the source repositories untouched · scripts/check/calibrate.sh
+- [ ] (code) the calibration file's per-repo block-level false-positive share is under two percent of commits judged, and no line of it records T1, T2, T3 or S1 turned off to get there · scripts/check/calibration-bar.sh
+- [ ] (code) `garden.json`'s metric command runs `scripts/check/calibration-bar.sh` and its latest result is committed · scripts/check/metric.sh
+
+## Needs #rules-prod
+
+## Tried
+- 2026-09-05 repos follow the umbrella loop's list; the brief's rctrl is umbel's former name and the same repository
+- 2026-09-05 `xtask` over a script so the calibration runs the same core the binary ships, with no second implementation of the diff walk
+</script>
+<script src="loop.js"></script>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rules-block · weed</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# rules-block — the six findings that stop a commit
+**Goal.** The rules that block by default, because each names a shape no honest change has: a deleted test, an added skip or focus, a stub in production code, a secret, an edited guardrail, and a conflict marker (G1, already live on check-face). Each lands as a failing fixture first in TypeScript/JavaScript, Python, Rust and Go, then the detector, and each has a neighbour fixture where it must stay silent. A rule detects a shape, never a vendor or a product name.
+
+## The rules
+
+| Id | Finding | Detection |
+|---|---|---|
+| T1 | test deleted: a test file removed, or a test case removed from a changed test file | file classification plus a case count from the reader's test shape, HEAD against tree |
+| T3 | skip or focus added: `.skip`, `.only`, `xit`, `xdescribe`, `test.todo`, `@pytest.mark.skip`, `@pytest.mark.xfail`, `@unittest.skip`, `#[ignore]`, `t.Skip(`, `t.SkipNow(` | added lines in test files, matched as syntax not as substrings inside strings or comments |
+| S1 | stub or TODO in production code: `TODO`, `FIXME`, `XXX`, `unimplemented!`, `todo!`, `NotImplementedError`, `throw new Error('not implemented')`, `panic("not implemented")`, a function body that is only `pass`, `return null`, `return nil`, or `...` | added lines in prod files, plus the reader's outline for the body-only shape |
+| X1 | secret-looking string added: a known prefix (`AKIA`, `ghp_`, `github_pat_`, `sk-`, `xox[bpoas]-`, `AIza`, `glpat-`, `npm_`, a private key block, a signed JWT) or a high-entropy literal assigned to a key-like name (`key`, `secret`, `token`, `password`, `credential`) | added lines in any file; the entropy path needs both the name and a Shannon entropy above 4.0 over 20 or more characters |
+| C1 | guardrail edited: `.github/workflows/*`, `.claude/settings*.json`, `.gemini/settings.json`, `.codex/*`, `weed.toml`, `.githooks/*`, the hard-limits section of `AGENTS.md` or `CLAUDE.md` | path classification; for the two markdown files only a hunk touching a section whose heading contains "hard limits" |
+
+## What a test case is, per language
+
+TypeScript/JavaScript: a call to `it`, `test`, `describe` (and their `.each` forms) under vitest, jest or `node:test`. Python: a function or method whose name starts with `test` in a test file, under pytest or `unittest`. Rust: a function under `#[test]` or `#[tokio::test]`. Go: a function `TestXxx(t *testing.T)`, and subtests via `t.Run`. A case count that drops in a changed test file is T1; a file removed whose classification is test is T1.
+
+## Silence
+
+Each rule has a neighbour that looks close and is honest: a test renamed in place, a `skip` inside a string, a `TODO` in a comment inside a test file, a `key` variable holding a short config name, a workflow file added rather than edited (still C1: any change to a guardrail path is the finding, and the neighbour for C1 is an edit to `.github/CODEOWNERS`, which is not a guardrail).
+
+## Tests
+- [ ] (code) T1 fires at block level when a test file is deleted and when a test case is removed from a changed test file, in ts, py, rs and go, and stays silent when a case is renamed in place or a new case is added · tests/rule_t1.rs
+- [ ] (code) T3 fires at block level on each added skip or focus form per language and stays silent when the same token sits inside a string or a comment · tests/rule_t3.rs
+- [ ] (code) S1 fires at block level on each stub form per language in production files, including the body-only shapes, and stays silent on the same tokens in test files and on a `TODO` inside a string literal · tests/rule_s1.rs
+- [ ] (code) X1 fires at block level on each known prefix and on a high-entropy literal assigned to a key-like name, and stays silent on a short name, on a placeholder like `<your-key-here>`, and on a hash in a lockfile · tests/rule_x1.rs
+- [ ] (code) C1 fires at block level on every listed guardrail path and on a hunk touching the hard-limits section of `AGENTS.md`, and stays silent on `.github/CODEOWNERS` and on a hunk elsewhere in `AGENTS.md` · tests/rule_c1.rs
+- [ ] (code) every block rule's result carries a what/why/next message and, for T3 and G1, a `fixes` entry that removes the added line · tests/rule_messages.rs
+
+## Needs #check-face #tilth-core
+
+## Tried
+- 2026-09-05 rule files are `src/core/rules/check/<id>.rs`, one per rule, registered in `src/core/rules/check/mod.rs`; scan rules get their own registry so the two faces never share a file
+- 2026-09-05 T2 (assertions dropped) is on rules-tests although it blocks by default: its count depends on per-language assertion vocabularies that the tests loop owns, and the block set here is the one the umbrella loop names as unambiguous
+- 2026-09-05 X1's prefix list overlaps pleach's hygiene gate on purpose: both are the same shapes, and weed is the one that runs where pleach does not
+</script>
+<script src="loop.js"></script>

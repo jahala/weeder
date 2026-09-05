@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tilth-core · weed</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# tilth-core — the parsing substrate, and the one seam that touches it
+**Goal.** weed reads code through `tilth-core`, a library crate extracted from tilth that owns tree-sitter outlines, file-type and language detection, test-file classification, import extraction and resolution, and caller search across fourteen languages. weed does not parse anything itself. All of that reading sits behind one seam module, `src/seams/reader.rs`, so the core stays pure and the dependency can be swapped or upgraded mechanically.
+
+## The extraction lives in tilth
+
+The crate does not exist when this loop is shaped. The proposal is a branch `tilth-core` in the tilth repository (worktree at `.context/tilth-core`), conducted by its own pleach plan (`plans/tilth-core.plan.json`): a Cargo workspace whose root package stays `tilth` (so the fuzz crate, the release workflow and `cargo install --path .` keep working) and whose new member `crates/tilth-core` holds the parsing modules, with tilth's binary consuming it and tilth's CI trio (`cargo fmt --check`, `cargo clippy --workspace -- -D warnings`, `cargo test --workspace`) green. The tilth agent owns landing it on main; this loop records that the proposal exists and is green.
+
+## What weed asks of the crate
+
+- file-type and language detection for a path (`detect_file_type`, `Lang`, `FileType`)
+- outline entries for a file's content and language: name, kind, line range, children (`get_outline_entries`)
+- test-file classification by path (`is_test_file`)
+- the test structure of a test file: suites and cases with their lines, where the language has such a shape
+- import lines, their sources, whether a source is external, and resolution of a relative source to files on disk
+- callers of a symbol across a scope, batched, so a rule can name a blast radius or prove an export is dead
+
+## The seam
+
+`src/seams/reader.rs` is the only module in weed that names `tilth_core`. It exposes plain data to the core — `Outline`, `TestShape`, `Import`, `CallerSite`, `FileKind` hints — and nothing tree-sitter-shaped leaks past it. Core rules take those values as arguments; faces call the seam and hand the values in. A test reads the source tree and refuses any other `tilth_core` reference.
+
+## Tests
+- [ ] (code) the tilth worktree at `.context/tilth-core` is on branch `tilth-core`, holds `crates/tilth-core` exposing detection, outline entries, test-file classification, test structure, imports and callers, tilth's binary consumes it, and tilth's CI trio is green there · scripts/check/tilth-core.sh
+- [ ] (code) weed's `Cargo.toml` depends on `tilth-core` as a git dependency on the tilth repository, `.cargo/config.toml` patches it to the local worktree, and `cargo build` succeeds · scripts/check/tilth-core-dep.sh
+- [ ] (code) `src/seams/reader.rs` is the only file in `src/` that references `tilth_core`, and `src/core/` compiles with the reader's data types only · tests/reader_seam.rs
+- [ ] (code) the reader returns outline entries, test shape, imports and callers for one small file in each of ts, py, rs and go, asserted against the fixture's known contents · tests/reader_langs.rs
+
+## Tried
+- 2026-09-05 the brief named the modules on an older branch of tilth (`src/read/outline/`, `src/search/symbol.rs`, `src/search/deps.rs`, `src/types.rs::is_test_file`, `src/search/blast.rs`); on main the shared language infrastructure has since moved to `src/lang/`, so the extraction follows main's layout, not the brief's file list
+- 2026-09-05 tilth's `main` trips one clippy lint on rustc 1.98 (`manual_is_variant_and` in `src/overview.rs:693`) that its CI toolchain did not know; the extraction plan fixes that one line so the CI trio can be the gate
+- 2026-09-05 decided: weed does not fork or vendor any tilth parsing code; if the crate is not green, weed waits, and the reader seam is the only place the wait is felt
+</script>
+<script src="loop.js"></script>
