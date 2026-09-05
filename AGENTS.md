@@ -42,7 +42,7 @@ bash scripts/check/run.sh tests/<name>.rs     # one evidence file, the way the v
 tend2 next docs/tend2                          # where things stand
 ```
 
-`tilth-core` is a git dependency on the tilth repository (branch `tilth-core`). Until the owner pushes that branch, `.cargo/config.toml` patches it to the local worktree at `.context/tilth-core/crates/tilth-core`; that file is the only machine-specific line in the repo and is flagged on the project loop.
+`tilth-core` is a git dependency on `https://github.com/jahala/tilth`, pinned by rev to the commit the tilth agent landed (the tilth-core loop names it). Nothing in the repo points at a path on this machine; the worktree at `.context/tilth-core` exists only so the evidence script can run the crate's own suite.
 
 <!-- tend2:begin -->
 ## tend2 — this project plans on loops
