@@ -456,7 +456,7 @@ fn protection(root: &Path, from_the_flag: &[String]) -> Result<String, String> {
         "as this install named them"
     };
     Ok(format!(
-        "protected: {} — {source}.\n",
+        "protected: {} ({source}).\n",
         if branches.is_empty() {
             "no branch".to_string()
         } else {

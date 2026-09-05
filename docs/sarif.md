@@ -109,8 +109,8 @@ level a result actually carries lives on the result.
 ## helpUri and the documentation base
 
 A rule is documented at `docs/rules.md#<id>`. SARIF wants an absolute URI in `helpUri`, so the face
-hands `render` a documentation base — the checkout as a `file:` URI, or a published documentation
-URL where there is one — and weed resolves `docs/rules.md#<id>` against it. Without a base weed
+hands `render` a documentation base, the checkout as a `file:` URI or a published documentation
+URL where there is one, and weed resolves `docs/rules.md#<id>` against it. Without a base weed
 writes no `helpUri` at all, because a relative one fails schema validation and no consumer would
 follow it.
 
@@ -145,7 +145,7 @@ carries no `fixes`, because a replacement without a region says nothing about wh
 
 ## Regions
 
-SARIF counts lines from one. A finding that names a whole file — a deleted test, an added binary —
+SARIF counts lines from one. A finding that names a whole file, a deleted test or an added binary,
 carries an `artifactLocation` and no region. `endLine` appears only when the finding spans more than
 one line, so a one-line finding reads as `{ "startLine": 12 }`.
 
@@ -169,13 +169,13 @@ two results. A finding with no region sorts at line zero, above every line in it
 
 The order is fixed in one place so that nothing upstream of it has to be careful. A detector reports
 in whatever order suits it, a face may add findings from several passes, and the log still comes out
-the same — which is what lets a caller diff two logs, or a reviewer trust that a second run means
+the same, which is what lets a caller diff two logs, or a reviewer trust that a second run means
 what the first one did. Nothing in `src/core/` iterates a hash container into the output, and the
 one `HashMap` there says beside itself why its order never reaches a log;
 `tests/determinism.rs::every_hash_container_in_core_says_why_its_order_never_reaches_the_output`
 reads the source and asks for that in writing.
 
-The table keeps its own order — block findings first, then warnings, then notes — because a person
+The table keeps its own order, block findings first, then warnings, then notes, because a person
 reading it wants the thing that stopped them at the top.
 
 ## What weed leaves out
@@ -183,6 +183,6 @@ reading it wants the thing that stopped them at the top.
 No `partialFingerprints`. GitHub derives a fingerprint from the location when none is given, and a
 fingerprint that survives a rename is a later loop's problem.
 
-No timestamps. SARIF has places for them — `invocations[].startTimeUtc`, `endTimeUtc` — and a log
+No timestamps. SARIF has places for them (`invocations[].startTimeUtc`, `endTimeUtc`) and a log
 carrying one cannot be compared byte for byte with the log of the same diff an hour later. A loop
 that adds one has to strip it in `tests/determinism.rs` and record why there.
