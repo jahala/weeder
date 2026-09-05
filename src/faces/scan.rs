@@ -232,8 +232,10 @@ fn walk(root: &Path, path: &[String], into: &mut Vec<CommandListing>) -> Result<
 }
 
 /// Ask each registry what its latest release is, and write the snapshot the
-/// repository commits. One line comes back for every package weed could not
-/// get an answer about; a scan then runs against what it did get.
+/// repository commits. One line comes back for every package weed could not get
+/// a fresh answer about, and the snapshot keeps what it already held for those;
+/// a scan then runs against the result. A refresh that reached no registry at
+/// all is a failure rather than a snapshot.
 fn refresh(root: &Path, version: &str) -> Result<Vec<String>, String> {
     let mut wanted: Vec<(Registry, String)> = Vec::new();
     for path in git::tree_files(root).map_err(|error| error.to_string())? {
@@ -253,36 +255,79 @@ fn refresh(root: &Path, version: &str) -> Result<Vec<String>, String> {
     }
 
     let agent = format!("weed/{version}");
+    let committed = read_snapshot(root)?;
     let mut snapshot = Snapshot::default();
+    let mut said = Vec::new();
     let mut unreachable = Vec::new();
+    let mut answered = 0;
     for (registry, package) in &wanted {
-        match fetch(root, *registry, package, &agent) {
-            Ok(Some(latest)) => snapshot.record(*registry, package, &latest),
-            Ok(None) => unreachable.push(format!(
-                "{} had no latest release to give for {package}, so the snapshot keeps nothing for it.",
-                registry.name()
-            )),
-            Err(error) => return Err(error),
+        match fetch(root, *registry, package, &agent)? {
+            Reply::Latest(latest) => {
+                snapshot.record(*registry, package, &latest);
+                answered += 1;
+            }
+            Reply::Unreadable => {
+                answered += 1;
+                said.push(format!(
+                    "{} answered about {package} with no latest release in it, so the snapshot keeps what it had.",
+                    registry.name()
+                ));
+                carry_over(&committed, &mut snapshot, *registry, package);
+            }
+            Reply::Unreachable(why) => {
+                unreachable.push(format!(
+                    "weed could not reach {} for {package}: {why}.",
+                    registry.name()
+                ));
+                carry_over(&committed, &mut snapshot, *registry, package);
+            }
         }
     }
+
+    // A refresh that reached no registry at all did not happen. Writing the
+    // snapshot here would replace what the repository committed with a file
+    // saying the registries have released nothing, and every pin would read as
+    // current forever after.
+    if answered == 0 && !unreachable.is_empty() {
+        return Err(format!(
+            "{} {FETCH_PROGRAM} is how weed asks a registry, and every ask failed, so {SNAPSHOT_PATH} is left as the repository committed it. run --refresh-snapshot where the machine can reach the registries, or scan without it and judge against the snapshot you have.",
+            unreachable.join(" ")
+        ));
+    }
+    said.extend(unreachable);
 
     let file = root.join(SNAPSHOT_PATH);
     if let Some(directory) = file.parent() {
         fs::create_dir_all(directory).map_err(|error| error.to_string())?;
     }
     fs::write(&file, &snapshot.to_json()).map_err(|error| error.to_string())?;
-    Ok(unreachable)
+    Ok(said)
 }
 
-/// One registry, asked about one package. A registry that refuses or answers
-/// something weed cannot read is a package with no latest release; a fetcher
-/// this machine does not have is a refresh that never happened.
-fn fetch(
-    root: &Path,
-    registry: Registry,
-    package: &str,
-    agent: &str,
-) -> Result<Option<String>, String> {
+/// What the committed snapshot held for a package weed could not get a fresh
+/// answer about, kept in the new one.
+fn carry_over(committed: &Snapshot, into: &mut Snapshot, registry: Registry, package: &str) {
+    if let Some(recorded) = committed.recorded(registry, package) {
+        into.record(registry, package, recorded);
+    }
+}
+
+/// What one registry gave back about one package.
+enum Reply {
+    /// The latest release it named.
+    Latest(String),
+    /// It answered, and its answer held no release weed could read: a package
+    /// that has been yanked, a reply in a shape this registry did not use to
+    /// write.
+    Unreadable,
+    /// weed never got to it, and this is what the fetcher said about that.
+    Unreachable(String),
+}
+
+/// One registry, asked about one package. A fetcher this machine does not have
+/// is a refresh that never happened, and it is the caller who says so; anything
+/// the fetcher itself came back with is an answer this returns.
+fn fetch(root: &Path, registry: Registry, package: &str, agent: &str) -> Result<Reply, String> {
     let url = registry.latest_url(package);
     let seconds = FETCH_TIMEOUT.as_secs().to_string();
     let arguments = [
@@ -300,9 +345,24 @@ fn fetch(
     let answer = exec::run(root, FETCH_PROGRAM, &arguments, FETCH_TIMEOUT)
         .map_err(|error| format!("{error} --refresh-snapshot is the one thing weed does over the network, and it asks {FETCH_PROGRAM} to do it."))?;
     if answer.code != 0 {
-        return Ok(None);
+        return Ok(Reply::Unreachable(refusal(&answer)));
     }
-    Ok(registry.latest_in(&answer.stdout))
+    Ok(registry
+        .latest_in(&answer.stdout)
+        .map_or(Reply::Unreadable, Reply::Latest))
+}
+
+/// What the fetcher said when it came back with nothing. Its own complaint
+/// names the reason: a host that does not resolve, a route that is not there.
+/// A person reading the message needs that rather than an exit code alone.
+fn refusal(answer: &exec::Output) -> String {
+    answer
+        .stderr
+        .lines()
+        .map(str::trim)
+        .find(|line| !line.is_empty())
+        .map(|said| said.trim_end_matches('.').to_string())
+        .unwrap_or_else(|| format!("{FETCH_PROGRAM} left with {}", answer.code))
 }
 
 fn write(findings: &[Finding], request: &Request, root: &Path) -> String {

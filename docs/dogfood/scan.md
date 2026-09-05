@@ -60,3 +60,29 @@ Two things this loop did not solve, both real:
   fixture is an input to a test, not part of the program. The fix is a `[scan] exclude` list of
   globs a scan does not read, which every linter has and this loop was not shaped to add. Until it
   lands, a repository that keeps sample code in the tree turns R2 off.
+
+## The two binding checks, later
+
+Cape-town added two checks to the loop after milestone 5, and `tend2 verify --expect-payload`
+made the new payload sha the thing to satisfy: the same command, a different number, and the two
+new checks unstamped until their evidence ran. Nothing about the shaped checks had to be explained
+twice.
+
+Writing the exec bound as a test found nothing wrong: the face already handed `exec::run` a program
+and an argument array, and R1 resolves a citation against listings it already has rather than by
+running anything. What the test adds is the record. Its PATH is a directory of scripts that write
+down the arguments they were handed, so the claim is read off the commands themselves: two lines,
+`listed-tool --help` and `listed-tool build --help`, and the second one is there because the first
+one's help named `build`. Routing the same call through `sh -c` to see the test fail took one line
+and the log came back saying `sh -c listed-tool --help`.
+
+The offline check found a real defect. `curl` exiting 6 because a host does not resolve was read as
+a registry with no latest release to give, so a refresh with no network wrote a snapshot saying
+every registry has released nothing, and the next scan would have called every pin current. A
+refresh now tells the two apart: a registry that answered, and one weed never reached. Reaching
+none of them is a refresh that did not happen, so weed leaves with 3 and the committed snapshot
+stays as it was. The denial the test runs under is `sandbox-exec` on macOS and `unshare` on Linux,
+and the refresh coming back unreachable is what proves the denial is real rather than decorative.
+
+`weed rules` grew a network column out of the same check. It is the one place a reader can ask
+what the judge may reach without reading the source, and the answer is `none` on every rule but R4.

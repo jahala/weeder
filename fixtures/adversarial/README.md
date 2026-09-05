@@ -12,9 +12,10 @@ fixture has not been shown to discriminate.
 
 A rule with more than one shape to prove carries more than one of each, named
 for what it holds: T5 has a `silent-code/` for the half where the code moves
-without the expectation, and T7 has `fire-case/` and `silent-case/` for the
-languages whose runners collect a case by the name it is declared under. Every
-directory holding a `before/` and an `after/` is a fixture, whatever it is
+without the expectation, T7 has `fire-case/` and `silent-case/` for the
+languages whose runners collect a case by the name it is declared under, and R1
+has a `fire-bound/` whose document cites the commands a scan must refuse to run.
+Every directory holding a `before/` and an `after/` is a fixture, whatever it is
 called, and `tests/determinism.rs` replays all of them.
 
 A rule on the `scan` face judges the tree rather than a diff, so its fixture has
