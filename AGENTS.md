@@ -14,6 +14,7 @@ tests/         integration tests that drive the real `weed` binary on real git r
 fixtures/adversarial/<RULE>/<lang>/{fire,silent}/{before,after}/   one minimal repo history per rule per language: `before/` is committed as HEAD, `after/` is the working tree; a file `after/.weed-commit` carries the commit message (for trailers) and is never copied
 schemas/       vendored official schemas (sarif-schema-2.1.0.json)
 scripts/check/ evidence scripts a loop cites; run.sh is the runner tend2 verify uses
+scripts/proof/ evidence that starts a real agent session and writes what happened into docs/proof-2026-09.md
 docs/          sarif.md · pleach.md · tend2-seam.md · calibration-2026-09.md · proof-2026-09.md · dogfood.md · tend2/ (the map)
 examples/      pleach/plan.json · ci/github.yml
 ```

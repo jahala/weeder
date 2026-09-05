@@ -5,9 +5,11 @@ pub mod diff;
 pub mod finding;
 pub mod glob;
 pub mod guard;
+pub mod hook;
 pub mod read;
 pub mod rules;
 pub mod sarif;
+pub mod shell;
 pub mod suppress;
 
 pub use catalogue::{Face, Rule};
@@ -16,6 +18,7 @@ pub use config::{parse_config, Config, ConfigError, DependencyDirection, RuleSet
 pub use diff::{parse_diff, ChangeKind, DiffError, FileDiff, Hunk, HunkLine, LineKind};
 pub use finding::{Finding, Fix, Level, Message, Region};
 pub use guard::{parse_push_refs, protects, Hook, PushRef};
+pub use hook::{Ask, Harness, Refusal};
 pub use read::{
     CallerSite, Definition, DefinitionKind, Import, Outline, TestShape, TestUnit, TestUnitKind,
 };
