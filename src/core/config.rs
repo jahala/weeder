@@ -24,9 +24,14 @@ pub struct Thresholds {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Config {
     pub rules: HashMap<String, RuleSetting>,
+    /// `[scope] allow`: the globs a change may touch; everything else is X2.
     pub scope_globs: Vec<String>,
+    /// `[deps] layers`: layer name to the path globs that belong to it.
+    pub layers: BTreeMap<String, Vec<String>>,
+    /// `[deps] allow`: the import directions between layers that are permitted; D2 flags the rest.
     pub dependency_directions: Vec<DependencyDirection>,
     pub thresholds: Thresholds,
+    /// `[guard] protected`: branches guard refuses to rewrite or push non-fast-forward to.
     pub protected_branches: Vec<String>,
 }
 
@@ -60,6 +65,7 @@ impl Default for Config {
         Self {
             rules,
             scope_globs: vec!["**/*".to_string()],
+            layers: BTreeMap::new(),
             dependency_directions: Vec::new(),
             thresholds: Thresholds {
                 todo_age_days: 30,
@@ -75,7 +81,7 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
         return Ok(Config::default());
     };
     let raw: RawConfig = toml::from_str(input).map_err(|error| ConfigError {
-        key: toml_error_key(&error),
+        key: "weed.toml".to_string(),
         message: error.message().to_string(),
     })?;
     let mut config = Config::default();
@@ -87,10 +93,33 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
         }
     }
     if let Some(scope) = raw.scope {
-        config.scope_globs = scope.allowed_globs();
+        if let Some(allow) = scope.allow {
+            config.scope_globs = allow;
+        }
     }
     if let Some(deps) = raw.deps {
-        config.dependency_directions = deps.directions();
+        if let Some(layers) = deps.layers {
+            config.layers = layers;
+        }
+        config.dependency_directions = deps
+            .allow
+            .unwrap_or_default()
+            .into_iter()
+            .map(|direction| DependencyDirection {
+                from: direction.from,
+                to: direction.to,
+            })
+            .collect();
+        for direction in &config.dependency_directions {
+            for layer in [&direction.from, &direction.to] {
+                if !config.layers.contains_key(layer) {
+                    return Err(ConfigError {
+                        key: format!("deps.allow.{layer}"),
+                        message: "names a layer that [deps] layers does not define".to_string(),
+                    });
+                }
+            }
+        }
     }
     if let Some(thresholds) = raw.thresholds {
         if let Some(value) = thresholds.todo_age_days {
@@ -101,7 +130,7 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
         }
     }
     if let Some(guard) = raw.guard {
-        if let Some(branches) = guard.protected_branches.or(guard.branches) {
+        if let Some(branches) = guard.protected {
             config.protected_branches = branches;
         }
     }
@@ -137,13 +166,6 @@ fn is_scan_rule(rule: &str) -> bool {
     matches!(rule, "R1" | "R2" | "R3" | "R4")
 }
 
-fn toml_error_key(error: &toml::de::Error) -> String {
-    error
-        .span()
-        .map(|_| "weed.toml".to_string())
-        .unwrap_or_else(|| "weed.toml".to_string())
-}
-
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawConfig {
@@ -157,35 +179,14 @@ struct RawConfig {
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawScope {
-    allowed: Option<Vec<String>>,
-    globs: Option<Vec<String>>,
-}
-
-impl RawScope {
-    fn allowed_globs(self) -> Vec<String> {
-        self.allowed.or(self.globs).unwrap_or_default()
-    }
+    allow: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawDeps {
-    directions: Option<Vec<DependencyDirectionToml>>,
-    allowed: Option<Vec<DependencyDirectionToml>>,
-}
-
-impl RawDeps {
-    fn directions(self) -> Vec<DependencyDirection> {
-        self.directions
-            .or(self.allowed)
-            .unwrap_or_default()
-            .into_iter()
-            .map(|direction| DependencyDirection {
-                from: direction.from,
-                to: direction.to,
-            })
-            .collect()
-    }
+    layers: Option<BTreeMap<String, Vec<String>>>,
+    allow: Option<Vec<DependencyDirectionToml>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -205,6 +206,5 @@ struct RawThresholds {
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawGuard {
-    protected_branches: Option<Vec<String>>,
-    branches: Option<Vec<String>>,
+    protected: Option<Vec<String>>,
 }

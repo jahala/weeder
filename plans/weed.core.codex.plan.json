@@ -10,7 +10,7 @@
       "accept": {
         "smoke": "tend2 verify docs/tend2/core.tend2.html --repo-root . --force --expect-payload 25183d537229 --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
-          "command": "tend2 verify docs/tend2/core.tend2.html --repo-root . --force --expect-payload 25183d537229 --audit-egress",
+          "command": "tend2 verify docs/tend2/core.tend2.html --repo-root . --force --expect-payload 25183d537229 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
           "provider": "opencode",
           "selfIntegrity": true,
           "model": "opencode/big-pickle"
