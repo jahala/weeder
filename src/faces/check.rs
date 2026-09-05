@@ -15,12 +15,12 @@ use std::path::{Path, PathBuf};
 use crate::core::config::{parse_config, Config};
 use crate::core::diff::{parse_diff, FileDiff};
 use crate::core::finding::{Finding, Level};
+use crate::core::rules;
 use crate::core::sarif::{self, Context, EXIT_BLOCKED, EXIT_CLEAN, EXIT_COULD_NOT_RUN, RULES_DOC};
 use crate::core::suppress::{
     apply_suppressions, parse_commit_suppressions, parse_inline_suppressions,
     InlineSuppressionError, Suppression,
 };
-use crate::core::{glob, rules};
 use crate::faces::Answer;
 use crate::seams::{fs, git};
 
@@ -49,13 +49,17 @@ pub struct Request {
     pub base: Option<String>,
     /// Judge the index alone.
     pub staged: bool,
-    /// Restrict the judged paths to these globs; empty leaves `weed.toml` in charge.
+    /// The paths a change may touch. Every file is judged whatever the scope;
+    /// X2 (rules-prod) reports a file outside it. Empty leaves `weed.toml` in charge.
     pub scope: Vec<String>,
     /// Report suppressed findings at their own level, and refuse to guess.
     pub strict: bool,
     pub format: Format,
     /// Read `weed.toml` from here instead of the repository root.
     pub config: Option<PathBuf>,
+    /// The message of the commit being prepared, for its `Weed-allow:` trailers.
+    /// A pre-commit gate has no commit to read, so a hook hands the message in.
+    pub message_file: Option<PathBuf>,
     pub version: String,
 }
 
@@ -70,10 +74,9 @@ fn judge(request: &Request) -> Result<Answer, String> {
     let root = git::repository_root(&request.cwd).map_err(|error| error.to_string())?;
     let config = read_config(request, &root)?;
     let diff = read_diff(request, &root)?;
-    let files = parse_diff(&diff).map_err(|error| {
+    let judged: Vec<FileDiff> = parse_diff(&diff).map_err(|error| {
         format!("weed could not read the diff git produced: {error}. report it with the change that caused it.")
     })?;
-    let judged: Vec<FileDiff> = in_scope(files, request, &config);
 
     let findings = rules::evaluate(&judged, &config);
     let (inline, malformed) = parse_inline_suppressions(&judged);
@@ -83,12 +86,24 @@ fn judge(request: &Request) -> Result<Answer, String> {
         }
     }
 
-    let findings = if request.strict {
+    let mut suppressions = inline;
+    suppressions.extend(trailers(request, &root)?);
+    let findings = apply_suppressions(findings, &suppressions);
+    // Under --strict a suppression is reported and not honoured: the finding
+    // keeps the suppression it carries and gets its own level back, so a gate an
+    // agent wrote an allowance for still stops it, and the reviewer sees both.
+    let findings: Vec<Finding> = if request.strict {
         findings
+            .into_iter()
+            .map(|mut finding| {
+                if let Some(level) = finding.suppressed.as_ref().and_then(|s| s.original_level) {
+                    finding.level = level;
+                }
+                finding
+            })
+            .collect()
     } else {
-        let mut suppressions = inline;
-        suppressions.extend(trailers(request, &root)?);
-        apply_suppressions(findings, &suppressions)
+        findings
     };
 
     let code = if findings.iter().any(|finding| finding.level == Level::Block) {
@@ -141,31 +156,18 @@ fn read_diff(request: &Request, root: &Path) -> Result<String, String> {
     diff.map_err(|error| error.to_string())
 }
 
-/// The files the run is allowed to judge. `--scope` wins where it is given;
-/// otherwise `weed.toml`'s `[scope] allow` decides, and its default is every path.
-fn in_scope(files: Vec<FileDiff>, request: &Request, config: &Config) -> Vec<FileDiff> {
-    let globs = if request.scope.is_empty() {
-        &config.scope_globs
-    } else {
-        &request.scope
-    };
-    files
-        .into_iter()
-        .filter(|file| {
-            [file.new_path.as_deref(), file.old_path.as_deref()]
-                .into_iter()
-                .flatten()
-                .any(|path| glob::matches_any(globs, path))
-        })
-        .collect()
-}
-
-/// The `Weed-allow:` trailers travelling with the change: the message of the
-/// commit being prepared, and every commit a judged range carries.
+/// The `Weed-allow:` trailers travelling with the change: the message handed in
+/// with `--message-file`, and every commit a judged range carries. git's own
+/// COMMIT_EDITMSG is never read: at pre-commit time it still holds the previous
+/// commit's message, and a trailer must never outlive the change it was written for.
 fn trailers(request: &Request, root: &Path) -> Result<Vec<Suppression>, String> {
     let mut messages = Vec::new();
-    if let Some(pending) = git::pending_commit_message(root).map_err(|error| error.to_string())? {
-        messages.push(pending);
+    if let Some(path) = &request.message_file {
+        messages.push(
+            fs::read(path).map_err(|error| {
+                format!("{error} --message-file must name a file weed can read.")
+            })?,
+        );
     }
     if let Some(base) = &request.base {
         messages.extend(git::commit_messages(root, base).map_err(|error| error.to_string())?);

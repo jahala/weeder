@@ -342,7 +342,7 @@ fn row(finding: &Finding) -> Row {
         format!("{}:{}", finding.path, line)
     };
     Row {
-        level: sarif_level(level(finding)),
+        level: sarif_level(finding.level),
         rule: finding.rule.clone(),
         path: finding.path.clone(),
         line,
@@ -389,7 +389,7 @@ fn result(finding: &Finding, catalogue: &[Rule]) -> SarifResult {
     SarifResult {
         rule_id: finding.rule.clone(),
         rule_index: catalogue.iter().position(|rule| rule.id == finding.rule),
-        level: sarif_level(level(finding)),
+        level: sarif_level(finding.level),
         message: Text::new(message(finding)),
         locations: vec![Location {
             physical_location: PhysicalLocation {
@@ -446,16 +446,6 @@ fn region(finding: &Finding) -> Option<&crate::core::finding::Region> {
         .region
         .as_ref()
         .filter(|region| region.start_line >= 1)
-}
-
-/// A suppressed finding is a note whatever level the rule carries, because the
-/// pile stays visible without stopping anyone.
-fn level(finding: &Finding) -> Level {
-    if finding.suppressed.is_some() {
-        Level::Note
-    } else {
-        finding.level
-    }
 }
 
 fn sarif_level(level: Level) -> SarifLevel {

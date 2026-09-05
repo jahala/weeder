@@ -69,25 +69,18 @@ fn base_judges_the_tree_against_that_ref() {
 }
 
 #[test]
-fn scope_restricts_the_judged_paths() {
-    let (repo, base) = three_zones();
-
+fn scope_never_hides_a_finding() {
+    // `--scope` names the paths a change may touch. Every file is still judged;
+    // a file outside the scope is X2's finding (rules-prod), not a file weed
+    // looks away from.
+    let (repo, _) = three_zones();
     let run = repo.weed(&["check", "--scope", "src/**"]);
-    assert_eq!(run.paths(), vec!["src/nested.ts"]);
-
-    let run = repo.weed(&["check", "--base", &base, "--scope", "*.ts"]);
-    assert_eq!(
-        run.paths(),
-        vec!["committed.ts", "staged.ts", "tracked.ts"],
-        "a single star stops at a separator, so it never reaches into src/"
-    );
-
-    let run = repo.weed(&["check", "--scope", "**/*.ts", "--scope", "docs/**"]);
     assert_eq!(
         run.paths(),
         vec!["src/nested.ts", "staged.ts", "tracked.ts"],
-        "several scopes allow a path any one of them allows"
+        "a conflict outside the scope is still a conflict"
     );
+    assert_eq!(run.code, 2);
 }
 
 #[test]

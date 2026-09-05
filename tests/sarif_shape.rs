@@ -87,7 +87,9 @@ fn result_carries_its_rule_id_and_the_index_of_that_rule_in_the_tool_component()
 
 #[test]
 fn levels_map_block_to_error_warn_to_warning_and_a_suppressed_finding_to_note() {
-    let mut suppressed = finding("T3", Level::Block, "tests/a.test.ts", region(2, 2));
+    // The face sets a honoured suppression's level to Note; under --strict it
+    // leaves the rule's level in place and the suppression still travels.
+    let mut suppressed = finding("T3", Level::Note, "tests/a.test.ts", region(2, 2));
     suppressed.suppressed = Some(Suppression {
         rule: "T3".to_string(),
         reason: "the upstream suite is quarantined".to_string(),
@@ -96,10 +98,13 @@ fn levels_map_block_to_error_warn_to_warning_and_a_suppressed_finding_to_note() 
         source: SuppressionSource::InlineComment,
         original_level: Some(Level::Block),
     });
+    let mut strict = suppressed.clone();
+    strict.level = Level::Block;
     let findings = vec![
         finding("T1", Level::Block, "tests/a.test.ts", region(4, 4)),
         finding("T4", Level::Warn, "tests/a.test.ts", region(6, 6)),
         suppressed,
+        strict,
     ];
     let log = json(&findings, &context());
     let results = log["runs"][0]["results"]
@@ -109,7 +114,11 @@ fn levels_map_block_to_error_warn_to_warning_and_a_suppressed_finding_to_note() 
         .iter()
         .map(|result| result["level"].as_str().expect("a result carries a level"))
         .collect();
-    assert_eq!(levels, vec!["error", "warning", "note"]);
+    assert_eq!(levels, vec!["error", "warning", "note", "error"]);
+    assert!(
+        results[3].get("suppressions").is_some(),
+        "a finding reported at its own level under --strict still carries the suppression"
+    );
 }
 
 #[test]
