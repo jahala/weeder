@@ -9,15 +9,20 @@
 //! A debug build leaves a door open so this can be proven on the real binary:
 //! `WEED_PANIC_FOR_TESTS` makes weed panic with the words it is given, before it
 //! has read a flag or looked at a repository. `cfg(debug_assertions)` keeps the
-//! door out of a release build.
+//! door out of a release build, so the tests that walk through it run only on a
+//! debug build, and a release build is held to the opposite: the variable does
+//! nothing at all.
 
 mod common;
 
-use common::{weed_in, Repo, Run};
+#[cfg(debug_assertions)]
+use common::Run;
+use common::{weed_in, Repo};
 
 /// The variable a debug build reads, and the words it panics with.
 const ASKED: &str = "WEED_PANIC_FOR_TESTS";
 
+#[cfg(debug_assertions)]
 fn panicking(repo: &Repo, arguments: &[&str], reason: &str) -> Run {
     let output = repo
         .weed_command(arguments)
@@ -33,6 +38,7 @@ fn panicking(repo: &Repo, arguments: &[&str], reason: &str) -> Run {
     }
 }
 
+#[cfg(debug_assertions)]
 #[test]
 fn a_panic_leaves_with_exit_three_and_names_itself_a_bug() {
     let repo = Repo::init();
@@ -74,6 +80,7 @@ fn a_panic_leaves_with_exit_three_and_names_itself_a_bug() {
 
 /// A panic weed cannot judge must not look like a judgement. Nothing may reach
 /// stdout, where a SARIF log with no results would read as a clean run.
+#[cfg(debug_assertions)]
 #[test]
 fn a_panic_writes_no_log_a_reader_could_mistake_for_a_verdict() {
     let repo = Repo::init();
@@ -86,6 +93,7 @@ fn a_panic_writes_no_log_a_reader_could_mistake_for_a_verdict() {
 
 /// A panic message written across several lines would be several reasons as far
 /// as a reader, or a hook parsing output a line at a time, can tell.
+#[cfg(debug_assertions)]
 #[test]
 fn a_panic_that_says_several_lines_still_leaves_one() {
     let repo = Repo::init();
@@ -112,6 +120,7 @@ fn a_panic_that_says_several_lines_still_leaves_one() {
 
 /// The hook catches a panic wherever it comes from, including before weed has
 /// read a flag. `--version` is the shortest path through the binary there is.
+#[cfg(debug_assertions)]
 #[test]
 fn the_hook_is_in_place_before_the_flags_are_read() {
     let repo = Repo::init();
@@ -167,6 +176,7 @@ fn a_neighbouring_variable_does_not_open_the_door() {
 /// The binary the rest of the suite runs is a debug build, which is what carries
 /// the door. If that ever stops being true this test says so, rather than the
 /// hook quietly going unproven.
+#[cfg(debug_assertions)]
 #[test]
 fn the_binary_under_test_is_the_one_that_carries_the_door() {
     let directory = tempfile::tempdir().expect("a temp directory");
@@ -187,4 +197,27 @@ fn the_binary_under_test_is_the_one_that_carries_the_door() {
         Some(3),
         "the tests drive a debug build, so the door is there to prove the hook with"
     );
+}
+
+/// The release build is what anyone installs, and it has no way to be made to
+/// fall over from outside: the variable the debug build listens to is nothing to
+/// it, and weed answers as usual.
+#[cfg(not(debug_assertions))]
+#[test]
+fn a_release_binary_has_no_door() {
+    let directory = tempfile::tempdir().expect("a temp directory");
+    let asked = std::process::Command::new(common::binary())
+        .current_dir(directory.path())
+        .arg("--version")
+        .env(ASKED, "a bug")
+        .output()
+        .expect("the weed binary should run");
+    assert_eq!(
+        asked.status.code(),
+        Some(0),
+        "a release build carries no door, so the variable changes nothing: {}",
+        String::from_utf8_lossy(&asked.stderr)
+    );
+    let usual = weed_in(directory.path(), &["--version"]);
+    assert_eq!(usual.code, 0);
 }
