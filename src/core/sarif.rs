@@ -235,10 +235,11 @@ pub fn render(findings: &[Finding], context: &Context) -> Log {
         .iter()
         .map(|rule| descriptor(rule, context.docs_base.as_deref()))
         .collect();
-    let results: Vec<SarifResult> = findings
+    let mut results: Vec<SarifResult> = findings
         .iter()
         .map(|finding| result(finding, &context.catalogue))
         .collect();
+    results.sort_by(|left, right| sort_key(left).cmp(&sort_key(right)));
     let invocation = match &context.outcome {
         Outcome::Ran => Invocation {
             execution_successful: true,
@@ -274,6 +275,32 @@ pub fn render(findings: &[Finding], context: &Context) -> Log {
             results,
         }],
     }
+}
+
+/// The order law: file, then line, then rule id, and the message where a file,
+/// a line and a rule still name two results. Fixing the order here, once, is
+/// what lets weed promise the same bytes on two runs: a detector may report in
+/// whatever order suits it, a face may add findings from several passes, and the
+/// log still comes out the same. A finding with no region points at the whole
+/// file and sorts at line zero, above every line in it. The message closes the
+/// order so that no two results can be told apart by position alone — results
+/// that tie on all four are the same bytes, so their order cannot be read.
+fn sort_key(result: &SarifResult) -> (&str, u32, &str, &str) {
+    let place = result
+        .locations
+        .first()
+        .map(|location| &location.physical_location);
+    (
+        place
+            .map(|place| place.artifact_location.uri.as_str())
+            .unwrap_or_default(),
+        place
+            .and_then(|place| place.region.as_ref())
+            .map(|region| region.start_line)
+            .unwrap_or(0),
+        result.rule_id.as_str(),
+        result.message.text.as_str(),
+    )
 }
 
 /// A log as the JSON a consumer reads. Serializing cannot fail: every field is
