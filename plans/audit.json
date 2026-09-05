@@ -40,5 +40,14 @@
   },
   "weed": {
     "provider": "codex"
+  },
+  "hardening": {
+    "provider": "codex"
+  },
+  "recall": {
+    "provider": "codex"
+  },
+  "calibration-audit": {
+    "provider": "claude"
   }
 }

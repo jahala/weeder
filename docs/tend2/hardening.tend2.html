@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hardening · weed</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# hardening — the same answer every time, and never a panic
+**Goal.** A gate that answers differently on two runs, or dies on an input it did not expect, is a hole. weed's output is byte-identical across runs for the same diff, tree and config, whatever the locale, time zone, environment or allocation order, because its results are sorted by file, line and rule before they are written. weed never panics on input: malformed diffs, binaries, non-UTF-8, CRLF, renames, symlinks, submodules, merge and empty commits, and huge files either judge cleanly or leave with exit 3 and a reason. Both are tests, not claims, and they run on every fixture.
+
+## Determinism
+
+`tests/determinism.rs` replays every fixture under `fixtures/adversarial/` through the real binary three times, each run under a different `LANG`, `LC_ALL` and `TZ`, and asserts the three SARIF logs are byte-identical. weed writes no timestamps, so nothing is stripped; if a later loop adds one, this test is where it is stripped and the reason recorded. The order law lives in `sarif::render`: results are sorted by `artifactLocation.uri`, then `region.startLine`, then `ruleId` before the log is built, and the table keeps its level-first order. `tests/sarif_order.rs` pins the sort on findings handed in shuffled. Nothing in core iterates a `HashMap` into output; a test reads the source tree for `HashMap` and `HashSet` in `src/core/` and requires each use to be documented as order-free.
+
+## Never panic
+
+`tests/core_hostile.rs` is a property test (`proptest`) over `parse_diff` and `classify_file`: arbitrary byte strings, arbitrary mutations of real captured diffs (truncated hunks, headers with missing fields, counts that lie, `\r\n` line ends, invalid UTF-8 handled at the seam as lossy text), and huge inputs. The property is that every call returns `Ok` or `Err` and never panics. `tests/check_hostile.rs` drives the real binary on repositories built to hurt: a symlink to a file and to a directory, a submodule, a merge commit with two parents judged with `--base`, an empty commit, a 20 MiB file, a file with `\r\n` line ends, a binary file, a non-UTF-8 text file, a path with spaces and one with a quote. Each run leaves with 0, 2 or 3 and one stderr line on 3; a status of 101 (a Rust panic) fails the test. `main.rs` installs a panic hook that turns any panic into exit 3 with the message "weed hit a bug and stopped rather than judge: <panic>. report it with the diff." so even an unforeseen panic fails closed.
+
+## Tests
+- [ ] (code) `sarif::render` orders results by file, then line, then rule id, and `tests/sarif_order.rs` proves it on shuffled findings · tests/sarif_order.rs
+- [ ] (code) every fixture replayed three times under different locale and time-zone environments produces byte-identical SARIF, and no `HashMap` or `HashSet` in `src/core/` reaches output without a comment stating its order does not · tests/determinism.rs
+- [ ] (code) a property test over `parse_diff` and `classify_file` with arbitrary and mutated inputs never panics · tests/core_hostile.rs
+- [ ] (code) the real binary on repositories with symlinks, a submodule, a merge commit, an empty commit, a 20 MiB file, CRLF, a binary file, non-UTF-8 text, and paths with spaces and quotes leaves with 0, 2 or 3 and never 101, with one stderr line on 3 · tests/check_hostile.rs
+- [ ] (code) a panic anywhere in weed becomes exit 3 with a message naming it as a bug, proven by a test that triggers the hook through a debug-only environment variable · tests/panic_hook.rs
+
+## Needs #core #sarif #check-face
+
+## Tried
+- 2026-09-05 shaped from cape-town's six binding checks (determinism, never panic, and the order law they need); the umbrella's fit script re-runs these from the pinned version
+- 2026-09-05 tilth found ten order-only differences against itself the same day; weed sorts before it writes so it cannot inherit that
+- 2026-09-05 the panic hook is a last resort, never a licence: core still returns errors, and a panic that the hook catches is a bug to fix, reported as one
+</script>
+<script src="loop.js"></script>
