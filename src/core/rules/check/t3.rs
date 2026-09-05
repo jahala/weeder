@@ -14,6 +14,7 @@
 use crate::core::change::Change;
 use crate::core::classify::Lang;
 use crate::core::finding::{Finding, Fix, Level, Message, Region};
+use crate::core::rules::check::Judgement;
 use crate::core::syntax::{words, Mask};
 
 /// The functions that declare a test where the language spells one as a call.
@@ -48,7 +49,8 @@ enum Effect {
     Focused,
 }
 
-pub fn evaluate(changes: &[Change]) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+    let changes = judged.changes;
     let mut findings = Vec::new();
     for change in changes {
         let Some(path) = change.diff.new_path.as_deref() else {

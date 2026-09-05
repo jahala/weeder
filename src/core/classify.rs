@@ -94,21 +94,21 @@ fn is_guardrail(path: &str) -> bool {
 }
 
 fn is_manifest(path: &str) -> bool {
+    let name = path.rsplit('/').next().unwrap_or(path);
     matches!(
-        path.rsplit('/').next().unwrap_or(path),
+        name,
         "package.json"
             | "Cargo.toml"
             | "Cargo.lock"
             | "pyproject.toml"
-            | "requirements.txt"
-            | "requirements-dev.txt"
             | "go.mod"
             | "go.sum"
             | "pnpm-lock.yaml"
             | "package-lock.json"
             | "yarn.lock"
-            | "poetry.lock"
-    )
+            | "poetry.lock" // pip keeps one list per purpose and names them all the same way, so the
+                            // family is matched rather than the two spellings that turn up most often.
+    ) || (name.starts_with("requirements") && name.ends_with(".txt"))
 }
 
 fn is_generated(path: &str, content: &str) -> bool {

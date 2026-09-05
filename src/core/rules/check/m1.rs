@@ -17,6 +17,7 @@ use crate::core::change::Change;
 use crate::core::classify::FileKind;
 use crate::core::finding::{Finding, Level, Message, Region};
 use crate::core::rules::check::vocab::{doubled_symbol, is_mock, names};
+use crate::core::rules::check::Judgement;
 use crate::core::syntax::Mask;
 
 /// The extensions a module specifier leaves off, by the language that wrote it.
@@ -25,7 +26,8 @@ const SOURCE_EXTENSIONS: &[&str] = &["ts", "tsx", "js", "jsx", "mjs", "cjs", "py
 /// The file a directory's module specifier resolves to, per language.
 const DIRECTORY_MODULES: &[&str] = &["index", "__init__", "mod"];
 
-pub fn evaluate(changes: &[Change]) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+    let changes = judged.changes;
     let production: Vec<&Change> = changes
         .iter()
         .filter(|change| change.after.is(FileKind::Prod) || change.before.is(FileKind::Prod))

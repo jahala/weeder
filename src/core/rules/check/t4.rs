@@ -12,12 +12,14 @@
 //! written under, which the vocabulary knows: a magnitude accepts more as it
 //! grows, and a count of digits accepts more as it shrinks.
 
-use crate::core::change::{Change, Replacement};
+use crate::core::change::Replacement;
 use crate::core::finding::{Finding, Level, Message, Region};
 use crate::core::rules::check::vocab::{names, numbers, skeleton, slack, Name, Number, Sense};
+use crate::core::rules::check::Judgement;
 use crate::core::syntax::Mask;
 
-pub fn evaluate(changes: &[Change]) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+    let changes = judged.changes;
     let mut findings = Vec::new();
     for change in changes {
         let Some(path) = change.diff.new_path.as_deref() else {

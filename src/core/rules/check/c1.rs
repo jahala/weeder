@@ -21,6 +21,7 @@ use crate::core::change::Change;
 use crate::core::classify::{classify_file, FileKind};
 use crate::core::finding::{Finding, Level, Message, Region};
 use crate::core::guard;
+use crate::core::rules::check::Judgement;
 
 /// The files whose law lives in one section rather than in the whole file.
 const INSTRUCTIONS: &[&str] = &["AGENTS.md", "CLAUDE.md"];
@@ -28,7 +29,8 @@ const INSTRUCTIONS: &[&str] = &["AGENTS.md", "CLAUDE.md"];
 /// The heading that opens the section those files state their law in.
 const HARD_LIMITS: &str = "hard limits";
 
-pub fn evaluate(changes: &[Change]) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+    let changes = judged.changes;
     changes.iter().filter_map(edit).collect()
 }
 

@@ -10,13 +10,16 @@
 //! config weed cannot parse, leaves with exit 3 and says why on stderr. A gate
 //! that could not run must never look like a gate that passed.
 
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
 use crate::core::change::{Change, Side};
 use crate::core::classify::{classify_file, FileKind};
+use crate::core::config::Config;
 use crate::core::diff::{parse_diff, FileDiff};
 use crate::core::finding::{Finding, Level};
-use crate::core::read::TestShape;
+use crate::core::glob;
+use crate::core::read::{CallerSite, TestShape};
 use crate::core::rules;
 use crate::core::sarif::{self, Context, EXIT_BLOCKED, EXIT_CLEAN, EXIT_COULD_NOT_RUN, RULES_DOC};
 use crate::core::suppress::{
@@ -86,7 +89,17 @@ fn judge(request: &Request) -> Result<Answer, String> {
     })?;
     let (inline, malformed) = parse_inline_suppressions(&judged);
 
-    let findings = rules::check::evaluate(&gather(&root, &range, judged)?, &config);
+    let changes = gather(&root, &range, judged)?;
+    let scope = scope(request, &config);
+    let paths = git::tracked_paths(&root).map_err(|error| error.to_string())?;
+    let callers = callers(&root, &changes, &scope)?;
+    let findings = rules::check::evaluate(&rules::check::Judgement {
+        changes: &changes,
+        config: &config,
+        scope: &scope,
+        paths: &paths,
+        callers: &callers,
+    });
     if request.strict {
         if let Some(unreadable) = malformed.first() {
             return Err(refusal(unreadable));
@@ -204,20 +217,30 @@ fn gather(root: &Path, range: &Range, judged: Vec<FileDiff>) -> Result<Vec<Chang
         .collect()
 }
 
-/// One side of one file. A side with no file, and a file that is not text, are
-/// both nothing to read: weed judges lines, and neither carries any.
+/// One side of one file. A side with no file is nothing to read at all. A file
+/// whose bytes are not text has no lines for a rule to judge, and still has a
+/// path and a weight, which is what G2 asks about.
 fn side(root: &Path, source: &Source, path: Option<&str>) -> Result<Side, String> {
     let Some(path) = path else {
         return Ok(Side::default());
     };
-    let content = match source {
+    let blob = match source {
         Source::Reference(reference) => git::file_at_ref(root, reference, path),
         Source::Index => git::file_in_index(root, path),
         Source::Tree => git::file_in_tree(root, path),
     }
     .map_err(|error| error.to_string())?;
-    let Some(content) = content else {
+    let Some(blob) = blob else {
         return Ok(Side::default());
+    };
+    let (size, binary) = (Some(blob.size()), blob.is_binary());
+    let Some(content) = blob.text() else {
+        return Ok(Side {
+            classification: Some(classify_file(path, "")),
+            size,
+            binary,
+            ..Side::default()
+        });
     };
 
     let classification = classify_file(path, &content);
@@ -231,12 +254,43 @@ fn side(root: &Path, source: &Source, path: Option<&str>) -> Result<Side, String
     // asks what a rename did to a case, or which unit a double stands in for,
     // is asking about a declaration on whichever side of the suite it sits.
     let outline = reader::outline(file, &content);
+    let imports = reader::imports(file, &content);
     Ok(Side {
         content: Some(content),
         classification: Some(classification),
         tests,
         outline,
+        imports,
+        size,
+        binary,
     })
+}
+
+/// The paths this run allows the change to touch. `--scope` is what the caller
+/// asked for on this run; with no flag, whatever `weed.toml` states, which is
+/// everything until a repository says otherwise.
+fn scope(request: &Request, config: &Config) -> Vec<String> {
+    if request.scope.is_empty() {
+        config.scope_globs.clone()
+    } else {
+        request.scope.clone()
+    }
+}
+
+/// Where the definitions of the out-of-scope files are called from. Only those
+/// files are asked about: a walk of the tree is the one expensive thing a check
+/// does, and with nothing outside the scope there is nothing to ask.
+fn callers(root: &Path, changes: &[Change], scope: &[String]) -> Result<Vec<CallerSite>, String> {
+    let symbols: BTreeSet<String> = changes
+        .iter()
+        .filter(|change| {
+            change
+                .path()
+                .is_some_and(|path| !glob::matches_any(scope, path))
+        })
+        .flat_map(Change::changed_definitions)
+        .collect();
+    reader::callers(&symbols, root).map_err(|error| error.to_string())
 }
 
 /// The `Weed-allow:` trailers travelling with the change: the message handed in
