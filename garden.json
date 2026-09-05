@@ -8,7 +8,7 @@
   ],
   "version": "0.1.0",
   "install": {
-    "npm": "npm install -g weed",
+    "npm": "npm install -g @plotplot/weed",
     "cargo": "cargo install weed",
     "binary": {
       "url": "https://github.com/jahala/weed/releases/download/v{version}/{asset}",

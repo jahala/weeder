@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install weed
-        run: npm install -g weed
+        run: npm install -g @plotplot/weed
 
       - name: Judge the pull request
         run: weed check --base origin/${{ github.base_ref }} --strict --format sarif > weed.sarif
