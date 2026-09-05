@@ -75,7 +75,9 @@ fn result_carries_its_rule_id_and_the_index_of_that_rule_in_the_tool_component()
         .as_array()
         .expect("results is an array")
         .iter()
-        .zip(["S1", "R2"])
+        // The order law sorts by file, then line: R2 sits at line 9 and S1 at
+        // line 40, whichever way round they were handed in.
+        .zip(["R2", "S1"])
     {
         assert_eq!(result["ruleId"], Value::from(expected));
         let index = result["ruleIndex"]
@@ -114,9 +116,17 @@ fn levels_map_block_to_error_warn_to_warning_and_a_suppressed_finding_to_note() 
         .iter()
         .map(|result| result["level"].as_str().expect("a result carries a level"))
         .collect();
-    assert_eq!(levels, vec!["error", "warning", "note", "error"]);
+    assert_eq!(
+        levels,
+        vec!["note", "error", "error", "warning"],
+        "the order law reads line 2 first — the honoured suppression, then the same finding under --strict — and then lines 4 and 6"
+    );
+    let strict = results
+        .iter()
+        .find(|result| result["ruleId"] == "T3" && result["level"] == "error")
+        .expect("the strict result is in the log");
     assert!(
-        results[3].get("suppressions").is_some(),
+        strict.get("suppressions").is_some(),
         "a finding reported at its own level under --strict still carries the suppression"
     );
 }
@@ -182,9 +192,10 @@ fn a_mechanical_fix_becomes_a_fixes_entry_over_the_finding_s_region() {
         .as_array()
         .expect("results is an array");
 
-    let change = &results[0]["fixes"][0]["artifactChanges"][0];
+    // By file: src/parser.rs, then tests/a.test.ts, then tests/b.test.ts.
+    let change = &results[1]["fixes"][0]["artifactChanges"][0];
     assert_eq!(
-        results[0]["fixes"][0]["description"]["text"],
+        results[1]["fixes"][0]["description"]["text"],
         Value::from("remove the skip marker.")
     );
     assert_eq!(
@@ -200,7 +211,7 @@ fn a_mechanical_fix_becomes_a_fixes_entry_over_the_finding_s_region() {
         Value::from("it(\"parses\", () => {})")
     );
 
-    let removal = &results[1]["fixes"][0]["artifactChanges"][0]["replacements"][0];
+    let removal = &results[0]["fixes"][0]["artifactChanges"][0]["replacements"][0];
     assert_eq!(removal["deletedRegion"]["startLine"], Value::from(88));
     assert_eq!(removal["deletedRegion"]["endLine"], Value::from(90));
     assert!(

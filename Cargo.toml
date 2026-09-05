@@ -22,6 +22,9 @@ jsonschema = { version = "0.53", default-features = false }
 # A real pseudo-terminal, so the format tests ask the binary what it does with a
 # terminal on stdout instead of asking it to believe there is one.
 libc = "0.2"
+# The hostile-input tests: core is handed inputs nobody wrote on purpose, and
+# has to answer or refuse rather than fall over.
+proptest = "1.11.0"
 
 [profile.release]
 opt-level = 3
