@@ -1,9 +1,9 @@
-//! M1 — a test mocks the unit under change.
+//! M1, a test mocks the unit under change.
 //!
 //! Each fire fixture changes a production file and, in the same commit, a test
 //! that stands a double in front of it. The languages name their doubles two
-//! ways: the two that resolve a module hand the framework a specifier — a
-//! relative path, a dotted module — and the two that resolve a type give the
+//! ways: the two that resolve a module hand the framework a specifier, a
+//! relative path, a dotted module, and the two that resolve a type give the
 //! double the name of what it replaces.
 //!
 //! The neighbour is the same change with the double pointed at a unit the

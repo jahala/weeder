@@ -1,4 +1,4 @@
-//! T4 — a tolerance or a timeout was widened.
+//! T4, a tolerance or a timeout was widened.
 //!
 //! Each fire fixture rewrites two lines and nothing else: the number that says
 //! how close a value has to be, and the number that says how long the test will

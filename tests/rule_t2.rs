@@ -1,4 +1,4 @@
-//! T2 — assertions were dropped from a changed test file.
+//! T2, assertions were dropped from a changed test file.
 //!
 //! The counts the finding has to name are read off the fixture here, by looking
 //! for the forms each language's frameworks write an assertion in, so the

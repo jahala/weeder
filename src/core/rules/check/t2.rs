@@ -1,4 +1,4 @@
-//! T2 — assertions were dropped from a changed test file.
+//! T2, assertions were dropped from a changed test file.
 //!
 //! A case that is still there and no longer checks anything is a test in name
 //! only: it runs, it passes, and it holds the code to nothing. T1 counts the

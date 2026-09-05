@@ -1,4 +1,4 @@
-//! T4 — a tolerance or a timeout was widened.
+//! T4, a tolerance or a timeout was widened.
 //!
 //! A test that used to hold a value to six decimals and now holds it to two has
 //! not been fixed; it has been told to stop looking. The same goes for a wait
@@ -6,8 +6,8 @@
 //!
 //! The finding is a pair: a line that went out and the line that came in to
 //! replace it, in one hunk. The two are read through the syntax mask and
-//! compared with their numbers taken out — the same assertion, differently
-//! numbered — so a rewritten line, a renamed value or a changed expectation is
+//! compared with their numbers taken out, the same assertion, differently
+//! numbered, so a rewritten line, a renamed value or a changed expectation is
 //! not this rule's business. What makes a number a slack is the word it is
 //! written under, which the vocabulary knows: a magnitude accepts more as it
 //! grows, and a count of digits accepts more as it shrinks.
@@ -60,9 +60,9 @@ fn widening(before: &Mask, after: &Mask, pair: &Replacement<'_>) -> Option<Widen
 }
 
 /// What a number is a slack of. The name that says so is the last one written
-/// before it that says anything about slack at all — the keyword argument that
+/// before it that says anything about slack at all, the keyword argument that
 /// gave the number, the call that takes it, the function whose result it is
-/// compared against — and where nothing before it says anything, the first name
+/// compared against, and where nothing before it says anything, the first name
 /// after it, because a duration is as often written with its unit behind it.
 fn sense(named: &[Name<'_>], number: &Number) -> Option<Sense> {
     let carries = |name: &Name<'_>| slack(name.last()).or_else(|| name.receiver().and_then(slack));

@@ -5,12 +5,12 @@
 //! a test will put up with. T6 reads what an assertion says about a failure. M1
 //! reads the word that puts a double where a unit was. Each language spells all
 //! four in the grammar of its own frameworks, and none of them is named here:
-//! what is written down is the shape — a call, a member on a receiver, a
-//! keyword, a macro — and the roots those shapes are built from.
+//! what is written down is the shape, a call, a member on a receiver, a
+//! keyword, a macro, and the roots those shapes are built from.
 //!
 //! A line is read through the syntax mask, so a word inside a string or a
-//! comment says nothing. Names are read as paths — `self.assertEqual`,
-//! `require.NoError`, `Error::Empty` — because the receiver is half of what a
+//! comment says nothing. Names are read as paths, `self.assertEqual`,
+//! `require.NoError`, `Error::Empty`, because the receiver is half of what a
 //! name means, and an identifier is read as the words it is built from, so
 //! `toBeCloseTo`, `from_millis` and `Abs` all answer for themselves.
 
@@ -65,7 +65,7 @@ impl<'a> Name<'a> {
         self.after == Some('!')
     }
 
-    /// Whether the name names a type or a value the language capitalises — an
+    /// Whether the name names a type or a value the language capitalises, an
     /// error kind, a sentinel, a class. Every language weed reads writes those
     /// with a capital and its ordinary bindings without one.
     #[must_use]
@@ -279,7 +279,7 @@ impl Suite {
             return true;
         }
         // A member of the handle carries the root and the runner's own suffix
-        // on it — the formatting variant, the one that stops the test there —
+        // on it, the formatting variant, the one that stops the test there ,
         // so the root is enough, and only on the handle itself.
         self.handles.contains(receiver)
             && table
@@ -331,8 +331,8 @@ pub enum Sense {
     Nearness,
 }
 
-/// The words that say a number is a slack — how far apart two values may be, or
-/// how long a test will wait — and which way that number widens.
+/// The words that say a number is a slack, how far apart two values may be, or
+/// how long a test will wait, and which way that number widens.
 const SLACK_WORDS: &[(&str, Sense)] = &[
     ("tolerance", Sense::Magnitude),
     ("epsilon", Sense::Magnitude),
@@ -496,7 +496,7 @@ pub struct Number {
 /// The numbers a line of code writes, in the order it writes them.
 ///
 /// A run of digits that a name runs into is part of the name and not a number.
-/// A literal a suffix runs into — a radix, a unit, a type — is a number weed
+/// A literal a suffix runs into, a radix, a unit, a type, is a number weed
 /// cannot compare against another one, so it is left where it is rather than
 /// read wrongly.
 #[must_use]

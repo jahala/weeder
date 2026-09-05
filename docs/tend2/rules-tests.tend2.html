@@ -5,7 +5,7 @@
 <title>rules-tests · weed</title>
 <link rel="stylesheet" href="loop.css">
 <body>
-<noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
 <script type="text/markdown" id="loop">
 # rules-tests — how a test suite gets quietly weaker
 **Goal.** The rules that read the change to a test suite and name each way it can become weaker without anyone deleting a test: assertions dropped, a tolerance widened, expected values regenerated, an error assertion loosened, a test uncollected by rename, and a mock placed over the very unit under change. T2 blocks by default; the rest warn, for the human at the pull request. Each lands as a failing fixture first in TypeScript/JavaScript, Python, Rust and Go, with a silent neighbour.
@@ -24,17 +24,20 @@
 tend2's `src/verify/mock.ts` (in `/Users/jahala/conductor/workspaces/feature-map/missoula/`) is prior art for M1 on TypeScript: read it for the shapes it catches, do not port it.
 
 ## Tests
-- [x] (code) T2 fires at block level when a changed test file's assertion count drops, per language, and stays silent when assertions move between cases with the count unchanged or a `Weed-allow: T2` trailer carries a reason · tests/rule_t2.rs @e455f19 · by cli
-- [x] (code) T4 warns when a paired removed/added line widens an approximate assertion or a timeout, per language, and stays silent when the number tightens or an unrelated literal changes · tests/rule_t4.rs @7688eeb · by cli
-- [x] (code) T5 warns when a snapshot, golden or fixture file changes alongside a prod file, and stays silent when only the snapshot changes or only prod changes · tests/rule_t5.rs @cb310e7 · by cli
-- [x] (code) T6 warns on each weakened error assertion shape per language and stays silent when the assertion becomes more specific · tests/rule_t6.rs @ab3d8bc · by cli
-- [x] (code) T7 fires at block level when a rename takes a test file or case out of the runner's naming convention, per language, and stays silent on a rename that stays inside it · tests/rule_t7.rs @8b68101 · by cli
-- [x] (code) M1 warns when a test in the diff mocks a module whose prod file is also in the diff, per language, and stays silent when the mocked module is outside the diff · tests/rule_m1.rs @53b0876 · by cli
+- [x] (code) T2 fires at block level when a changed test file's assertion count drops, per language, and stays silent when assertions move between cases with the count unchanged or a `Weed-allow: T2` trailer carries a reason · tests/rule_t2.rs @dc2afeb · by cli
+- [x] (code) T4 warns when a paired removed/added line widens an approximate assertion or a timeout, per language, and stays silent when the number tightens or an unrelated literal changes · tests/rule_t4.rs @987be18 · by cli
+- [x] (code) T5 warns when a snapshot, golden or fixture file changes alongside a prod file, and stays silent when only the snapshot changes or only prod changes · tests/rule_t5.rs @10f4021 · by cli
+- [x] (code) T6 warns on each weakened error assertion shape per language and stays silent when the assertion becomes more specific · tests/rule_t6.rs @0ee6d46 · by cli
+- [x] (code) T7 fires at block level when a rename takes a test file or case out of the runner's naming convention, per language, and stays silent on a rename that stays inside it · tests/rule_t7.rs @db42b55 · by cli
+- [x] (code) M1 warns when a test in the diff mocks a module whose prod file is also in the diff, per language, and stays silent when the mocked module is outside the diff · tests/rule_m1.rs @fd0dec7 · by cli
 
 ## Needs #rules-block
 
 ## Tried
 - 2026-09-05 assertion counting is a vocabulary per language and framework; the vocabulary lives in one table in `src/core/rules/check/vocab.rs` so T2, T4 and T6 share it and `weed rules` can print it
 - 2026-09-05 T7 blocks because an uncollected test is a deleted test that still looks present; the fixture's neighbour is the same rename kept collectable
+- 2026-09-05 built by pleach node `rules-tests` (claude/opus, codex audit) in one attempt, 45 minutes, landed through `pleach land` as a14eebe with no conflict. T2 counts each side whole through the vocabulary; T4 pairs a removed line with the added line that replaced it, compares their skeletons, and attributes a number to the last slack word before it (or the first after, for a unit written behind); T6 compares failure qualifiers as sets and leaves a changed claim alone; T7 follows a renamed case by its body; M1 resolves a double by module path or by the symbol it wears against the changed production files. Conductor review found nothing to fix
+- 2026-09-05 the substrate's Go outline carries no type declarations, so `MockFormatter` could not be resolved against `type Formatter interface`; the reader seam now reads Go type declarations itself, single and parenthesised, the way it already reads Rust attributes. Reported to almaty as a gap in tilth-core's outline, not as a workaround
+- 2026-09-05 known and deferred to calibration: T5 names `fixtures/` among the expectation directories and reports one finding per expectation file, so weed judging its own tree warns 285 times on its specimens; the specimen exclusion cape-town ruled on closes it, and whether T5 should collapse to one finding per change is a calibration question
 </script>
 <script src="loop.js"></script>

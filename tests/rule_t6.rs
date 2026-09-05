@@ -1,4 +1,4 @@
-//! T6 — an error assertion was weakened.
+//! T6, an error assertion was weakened.
 //!
 //! Each language gets two shapes: an assertion that named the message the code
 //! raises, and one that named the kind. Both come back from the change saying
@@ -6,8 +6,8 @@
 //! fixture by comparing its two sides, so the expectation follows the change
 //! rather than the detector.
 //!
-//! The neighbour is the same fixture the other way round — an assertion that
-//! arrives naming what it used to accept blindly — which is the edit this rule
+//! The neighbour is the same fixture the other way round, an assertion that
+//! arrives naming what it used to accept blindly, which is the edit this rule
 //! must never punish.
 
 mod common;

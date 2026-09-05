@@ -1,4 +1,4 @@
-//! T7 — a rename took a test out of the runner.
+//! T7, a rename took a test out of the runner.
 //!
 //! The file fixtures rename a suite to a name its runner does not collect, in
 //! all four languages, and the neighbour renames the same file to another name
@@ -6,8 +6,8 @@
 //! only a rename.
 //!
 //! The case fixtures are for the two languages whose runners decide what a case
-//! is from its name. Where a case is marked instead — an attribute above it, a
-//! title handed to a call — a rename collects the test as before, and there is
+//! is from its name. Where a case is marked instead, an attribute above it, a
+//! title handed to a call, a rename collects the test as before, and there is
 //! nothing for this rule to find.
 
 mod common;

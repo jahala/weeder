@@ -1,9 +1,9 @@
-//! T5 — expected values were regenerated.
+//! T5, expected values were regenerated.
 //!
 //! The fire fixture is the pairing that reads badly: a production file changed
 //! and the recorded expectation changed with it, in one commit. Each language
-//! keeps its expectations where its own runner writes them — a snapshot
-//! directory, a golden file under the data directory — and the fixture puts
+//! keeps its expectations where its own runner writes them, a snapshot
+//! directory, a golden file under the data directory, and the fixture puts
 //! them there rather than somewhere weed would find convenient.
 //!
 //! Two neighbours, because there are two innocent halves. One moves the

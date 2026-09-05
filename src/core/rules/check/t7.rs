@@ -1,4 +1,4 @@
-//! T7 — a rename took a test out of the runner.
+//! T7, a rename took a test out of the runner.
 //!
 //! Every runner decides what to run by name. A file the naming convention no
 //! longer matches is never collected, and a case whose name stopped fitting is
@@ -7,11 +7,11 @@
 //! wearing the file it used to live in, which is why this blocks.
 //!
 //! Two shapes, because runners collect in two ways. A file is collected by its
-//! path — the suffix its runner globs for, the directory it has to sit in — so
+//! path, the suffix its runner globs for, the directory it has to sit in, so
 //! a rename that leaves the convention is the finding. A case is collected by
 //! its name where the language has no other way to mark one, and a rename that
 //! leaves that convention is the same finding one level down. Where a case is
-//! marked rather than named — an attribute above it, a title handed to a call —
+//! marked rather than named, an attribute above it, a title handed to a call ,
 //! renaming it collects the test as before, and weed says nothing.
 
 use crate::core::change::{Change, Side};

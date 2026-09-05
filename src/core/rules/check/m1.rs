@@ -1,8 +1,8 @@
-//! M1 — a test mocks the unit under change.
+//! M1, a test mocks the unit under change.
 //!
 //! A double is a decision about what a test is for: this part is somebody
 //! else's problem today. That decision goes wrong the moment the doubled part
-//! is the part being changed — the suite exercises the stand-in, the change
+//! is the part being changed, the suite exercises the stand-in, the change
 //! ships unexercised, and the run is green because nothing ran.
 //!
 //! weed only says so where both halves are in front of it. A test file in the
@@ -136,7 +136,7 @@ fn resolve<'a>(double: &Double, test: &str, production: &[&'a Change]) -> Option
 /// A specifier written as a relative path is resolved against the directory the
 /// test sits in, the way the language resolves an import. A specifier written
 /// as a dotted module name is matched against the tail of the path, because the
-/// root it counts from is the runner's to know and not weed's — and the tail is
+/// root it counts from is the runner's to know and not weed's, and the tail is
 /// tried shorter and shorter, so a specifier that names an attribute inside a
 /// module still finds the module.
 fn names_module(module: &str, test: &str, path: &str) -> bool {
