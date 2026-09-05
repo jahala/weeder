@@ -67,12 +67,18 @@ pub fn outline(path: &Path, content: &str) -> Outline {
     let Some(lang) = code_language(path) else {
         return Outline::default();
     };
-    Outline {
-        definitions: get_outline_entries(content, lang)
-            .into_iter()
-            .map(definition)
-            .collect(),
+    let mut definitions: Vec<Definition> = get_outline_entries(content, lang)
+        .into_iter()
+        .map(definition)
+        .collect();
+    // Go declares a type with a keyword the grammar behind the outline emits no
+    // entry for, and a rule that asks what a file defines has to be told about
+    // them: the interface a double stands in for is a definition like any other.
+    if lang == tilth_core::Lang::Go {
+        definitions.extend(declared_types(content));
+        definitions.sort_by_key(|definition| definition.start_line);
     }
+    Outline { definitions }
 }
 
 /// The tests a file declares.
@@ -395,4 +401,87 @@ fn is_cfg_test_attribute(attribute: &str) -> bool {
                 .split(|character: char| !character.is_alphanumeric() && character != '_')
                 .any(|token| token == "test")
         })
+}
+
+/// The types a Go file declares, written one at a time or gathered in a
+/// parenthesised block. Go declares its types at the top of the file and
+/// nowhere else, so the scan reads the lines that begin one and follows the
+/// braces to the end of it.
+fn declared_types(content: &str) -> Vec<Definition> {
+    let lines: Vec<&str> = content.lines().collect();
+    let mut found = Vec::new();
+    let mut index = 0;
+    while index < lines.len() {
+        let Some(rest) = lines[index].strip_prefix("type ") else {
+            index += 1;
+            continue;
+        };
+        if rest.trim() == "(" {
+            index += 1;
+            while index < lines.len() && lines[index].trim() != ")" {
+                if let Some(declared) = declared_type(&lines, index) {
+                    index = declared.end_line as usize;
+                    found.push(declared);
+                }
+                index += 1;
+            }
+            index += 1;
+            continue;
+        }
+        if let Some(declared) = declared_type(&lines, index) {
+            index = declared.end_line as usize;
+            found.push(declared);
+        }
+        index += 1;
+    }
+    found
+}
+
+/// One type declaration: the name it gives, what it is made of, and the lines it
+/// occupies. A declaration that opens a brace runs to the brace that closes it.
+fn declared_type(lines: &[&str], index: usize) -> Option<Definition> {
+    let line = lines.get(index)?;
+    let declaration = line.trim().strip_prefix("type ").unwrap_or(line.trim());
+    let mut words = declaration.split_whitespace();
+    let name = words.next()?;
+    if !name
+        .chars()
+        .next()
+        .is_some_and(|first| first.is_alphabetic() || first == '_')
+    {
+        return None;
+    }
+    let kind = match words.next() {
+        Some(word) if word.starts_with("interface") => DefinitionKind::Interface,
+        Some(word) if word.starts_with("struct") => DefinitionKind::Struct,
+        Some(_) => DefinitionKind::TypeAlias,
+        None => return None,
+    };
+    Some(Definition {
+        kind,
+        name: name.trim_end_matches(&['[', ','][..]).to_string(),
+        start_line: index as u32 + 1,
+        end_line: block_end(lines, index) as u32 + 1,
+        signature: Some(line.trim().to_string()),
+        children: Vec::new(),
+    })
+}
+
+/// Where the block a line opens is closed, or the line itself where it opens
+/// none. A file that ends inside a block ends there, and so does the count.
+fn block_end(lines: &[&str], index: usize) -> usize {
+    let mut depth: i32 = 0;
+    for (offset, line) in lines.iter().enumerate().skip(index) {
+        for character in line.chars() {
+            match character {
+                '{' => depth += 1,
+                '}' => depth -= 1,
+                _ => {}
+            }
+        }
+        if depth <= 0 {
+            return offset;
+        }
+    }
+    lines.len().saturating_sub(1)
 }

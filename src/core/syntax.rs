@@ -74,6 +74,41 @@ impl Mask {
         self.view(line, |syntax| syntax == Syntax::Literal)
     }
 
+    /// The literals of the 1-based line, one at a time, delimiters included and
+    /// each with the character it starts at. A literal holds spaces of its own,
+    /// so a caller that needs them apart cannot get them by splitting
+    /// [`Mask::literals`] — the run is the boundary, and the count of characters
+    /// is what a caller compares against, because a blanked view is the same
+    /// characters and not the same bytes.
+    #[must_use]
+    pub fn literal_runs(&self, line: u32) -> Vec<Literal> {
+        let Some(index) = (line as usize).checked_sub(1) else {
+            return Vec::new();
+        };
+        let mut runs: Vec<Literal> = Vec::new();
+        let mut open: Option<Literal> = None;
+        for (at, (character, syntax)) in self.lines.get(index).into_iter().flatten().enumerate() {
+            match (*syntax == Syntax::Literal, &mut open) {
+                (true, Some(literal)) => literal.text.push(*character),
+                (true, None) => {
+                    open = Some(Literal {
+                        start: at,
+                        text: character.to_string(),
+                    })
+                }
+                (false, _) => runs.extend(open.take()),
+            }
+        }
+        runs.extend(open);
+        runs
+    }
+
+    /// How many lines the file has.
+    #[must_use]
+    pub fn line_count(&self) -> u32 {
+        u32::try_from(self.lines.len()).unwrap_or(u32::MAX)
+    }
+
     fn view(&self, line: u32, keep: impl Fn(Syntax) -> bool) -> String {
         let Some(index) = (line as usize).checked_sub(1) else {
             return String::new();
@@ -88,6 +123,15 @@ impl Mask {
             })
             .unwrap_or_default()
     }
+}
+
+/// One literal a line holds, and where in the line it begins.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Literal {
+    /// How many characters of the line come before it.
+    pub start: usize,
+    /// The literal as it is written, delimiters included.
+    pub text: String,
 }
 
 /// One identifier of a line, with the characters that decide what it is: a `.`
