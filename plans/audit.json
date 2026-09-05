@@ -6,8 +6,7 @@
     "provider": "codex"
   },
   "sarif": {
-    "provider": "opencode",
-    "model": "opencode/big-pickle"
+    "provider": "codex"
   },
   "check-face": {
     "provider": "codex"
