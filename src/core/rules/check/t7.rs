@@ -19,9 +19,11 @@ use crate::core::classify::Lang;
 use crate::core::diff::ChangeKind;
 use crate::core::finding::{Finding, Level, Message, Region};
 use crate::core::read::{Definition, DefinitionKind};
+use crate::core::rules::check::Judgement;
 use crate::core::syntax::Mask;
 
-pub fn evaluate(changes: &[Change]) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+    let changes = judged.changes;
     let mut findings = Vec::new();
     for change in changes {
         findings.extend(uncollected_file(change));

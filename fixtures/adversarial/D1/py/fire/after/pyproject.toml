@@ -1,0 +1,4 @@
+[project]
+name = "demo"
+version = "1.4.0"
+dependencies = ["tomli", "tiny-queue"]

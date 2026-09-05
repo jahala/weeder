@@ -14,8 +14,10 @@ use crate::core::change::Change;
 use crate::core::classify::Lang;
 use crate::core::finding::{Finding, Level, Message, Region};
 use crate::core::rules::check::vocab::Suite;
+use crate::core::rules::check::Judgement;
 
-pub fn evaluate(changes: &[Change]) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+    let changes = judged.changes;
     changes.iter().filter_map(dropped).collect()
 }
 

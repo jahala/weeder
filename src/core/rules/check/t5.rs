@@ -14,6 +14,7 @@
 use crate::core::change::Change;
 use crate::core::classify::FileKind;
 use crate::core::finding::{Finding, Level, Message};
+use crate::core::rules::check::Judgement;
 
 /// The directories a suite keeps its recorded expectations in, whichever
 /// runner wrote them.
@@ -32,7 +33,8 @@ const EXPECTATION_EXTENSIONS: &[&str] = &["snap", "golden", "approved"];
 /// The word an approval file carries in front of its extension: `page.approved.txt`.
 const APPROVED: &str = "approved";
 
-pub fn evaluate(changes: &[Change]) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+    let changes = judged.changes;
     let production: Vec<&str> = changes
         .iter()
         .filter(|change| is_production(change))

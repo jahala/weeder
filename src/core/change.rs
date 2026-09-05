@@ -7,9 +7,11 @@
 //! only ever looks at them, which is what keeps a rule runnable on a diff that
 //! never touched a disk.
 
+use std::collections::BTreeSet;
+
 use crate::core::classify::{Classification, FileKind, Lang};
 use crate::core::diff::{ChangeKind, FileDiff, HunkLine, LineKind};
-use crate::core::read::{Outline, TestShape};
+use crate::core::read::{DefinitionKind, Import, Outline, TestShape};
 use crate::core::syntax::Mask;
 
 /// One side of a change: the file as a ref carries it, or as the tree does.
@@ -25,6 +27,15 @@ pub struct Side {
     pub tests: TestShape,
     /// What the file defines, empty where it defines nothing.
     pub outline: Outline,
+    /// The import statements the file makes, empty where it makes none.
+    pub imports: Vec<Import>,
+    /// What the file weighs, or `None` where this side has no file at all. A
+    /// side whose bytes are not text still weighs something, which is how a
+    /// rule tells "there is no file here" from "there is a file weed cannot
+    /// read a line of".
+    pub size: Option<u64>,
+    /// Whether this side's bytes carry no lines to judge.
+    pub binary: bool,
 }
 
 impl Side {
@@ -95,6 +106,35 @@ impl Change {
     #[must_use]
     pub fn is_deletion(&self) -> bool {
         self.diff.change == ChangeKind::Deleted
+    }
+
+    /// Whether the change brought the file into the repository. A change with
+    /// no side before it is one nobody had said yes to until now, whether git
+    /// wrote it as a patch or as bytes it could not patch.
+    #[must_use]
+    pub fn is_addition(&self) -> bool {
+        self.diff.old_path.is_none() && self.diff.new_path.is_some()
+    }
+
+    /// The definitions the change touched, on either side of it: what somebody
+    /// else in the tree was relying on. An import is left out, it names what
+    /// this file depends on rather than what depends on this file.
+    #[must_use]
+    pub fn changed_definitions(&self) -> BTreeSet<String> {
+        let added: Vec<u32> = self.added().map(|(line, _)| line).collect();
+        let removed: Vec<u32> = self.removed().map(|(line, _)| line).collect();
+        let mut names = BTreeSet::new();
+        for (side, touched) in [(&self.after, &added), (&self.before, &removed)] {
+            for definition in side.outline.flatten() {
+                if definition.kind == DefinitionKind::Import || definition.name.is_empty() {
+                    continue;
+                }
+                if touched.iter().any(|line| definition.spans(*line)) {
+                    names.insert(definition.name.clone());
+                }
+            }
+        }
+        names
     }
 
     /// The lines the change added, each with the number it takes in the new
