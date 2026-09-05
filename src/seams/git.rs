@@ -113,7 +113,9 @@ pub fn diff_range(root: &Path, base: &str, tip: &str) -> Result<String, GitError
 /// A file's contents at a ref, or `None` where the ref does not carry it.
 pub fn file_at_ref(root: &Path, reference: &str, path: &str) -> Result<Option<String>, GitError> {
     let object = format!("{reference}:{path}");
-    match run(root, &["show", &object]) {
+    // A file's own bytes, read the way the diff is read: a byte that is not
+    // utf-8 must not make a file that is there look like a file that is not.
+    match run_lossy(root, &["show", &object]) {
         Ok(contents) => Ok(Some(contents)),
         Err(GitError::Refused { .. }) => Ok(None),
         Err(other) => Err(other),
@@ -142,7 +144,9 @@ pub fn commit_messages(root: &Path, base: &str, tip: &str) -> Result<Vec<String>
     } else {
         format!("{commit}..{tip}")
     };
-    let output = run(root, &["log", "--format=%B%x00", &range])?;
+    // A commit message is whatever its author typed, and a trailer written in a
+    // message with a byte weed cannot read still has to be honoured.
+    let output = run_lossy(root, &["log", "--format=%B%x00", &range])?;
     Ok(output
         .split('\u{0}')
         .map(str::trim)
@@ -268,7 +272,24 @@ fn diff(root: &Path, revisions: &[&str]) -> Result<String, GitError> {
         CONTEXT_LINES,
     ];
     arguments.extend_from_slice(revisions);
-    run(root, &arguments)
+    run_lossy(root, &arguments)
+}
+
+/// One git invocation whose answer is read as text even where some of it is not
+/// utf-8. A diff carries the bytes of the files it is about, and a repository
+/// with one latin-1 source file in it would otherwise leave weed unable to judge
+/// anything else in the change. Nothing is lost that a rule reads: a rule
+/// matches ascii shapes, and utf-8 never spells an ascii character with a byte
+/// above 127, so a byte that gets replaced was never part of one. Every other
+/// question weed asks git has a sha, a ref or a setting for an answer, and those
+/// are still read strictly — bytes weed cannot read there are a refusal.
+fn run_lossy(directory: &Path, arguments: &[&str]) -> Result<String, GitError> {
+    let attempt = attempt(directory, arguments)?;
+    if attempt.code == 0 {
+        Ok(String::from_utf8_lossy(&attempt.stdout).into_owned())
+    } else {
+        Err(attempt.refusal(arguments))
+    }
 }
 
 /// One git invocation that must have worked. Anything but success is a refusal

@@ -22,6 +22,8 @@ the test fails, so a consumer never has to guess what weed meant.
 | fixes | a `fixes` entry over the finding's region when the fix is mechanical | `tests/sarif_shape.rs::a_mechanical_fix_becomes_a_fixes_entry_over_the_finding_s_region` |
 | suppressions | a `suppressions` entry of kind `inSource` carrying the reason as `justification` | `tests/sarif_shape.rs::a_suppressed_result_carries_the_reason_as_an_in_source_justification` |
 | the invocation | `executionSuccessful`, the `exitCode`, and `toolExecutionNotifications` when weed could not run | `tests/sarif_shape.rs::the_invocation_reports_the_exit_code_and_the_reason_weed_could_not_run` |
+| the order of results | sorted by `artifactLocation.uri`, then `region.startLine`, then `ruleId`, then the message | `tests/sarif_order.rs::results_are_ordered_by_file_then_line_then_rule` |
+| the same bytes twice | the same diff, tree and config write the same log in any locale, any time zone, any process | `tests/determinism.rs::every_fixture_answers_the_same_bytes_in_every_locale_and_time_zone` |
 | schema validity | an empty log validates | `tests/sarif_schema.rs::empty_log_validates_against_the_vendored_schema` |
 | schema validity | a single finding validates | `tests/sarif_schema.rs::single_finding_log_validates_against_the_vendored_schema` |
 | schema validity | many findings across levels validate | `tests/sarif_schema.rs::many_findings_across_levels_validate_against_the_vendored_schema` |
@@ -159,7 +161,28 @@ warning  S3  src/parser.rs:4          A debug leftover reached production code.
 Columns are padded to the widest cell so the message column lines up. The count line is always the
 last line, and an empty run is that line alone.
 
+## The order results come in
+
+`render` sorts the results before it builds the log: by `artifactLocation.uri`, then
+`region.startLine`, then `ruleId`, and then the message where a file, a line and a rule still name
+two results. A finding with no region sorts at line zero, above every line in its file.
+
+The order is fixed in one place so that nothing upstream of it has to be careful. A detector reports
+in whatever order suits it, a face may add findings from several passes, and the log still comes out
+the same — which is what lets a caller diff two logs, or a reviewer trust that a second run means
+what the first one did. Nothing in `src/core/` iterates a hash container into the output, and the
+one `HashMap` there says beside itself why its order never reaches a log;
+`tests/determinism.rs::every_hash_container_in_core_says_why_its_order_never_reaches_the_output`
+reads the source and asks for that in writing.
+
+The table keeps its own order — block findings first, then warnings, then notes — because a person
+reading it wants the thing that stopped them at the top.
+
 ## What weed leaves out
 
 No `partialFingerprints`. GitHub derives a fingerprint from the location when none is given, and a
 fingerprint that survives a rename is a later loop's problem.
+
+No timestamps. SARIF has places for them — `invocations[].startTimeUtc`, `endTimeUtc` — and a log
+carrying one cannot be compared byte for byte with the log of the same diff an hour later. A loop
+that adds one has to strip it in `tests/determinism.rs` and record why there.

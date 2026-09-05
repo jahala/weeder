@@ -135,6 +135,10 @@ enum RulesFormat {
 }
 
 fn main() -> ExitCode {
+    install_panic_hook();
+    #[cfg(debug_assertions)]
+    fault_if_asked();
+
     let cli = match Cli::try_parse() {
         Ok(cli) => cli,
         Err(error) => return usage(&error),
@@ -270,6 +274,54 @@ fn run_hook(args: HarnessArgs) -> Answer {
         event,
         version: env!("CARGO_PKG_VERSION").to_string(),
     })
+}
+
+/// A panic is a bug in weed, never a verdict, and a gate that dies part way
+/// through judging still has to fail closed: exit 3, one line, and the line says
+/// whose fault it is. The hook leaves through `exit` rather than by letting the
+/// panic unwind, so a release build — which aborts on a panic and would
+/// otherwise leave with a signal — leaves with the same code a debug build does.
+fn install_panic_hook() {
+    std::panic::set_hook(Box::new(|panic| {
+        let mut stderr = std::io::stderr().lock();
+        let _ = writeln!(
+            stderr,
+            "weed hit a bug and stopped rather than judge: {}. report it with the diff.",
+            fault(panic)
+        );
+        let _ = stderr.flush();
+        std::process::exit(EXIT_COULD_NOT_RUN);
+    }));
+}
+
+/// What the panic said and where it said it, on one line. A payload written
+/// across several lines is folded back onto one: whoever reads a hook's output
+/// reads a line at a time, and a reason split over three of them is three
+/// reasons as far as they can tell.
+fn fault(panic: &std::panic::PanicHookInfo<'_>) -> String {
+    let said = panic
+        .payload_as_str()
+        .unwrap_or("a panic that said nothing")
+        .split_whitespace()
+        .collect::<Vec<&str>>()
+        .join(" ");
+    match panic.location() {
+        Some(location) => format!("{said} at {}:{}", location.file(), location.line()),
+        None => said,
+    }
+}
+
+/// The door a debug build leaves open so the panic hook can be proven on the
+/// real binary rather than argued about: weed panics where it is told to, with
+/// the words it is given. `cfg(debug_assertions)` keeps it out of a release
+/// build, so the weed anyone installs has no way to be made to fall over from
+/// outside it.
+#[cfg(debug_assertions)]
+fn fault_if_asked() {
+    const ASKED: &str = "WEED_PANIC_FOR_TESTS";
+    if let Some(reason) = std::env::var_os(ASKED) {
+        panic!("{}", reason.to_string_lossy());
+    }
 }
 
 /// A run that never happened: exit 3, and one line saying what stopped it.
