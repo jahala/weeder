@@ -1,0 +1,16 @@
+{
+  "tilth-core": { "provider": "codex" },
+  "core": { "provider": "codex" },
+  "sarif": { "provider": "codex" },
+  "check-face": { "provider": "codex" },
+  "rules-block": { "provider": "codex" },
+  "rules-tests": { "provider": "codex" },
+  "rules-prod": { "provider": "codex" },
+  "guard": { "provider": "codex" },
+  "hooks": { "provider": "codex" },
+  "scan": { "provider": "codex" },
+  "calibration": { "provider": "codex" },
+  "bite": { "provider": "codex" },
+  "garden-fit": { "provider": "codex" },
+  "weed": { "provider": "codex" }
+}

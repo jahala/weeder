@@ -15,7 +15,7 @@ Written 2026-09-05 after reading FORMAT.md, tend2-ARCHITECTURE.md, emit.ts, veri
 
 ## pleach
 
-9. **`--repo-root` on a linked git worktree.** The worktree's `.git` is a file, not a directory. The journal default is `<repo-root>/.git/pleach/journal.jsonl` and receipts live under `<git-dir>/pleach/receipts/`. Do those resolve through `git rev-parse --git-dir`, or does the run fail on `ENOTDIR`? I pass `--journal` explicitly and will report what the receipts do.
+9. **`--repo-root` on a linked git worktree** — answered by reading `src/seams/gitdir.ts`: a `.git` file is followed to the real git dir, so journal, lock and receipts land there. Only the `--help` text still says `<repo-root>/.git/pleach/journal.jsonl`; worth updating to `<git-dir>`.
 10. **Contract v1.3 Tried handback.** The garden law §6a says the Tried requirement travels in the work order and is validated in shape by pleach's run loop through an additive v1.3 field. The installed `pleach schema` does not carry it yet. What is the field's name and shape, so hand-authored and emitted plans can carry it the day it lands?
 11. **`pleach --version`** is "unknown flag". Same pinning need as tend2.
 12. **Worker model names.** `"worker": { "provider": "claude", "model": "opus" }` validates; if the runtime rejects the alias I will report it.
