@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plotplot.ai/schemas/garden.schema.json",
+  "title": "garden bed manifest",
+  "description": "What a bed of the plotplot garden declares about itself, so the umbrella can verify the fit contract without reading the bed's source. [flagged] proposal: the manifest schema belongs to the contracts repository, which does not exist yet. Until it does, this file is vendored here and the shape may still move.",
+  "type": "object",
+  "required": [
+    "name",
+    "kind",
+    "version",
+    "install",
+    "faces",
+    "check",
+    "metric",
+    "context_cost"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "description": "The schema this manifest was written against.",
+      "type": "string"
+    },
+    "name": {
+      "description": "The bed's name, lowercase, as the binary and the brand layer spell it.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "summary": {
+      "description": "One sentence saying what the bed is.",
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "description": "What the bed is to the garden. A gate judges and may block; a hook answers a harness or git; a skill is read by an agent; an mcp face is spoken to over stdio; a library is depended on by other beds.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": ["gate", "hook", "skill", "mcp", "library"]
+      }
+    },
+    "version": {
+      "description": "The released version, equal to the one the bed's own package manifest carries.",
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"
+    },
+    "install": {
+      "description": "How the bed arrives, per platform. At least one route, and the binary route names every target triple a release publishes.",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "npm": {
+          "description": "The command that installs the npm wrapper.",
+          "type": "string",
+          "minLength": 1
+        },
+        "cargo": {
+          "description": "The command that installs from crates.io.",
+          "type": "string",
+          "minLength": 1
+        },
+        "binary": {
+          "description": "The release archives, by target triple.",
+          "type": "object",
+          "required": ["url", "targets"],
+          "additionalProperties": false,
+          "properties": {
+            "url": {
+              "description": "Where an archive is fetched from. {version} is the manifest's version and {asset} is the archive named under targets.",
+              "type": "string",
+              "format": "uri-template",
+              "minLength": 1
+            },
+            "targets": {
+              "description": "Target triple to the archive the release publishes for it.",
+              "type": "object",
+              "minProperties": 1,
+              "propertyNames": {
+                "pattern": "^[a-z0-9_]+-[a-z0-9_]+-[a-z0-9_]+(-[a-z0-9_]+)?$"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "faces": {
+      "description": "The commands the bed offers, named as a caller types them.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "skill": {
+      "description": "Where the bed's SKILL.md lives, so the stem can install it into a harness's discovery directory.",
+      "type": "string",
+      "minLength": 1
+    },
+    "check": {
+      "description": "The command whose findings the umbrella reads, and the standard it emits them in.",
+      "type": "object",
+      "required": ["command", "format"],
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "format": {
+          "description": "The standard and its version, as <standard>-<version>.",
+          "type": "string",
+          "pattern": "^[a-z]+-[0-9]+\\.[0-9]+\\.[0-9]+$"
+        }
+      }
+    },
+    "metric": {
+      "description": "The one number the bed is measured by, the command that produces it, and where its latest result is committed.",
+      "type": "object",
+      "required": ["command", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "latest": {
+          "description": "The committed summary of the metric's latest result — its value, its interval, its date, and the version measured.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "context_cost": {
+      "description": "Tokens the bed adds to an agent's session before it is called. A binary a caller runs costs nothing until it is run.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "flagged": {
+      "description": "Claims in this repository the owner has not confirmed. Each names what is provisional and what would settle it.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": ["what", "why"],
+        "additionalProperties": false,
+        "properties": {
+          "what": {
+            "type": "string",
+            "minLength": 1
+          },
+          "why": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
