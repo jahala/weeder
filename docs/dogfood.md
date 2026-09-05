@@ -119,3 +119,9 @@ Running log. One dated entry per observation: the exact command, what happened, 
 ### 2026-09-05 — the first garden gate in running code
 
 - On 2026-09-05 `weed check` refused a conflict marker at block level through the real binary on a real git repository, in TypeScript, Python, Rust and Go, with a SARIF log that validates against the official schema. cape-town notes it is the first garden gate that exists in running code rather than on a page. The date is recorded here because the garden's claims are meant to be dated.
+
+### hooks landed by hand: the module-list conflict
+
+- `pleach land` for hooks refused with a conflict in `src/core/mod.rs`: the seam node and the hooks node each added one `pub mod` line and one `pub use` line at the same place. Parallel siblings that each add a module will conflict there every time, and the resolution is always "keep both". Two things would help: pleach could try a merge with a union strategy on files a plan marks as list-like, or say in its docs that a conductor running siblings should expect this class and land in dependency order; on my side, the loops now run under separate locks so siblings land one at a time, which turns the conflict into a plain merge.
+- The conductor's own chain kept going after the refused land, ran a verify sweep on a tree without the node, and emitted a plan that needed a loop not yet landed. No harm done (verify writes nothing on a missing evidence file, and the plan failed validation), but a `pleach land` that exits 1 should stop a script; mine did not check.
+- Three nodes ran concurrently under three locks (hardening, rules-block, garden-fit) with three Opus workers and Codex audits, on the new pleach: worktrees under `<git-dir>/pleach/worktrees/`, `pleach clean` available, `--version` answering. Nothing to report from the mechanism itself, which is the point.
