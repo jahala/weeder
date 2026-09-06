@@ -1,8 +1,8 @@
 # calibration: weed over real history, 2026-09
 
-weed ships as a gate: over 635 commits of real history in 5 repositories it blocked 25, of which 2 were block-level false positives, 0.31 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level.
+The classification is untrusted: the blind re-grade in docs/calibration-audit-blind-2026-09.md agreed below the 90 percent bar, so the blocked-commit and recall classifications must be redone before weed ships as a gate.
 
-A second party re-graded the classification and docs/calibration-audit-2026-09.md records the agreement: blocked commits at 100.0 percent of 20 cases, recall cases at 100.0 percent of 20 cases. That is what took the qualification off this sentence. The auditor drew its sample from this file's own tables, where the builder's class sits beside each commit, so it could read the class before judging: the agreement is a sighted one until a blind re-grade is recorded.
+A second party first re-graded the classification sighted, and docs/calibration-audit-2026-09.md records the agreement: blocked commits at 100.0 percent of 20 cases, recall cases at 100.0 percent of 20 cases. The auditor drew its sample from this file's own tables, where the builder's class sits beside each commit, so it could read the class before judging. A blind re-grade in docs/calibration-audit-blind-2026-09.md agreed below the bar: blocked commits at 45.0 percent of 20 cases, recall cases at 60.0 percent of 20 cases.
 
 ## How this was measured
 

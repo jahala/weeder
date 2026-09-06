@@ -2,6 +2,8 @@
 
 Provider: codex, OpenAI GPT-5 Codex
 
+Blind: no; the auditor could read the builder's classification and reasoning in docs/calibration-2026-09.md before judging.
+
 Seed: calibration-audit-2026-09-codex
 
 The sample below was drawn by sorting the cases from `docs/calibration-2026-09.md` with SHA-256 over the seed, sample name and case key, then taking the first twenty in each sample. Verdicts use the same classes for blocked commits and `miss` for recall cases.
