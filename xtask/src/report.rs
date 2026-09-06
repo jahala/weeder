@@ -139,7 +139,7 @@ impl<'a> Report<'a> {
     pub fn render(&self) -> String {
         let mut out = String::new();
         let outcome = self.outcome();
-        out.push_str("# calibration, weed over real history, 2026-09\n\n");
+        out.push_str("# calibration: weed over real history, 2026-09\n\n");
         out.push_str(&self.verdict(&outcome));
         out.push_str(&self.method());
         out.push_str(&self.levels());
@@ -522,7 +522,7 @@ impl<'a> Report<'a> {
             );
         }
         if fires.is_empty() {
-            out.push_str("|, | 0 | 0 | 0 | 0 | 0.00% |\n");
+            out.push_str("| none | 0 | 0 | 0 | 0 | 0.00% |\n");
         }
         out.push('\n');
         out

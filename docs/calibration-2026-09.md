@@ -1,4 +1,4 @@
-# calibration — weed over real history, 2026-09
+# calibration: weed over real history, 2026-09
 
 weed ships as a gate: over 635 commits of real history in 5 repositories it blocked 71, of which 9 were block-level false positives, 1.42 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level.
 
@@ -40,7 +40,7 @@ No `weed.toml` was passed and none was read: every rule ran at the level the cat
 
 No commit in the corpus carried a `weed.toml` of its own, so no repository moved a rule off the level above.
 
-## tilth — 200 commits judged, 36 blocked, 54 warned
+## tilth, 200 commits judged, 36 blocked, 54 warned
 
 The window is `refs/remotes/origin/main`: the last 200 commits of it that are not merges, 200 of which have a parent to be judged against.
 
@@ -83,7 +83,7 @@ The window is `refs/remotes/origin/main`: the last 200 commits of it that are no
 | `5a4edbf5c5` search: extract bloom_walk, callee_query, scope from relational queries | T1, T2 | acceptable | bloom_walk, callee_query and scope were extracted into their own modules and their cases followed: 15 cases left callers.rs and callees.rs, and the repository gained four. The move is real and so is the report. |
 | `bd36a43637` index: drop inert SymbolIndex plumbing | T1 | acceptable | SymbolIndex and its six tests were dropped together as inert plumbing. Six cases leaving the tree is exactly the change a person should have to confirm was meant. |
 
-## pleach — 152 commits judged, 7 blocked, 16 warned
+## pleach, 152 commits judged, 7 blocked, 16 warned
 
 The window is `refs/remotes/origin/master`: the last 153 commits of it that are not merges, 152 of which have a parent to be judged against.
 
@@ -97,7 +97,7 @@ The window is `refs/remotes/origin/master`: the last 153 commits of it that are 
 | `c42ed6d92a` fix(p0): review — pin floating devDeps, dedupe CI triggers | C1 | acceptable | the change edits `.github/workflows/ci.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working. |
 | `46f9c71acf` chore(p0): skeleton — package.json, tsconfig, biome, CI, gitignore | C1 | acceptable | the change edits `.github/workflows/ci.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working. |
 
-## tend2 — 200 commits judged, 11 blocked, 17 warned
+## tend2, 200 commits judged, 11 blocked, 17 warned
 
 The window is `refs/remotes/origin/master`: the last 200 commits of it that are not merges, 200 of which have a parent to be judged against.
 
@@ -115,7 +115,7 @@ The window is `refs/remotes/origin/master`: the last 200 commits of it that are 
 | `07931a6742` ci: gate the tend2 kernel + spike suites, not just v1 — the verification product now CI-verifies itself | C1 | acceptable | the change edits `.github/workflows/ci.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working. |
 | `52b97e43ce` feat(loop-hole): refusal hygiene — sanitized one-line reasons + child stderr (rate limits read as rate limits); .loop-scratch gitignored | X1 | false positive | both hits are `class="detail-meta__key">` and `class="journey-row__key">` in the renderer's html builder. The value is markup, not a credential, and X1 took the class attribute for an assignment. |
 
-## copeca — 25 commits judged, 5 blocked, 5 warned
+## copeca, 25 commits judged, 5 blocked, 5 warned
 
 The window is `refs/remotes/origin/master`: the last 26 commits of it that are not merges, 25 of which have a parent to be judged against. Fewer than 50 commits were judged, so this repository is reported and not judged on its own share.
 
@@ -127,7 +127,7 @@ The window is `refs/remotes/origin/master`: the last 26 commits of it that are n
 | `f6198d4b20` fix: narrow gitignore — only root results/, not src/copeca/results/ | S1 | false positive | `def parse(...) -> "RunResult": ...` sits in `class Parser(Protocol)`. In Python an ellipsis body is how a protocol declares a method's type; there is no implementation to finish, and reading it as a stub is reading the language wrong. |
 | `1abdc130df` feat: project scaffold — copeca benchmark tool | X1 | false positive | both hits are prose in a skill file: an example check reading "User can log in with valid credentials" and one about signJWT returning a token. X1 read the words after the colon as an assigned value. |
 
-## umbel — 58 commits judged, 12 blocked, 7 warned
+## umbel, 58 commits judged, 12 blocked, 7 warned
 
 The window is `refs/remotes/origin/master`: the last 59 commits of it that are not merges, 58 of which have a parent to be judged against.
 
@@ -167,24 +167,24 @@ Too few commits to carry a share of their own, reported and not judged alone: co
 
 Every block whose claim was not true of the change, under the rule that made it. This is the list the rule loops work from.
 
-**S1** — one block
+**S1**, one block
 
-- copeca `f6198d4b20` fix: narrow gitignore — only root results/, not src/copeca/results/ — `def parse(...) -> "RunResult": ...` sits in `class Parser(Protocol)`. In Python an ellipsis body is how a protocol declares a method's type; there is no implementation to finish, and reading it as a stub is reading the language wrong.
+- copeca `f6198d4b20` fix: narrow gitignore — only root results/, not src/copeca/results/, `def parse(...) -> "RunResult": ...` sits in `class Parser(Protocol)`. In Python an ellipsis body is how a protocol declares a method's type; there is no implementation to finish, and reading it as a stub is reading the language wrong.
 
-**T1** — one block
+**T1**, one block
 
-- tend2 `3adc642ce1` polish(root): no asset folder in the root — maps carry their own renderer — the file declares two `it(` call sites before and after; one of them now sits inside a `for` over the sibling directories, so it runs once per directory. The reader counts statically declared cases and missed the generated one, so the claim that a case disappeared is not true.
+- tend2 `3adc642ce1` polish(root): no asset folder in the root — maps carry their own renderer, the file declares two `it(` call sites before and after; one of them now sits inside a `for` over the sibling directories, so it runs once per directory. The reader counts statically declared cases and missed the generated one, so the claim that a case disappeared is not true.
 
-**X1** — 8 blocks
+**X1**, 8 blocks
 
-- pleach `bbf44e96f1` docs(tend): self-tracking garden — positioning, wiring, narratives, thumbnails — every hit is `class="detail-meta__key">` and `class="journey-row__key">` in generated html, plus two lines of prose in a skill about verification recipes. No credential was added; X1 read a css class name and a markdown sentence as an assignment because the name ends in key, token or credentials.
-- tend2 `52b97e43ce` feat(loop-hole): refusal hygiene — sanitized one-line reasons + child stderr (rate limits read as rate limits); .loop-scratch gitignored — both hits are `class="detail-meta__key">` and `class="journey-row__key">` in the renderer's html builder. The value is markup, not a credential, and X1 took the class attribute for an assignment.
-- copeca `eb9ed62b2d` feat: robust + isolated benchmark runs — run-robustness, cross-CLI clean room, subscription/API dual-auth (#15) — the two hits are the rendered `detail-meta__key` and `journey-row__key` spans in a generated feature page. No credential was added.
-- copeca `70d669542a` Audit remediation, corpus 16→52, multi-CLI runners + OSS publishing prep — the hit is `key = serialization.load_pem_public_key(pem)` in the signing module: a local variable named key holding the result of a call, not a credential.
-- copeca `e8584ab6af` docs: README + architecture, engineering, metrics, methodology, authoring — thirty-eight hits, every one of them a `detail-meta__key` or `journey-row__key` span in the generated documentation pages.
-- copeca `1abdc130df` feat: project scaffold — copeca benchmark tool — both hits are prose in a skill file: an example check reading "User can log in with valid credentials" and one about signJWT returning a token. X1 read the words after the colon as an assigned value.
-- umbel `8f75fcb093` feat(tend): standalone pages for the personas + opportunities — garden at 0 warnings — ten hits, all `detail-meta__key` and `journey-row__key` spans in generated persona pages. No credential was added.
-- umbel `4167b85477` feat(tend): add the tend feature-map garden (umbel) (#41) — the same generated `detail-meta__key` and `journey-row__key` spans across the new garden pages, plus the two lines of skill prose about credentials and tokens.
+- pleach `bbf44e96f1` docs(tend): self-tracking garden — positioning, wiring, narratives, thumbnails, every hit is `class="detail-meta__key">` and `class="journey-row__key">` in generated html, plus two lines of prose in a skill about verification recipes. No credential was added; X1 read a css class name and a markdown sentence as an assignment because the name ends in key, token or credentials.
+- tend2 `52b97e43ce` feat(loop-hole): refusal hygiene — sanitized one-line reasons + child stderr (rate limits read as rate limits); .loop-scratch gitignored, both hits are `class="detail-meta__key">` and `class="journey-row__key">` in the renderer's html builder. The value is markup, not a credential, and X1 took the class attribute for an assignment.
+- copeca `eb9ed62b2d` feat: robust + isolated benchmark runs — run-robustness, cross-CLI clean room, subscription/API dual-auth (#15), the two hits are the rendered `detail-meta__key` and `journey-row__key` spans in a generated feature page. No credential was added.
+- copeca `70d669542a` Audit remediation, corpus 16→52, multi-CLI runners + OSS publishing prep, the hit is `key = serialization.load_pem_public_key(pem)` in the signing module: a local variable named key holding the result of a call, not a credential.
+- copeca `e8584ab6af` docs: README + architecture, engineering, metrics, methodology, authoring, thirty-eight hits, every one of them a `detail-meta__key` or `journey-row__key` span in the generated documentation pages.
+- copeca `1abdc130df` feat: project scaffold — copeca benchmark tool, both hits are prose in a skill file: an example check reading "User can log in with valid credentials" and one about signJWT returning a token. X1 read the words after the colon as an assigned value.
+- umbel `8f75fcb093` feat(tend): standalone pages for the personas + opportunities — garden at 0 warnings, ten hits, all `detail-meta__key` and `journey-row__key` spans in generated persona pages. No credential was added.
+- umbel `4167b85477` feat(tend): add the tend feature-map garden (umbel) (#41), the same generated `detail-meta__key` and `journey-row__key` spans across the new garden pages, plus the two lines of skill prose about credentials and tokens.
 
 ## Precision and the allowance rate
 
