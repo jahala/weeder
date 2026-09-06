@@ -81,5 +81,6 @@ fn expected_face(rule: &Rule) -> &'static str {
     match rule.face {
         Face::Check => "check",
         Face::Scan => "scan",
+        Face::Bite => "bite",
     }
 }

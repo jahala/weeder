@@ -1,13 +1,15 @@
 //! The detectors, kept apart by the face that runs them.
 //!
-//! `check` judges a diff and `scan` judges a tree; the two read different things
-//! and land on their own schedules, so each face owns its registry and neither
-//! can quietly start running the other's rules.
+//! `check` judges a diff, `scan` judges a tree and `bite` judges what a test
+//! command did with two states of one; the three read different things and land
+//! on their own schedules, so each face owns its registry and none of them can
+//! quietly start running another's rules.
 
 use crate::core::catalogue::Rule;
 use crate::core::config::{Config, RuleSetting};
 use crate::core::finding::Level;
 
+pub mod bite;
 pub mod check;
 pub mod scan;
 

@@ -13,13 +13,12 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use crate::core::change::{Change, Side};
-use crate::core::classify::{classify_file, FileKind};
+use crate::core::change::Change;
 use crate::core::config::Config;
 use crate::core::diff::{parse_diff, FileDiff};
 use crate::core::finding::{Finding, Level};
 use crate::core::glob;
-use crate::core::read::{CallerSite, TestShape};
+use crate::core::read::CallerSite;
 use crate::core::rules;
 use crate::core::sarif::{self, Context, EXIT_BLOCKED, EXIT_CLEAN, EXIT_COULD_NOT_RUN, RULES_DOC};
 use crate::core::specimen;
@@ -27,7 +26,7 @@ use crate::core::suppress::{
     apply_suppressions, parse_commit_suppressions, parse_inline_suppressions,
     InlineSuppressionError, Suppression,
 };
-use crate::faces::{read_config, Answer, Format};
+use crate::faces::{gather, read_config, Answer, Format, Source};
 use crate::seams::{fs, git, reader};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -77,7 +76,7 @@ fn judge(request: &Request) -> Result<Answer, String> {
     let (judged, excluded) = set_aside(judged, &config.specimens);
     let (inline, malformed) = parse_inline_suppressions(&judged);
 
-    let changes = gather(&root, &range, judged)?;
+    let changes = gather(&root, &range.base, &range.after, judged)?;
     let scope = scope(request, &config);
     // The specimens leave the repository's paths too: a rule that reads what the
     // tree holds, to resolve an import or to work out what a pattern hides,
@@ -144,17 +143,6 @@ struct Range {
     after: Source,
 }
 
-/// Where a version of a file is to be found.
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum Source {
-    /// A commit, by whatever name the caller gave it.
-    Reference(String),
-    /// The index: what a commit would carry.
-    Index,
-    /// The working tree, as it sits on disk.
-    Tree,
-}
-
 /// What this run compares against what. A run that names two states weed cannot
 /// judge together stops here rather than guessing which one was meant.
 fn range(request: &Request) -> Result<Range, String> {
@@ -189,77 +177,6 @@ fn read_diff(root: &Path, range: &Range) -> Result<String, String> {
         _ => git::diff_ref(root, &range.base),
     };
     diff.map_err(|error| error.to_string())
-}
-
-/// Each changed file with both of its sides read: the text, what the path is,
-/// and what the reader makes of the inside of it. This is the one place weed
-/// touches a file for the rules, so a detector stays pure and testable whole.
-fn gather(root: &Path, range: &Range, judged: Vec<FileDiff>) -> Result<Vec<Change>, String> {
-    judged
-        .into_iter()
-        .map(|diff| {
-            let before = side(
-                root,
-                &Source::Reference(range.base.clone()),
-                diff.old_path.as_deref(),
-            )?;
-            let after = side(root, &range.after, diff.new_path.as_deref())?;
-            Ok(Change {
-                diff,
-                before,
-                after,
-            })
-        })
-        .collect()
-}
-
-/// One side of one file. A side with no file is nothing to read at all. A file
-/// whose bytes are not text has no lines for a rule to judge, and still has a
-/// path and a weight, which is what G2 asks about.
-fn side(root: &Path, source: &Source, path: Option<&str>) -> Result<Side, String> {
-    let Some(path) = path else {
-        return Ok(Side::default());
-    };
-    let blob = match source {
-        Source::Reference(reference) => git::file_at_ref(root, reference, path),
-        Source::Index => git::file_in_index(root, path),
-        Source::Tree => git::file_in_tree(root, path),
-    }
-    .map_err(|error| error.to_string())?;
-    let Some(blob) = blob else {
-        return Ok(Side::default());
-    };
-    let (size, binary) = (Some(blob.size()), blob.is_binary());
-    let Some(content) = blob.text() else {
-        return Ok(Side {
-            classification: Some(classify_file(path, "")),
-            size,
-            binary,
-            ..Side::default()
-        });
-    };
-
-    let classification = classify_file(path, &content);
-    let file = Path::new(path);
-    let tests = if classification.kind == FileKind::Test || classification.has_inline_tests {
-        reader::test_shape(file, &content)
-    } else {
-        TestShape::default()
-    };
-    // Every side is outlined, test file and production file alike: a rule that
-    // asks what a rename did to a case, or which unit a double stands in for,
-    // is asking about a declaration on whichever side of the suite it sits.
-    let outline = reader::outline(file, &content);
-    let imports = reader::imports(file, &content);
-    Ok(Side {
-        content: Some(content),
-        classification: Some(classification),
-        tests,
-        outline,
-        imports,
-        size,
-        binary,
-    })
 }
 
 /// The changed files weed judges, and the paths it was told to leave alone.

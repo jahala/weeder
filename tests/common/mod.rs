@@ -614,6 +614,34 @@ pub fn fixture(rule: &str, lang: &str, case: &str) -> Repo {
     repo
 }
 
+/// A repository built from a phased fixture: `before/` committed as the base,
+/// `test/` committed as the test phase, `after/` committed as the
+/// implementation. Each stage is copied over the tree the stage before it
+/// committed, because a phase adds to a repository rather than replacing it.
+///
+/// This is the history `weed bite` judges: three commits, the middle one
+/// carrying the tests alone, which is what a conductor that commits its test
+/// phase separately leaves behind.
+pub fn phased_fixture(rule: &str, lang: &str, case: &str) -> Repo {
+    let source = fixture_root().join(rule).join(lang).join(case);
+    assert!(
+        source.is_dir(),
+        "there is no fixture at {}",
+        source.display()
+    );
+
+    let repo = Repo::init();
+    for (stage, message) in [
+        ("before", "the state the change starts from"),
+        ("test", "the test phase"),
+        ("after", "the implementation"),
+    ] {
+        copy_tree(&source.join(stage), repo.root());
+        repo.commit(message);
+    }
+    repo
+}
+
 pub fn fixture_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures/adversarial")
 }
