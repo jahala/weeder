@@ -27,6 +27,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
 use clap::Args;
+use weed::faces::{check, Format};
 
 use corpus::Working;
 use inject::{Mutation, NoSite};
@@ -82,6 +83,16 @@ pub struct Case {
     pub line: Option<u32>,
     pub shape: String,
     pub caught: bool,
+}
+
+/// A replayed recall case with the material a blind auditor may read.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Replay {
+    pub diff: String,
+    pub shape: String,
+    pub target: Vec<String>,
+    pub lines: Option<(u32, u32)>,
+    pub findings: Vec<crate::calibrate::Finding>,
 }
 
 /// What one repository gave the campaign.
@@ -165,13 +176,14 @@ pub fn run(request: &Request) -> Result<(), String> {
     Ok(())
 }
 
-/// Rebuild the mutation diff for one recalled case from the pinned corpus.
-pub fn replay_diff(
+/// Rebuild the mutation, diff and weed findings for one recalled case from the
+/// pinned corpus.
+pub fn replay_case(
     repo: &crate::corpus::Repo,
     sha: &str,
     rule: &str,
     lang: &str,
-) -> Result<String, String> {
+) -> Result<Replay, String> {
     let lang =
         Language::from_slug(lang).ok_or_else(|| format!("{lang} is not a recall language"))?;
     let working = corpus::prepare(repo)?;
@@ -204,13 +216,35 @@ pub fn replay_diff(
         )
     })?;
     let _before = apply(&root, &planted, &tree)?;
+    let config_dir = tempfile::tempdir().map_err(|error| error.to_string())?;
+    let config = config_dir.path().join("weed.toml");
+    prepare_config(&planted, &config)?;
+    let answer = check::run(&check::Request {
+        cwd: root.clone(),
+        base: Some(parent.clone()),
+        tip: None,
+        staged: false,
+        scope: scopes(&planted.arguments)?,
+        strict: true,
+        format: Format::Sarif,
+        config: planted.config.as_ref().map(|_| config),
+        message_file: None,
+        version: env!("CARGO_PKG_VERSION").to_string(),
+    });
     let mut arguments = vec!["diff", "--no-ext-diff", &parent, "--"];
     for (path, _) in &planted.writes {
         arguments.push(path);
     }
     let diff = git::capture(&root, &arguments)?;
     restore(&root, &planted, &tree)?;
-    Ok(diff.trim_end_matches('\n').to_string())
+    let findings = crate::calibrate::results(&answer.stdout)?;
+    Ok(Replay {
+        diff: diff.trim_end_matches('\n').to_string(),
+        shape: planted.shape,
+        target: planted.target,
+        lines: planted.lines,
+        findings,
+    })
 }
 
 /// One outcome per repository, made of what each of its slices came back with,
@@ -527,6 +561,23 @@ fn arguments(planted: &Mutation, config: &Path) -> Vec<String> {
         arguments.push(config.to_string_lossy().to_string());
     }
     arguments
+}
+
+fn scopes(arguments: &[String]) -> Result<Vec<String>, String> {
+    let mut scopes = Vec::new();
+    let mut iter = arguments.iter();
+    while let Some(argument) = iter.next() {
+        match argument.as_str() {
+            "--scope" => {
+                let Some(scope) = iter.next() else {
+                    return Err("--scope in a replay case needs a path".to_string());
+                };
+                scopes.push(scope.clone());
+            }
+            other => return Err(format!("replay does not know audit argument {other}")),
+        }
+    }
+    Ok(scopes)
 }
 
 /// The config a case reads, written outside the repository so that asking for

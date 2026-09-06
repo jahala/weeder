@@ -8,9 +8,13 @@ Seed: calibration-audit-blind-2026-09-47
 
 Packet: docs/calibration-audit-blind-2026-09.packet.md
 
+Packet SHA-256: 2fc307ad583468ec941b139b2d4422ca5c680b588824a9b3712e5df06d128213
+
 Response: docs/calibration-audit-blind-2026-09.response.md
 
-The packet was written by `cargo xtask audit-packet --seed calibration-audit-blind-2026-09-47` from the pinned corpus. The fresh auditor received only that packet and the class definitions. Agreement is below the 90 percent bar, so the classification is untrusted until it is redone.
+Transcript: docs/calibration-audit-blind-2026-09.transcript.md
+
+The packet was written by `cargo xtask audit-packet --seed calibration-audit-blind-2026-09-47` from the pinned corpus. The fresh auditor received only that packet and the class definitions. A later fair packet with catalogue text, weed findings and recall planting questions is recorded at the same path and hash above; no passing fair re-grade exists yet. Agreement is below the 90 percent bar, so the classification is untrusted until it is redone.
 
 ## Agreement
 
