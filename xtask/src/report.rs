@@ -139,7 +139,7 @@ impl<'a> Report<'a> {
     pub fn render(&self) -> String {
         let mut out = String::new();
         let outcome = self.outcome();
-        out.push_str("# calibration — weed over real history, 2026-09\n\n");
+        out.push_str("# calibration, weed over real history, 2026-09\n\n");
         out.push_str(&self.verdict(&outcome));
         out.push_str(&self.method());
         out.push_str(&self.levels());
@@ -245,7 +245,7 @@ impl<'a> Report<'a> {
     fn repo_section(&self, repo: &RepoMeasurement) -> String {
         let tally = self.tally(repo);
         let mut out = format!(
-            "## {} — {} commits judged, {} blocked, {} warned\n\n",
+            "## {}, {} commits judged, {} blocked, {} warned\n\n",
             repo.name,
             repo.judged,
             tally.blocked(),
@@ -270,7 +270,7 @@ impl<'a> Report<'a> {
             for refusal in &repo.refusals {
                 let _ = writeln!(
                     out,
-                    "- `{}` — {}",
+                    "- `{}`, {}",
                     short(&refusal.sha),
                     cell(&refusal.reason)
                 );
@@ -419,7 +419,7 @@ impl<'a> Report<'a> {
         for (rule, blocks) in &by_rule {
             let _ = writeln!(
                 out,
-                "**{rule}** — {}\n",
+                "**{rule}**, {}\n",
                 if blocks.len() == 1 {
                     "one block".to_string()
                 } else {
@@ -429,7 +429,7 @@ impl<'a> Report<'a> {
             for (repo, blocked, reasoning) in blocks {
                 let _ = writeln!(
                     out,
-                    "- {repo} `{}` {} — {}",
+                    "- {repo} `{}` {}, {}",
                     short(&blocked.sha),
                     cell(&blocked.subject),
                     cell(reasoning),
@@ -522,7 +522,7 @@ impl<'a> Report<'a> {
             );
         }
         if fires.is_empty() {
-            out.push_str("| — | 0 | 0 | 0 | 0 | 0.00% |\n");
+            out.push_str("|, | 0 | 0 | 0 | 0 | 0.00% |\n");
         }
         out.push('\n');
         out

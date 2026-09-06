@@ -30,6 +30,7 @@
 - [x] (code) X2 fires at block level on a file outside the given scope globs, names the callers of its changed definitions, and stays silent without `--scope` and on files inside the scope · tests/rule_x2.rs @74eb044 · by cli
 - [x] (code) C2 warns when an ignore file gains a pattern matching source or test paths and stays silent on build-output patterns · tests/rule_c2.rs @26b2f5b · by cli
 - [x] (code) G2 warns on an added file above 1 MiB and on an added binary, and stays silent on a small text file and on a tracked binary that only changes · tests/rule_g2.rs @451a2a1 · by cli
+- [ ] (code) `[scope] specimens` in `weed.toml` is a list of directories under `fixtures/adversarial/**` that `check` and `scan` skip for every rule, each skipped path reported once at note level so an exclusion is as visible as an allowance; an entry outside that root, a glob that reaches past it, or a rule name in the list is refused with exit 3 and a message naming it · tests/config_specimens.rs
 
 ## Needs #rules-tests
 
@@ -39,5 +40,6 @@
 - 2026-09-06 built by pleach node `rules-prod` (claude/opus, codex audit) in one attempt, 65 minutes; the land gate refused the composition with scan (both landings added a `comments` view to the mask, and scan still read the tree as text where rules-prod now reads a blob), resolved by hand. Every detector is a pure function of one `Judgement` the face gathers once: changes, config, scope, tracked paths, callers. D1 warns and blocks when a scope excludes the manifest, and the registry keeps a level a detector chose above its default; D2 resolves a module name by matching its segments against the repository's own paths and refuses to guess between two layers; X2 names the blast radius through the reader's callers; C2 turns an ignore pattern into globs and reports what it hides; G2 reads size and binariness off the same bytes; S3 reads `[entrypoints] cli`; the vendor name the brief listed became the shape `dump`. weed.toml now states weed's own layers, so D2 holds weed to its doctrine
 - 2026-09-06 the catalogue is complete: eighteen check rules and four scan rules, `docs/rules.md` written from the same table and pinned to it by `tests/docs_rules.rs`, so every SARIF helpUri lands somewhere
 - 2026-09-06 left for calibration: D2 reads every import of a changed file, so touching a file that already reaches the wrong way blocks the change that touched it. Right for a clean tree, wrong for a repository adopting the rule with a mess; whether existing arrows need an allowance is calibration's call. S2's Go shape is narrow on purpose, and calibration decides if it is still too wide
+- 2026-09-06 cape-town's specimen ruling (calibration's Tried) lands here as a check rather than in calibration: it is a config surface, and the calibration worker rightly refused to move the numbers it was measuring by changing a detector's input mid-run
 </script>
 <script src="loop.js"></script>
