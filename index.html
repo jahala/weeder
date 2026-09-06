@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>weed · the judge of the diff</title>
+<meta name="description" content="weed reads the diff an agent just wrote and refuses the cheap road to green: a deleted test, a dropped assertion, a skip, a stub, a swallowed error, a secret. one static binary, milliseconds, no model in the loop.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20d%3D%22M13.2%2028.4%20C12.8%2022.4%2C%2013.2%2013.4%2C%2013.8%206.2%22%20fill%3D%22none%22%20stroke%3D%22%23357E2C%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M13%2025.6%20L11.5%2024.9%22%20fill%3D%22none%22%20stroke%3D%22%23357E2C%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M13.4%2013%20L15.1%2012.3%22%20fill%3D%22none%22%20stroke%3D%22%23357E2C%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M13.6%209.8%20L12.1%209.2%22%20fill%3D%22none%22%20stroke%3D%22%23357E2C%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%2F%3E%3Cellipse%20cx%3D%229.6%22%20cy%3D%2224.2%22%20rx%3D%222.8%22%20ry%3D%221.2%22%20transform%3D%22rotate%2830%209.6%2024.2%29%22%20fill%3D%22%23357E2C%22%2F%3E%3Cellipse%20cx%3D%2217.5%22%20cy%3D%2211.2%22%20rx%3D%222.8%22%20ry%3D%221.2%22%20transform%3D%22rotate%28-30%2017.5%2011.2%29%22%20fill%3D%22%23357E2C%22%2F%3E%3Cellipse%20cx%3D%2210.2%22%20cy%3D%228.6%22%20rx%3D%222.8%22%20ry%3D%221.2%22%20transform%3D%22rotate%2830%2010.2%208.6%29%22%20fill%3D%22%23357E2C%22%2F%3E%3Cpath%20d%3D%22M11.2%2016.1%20L24.5%2022.75%22%20fill%3D%22none%22%20stroke%3D%22%238E3B5E%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M11.2%2021.9%20L24.5%2015.25%22%20fill%3D%22none%22%20stroke%3D%22%238E3B5E%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%2F%3E%3Ccircle%20cx%3D%2226.5%22%20cy%3D%2223.75%22%20r%3D%222.2%22%20fill%3D%22none%22%20stroke%3D%22%238E3B5E%22%20stroke-width%3D%221.6%22%2F%3E%3Ccircle%20cx%3D%2226.5%22%20cy%3D%2214.25%22%20r%3D%222.2%22%20fill%3D%22none%22%20stroke%3D%22%238E3B5E%22%20stroke-width%3D%221.6%22%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Hanken+Grotesk:wght@400..800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script>(function(){var r=document.documentElement;r.classList.add('js');var s=localStorage.getItem('pp-theme');if(s)r.setAttribute('data-theme',s);else if(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)r.setAttribute('data-theme','dark');})();</script>
+<style>
+  :root{
+    /* color — shared family palette */
+    --pp-primary:#357E2C; --pp-primary-deep:#2C6B2A; --pp-leaf:#4A9E3F; --pp-forest:#214A2C;
+    --pp-accent:#E89227; --pp-amber-ink:#A86518;
+    --pp-text:#3A2718; --pp-text-soft:#786148;
+    --pp-bg:#FAF5E9; --pp-bg-band:#F2EAD6; --pp-surface:#F5EEDD; --pp-border:#E2D8C0;
+    /* semantic */
+    --pp-healthy:#46913C; --pp-caution:#B0741C; --pp-error:#BC4126; --pp-info:#3F7186; --pp-muted:#9A8C72;
+    /* product blooms */
+    --pp-tilth:#4E88A6; --pp-tend:#D6502F; --pp-petals:#E588A0; --pp-pleach:#97539B; --pp-umbel:#E89227; --pp-copeca:#1F8A7B; --pp-pollen:#C8B330; --pp-pollen-ink:#7E6A08; --pp-weed:#8E3B5E; --pp-weed-word:#8E3B5E;
+    /* soil-night terminal (fixed in both themes) */
+    --pp-term-bg:#1C1610; --pp-term-surface:#262019; --pp-term-border:#403628;
+    --pp-term-green:#84C56A; --pp-term-sun:#F2A93B; --pp-term-text:#F3ECD9;
+    /* type */
+    --pp-font-heading:'Fraunces',Georgia,serif;
+    --pp-font-body:'Hanken Grotesk',system-ui,sans-serif;
+    --pp-font-code:'JetBrains Mono',monospace;
+    /* space */
+    --pp-space-4xs:4px; --pp-space-3xs:8px; --pp-space-2xs:12px; --pp-space-xs:16px;
+    --pp-space-sm:24px; --pp-space-md:32px; --pp-space-lg:48px; --pp-space-xl:64px;
+    --pp-space-2xl:96px; --pp-space-3xl:128px;
+    --pp-container-max:1200px; --pp-gutter:32px;
+    /* radius */
+    --pp-radius-xs:3px; --pp-radius-sm:6px; --pp-radius-md:8px; --pp-radius-lg:10px;
+    --pp-radius-xl:12px; --pp-radius-full:999px;
+    /* shadow — ink-tinted */
+    --pp-shadow-rest:0 1px 0 #E2D8C0, 0 12px 40px -16px rgba(58,39,24,0.35);
+    --pp-shadow-lift:0 2px 4px rgba(58,39,24,0.05), 0 14px 32px rgba(58,39,24,0.08);
+    /* motion */
+    --pp-ease-petal:cubic-bezier(0.22,1,0.36,1);
+  }
+  [data-theme="dark"]{
+    --pp-primary:#84C56A; --pp-accent:#F2A93B; --pp-leaf:#9FD08A;
+    --pp-text:#F3ECD9; --pp-text-soft:#C9BBA0;
+    --pp-bg:#1C1610; --pp-bg-band:#211A12; --pp-surface:#262019; --pp-border:#403628;
+    --pp-pollen-ink:#D9C44A;
+    --pp-weed-word:#B85C82;
+    --pp-shadow-rest:0 1px 0 #403628, 0 12px 40px -16px rgba(8,6,4,0.6);
+    --pp-shadow-lift:0 2px 4px rgba(8,6,4,0.3), 0 14px 32px rgba(8,6,4,0.45);
+  }
+
+  *{box-sizing:border-box}
+  html{font-size:18px;scroll-behavior:smooth}
+  body{margin:0;background:var(--pp-bg);color:var(--pp-text);
+    font-family:var(--pp-font-body);font-size:1.0625rem;line-height:1.65;
+    -webkit-font-smoothing:antialiased;transition:background .4s var(--pp-ease-petal),color .4s var(--pp-ease-petal)}
+  .wrap{max-width:var(--pp-container-max);margin:0 auto;padding:0 var(--pp-gutter)}
+
+  h1,h2,h3{font-family:var(--pp-font-heading);font-optical-sizing:auto;margin:0;line-height:1.08;font-weight:600}
+  h1{font-size:clamp(3rem,5.4vw,4.2rem);line-height:1.04;font-weight:620;letter-spacing:-.015em}
+  h2{font-size:2.4rem;line-height:1.12}
+  h3{font-size:1.6rem;line-height:1.2}
+  a{color:var(--pp-primary);text-decoration:none}
+  :focus-visible{outline:2px solid var(--pp-primary);outline-offset:3px;border-radius:var(--pp-radius-xs)}
+  code{font-family:var(--pp-font-code);font-size:.88em}
+  .kicker{font-family:var(--pp-font-code);font-size:.74rem;font-weight:500;
+    text-transform:uppercase;letter-spacing:.2em;color:var(--pp-weed-word);margin:0 0 var(--pp-space-xs)}
+  .lede{font-size:1.3rem;line-height:1.5;color:var(--pp-text-soft)}
+  .sec-head{max-width:46ch;margin-bottom:var(--pp-space-xl)}
+  .sec-head h2{margin-top:var(--pp-space-2xs)}
+  .sec-head .lede{margin-top:var(--pp-space-sm)}
+
+  /* buttons */
+  .btn{font-family:var(--pp-font-body);font-weight:600;font-size:1rem;border:0;cursor:pointer;
+    border-radius:var(--pp-radius-sm);padding:var(--pp-space-2xs) var(--pp-space-sm);
+    display:inline-flex;align-items:center;gap:var(--pp-space-3xs);
+    transition:transform .18s ease,background .18s ease,box-shadow .18s ease}
+  .btn.primary{background:var(--pp-primary);color:var(--pp-bg)}
+  .btn.primary:hover{background:var(--pp-primary-deep);transform:translateY(-1px)}
+  [data-theme="dark"] .btn.primary:hover{background:var(--pp-leaf)}
+  .btn.ghost{background:transparent;color:var(--pp-primary);box-shadow:inset 0 0 0 1.5px var(--pp-border)}
+  .btn.ghost:hover{box-shadow:inset 0 0 0 1.5px var(--pp-primary);transform:translateY(-1px)}
+
+  /* header */
+  header.site{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--pp-bg) 86%,transparent);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--pp-border)}
+  header.site .wrap{display:flex;align-items:center;justify-content:space-between;
+    padding-top:var(--pp-space-xs);padding-bottom:var(--pp-space-xs)}
+  .brand{display:inline-flex;align-items:center;gap:var(--pp-space-3xs);color:var(--pp-text)}
+  .wordmark{font-family:var(--pp-font-heading);font-weight:600;font-size:1.4rem;letter-spacing:-.01em}
+  .mark{width:28px;height:28px;flex:none}
+  .w-plant{fill:none;stroke:var(--pp-primary);stroke-linecap:round}
+  .w-leaf{fill:var(--pp-primary)}
+  .w-blade{fill:none;stroke:var(--pp-weed);stroke-linecap:round}
+  .w-loop{fill:none;stroke:var(--pp-weed)}
+  .nav{display:flex;align-items:center;gap:var(--pp-space-sm)}
+  .nav a{color:var(--pp-text-soft);font-size:.95rem}
+  .nav a:hover{color:var(--pp-primary)}
+  .toggle{background:transparent;border:1px solid var(--pp-border);border-radius:var(--pp-radius-full);
+    width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;
+    color:var(--pp-text-soft);cursor:pointer;transition:color .18s ease,border-color .18s ease}
+  .toggle:hover{color:var(--pp-primary);border-color:var(--pp-primary)}
+  .toggle svg{width:18px;height:18px}
+
+  /* hero */
+  .hero .wrap{display:grid;grid-template-columns:1fr 1.22fr;gap:var(--pp-space-xl);
+    align-items:center;padding-top:var(--pp-space-2xl);padding-bottom:var(--pp-space-2xl)}
+  .hero h1{margin:var(--pp-space-2xs) 0 var(--pp-space-sm)}
+  .hero .lede{max-width:34ch}
+  .cta{display:flex;gap:var(--pp-space-2xs);margin-top:var(--pp-space-lg);flex-wrap:wrap}
+  .under{margin-top:var(--pp-space-sm);font-family:var(--pp-font-code);font-size:.78rem;
+    letter-spacing:.04em;color:var(--pp-text-soft)}
+
+  /* terminal */
+  .term{background:var(--pp-term-bg);border:1px solid var(--pp-term-border);
+    border-radius:var(--pp-radius-md);box-shadow:var(--pp-shadow-rest);overflow:hidden;font-family:var(--pp-font-code)}
+  .term-bar{display:flex;align-items:center;gap:var(--pp-space-3xs);
+    padding:var(--pp-space-2xs) var(--pp-space-xs);background:var(--pp-term-surface);border-bottom:1px solid var(--pp-term-border)}
+  .tdot{width:11px;height:11px;border-radius:var(--pp-radius-full)}
+  .tdot.e{background:var(--pp-error)}
+  .tdot.c{background:var(--pp-caution)}
+  .tdot.k{background:var(--pp-healthy)}
+  .term-title{margin-left:var(--pp-space-3xs);font-size:.78rem;opacity:.6;color:var(--pp-term-text)}
+  .term-body{margin:0;padding:var(--pp-space-sm);font-size:.72rem;line-height:1.85;
+    white-space:pre-wrap;color:var(--pp-term-text)}
+  .t-prompt{color:var(--pp-term-green)}
+  .t-path{color:var(--pp-term-sun)}
+  .t-block{color:var(--pp-error);font-weight:700}
+  .t-dim{opacity:.55;color:var(--pp-term-text)}
+
+  /* sections */
+  section.band{background:var(--pp-bg-band);border-top:1px solid var(--pp-border);border-bottom:1px solid var(--pp-border)}
+  section.pad .wrap{padding-top:var(--pp-space-3xl);padding-bottom:var(--pp-space-3xl)}
+
+  /* card rows */
+  .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--pp-space-md)}
+  .cards.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .card{background:var(--pp-surface);border:1px solid var(--pp-border);border-radius:var(--pp-radius-lg);
+    padding:var(--pp-space-md);border-top:3px solid var(--pp-weed)}
+  .card h3{font-size:1.32rem;margin-bottom:var(--pp-space-3xs)}
+  .card p{margin:var(--pp-space-3xs) 0 0;color:var(--pp-text-soft);font-size:.98rem}
+  .card .label{font-family:var(--pp-font-code);font-size:.72rem;text-transform:uppercase;
+    letter-spacing:.14em;margin:0;color:var(--pp-weed-word)}
+
+  /* the catalogue */
+  .cat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--pp-space-md) var(--pp-space-xl)}
+  .cat h3{font-size:1.15rem;font-family:var(--pp-font-body);font-weight:700;
+    margin-bottom:var(--pp-space-2xs);display:flex;align-items:center;gap:var(--pp-space-3xs)}
+  .rules{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--pp-space-4xs)}
+  .rules li{display:grid;grid-template-columns:2.6rem 1fr;gap:var(--pp-space-3xs);
+    align-items:baseline;font-size:.95rem;color:var(--pp-text-soft);
+    padding:var(--pp-space-4xs) 0;border-bottom:1px solid var(--pp-border)}
+  .rid{font-family:var(--pp-font-code);font-size:.82rem;font-weight:700;color:var(--pp-weed-word)}
+  .chip{font-family:var(--pp-font-code);font-size:.66rem;text-transform:uppercase;letter-spacing:.12em;
+    padding:var(--pp-space-4xs) var(--pp-space-3xs);border-radius:var(--pp-radius-full);
+    border:1px solid var(--pp-border);color:var(--pp-text-soft)}
+  .chip.block{color:var(--pp-error);border-color:var(--pp-error)}
+  .chip.warn{color:var(--pp-caution);border-color:var(--pp-caution)}
+  .chip.scan{color:var(--pp-info);border-color:var(--pp-info)}
+
+  /* numbers */
+  .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--pp-space-md);
+    margin-bottom:var(--pp-space-xl)}
+  .stat{border-top:3px solid var(--pp-weed);padding-top:var(--pp-space-2xs)}
+  .stat b{display:block;font-family:var(--pp-font-heading);font-weight:620;
+    font-size:2.7rem;line-height:1;letter-spacing:-.02em}
+  .stat span{display:block;margin-top:var(--pp-space-3xs);font-size:.92rem;color:var(--pp-text-soft)}
+  .prose{max-width:64ch;display:flex;flex-direction:column;gap:var(--pp-space-xs)}
+  .prose p{margin:0;color:var(--pp-text-soft)}
+  .prose strong{color:var(--pp-text);font-weight:600}
+
+  /* start */
+  .start-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--pp-space-xl);align-items:start}
+  .snips{display:flex;flex-direction:column;gap:var(--pp-space-xs)}
+  .snip{background:var(--pp-term-bg);border:1px solid var(--pp-term-border);border-radius:var(--pp-radius-md);
+    padding:var(--pp-space-xs) var(--pp-space-sm);font-family:var(--pp-font-code);font-size:.84rem;
+    color:var(--pp-term-text);overflow-x:auto}
+  .snip .t-dim{display:block;margin-bottom:var(--pp-space-4xs)}
+
+  /* footer — the garden footer (reference implementation, .brand/components.md) */
+  .gf{background:var(--pp-forest);color:var(--pp-term-text)}
+  .gf-wrap{max-width:var(--pp-container-max);margin:0 auto;
+    padding:var(--pp-space-xl) var(--pp-gutter) var(--pp-space-lg)}
+  .gf a{color:var(--pp-term-green)}
+  .gf a:hover{color:var(--pp-term-text)}
+  .gf h4{color:var(--pp-term-text);font-size:1.05rem;margin:0 0 var(--pp-space-xs)}
+  .gf .wordmark{font-family:var(--pp-font-heading);font-weight:600;color:var(--pp-term-text)}
+  .gf .mark{width:28px;height:28px;flex:none}
+  .gf .m-stem{fill:none;stroke:var(--pp-term-green);stroke-width:2;stroke-linecap:round}
+  .gf .m-leaf{fill:var(--pp-term-green)}
+  .gf .m-bloom{fill:var(--pp-accent)}
+  .gf-plot{display:flex;flex-wrap:wrap;align-items:center;gap:var(--pp-space-2xs) var(--pp-space-md);
+    padding-bottom:var(--pp-space-md);margin-bottom:var(--pp-space-lg);
+    border-bottom:1px solid rgba(243,236,217,.14)}
+  .gf-plotbrand{display:inline-flex;align-items:center;gap:var(--pp-space-3xs)}
+  .gf-plotbrand .wordmark{font-size:1.45rem;letter-spacing:-.01em}
+  .gf-plotline{margin:0;flex:1;min-width:18ch;color:var(--pp-term-text);opacity:.8;font-size:1rem}
+  .gf-plotlink{font-family:var(--pp-font-code);font-size:.82rem;white-space:nowrap}
+  .gf-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:var(--pp-space-xl)}
+  .gf-soft{margin:var(--pp-space-2xs) 0 0;color:var(--pp-term-text);opacity:.78;
+    font-size:.95rem;max-width:42ch}
+  .gf-garden{display:flex;flex-wrap:wrap;gap:var(--pp-space-3xs)}
+  .gf-garden a{display:inline-flex;align-items:center;gap:var(--pp-space-4xs);
+    font-family:var(--pp-font-code);font-size:.82rem;color:var(--pp-term-text);
+    padding:var(--pp-space-4xs) var(--pp-space-2xs);
+    border-radius:var(--pp-radius-full);background:rgba(243,236,217,.07)}
+  .gf-garden a:hover{background:rgba(243,236,217,.14)}
+  .gf-garden a.is-current{background:color-mix(in srgb, var(--bloom) 18%, transparent)}
+  .gf-dot{width:8px;height:8px;border-radius:var(--pp-radius-full);
+    background:var(--bloom);flex:none}
+  .gf-bottom{margin-top:var(--pp-space-xl);padding-top:var(--pp-space-sm);
+    border-top:1px solid rgba(243,236,217,.14);display:flex;flex-wrap:wrap;
+    gap:var(--pp-space-3xs);justify-content:space-between;
+    font-family:var(--pp-font-code);font-size:.74rem;
+    color:var(--pp-term-text);opacity:.72}
+
+  /* motion (enhancement only — content shows without JS) */
+  .js .rise{opacity:0;transform:translateY(16px);transition:opacity .8s var(--pp-ease-petal),transform .8s var(--pp-ease-petal)}
+  .js .rise.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+    .js .rise{opacity:1!important;transform:none!important;transition:none!important}
+  }
+
+  @media (max-width:880px){
+    html{font-size:17px}
+    .hero .wrap{grid-template-columns:1fr;gap:var(--pp-space-xl)}
+    .cards,.cards.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .cat{grid-template-columns:1fr;gap:var(--pp-space-lg)}
+    .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .start-grid{grid-template-columns:1fr;gap:var(--pp-space-lg)}
+    .gf-grid{grid-template-columns:1fr;gap:var(--pp-space-lg)}
+  }
+  @media (max-width:520px){
+    html{font-size:16px}
+    .nav .lbl{display:none}
+    .cards,.cards.four{grid-template-columns:1fr}
+    .stats{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body id="top">
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="weed home">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+        <path class="w-plant" d="M13.2 28.4 C12.8 22.4, 13.2 13.4, 13.8 6.2" stroke-width="1.9"/>
+        <path class="w-plant" d="M13 25.6 L11.5 24.9" stroke-width="1.1"/>
+        <path class="w-plant" d="M13.4 13 L15.1 12.3" stroke-width="1.1"/>
+        <path class="w-plant" d="M13.6 9.8 L12.1 9.2" stroke-width="1.1"/>
+        <ellipse class="w-leaf" cx="9.6" cy="24.2" rx="2.8" ry="1.2" transform="rotate(30 9.6 24.2)"/>
+        <ellipse class="w-leaf" cx="17.5" cy="11.2" rx="2.8" ry="1.2" transform="rotate(-30 17.5 11.2)"/>
+        <ellipse class="w-leaf" cx="10.2" cy="8.6" rx="2.8" ry="1.2" transform="rotate(30 10.2 8.6)"/>
+        <path class="w-blade" d="M11.2 16.1 L24.5 22.75" stroke-width="1.9"/>
+        <path class="w-blade" d="M11.2 21.9 L24.5 15.25" stroke-width="1.9"/>
+        <circle class="w-loop" cx="26.5" cy="23.75" r="2.2" stroke-width="1.6"/>
+        <circle class="w-loop" cx="26.5" cy="14.25" r="2.2" stroke-width="1.6"/>
+      </svg>
+      <span class="wordmark">weed</span>
+    </a>
+    <nav class="nav">
+      <a href="#rules" class="lbl">the rules</a>
+      <a href="#numbers" class="lbl">the numbers</a>
+      <a href="#start">install</a>
+      <a href="https://github.com/jahala/weed">github</a>
+      <button class="toggle" id="theme" type="button" aria-label="Toggle soil-night">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21 13.2A9 9 0 1 1 10.8 3 7 7 0 0 0 21 13.2z"/></svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-copy rise">
+        <p class="kicker">the judge</p>
+        <h1>tests still mean what they meant.</h1>
+        <p class="lede">weed reads the diff an agent just wrote and refuses the cheap road to green: a deleted test, a dropped assertion, a skip, a stub, a swallowed error, a secret, a guardrail edited. one static binary, milliseconds, no model in the loop.</p>
+        <div class="cta">
+          <a class="btn primary" href="#start">install weed</a>
+          <a class="btn ghost" href="https://github.com/jahala/weed">read the source</a>
+        </div>
+        <p class="under">rust · exit 2 blocks · every finding as sarif</p>
+      </div>
+      <div class="hero-term rise">
+        <div class="term">
+          <div class="term-bar"><span class="tdot e"></span><span class="tdot c"></span><span class="tdot k"></span><span class="term-title">weed — zsh</span></div>
+<pre class="term-body"><span class="t-dim">~/project</span> <span class="t-prompt">$</span> weed check
+<span class="t-block">error</span>  <span class="t-path">T1</span>  src/parser.test.ts  a test file was deleted, and 2 test cases went with it.
+1 error, 0 warnings, 0 notes
+
+<span class="t-dim">~/project</span> <span class="t-prompt">$</span> weed guard install
+weed guard is installed: git runs its hooks from .githooks.
+<span class="t-dim">pre-commit  refuses an index that carries a finding weed blocks on
+pre-push    refuses a pushed range that blocks, and a non-fast-forward to a protected branch
+pre-rebase  refuses a rebase that would rewrite a protected branch</span>
+protected: main, master (as weed.toml has them today).
+</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band pad" id="why" aria-labelledby="why-heading">
+    <div class="wrap">
+      <div class="sec-head rise">
+        <p class="kicker">why weed</p>
+        <h2 id="why-heading">an agent is the worst judge of the diff it just wrote</h2>
+        <p class="lede">it is asked for green and it will find green. the shortest road there is almost never the code.</p>
+      </div>
+      <div class="cards rise">
+        <div class="card">
+          <p class="label">the failure</p>
+          <h3>one line, and the suite forgets</h3>
+          <p>a red test is deleted. an assertion goes quiet. a skip marker appears. an exception is caught and dropped on the floor. a timeout widens until the flake stops. each one is a single line, and each one is the last thing a reader finds in a diff of a thousand.</p>
+        </div>
+        <div class="card">
+          <p class="label">why not a model</p>
+          <h3>the same judgement on both sides of the desk</h3>
+          <p>asking a model to review what a model produced puts one kind of judgement in both chairs. it is also slow, priced per token, and different every time you ask. a gate has to answer the same way twice.</p>
+        </div>
+        <div class="card">
+          <p class="label">what weed does</p>
+          <h3>reads the change, not the code</h3>
+          <p>weed compares what is there now against what was there before and reports shapes: a case that is gone, an assertion that was dropped, a stub where an implementation belongs. no prompt, no score, no opinion about style. an exit code, and a sarif log for the pull request.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pad" id="rules" aria-labelledby="rules-heading">
+    <div class="wrap">
+      <div class="sec-head rise">
+        <p class="kicker">what it judges</p>
+        <h2 id="rules-heading">twenty five rules, and only the unambiguous ones block</h2>
+        <p class="lede">every rule has an id, an adversarial fixture in typescript, python, rust and go, and a level. a block stops the change. a warning is for the person at the pull request, never for the agent to argue with.</p>
+      </div>
+      <div class="cat rise">
+        <div>
+          <h3><span class="chip block">block</span> the change does not go through</h3>
+          <ul class="rules">
+            <li><span class="rid">T1</span><span>a test was deleted</span></li>
+            <li><span class="rid">T2</span><span>assertions were dropped from a changed test file</span></li>
+            <li><span class="rid">T3</span><span>a skip or focus marker was added</span></li>
+            <li><span class="rid">T7</span><span>a rename took a test out of the runner</span></li>
+            <li><span class="rid">S1</span><span>a stub or a todo reached production code</span></li>
+            <li><span class="rid">D2</span><span>an import crossed a forbidden boundary</span></li>
+            <li><span class="rid">X1</span><span>a secret-looking string was added</span></li>
+            <li><span class="rid">X2</span><span>a file outside the scope was touched</span></li>
+            <li><span class="rid">C1</span><span>a guardrail file was edited</span></li>
+            <li><span class="rid">G1</span><span>a conflict marker was committed</span></li>
+            <li><span class="rid">B1</span><span>a test passed without the change it covers</span></li>
+          </ul>
+        </div>
+        <div>
+          <h3><span class="chip warn">warn</span> for the human reading the diff</h3>
+          <ul class="rules">
+            <li><span class="rid">T4</span><span>a tolerance or a timeout was widened</span></li>
+            <li><span class="rid">T5</span><span>expected values were regenerated</span></li>
+            <li><span class="rid">T6</span><span>an error assertion was weakened</span></li>
+            <li><span class="rid">M1</span><span>a test mocks the unit under change</span></li>
+            <li><span class="rid">S2</span><span>an error was swallowed</span></li>
+            <li><span class="rid">S3</span><span>a debug leftover reached production code</span></li>
+            <li><span class="rid">D1</span><span>a dependency manifest changed</span></li>
+            <li><span class="rid">C2</span><span>an ignore file was broadened over source or tests</span></li>
+            <li><span class="rid">C3</span><span>a workflow was changed</span></li>
+            <li><span class="rid">G2</span><span>a large or a binary file was added</span></li>
+          </ul>
+          <h3 style="margin-top:var(--pp-space-lg)"><span class="chip scan">scan</span> the tree as it stands, never blocking</h3>
+          <ul class="rules">
+            <li><span class="rid">R1</span><span>the docs cite something that no longer exists</span></li>
+            <li><span class="rid">R2</span><span>a public symbol has no references</span></li>
+            <li><span class="rid">R3</span><span>a todo is older than the configured age</span></li>
+            <li><span class="rid">R4</span><span>a dependency pin lags the registry</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band pad" id="where" aria-labelledby="where-heading">
+    <div class="wrap">
+      <div class="sec-head rise">
+        <p class="kicker">where it runs</p>
+        <h2 id="where-heading">the gate belongs where the work lands</h2>
+        <p class="lede">a rule nobody runs is a preference. weed is wired into the four places a change passes through on its way in.</p>
+      </div>
+      <div class="cards four rise">
+        <div class="card">
+          <p class="label">in git</p>
+          <h3>guard</h3>
+          <p><code>weed guard install</code> writes the hooks and points <code>core.hooksPath</code> at them. pre-commit judges the index, pre-push judges the range and refuses a rewrite of a protected branch. it holds for every agent and every human alike.</p>
+        </div>
+        <div class="card">
+          <p class="label">in the harness</p>
+          <h3>the stop hook</h3>
+          <p><code>weed hook</code> answers a harness's hook event on stdin and replies in the shape that harness reads. the turn ends against weed's verdict rather than against the agent's own account of it.</p>
+        </div>
+        <div class="card">
+          <p class="label">in the plan</p>
+          <h3>pleach's gate</h3>
+          <p>pleach runs agent work as a graph of gated nodes. weed is the gate on each one, so a node whose diff blocks does not publish, and the plan never merges a step that got green the cheap way.</p>
+        </div>
+        <div class="card">
+          <p class="label">on the pull request</p>
+          <h3>the action</h3>
+          <p>in ci, <code>weed check</code> judges the pull request against the branch it opens onto and writes sarif. code scanning takes the log as it is, so every finding lands as an annotation on the diff a reviewer is already reading.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pad" id="numbers" aria-labelledby="numbers-heading">
+    <div class="wrap">
+      <div class="sec-head rise">
+        <p class="kicker">measured, 2026-09</p>
+        <h2 id="numbers-heading">a gate is only worth having if it is almost never wrong</h2>
+        <p class="lede">weed was run over real history at pinned commits, every block was classified by hand with one line of reasoning, and a second party re-graded the classification blind.</p>
+      </div>
+      <div class="stats rise">
+        <div class="stat"><b>635</b><span>commits of real history judged, in 5 repositories, each against its own parent</span></div>
+        <div class="stat"><b>20</b><span>commits blocked, of which 4 were block-level false positives</span></div>
+        <div class="stat"><b>0.63%</b><span>false-positive share of the commits judged, under the two percent bar</span></div>
+        <div class="stat"><b>2762</b><span>of 2791 planted anti-patterns caught, each on the site it was planted in</span></div>
+      </div>
+      <div class="prose rise">
+        <p><strong>recall holds per rule and per language.</strong> every rule that blocks stays at or above 95 percent in each of typescript, python, rust and go. the cases are planted one anti-pattern at a time into real commits by a scanner that knows nothing about weed's detectors, and a site the commit already fired on is passed over, so no hit is inherited.</p>
+        <p><strong>the classification is a second party's.</strong> the blind re-grade judged each case from a packet with the builder's class out of sight, and agreed on 19 of 20 blocked commits and 20 of 20 recall cases. the false-positive floor takes every verdict it called wrong as true.</p>
+        <p><strong>both readings stay in the report.</strong> under the three classes in use before the ruling of 2026-09-06, the same 23 blocked commits counted 7 false positives, 1.10 percent. under the ruling, where a block is claim-true or claim-false, they count 4, 0.63 percent. the definition changed on that date; the question was corrected rather than the goalpost moved.</p>
+        <p>the corpus, the pins, the judgement of every block and the script that checks the arithmetic are in the repository, at <code>docs/calibration-2026-09.md</code>. a commit pushed to any of those sources after the pin falls outside the window and cannot move a number here.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="band pad" id="fit" aria-labelledby="fit-heading">
+    <div class="wrap">
+      <div class="sec-head rise">
+        <p class="kicker">honest scope</p>
+        <h2 id="fit-heading">what weed decides, and what it leaves alone</h2>
+      </div>
+      <div class="cards four rise">
+        <div class="card">
+          <p class="label">on its own</p>
+          <h3>one binary, one command</h3>
+          <p>install it, run <code>weed guard install</code>, and the repository has a gate. nothing else in the garden has to be there, no service runs, and no token is spent.</p>
+        </div>
+        <div class="card">
+          <p class="label">with the garden</p>
+          <h3>tend2 and pleach</h3>
+          <p>tend2 holds the map and only its verifier writes a pass. pleach runs the work as gated nodes. weed is the gate they call, so a loop's checks stay honest because the diff that would have weakened them never lands.</p>
+        </div>
+        <div class="card">
+          <p class="label">beside what you already run</p>
+          <h3>with the linter and the scanner</h3>
+          <p>a linter reads style, a scanner reads for secrets, a review bot reads the shape of a pull request. weed reads the change against the tests and the guardrails, and says only what it can prove. it replaces none of them and argues with none of them.</p>
+        </div>
+        <div class="card">
+          <p class="label">what it will not say</p>
+          <h3>whether the code is good</h3>
+          <p>weed has no view on style, structure, naming, or whether the feature was worth building. it decides one thing, and says so in an exit code: whether the tests still mean what they meant.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pad" id="start" aria-labelledby="start-heading">
+    <div class="wrap">
+      <div class="start-grid">
+        <div class="rise">
+          <p class="kicker">start</p>
+          <h2 id="start-heading">install it, then put it inside git</h2>
+          <p class="lede">the binary is static and the install is one line. release binaries are built for linux and macos on x86_64 and aarch64, and for windows on x86_64. the second line is the one that matters: after <code>guard install</code> the gate runs whether anyone remembers it or not.</p>
+          <div class="cta">
+            <a class="btn primary" href="https://github.com/jahala/weed">weed on github</a>
+            <a class="btn ghost" href="https://github.com/jahala/weed/releases">release binaries</a>
+          </div>
+        </div>
+        <div class="snips rise">
+          <div class="snip"><span class="t-dim">from crates.io</span>cargo install weed</div>
+          <div class="snip"><span class="t-dim">or the npm wrapper, which fetches the binary for your platform</span>npm install -g @plotplot/weed</div>
+          <div class="snip"><span class="t-dim">then put the judgement inside git</span>weed guard install --protect main</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- garden footer · shared family surface. swap ONLY: (1) the identity column, (2) the .is-current pill, (3) the repo links -->
+<footer class="gf">
+  <div class="gf-wrap">
+
+    <!-- 0 · plotplot band — same on every product page; links home. (the umbrella page omits this) -->
+    <div class="gf-plot">
+      <a class="gf-plotbrand" href="https://plotplot.ai" aria-label="plotplot home">
+        <svg class="mark" viewBox="0 0 28 28" aria-hidden="true">
+          <path class="m-stem" d="M14 26 V12"/>
+          <path class="m-leaf" d="M14 18.5 C9 17.5 6 13.5 6.6 9 C11 9.8 14 13.2 14 18.5 Z"/>
+          <path class="m-leaf" d="M14 15.5 C19 14.5 22 10.5 21.4 6 C17 6.8 14 10.2 14 15.5 Z"/>
+          <circle class="m-bloom" cx="14" cy="8" r="3"/>
+        </svg>
+        <span class="wordmark">plotplot</span>
+      </a>
+      <p class="gf-plotline">a garden of small, sharp tools for building with AI.</p>
+      <a class="gf-plotlink" href="https://plotplot.ai">plotplot.ai →</a>
+    </div>
+
+    <div class="gf-grid">
+
+      <!-- 1 · identity — per product -->
+      <div class="gf-col">
+        <h4>weed</h4>
+        <p class="gf-soft">the judge of the diff. it reads what an agent produced and refuses dishonest growth, in milliseconds, with no model in the loop.</p>
+        <p class="gf-soft"><a href="https://github.com/jahala/weed">github →</a> &nbsp;·&nbsp; MIT</p>
+      </div>
+
+      <!-- 2 · the garden — identical on every page; add .is-current to THIS product -->
+      <div class="gf-col">
+        <h4>the plotplot garden</h4>
+        <nav class="gf-garden" aria-label="the garden">
+          <a href="https://jahala.github.io/tilth/"  style="--bloom:var(--pp-tilth)"><span class="gf-dot"></span>tilth</a>
+          <a href="https://jahala.github.io/tend/"   style="--bloom:var(--pp-tend)"><span class="gf-dot"></span>tend</a>
+          <a href="https://jahala.github.io/petals/" style="--bloom:var(--pp-petals)"><span class="gf-dot"></span>petals</a>
+          <a href="https://jahala.github.io/pleach/" style="--bloom:var(--pp-pleach)"><span class="gf-dot"></span>pleach</a>
+          <a href="https://jahala.github.io/umbel/"  style="--bloom:var(--pp-umbel)"><span class="gf-dot"></span>umbel</a>
+          <a href="https://jahala.github.io/copeca/" style="--bloom:var(--pp-copeca)"><span class="gf-dot"></span>copeca</a>
+          <a href="https://jahala.github.io/pollen/" style="--bloom:var(--pp-pollen)"><span class="gf-dot"></span>pollen</a>
+          <a href="https://jahala.github.io/weed/"   style="--bloom:var(--pp-weed)" class="is-current"><span class="gf-dot"></span>weed</a>
+        </nav>
+        <p class="gf-soft">small, sharp tools for building with agents.</p>
+      </div>
+
+      <!-- 3 · nearby — optional; drop the whole column if there's nothing -->
+      <div class="gf-col">
+        <h4>nearby</h4>
+        <p class="gf-soft"><a href="https://github.com/jahala/walkie-clawkie">walkie-clawkie</a> — push-to-talk between agents mid-turn.</p>
+        <p class="gf-soft"><a href="https://buymeacoffee.com/jahala">buy me a coffee →</a></p>
+      </div>
+
+    </div>
+    <div class="gf-bottom">
+      <span>© 2026 · a plotplot garden tool · MIT</span>
+      <span>agents produce; weed decides.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  var t=document.getElementById('theme');
+  if(t){t.addEventListener('click',function(){
+    var dark=root.getAttribute('data-theme')==='dark';
+    root.setAttribute('data-theme',dark?'light':'dark');
+    localStorage.setItem('pp-theme',dark?'light':'dark');
+  });}
+  if(!('IntersectionObserver' in window)){return;}
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){
+    if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
+  });},{threshold:.12,rootMargin:'0px 0px -8% 0px'});
+  document.querySelectorAll('.rise').forEach(function(el){io.observe(el);});
+})();
+</script>
+</body>
+</html>
