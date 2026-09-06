@@ -18,11 +18,11 @@
       "policy": {
         "timeoutMs": 5400000
       },
-      "needs": [],
       "worker": {
         "provider": "claude",
         "model": "opus"
-      }
+      },
+      "needs": []
     }
   ],
   "warnings": [
