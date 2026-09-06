@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a0762b-9a67-7141-a75e-666cddd9158f"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 32db18f829726169a7617e22b99c8df9c5add593c83deffedf8877040e866233\nVerdict: not-a-case\nReasoning: The diff only adds a new 10-second deadline at the planted site; it does not show an existing timeout widened from 1 to 10."}}
-{"type":"turn.completed","usage":{"input_tokens":22651,"cached_input_tokens":19840,"output_tokens":603,"reasoning_output_tokens":516}}

@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07648-56d2-7ae1-93b5-7c57a0227666"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: acceptable\nReasoning: T2 correctly observed assertions dropped from src/mcp/mod.rs, but the same commit relocated those tests into tool modules, so coverage was preserved while still meriting review."}}
-{"type":"turn.completed","usage":{"input_tokens":37152,"cached_input_tokens":20864,"output_tokens":186,"reasoning_output_tokens":99}}

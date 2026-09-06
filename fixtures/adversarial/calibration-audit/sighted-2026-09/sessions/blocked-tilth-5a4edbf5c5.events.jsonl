@@ -1,2 +1,0 @@
-{"type": "input", "case": "blocked:tilth:5a4edbf5c5", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
-{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: acceptable\nReasoning: T2 correctly flagged the assertion drop in callers.rs, but the same behavior was extracted into new modules with replacement assertions, so coverage was relocated rather than weakened."}

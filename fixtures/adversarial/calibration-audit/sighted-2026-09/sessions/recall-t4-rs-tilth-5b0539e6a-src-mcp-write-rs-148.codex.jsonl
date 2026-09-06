@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07648-f869-7382-91d2-901f85084aa8"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: miss\nReasoning: The planted change widened a Rust wait from 1 to 10 at the named site, matching T4, and the report lists it under misses rather than a caught finding."}}
-{"type":"turn.completed","usage":{"input_tokens":37152,"cached_input_tokens":20864,"output_tokens":215,"reasoning_output_tokens":127}}

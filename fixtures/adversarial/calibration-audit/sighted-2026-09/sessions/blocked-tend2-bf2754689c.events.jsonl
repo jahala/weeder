@@ -1,2 +1,2 @@
-{"type": "input", "case": "blocked:tend2:bf2754689c", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
-{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: acceptable\nReasoning: T1 correctly flagged deletion of season.test.ts cases, but the tested season command was removed and folded into the replacement orientation command with its own tests, so coverage moved with the feature."}
+{"type": "input", "case": "blocked:tend2:bf2754689c", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
+{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: acceptable\nReasoning: T1's claim is true because season.test.ts and its four cases were deleted, but the tested command was removed and folded into a replacement command with tests."}

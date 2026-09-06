@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t1-ts-tend2-6d9a1cf91-test-site-paths-test-ts.md", "sha256": "6c53f65c95d22b3824675b0a64e2481945637d08f06f6069cc5b86becd1244a0"}
+{"type": "answer", "answer": "Answered packet SHA-256: 6c53f65c95d22b3824675b0a64e2481945637d08f06f6069cc5b86becd1244a0\nVerdict: miss\nReasoning: The planted diff deletes the entire `it(...)` test case at `test/site-paths.test.ts`, while weed only reported T2 assertion removal, not T1."}

@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a0762b-c00b-7a42-8b95-22d67ce3e93b"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 8084d99ef519d6e2e031ee010cc30844981abfcb9d9a429690fcf24fc4c7fc4a\nVerdict: miss\nReasoning: The assertion changed from toThrow(/description/) to bare toThrow(), weakening the error assertion at the planted line, and weed reported no finding."}}
-{"type":"turn.completed","usage":{"input_tokens":20776,"cached_input_tokens":19840,"output_tokens":86,"reasoning_output_tokens":0}}

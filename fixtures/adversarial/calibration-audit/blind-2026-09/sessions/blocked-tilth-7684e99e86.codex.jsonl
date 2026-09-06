@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a0762b-088e-7783-9707-717a9c5ecb54"}
+{"type":"thread.started","thread_id":"01a07671-6ab6-7891-8ec7-23b57ad6f7eb"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 7f3097556ed2a7cfa010622330a2e79681907c54cace6da98e4330ae3590c339\nVerdict: true-positive\nReasoning: The test file did drop one assertion, replacing explicit truncation metadata validation with only output checks, so the rule's assertion-count claim is true and coverage was weakened."}}
-{"type":"turn.completed","usage":{"input_tokens":21087,"cached_input_tokens":19840,"output_tokens":89,"reasoning_output_tokens":0}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 3fd78292a83e812d29a649313b4f9dd1198507d757d98920058fb8694c90d3c6\nVerdict: acceptable\nReasoning: The test file really lost one assert, but the remaining checks still cover the regression by requiring both a truncation marker and surviving body content."}}
+{"type":"turn.completed","usage":{"input_tokens":22531,"cached_input_tokens":20864,"output_tokens":415,"reasoning_output_tokens":329}}

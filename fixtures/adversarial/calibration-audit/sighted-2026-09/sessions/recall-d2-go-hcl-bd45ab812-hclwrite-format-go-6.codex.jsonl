@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07648-d176-7c03-98b3-0f96faf8faa3"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: miss\nReasoning: The report says D2 was planted by making hclwrite/format.go import integrationtest, a forbidden boundary import, and weed did not report it at that planted site."}}
-{"type":"turn.completed","usage":{"input_tokens":37149,"cached_input_tokens":20864,"output_tokens":272,"reasoning_output_tokens":184}}

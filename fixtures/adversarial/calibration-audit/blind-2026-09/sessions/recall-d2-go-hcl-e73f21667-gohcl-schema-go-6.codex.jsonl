@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07671-e0e0-7410-bce6-8c82e3ce5079"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: e26217df2078c3e9c5d9dfcf6d5bcf7c5273a4283c0b763de992443ef19a0c27\nVerdict: miss\nReasoning: The diff adds a forbidden gohcl import of hcldec at the planted site, while weed only reports an unrelated workflow warning."}}
+{"type":"turn.completed","usage":{"input_tokens":22194,"cached_input_tokens":20864,"output_tokens":87,"reasoning_output_tokens":0}}

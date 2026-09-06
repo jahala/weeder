@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07649-18f5-7222-8898-fd3d8a59b3c9"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: miss\nReasoning: The report says the T6 shape was planted at test/verify.test.ts:176 in commit 32df8ddd1 and not reported, with the assertion weakened by no longer naming the error."}}
-{"type":"turn.completed","usage":{"input_tokens":37152,"cached_input_tokens":20864,"output_tokens":206,"reasoning_output_tokens":113}}

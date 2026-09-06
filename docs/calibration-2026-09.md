@@ -1,8 +1,8 @@
 # calibration: weed over real history, 2026-09
 
-weed ships as a gate: over 635 commits of real history in 5 repositories it blocked 23, of which 4 were block-level false positives, 0.63 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level. The re-grade behind it is blind: docs/calibration-audit-blind-2026-09.md declares `Blind: yes` and agrees at the bar, so its auditor judged the cases from a packet with the builder's class out of sight, and the sighted re-grade in docs/calibration-audit-2026-09.md is recorded beside it.
+weed ships as a gate: over 635 commits of real history in 5 repositories it blocked 20, of which 4 were block-level false positives, 0.63 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level. The re-grade behind it is blind: docs/calibration-audit-blind-2026-09.md declares `Blind: yes` and agrees at the bar, so its auditor judged the cases from a packet with the builder's class out of sight, and the sighted re-grade in docs/calibration-audit-2026-09.md is recorded beside it.
 
-A second party re-graded the classification and docs/calibration-audit-2026-09.md and docs/calibration-audit-blind-2026-09.md records the agreement: blocked commits in docs/calibration-audit-blind-2026-09.md at 100.0 percent of 20 cases, recall cases in docs/calibration-audit-blind-2026-09.md at 95.0 percent of 20 cases. That is what took the qualification off this sentence. The floor under that share is 0.63 percent, 4 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 0.63 percent, 4 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table. Both numbers stay in this file: under the three classes in use before the ruling of 2026-09-06 the same 23 blocked commits counted 7 false positives, 1.10 percent, and under it, where a blocked commit is claim-true or claim-false and `acceptable` is a label the audit never counts, they count 4, 0.63 percent. The definition changed on that date and the question was corrected, not the goalpost moved.
+A second party re-graded the classification and docs/calibration-audit-2026-09.md and docs/calibration-audit-blind-2026-09.md records the agreement: blocked commits in docs/calibration-audit-blind-2026-09.md at 95.0 percent of 20 cases, recall cases in docs/calibration-audit-blind-2026-09.md at 100.0 percent of 20 cases. That is what took the qualification off this sentence. The floor under that share is 0.63 percent, 4 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 0.63 percent, 4 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table. Both numbers stay in this file: under the three classes in use before the ruling of 2026-09-06 the same 23 blocked commits counted 7 false positives, 1.10 percent, and under it, where a blocked commit is claim-true or claim-false and `acceptable` is a label the audit never counts, they count 4, 0.63 percent. The definition changed on that date and the question was corrected, not the goalpost moved.
 
 ## How this was measured
 
@@ -45,7 +45,7 @@ No `weed.toml` was passed and none was read: every rule ran at the level the cat
 
 No commit in the corpus carried a `weed.toml` of its own, so no repository moved a rule off the level above.
 
-## tilth, 200 commits judged, 11 blocked, 79 warned
+## tilth, 200 commits judged, 8 blocked, 80 warned
 
 The window ends at `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905`, fetched from `https://github.com/jahala/tilth.git`: the last 200 commits reaching it that are not merges, 200 of which have a parent to be judged against.
 
@@ -53,14 +53,11 @@ The window ends at `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905`, fetched from `htt
 |---|---|---|---|
 | `11aef933c9` feat(list): consolidate tilth_files into tilth_list with directory-tree rendering | T1 | acceptable | T1 says src/mcp/tools/files.rs went with 8 cases and whatever it covered is now covered by nobody. The same commit adds src/mcp/tools/list.rs with 8 cases over the same ground, tool_files_empty_patterns_errors reappearing as tool_list_empty_patterns_errors and so on down the file. The count is right and the sentence under it is not. Under the ruling of 2026-09-06 the claim is the drop itself, which is true of this change, so this is claim-true; the sentence about what is held is the rule's own overclaim and is on rules-tests to fix. |
 | `10bec56a41` test(search): assert only is_ok in no_scope_no_root_defaults_to_cwd — the substring assertion flakes when search surfaces its own source text (resolve_scope behavior is pinned in mod.rs unit tests) | T2 | acceptable | T2 says src/mcp/tools/search.rs went from 3 assertions to 2, and it did. What went was a substring match on real search output, which the commit says flakes when search surfaces its own source text; resolve_scope's own unit tests still pin the refusal-versus-default behaviour, and the case still pins that tool_search propagates success. A test losing a check is worth a person's eye, and this one survives it. |
-| `96cd4b383b` fix(write): containment guard scope_root defaults to root; root-only writes succeed | T2 | acceptable | T2 says src/mcp/tools/search.rs went from 3 assertions to 2, and it did: the same change merged in beside the write containment fix, with the flaky substring match gone. The finding is about search.rs and not about the guard this commit repairs, and on search.rs the claim is true and the change was right. |
 | `7684e99e86` fix(budget): adapt regression test to upstream API surface | T2 | acceptable | T2 says src/budget.rs went from 10 assertions to 9, and it did: the cherry-picked case called apply_with_info, which exists only in the fork, and the assertion on where the cut landed went with the call. The regression it guards is still guarded, because a cut at zero leaves no x in the output and the case still demands one. |
 | `ab7f054b73` refactor(mcp): split tilth_read paths-only into its own PR | T1, T2 | true positive | T1 says a case left src/mcp/tools/definitions.rs, 3 down to 2, and T2 says 3 assertions went with it, 9 down to 6. Both are true, nothing in the change picks them up, and what they held was the paths-only tilth_read schema, which this commit reopens to a singular path. The schema is now pinned by nobody. |
-| `18eb6643ff` refactor(mcp): tighten module visibility and co-locate tests | T2 | acceptable | T2 says 21 assertions went out of src/mcp/mod.rs, 29 down to 8, so the suite reports green over behaviour nobody is holding. The commit's own subject is co-locate tests, and every one of those assertions is in src/mcp/tools/mod.rs, files.rs and edit.rs in the same change. The count holds and the consequence does not. Under the ruling of 2026-09-06 the claim is the drop itself, which is true of this change, so this is claim-true; the sentence about what is held is the rule's own overclaim and is on rules-tests to fix. |
 | `3ff87caf55` refactor(bloom): adopt fastbloom for BloomFilter implementation | T1, T2 | acceptable | T1 and T2 say src/index/bloom.rs lost a case and 6 assertions, and it did. They exercised private fields of the hand-written BloomFilter this commit replaces with fastbloom, so there is nothing left for them to hold. A suite shrinking under a swapped implementation is exactly what a person should see. |
 | `59c87110ab` refactor(mcp): adopt percent-encoding crate for file:// URI decoding | T1, T2 | acceptable | T1 and T2 say src/mcp.rs lost a case and 4 assertions, 17 down to 16 and 31 down to 27, and it did. They pinned a hand-rolled percent decoder that this commit hands to the percent-encoding crate, so the behaviour they held is now the library's. |
 | `d422a325fc` refactor(install): fold entry style into ConfigFormat as JsonLocal variant | T2 | acceptable | T2 says src/install.rs went from 66 assertions to 65, and it did. The one that went checked the entry_style field this commit folds into ConfigFormat, and the JsonLocal match that replaces it is asserted in the same case. |
-| `5a4edbf5c5` search: extract bloom_walk, callee_query, scope from relational queries | T2 | acceptable | T2 says 21 assertions went out of src/search/callers.rs, 33 down to 12, so the suite reports green over behaviour nobody is holding. The same commit creates bloom_walk.rs, callee_query.rs and scope.rs and puts 26 assertions in them. Nothing stopped being held. Under the ruling of 2026-09-06 the claim is the drop itself, which is true of this change, so this is claim-true; the sentence about what is held is the rule's own overclaim and is on rules-tests to fix. |
 | `bd36a43637` index: drop inert SymbolIndex plumbing | T1 | acceptable | T1 says src/index/symbol.rs went with 6 cases, and it did. SymbolIndex was allocated and threaded through the searches and never consulted, and this commit deletes the type; the cases exercised the dead allocator, so what they covered stopped existing in the same breath. A file of tests leaving the tree is worth reading either way. |
 
 ## pleach, 152 commits judged, 1 blocked, 21 warned
@@ -107,16 +104,16 @@ The window ends at `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d`, fetched from `htt
 
 | Repo | Commits judged | Blocked | Warned | True positive | Acceptable | False positive | False-positive share |
 |---|---|---|---|---|---|---|---|
-| tilth | 200 | 11 | 79 | 1 | 10 | 0 | 0.00% |
+| tilth | 200 | 8 | 80 | 1 | 7 | 0 | 0.00% |
 | pleach | 152 | 1 | 21 | 0 | 0 | 1 | 0.66% |
 | tend2 | 200 | 6 | 22 | 0 | 4 | 2 | 1.00% |
 | copeca | 25 | 1 | 7 | 0 | 0 | 1 | 4.00% |
 | umbel | 58 | 4 | 13 | 2 | 2 | 0 | 0.00% |
-| **pooled** | **635** | **23** | **142** | **3** | **16** | **4** | **0.63%** |
+| **pooled** | **635** | **20** | **143** | **3** | **13** | **4** | **0.63%** |
 
 The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 0.63 percent of 635 commits, and 0 commits weed could not judge.
 
-Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 182 of them at block level still, 78 at warn level, 1 at note level and 71 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files; 9 moved from T1 at block level to T5 at warn level, all of them on test files.
+Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 177 of them at block level still, 78 at warn level, 1 at note level and 76 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files; 9 moved from T1 at block level to T5 at warn level, all of them on test files.
 
 Too few commits to carry a share of their own, reported and not judged alone: copeca (25 commits, 4.00 percent). Their commits and their false positives are both in the pooled total.
 
@@ -124,7 +121,7 @@ Too few commits to carry a share of their own, reported and not judged alone: co
 
 A rule that splits in two is supposed to take friction off the gate while keeping the finding. Until the same files are read twice that is a claim. Every file whose answer changed is here with the rule that refused it, the kind weed gives the file, and the loudest thing weed says about it now.
 
-177 of the first run's block-level findings are refused by the same rule at the same level and are left out of this table; the 155 whose answer changed are all in it.
+174 of the first run's block-level findings are refused by the same rule at the same level and are left out of this table; the 158 whose answer changed are all in it.
 
 | Repo | Commit | File | Kind | Blocked then by | Says now | At |
 |---|---|---|---|---|---|---|
@@ -216,7 +213,8 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 | tilth | `1248c0e594` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
 | tilth | `1248c0e594` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
 | tilth | `136e246d8e` | `src/mcp/tools/edit.rs` | prod | T1 | nothing | nothing |
-| tilth | `18eb6643ff` | `src/mcp/mod.rs` | prod | T1 | T2 | block |
+| tilth | `18eb6643ff` | `src/mcp/mod.rs` | prod | T1 | nothing | nothing |
+| tilth | `18eb6643ff` | `src/mcp/mod.rs` | prod | T2 | nothing | nothing |
 | tilth | `1dfc5d26ba` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tilth | `1dfc5d26ba` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
 | tilth | `2dbcbc6eb4` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
@@ -230,12 +228,14 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 | tilth | `552bc2a0fe` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
 | tilth | `59c87110ab` | `src/mcp.rs` | prod | T2 | T1 | block |
 | tilth | `5a4edbf5c5` | `src/search/callees.rs` | prod | T1 | nothing | nothing |
-| tilth | `5a4edbf5c5` | `src/search/callers.rs` | prod | T1 | T2 | block |
+| tilth | `5a4edbf5c5` | `src/search/callers.rs` | prod | T1 | nothing | nothing |
+| tilth | `5a4edbf5c5` | `src/search/callers.rs` | prod | T2 | nothing | nothing |
 | tilth | `6c75ff025f` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
 | tilth | `76d5d02d34` | `src/mcp.rs` | prod | T1 | nothing | nothing |
 | tilth | `8da08f6e38` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
 | tilth | `8da08f6e38` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
 | tilth | `91d213abdc` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
+| tilth | `96cd4b383b` | `src/mcp/tools/search.rs` | prod | T2 | nothing | nothing |
 | tilth | `ab7f054b73` | `src/mcp/tools/definitions.rs` | prod | T2 | T1 | block |
 | tilth | `b0f3ebe707` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
 | tilth | `be3f6fbf34` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
@@ -320,7 +320,7 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 |---|---|---|---|---|---|
 | S1 | 2 | 2 | 0 | 0 | 0.00% |
 | T1 | 9 | 1 | 7 | 1 | 11.11% |
-| T2 | 12 | 1 | 11 | 0 | 0.00% |
+| T2 | 9 | 1 | 8 | 0 | 0.00% |
 | X1 | 3 | 0 | 0 | 3 | 100.00% |
 
 

@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a0762b-45ba-7181-881d-1251f6d431c6"}
+{"type":"thread.started","thread_id":"01a07671-9c63-76c0-b3a2-3a17dba82350"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 9e2c1f26cc31a3fc48ef84b533dc7a3fe3370c0e89dc208d68a824381f4724cc\nVerdict: acceptable\nReasoning: The TODO marker is genuinely present in production code, but it documents a known uncertainty in defensive extraction logic rather than leaving a stub or weakened executable behavior."}}
-{"type":"turn.completed","usage":{"input_tokens":24554,"cached_input_tokens":19840,"output_tokens":272,"reasoning_output_tokens":181}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: a63b0cff80a82047726fcc5aa71e0407a4d300d0335c3629bd874bfeb3505a13\nVerdict: true-positive\nReasoning: The added production provider contains a TODO marker explicitly saying transcript tool-call shape still needs verification, so the rule’s claim is true and it flags unfinished production behavior."}}
+{"type":"turn.completed","usage":{"input_tokens":25622,"cached_input_tokens":2432,"output_tokens":87,"reasoning_output_tokens":0}}

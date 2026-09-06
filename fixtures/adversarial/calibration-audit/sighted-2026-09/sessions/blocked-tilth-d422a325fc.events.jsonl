@@ -1,2 +1,2 @@
-{"type": "input", "case": "blocked:tilth:d422a325fc", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
-{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: acceptable\nReasoning: T2 correctly found one assertion drop, but the removed entry_style check was replaced by an asserted JsonLocal ConfigFormat match, so the refactor did not weaken coverage."}
+{"type": "input", "case": "blocked:tilth:d422a325fc", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
+{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: acceptable\nReasoning: T2 correctly identified one dropped assertion, but it covered a removed entry_style field now represented and asserted through ConfigFormat::JsonLocal in the same test."}

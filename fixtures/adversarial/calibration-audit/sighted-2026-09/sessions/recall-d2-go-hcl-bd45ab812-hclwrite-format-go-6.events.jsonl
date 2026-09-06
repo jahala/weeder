@@ -1,2 +1,0 @@
-{"type": "input", "case": "recall:D2:go:hcl:bd45ab812:hclwrite/format.go:6", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
-{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: miss\nReasoning: The report says D2 was planted by making hclwrite/format.go import integrationtest, a forbidden boundary import, and weed did not report it at that planted site."}

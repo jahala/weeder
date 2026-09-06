@@ -1,2 +1,0 @@
-{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/blocked-tilth-5a4edbf5c5.md", "sha256": "eb9dc7ba149562f5d199377514373aab06801187ef2fe093456d7fc8d6645cc7"}
-{"type": "answer", "answer": "Answered packet SHA-256: eb9dc7ba149562f5d199377514373aab06801187ef2fe093456d7fc8d6645cc7\nVerdict: acceptable\nReasoning: Assertions did leave callers.rs, but the relevant scope and query tests were moved into new focused modules, so the behavior remains checked elsewhere."}
