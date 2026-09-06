@@ -204,7 +204,7 @@ impl<'a> Report<'a> {
                         .collect();
                     let _ = write!(
                         verdict,
-                        "A second party re-graded the classification blind and {} records the agreement: {}. That is what took the qualification off this sentence.\n\n",
+                        "A second party re-graded the classification and {} records the agreement: {}. That is what took the qualification off this sentence. The auditor drew its sample from this file's own tables, where the builder's class sits beside each commit, so it could read the class before judging: the agreement is a sighted one until a blind re-grade is recorded.\n\n",
                         self.audit.label,
                         read.join(", "),
                     );
