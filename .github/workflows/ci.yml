@@ -20,6 +20,11 @@ jobs:
         with:
           components: clippy, rustfmt
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # ratchet:Swatinem/rust-cache@v2
+      # Ubuntu 24.04 restricts unprivileged user namespaces, and the offline
+      # proof in tests/scan_offline.rs needs one to take the network away from
+      # the process it starts. Lifting the restriction keeps that proof real
+      # here rather than skipped.
+      - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: cargo fmt --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
@@ -37,4 +42,9 @@ jobs:
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # ratchet:Swatinem/rust-cache@v2
         with:
           key: release
+      # Ubuntu 24.04 restricts unprivileged user namespaces, and the offline
+      # proof in tests/scan_offline.rs needs one to take the network away from
+      # the process it starts. Lifting the restriction keeps that proof real
+      # here rather than skipped.
+      - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: cargo test --workspace --release
