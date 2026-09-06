@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-umbel-059b4c4677.md","sha256":"4fff18bb0da68b58c1eaafc1fa63a68fd99818a369b1277c9b73b1d57451aff5"}
+{"type":"answer","answer":"Answered packet SHA-256: 4fff18bb0da68b58c1eaafc1fa63a68fd99818a369b1277c9b73b1d57451aff5\nVerdict: acceptable\nReasoning: Rewrites tests for a changed Codex home model with coherent replacement coverage."}

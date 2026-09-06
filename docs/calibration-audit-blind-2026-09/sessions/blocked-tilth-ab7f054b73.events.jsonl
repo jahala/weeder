@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-tilth-ab7f054b73.md","sha256":"00b7b5fe45cfdc498de42e8cc28d73d7f28a701da92ccc627ab91ded95ce1a1d"}
+{"type":"answer","answer":"Answered packet SHA-256: 00b7b5fe45cfdc498de42e8cc28d73d7f28a701da92ccc627ab91ded95ce1a1d\nVerdict: true-positive\nReasoning: Reintroduces singular path and removes the paths-only schema guard test."}

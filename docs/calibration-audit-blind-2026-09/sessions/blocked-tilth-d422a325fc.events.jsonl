@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-tilth-d422a325fc.md","sha256":"a4342d39ebc25e1d1f5ff994d75eff90cbfae7454c924d5e870e8e3710e0d398"}
+{"type":"answer","answer":"Answered packet SHA-256: a4342d39ebc25e1d1f5ff994d75eff90cbfae7454c924d5e870e8e3710e0d398\nVerdict: acceptable\nReasoning: Refactors host entry shaping while preserving the relevant install behavior."}

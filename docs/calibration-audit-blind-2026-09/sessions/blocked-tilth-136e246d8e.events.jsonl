@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-tilth-136e246d8e.md","sha256":"6f6af182e4b53339da65a0d33630cb11d6efedc03f5879a25e7d6f56541314b9"}
+{"type":"answer","answer":"Answered packet SHA-256: 6f6af182e4b53339da65a0d33630cb11d6efedc03f5879a25e7d6f56541314b9\nVerdict: true-positive\nReasoning: Deletes the edit tool and its empty-edit parse guard test."}

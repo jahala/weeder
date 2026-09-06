@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/recall-d1-py-tilth-49ccc86e9-benchmark-fixtures-setup-py.md","sha256":"4bcf0951da94c00b5cb7d60a110bb1bf09b376effb2c532c037ae40f4fc5227a"}
+{"type":"answer","answer":"Answered packet SHA-256: 4bcf0951da94c00b5cb7d60a110bb1bf09b376effb2c532c037ae40f4fc5227a\nVerdict: caught\nReasoning: Only changes a version string; no D1 shape is visible."}

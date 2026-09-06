@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/recall-d2-go-hcl-e73f21667-gohcl-schema-go-6.md","sha256":"cf80968650e2bb7c5dd9cb241b2b63ed6b3a82d4f098bf77b5fe159ca984f3f0"}
+{"type":"answer","answer":"Answered packet SHA-256: cf80968650e2bb7c5dd9cb241b2b63ed6b3a82d4f098bf77b5fe159ca984f3f0\nVerdict: miss\nReasoning: Adds an inward package import from gohcl schema code to another HCL package."}

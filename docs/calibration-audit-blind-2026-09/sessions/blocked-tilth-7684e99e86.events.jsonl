@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-tilth-7684e99e86.md","sha256":"1a07f93c741803f920f42066e8ec12cfad227889a1a6a57c70a125058bc5253e"}
+{"type":"answer","answer":"Answered packet SHA-256: 1a07f93c741803f920f42066e8ec12cfad227889a1a6a57c70a125058bc5253e\nVerdict: true-positive\nReasoning: Drops assertions that pinned the truncation metadata, leaving only weaker output checks."}

@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-tilth-10bec56a41.md","sha256":"c385691a13fd9d0edcb55466a07f78ebf29d4513560e05be804b1f0491d7fa00"}
+{"type":"answer","answer":"Answered packet SHA-256: c385691a13fd9d0edcb55466a07f78ebf29d4513560e05be804b1f0491d7fa00\nVerdict: acceptable\nReasoning: Drops a brittle response-body assertion while preserving the success-path check."}
