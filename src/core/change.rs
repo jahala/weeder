@@ -96,10 +96,7 @@ impl Change {
     /// the change took it away.
     #[must_use]
     pub fn path(&self) -> Option<&str> {
-        self.diff
-            .new_path
-            .as_deref()
-            .or(self.diff.old_path.as_deref())
+        self.diff.path()
     }
 
     /// Whether the change took the file away.

@@ -82,3 +82,30 @@ one that spells the same idea the same way.
 - **`weed.toml` now exists at the repository root** and states weed's own layers, so D2 holds
   weed to its own doctrine. `docs/rules.md` is written from the catalogue and pinned to it by
   `tests/docs_rules.rs`, which is what makes the `helpUri` in every SARIF result land somewhere.
+
+## The specimen exclusion, added after the catalogue closed
+
+Cape-town ruled on this while calibration was measuring, and it landed here because it is a
+config surface rather than a number: `[scope] specimens` is how a repository says which
+directories hold fixtures written to look dishonest.
+
+**What bounds the key is a decision procedure, not a list.** An entry is allowed when every
+path it can name lies under `fixtures/adversarial/`, which is true exactly when the literal
+prefix of the pattern is that root and no segment is `..`. So `fixtures/adversarial/**/after`
+is allowed, `fixtures/*` and `fixtures/adversarial*/ts` are refused, and the refusal names the
+entry it read. A rule id in the list is refused before either question is asked, with the
+message pointing at `[rules]`, because that is the one thing the key must never become.
+
+**Skipping had to mean skipping, on both faces.** The check face takes the specimens out of
+the parsed diff before anything reads them, so a specimen carries no suppression to honour and
+no malformed one to complain about, and out of the tracked paths as well, so C2 cannot report
+a `.gitignore` line for hiding a file no rule reads. The scan face keeps them out of the tree
+entirely. Every path either face left alone comes back as one note under the id `SPECIMEN`,
+which is not a rule: no detector reports it, `[rules]` cannot turn it off, and the way to stop
+hearing it is to take the entry out.
+
+**The note is per path, and on a big fixture tree that is a lot of notes.** weed's own
+`fixtures/adversarial/` holds 674 files and produces 17 scan warnings today, so a repository
+that excludes the whole root trades 17 warnings for 674 notes. That is the ruling read
+literally, and it is why `weed.toml` here does not name the root: turning weed's own exclusion
+on is a decision about weed's output, and calibration measured the numbers without it.

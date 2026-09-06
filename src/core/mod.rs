@@ -13,6 +13,7 @@ pub mod registry;
 pub mod rules;
 pub mod sarif;
 pub mod shell;
+pub mod specimen;
 pub mod suppress;
 pub mod syntax;
 pub mod tree;

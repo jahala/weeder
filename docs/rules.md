@@ -18,6 +18,7 @@ the person at the pull request, not an instruction to the agent that wrote it.
 |---|---|---|
 | `[rules]` | a level per rule id: `block`, `warn` or `off` for a check rule, `on` or `off` for a scan rule | all of them |
 | `[scope] allow` | the path globs a change may touch | X2 reports the rest, D1 stops being a warning outside them |
+| `[scope] specimens` | the fixture directories no rule reads | all of them, on both faces |
 | `[deps] layers` | a layer name to the path globs that belong to it | D2 |
 | `[deps] allow` | the `{ from, to }` pairs an import may run between | D2 |
 | `[entrypoints] cli` | the modules that are the command line itself, where printing is the product | S3 |
@@ -28,6 +29,16 @@ the person at the pull request, not an instruction to the agent that wrote it.
 `weed check --scope <glob>` names the scope for one run and takes precedence
 over `[scope] allow`. A run given neither allows every path, so X2 has nothing
 to report: weed will not invent the sentence a change was meant to be held to.
+
+`[scope] specimens` is the one place a repository takes paths away from the
+rules, and it may only take away directories under `fixtures/adversarial/`. An
+adversarial fixture is written to look dishonest, so weed reading it as
+production code is weed being right about the wrong file. An entry pointing
+anywhere else, a glob that can name a path outside that root, and a rule id in
+the list are each refused with exit 3, naming what was written. Every path an
+exclusion covers is reported once, at note level, under the id `SPECIMEN`: the
+log says which files no rule read, and `check` still leaves with whatever the
+files it did read deserve.
 
 <a id="T1"></a>
 ## T1: A test was deleted

@@ -3,6 +3,7 @@ use std::collections::{BTreeMap, HashMap};
 
 use crate::core::catalogue::{self, Face, Rule};
 use crate::core::finding::Level;
+use crate::core::specimen;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RuleSetting {
@@ -33,6 +34,10 @@ pub struct Config {
     pub rules: HashMap<String, RuleSetting>,
     /// `[scope] allow`: the globs a change may touch; everything else is X2.
     pub scope_globs: Vec<String>,
+    /// `[scope] specimens`: the fixture directories no rule reads. Every path
+    /// one of them covers is reported once, at note level, by whichever face
+    /// skipped it.
+    pub specimens: Vec<String>,
     /// `[deps] layers`: layer name to the path globs that belong to it.
     pub layers: BTreeMap<String, Vec<String>>,
     /// `[deps] allow`: the import directions between layers that are permitted; D2 flags the rest.
@@ -73,6 +78,7 @@ impl Default for Config {
         Self {
             rules,
             scope_globs: vec!["**/*".to_string()],
+            specimens: Vec::new(),
             layers: BTreeMap::new(),
             dependency_directions: Vec::new(),
             cli_entrypoints: Vec::new(),
@@ -105,6 +111,17 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
     if let Some(scope) = raw.scope {
         if let Some(allow) = scope.allow {
             config.scope_globs = allow;
+        }
+        if let Some(specimens) = scope.specimens {
+            for entry in &specimens {
+                if let Some(refused) = specimen::refusal(entry) {
+                    return Err(ConfigError {
+                        key: "scope.specimens".to_string(),
+                        message: refused,
+                    });
+                }
+            }
+            config.specimens = specimens;
         }
     }
     if let Some(deps) = raw.deps {
@@ -224,6 +241,7 @@ struct RawConfig {
 #[serde(deny_unknown_fields)]
 struct RawScope {
     allow: Option<Vec<String>>,
+    specimens: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]

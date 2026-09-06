@@ -18,6 +18,15 @@ pub struct FileDiff {
     pub new_mode: Option<String>,
 }
 
+impl FileDiff {
+    /// What the file is called: where the change left it, or where it was
+    /// before the change took it away.
+    #[must_use]
+    pub fn path(&self) -> Option<&str> {
+        self.new_path.as_deref().or(self.old_path.as_deref())
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Hunk {
     pub old_start: u32,
