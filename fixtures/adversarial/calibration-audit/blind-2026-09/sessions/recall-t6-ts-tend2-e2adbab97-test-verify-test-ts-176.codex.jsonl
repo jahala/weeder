@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a0762b-e6af-7870-b699-d951e8da0fa1"}
+{"type":"thread.started","thread_id":"01a07672-3e40-7332-9583-ced79e7ee0d1"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: c054486ce7e4aac5a374438b03d878657513811fa3cb7174a7016d4dbfe856aa\nVerdict: miss\nReasoning: The diff weakens the assertion from toThrow(/description/) to toThrow() at the planted line, and weed reported no finding there."}}
-{"type":"turn.completed","usage":{"input_tokens":20764,"cached_input_tokens":19840,"output_tokens":80,"reasoning_output_tokens":0}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 52013c79ab64384e019669172839fa9f2c3823d7d9bcdc0fc562e51718c31742\nVerdict: miss\nReasoning: The assertion changed from toThrow(/description/) to bare toThrow(), weakening the named error check, and weed reported no finding."}}
+{"type":"turn.completed","usage":{"input_tokens":22212,"cached_input_tokens":20864,"output_tokens":80,"reasoning_output_tokens":0}}

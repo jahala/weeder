@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07671-05d4-7be0-8c2f-59c46fec5aa1"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: d73ad04a4c8406bea8294d8309eb8078b82f57ffdaf05711108541605500fe75\nVerdict: true-positive\nReasoning: The touched-file table confirms all named test files were deleted with their contents, removing hundreds of test cases with no shown replacements, so the rule’s claim is true."}}
+{"type":"turn.completed","usage":{"input_tokens":31927,"cached_input_tokens":20864,"output_tokens":201,"reasoning_output_tokens":114}}

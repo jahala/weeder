@@ -1,2 +1,0 @@
-{"type": "input", "case": "recall:T4:rs:tilth:5b0539e6a:src/mcp/write.rs:148", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
-{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: miss\nReasoning: The planted change widened a Rust wait from 1 to 10 at the named site, matching T4, and the report lists it under misses rather than a caught finding."}

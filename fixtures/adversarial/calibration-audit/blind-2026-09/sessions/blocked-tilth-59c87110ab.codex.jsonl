@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a0762a-efc2-7d70-a48b-6be6400e9aaf"}
+{"type":"thread.started","thread_id":"01a07671-6560-7113-a7b8-58ae7bc70cc1"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 9081d25fa069639ac4f6716e3be91a2e358703adf56616fa69b4b14aa11269b9\nVerdict: acceptable\nReasoning: A standalone percent_decode unit test and four assertions were removed, but the helper was replaced by a library call and existing extraction coverage still exercises percent-decoded paths."}}
-{"type":"turn.completed","usage":{"input_tokens":21801,"cached_input_tokens":2432,"output_tokens":88,"reasoning_output_tokens":0}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 84d5aaa5e5ba70dc818a78b6fe81eb66b8a0eed9c9fa8873990baec823a98869\nVerdict: true-positive\nReasoning: The changed test file did drop the percent_decode_basic test and its four assertions, reducing direct coverage of decoding behavior now delegated to the new crate."}}
+{"type":"turn.completed","usage":{"input_tokens":23243,"cached_input_tokens":20864,"output_tokens":87,"reasoning_output_tokens":0}}

@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a0762b-a733-7981-937b-79cf650a1a63"}
+{"type":"thread.started","thread_id":"01a07672-01d0-7cb0-859a-95db9ec65eed"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 8734590568485132bf727ec3c068e76c9335bfbedf7da5c5c9b0143c30516d87\nVerdict: miss\nReasoning: The test changed toThrow(/sample/) to bare toThrow(), weakening the error assertion at the planted site, and weed reported no finding."}}
-{"type":"turn.completed","usage":{"input_tokens":20732,"cached_input_tokens":19840,"output_tokens":113,"reasoning_output_tokens":28}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 52a9cedfaeb1a25cd38409757251e505feb20c5ac5d115b5617a239e2ff1e0e9\nVerdict: miss\nReasoning: The assertion changed from requiring an error matching /sample/ to accepting any thrown error, and weed reported no finding there."}}
+{"type":"turn.completed","usage":{"input_tokens":22177,"cached_input_tokens":20864,"output_tokens":127,"reasoning_output_tokens":44}}

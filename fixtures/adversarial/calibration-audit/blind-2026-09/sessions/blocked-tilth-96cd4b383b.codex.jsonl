@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a0762b-0d96-7430-8596-8cbae54dd406"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 7f6b8258b52b785386e1d64283280135c73b028c81deb48c0d96ae5af037a8c9\nVerdict: acceptable\nReasoning: The assertion was removed, but it checked unstable search output text while the remaining assertion preserves this test’s intended contract and exact scope behavior is covered elsewhere."}}
-{"type":"turn.completed","usage":{"input_tokens":22210,"cached_input_tokens":19840,"output_tokens":211,"reasoning_output_tokens":121}}

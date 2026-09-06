@@ -1,2 +1,0 @@
-{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t4-rs-tilth-5b0539e6a-src-mcp-write-rs-148.md", "sha256": "32db18f829726169a7617e22b99c8df9c5add593c83deffedf8877040e866233"}
-{"type": "answer", "answer": "Answered packet SHA-256: 32db18f829726169a7617e22b99c8df9c5add593c83deffedf8877040e866233\nVerdict: not-a-case\nReasoning: The diff only adds a new 10-second deadline at the planted site; it does not show an existing timeout widened from 1 to 10."}

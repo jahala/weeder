@@ -1,2 +1,2 @@
-{"type": "input", "case": "blocked:pleach:624529b3a9", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
-{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: false-positive\nReasoning: The flagged private-key text was a detector regex and fixture, not an actual credential, so X1's published-secret claim was untrue."}
+{"type": "input", "case": "blocked:pleach:624529b3a9", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
+{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: false-positive\nReasoning: X1 matched pleach's own private-key detector regex and fixture, not an added credential, so the claimed secret publication was not true of the change."}

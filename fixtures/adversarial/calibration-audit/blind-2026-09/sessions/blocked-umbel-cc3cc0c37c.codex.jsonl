@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07671-b280-79e2-9675-b866ae5bdce2"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: f8fc73242485277bd471e2f4e9c52d732026268a029329e4ea93d18edcf3efed\nVerdict: acceptable\nReasoning: The TODO markers are genuinely added under src production providers, but they document intentionally defensive, partial extraction rather than a stubbed or regressed behavior."}}
+{"type":"turn.completed","usage":{"input_tokens":25694,"cached_input_tokens":20864,"output_tokens":399,"reasoning_output_tokens":314}}

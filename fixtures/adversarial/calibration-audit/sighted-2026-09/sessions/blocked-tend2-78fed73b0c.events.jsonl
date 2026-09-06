@@ -1,0 +1,2 @@
+{"type": "input", "case": "blocked:tend2:78fed73b0c", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
+{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: acceptable\nReasoning: T1 correctly identified deleted spike tests, but the corresponding killed spike implementation was removed in the same commit, so no remaining shipped behavior lost coverage."}

@@ -1,2 +1,2 @@
-{"type": "input", "case": "recall:T6:ts:tend2:51035a5c8:test/verify.test.ts:176", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
-{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: miss\nReasoning: The report states T6 was planted at that site as an error assertion no longer naming the error, and it was not reported there."}
+{"type": "input", "case": "recall:T6:ts:tend2:51035a5c8:test/verify.test.ts:176", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
+{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: miss\nReasoning: The report says T6 was planted at test/verify.test.ts:176 by weakening an error assertion, and lists it under planted cases not reported there."}

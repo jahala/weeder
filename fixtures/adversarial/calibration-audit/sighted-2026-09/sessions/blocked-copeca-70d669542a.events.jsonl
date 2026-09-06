@@ -1,2 +1,2 @@
-{"type": "input", "case": "blocked:copeca:70d669542a", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
-{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: false-positive\nReasoning: The flagged `key` is a local variable holding a loaded public key object, not an added secret or credential."}
+{"type": "input", "case": "blocked:copeca:70d669542a", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
+{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: false-positive\nReasoning: X1 flagged a local variable named key holding a loaded public key object, not an added secret or credential, so the rule's claim is not true."}

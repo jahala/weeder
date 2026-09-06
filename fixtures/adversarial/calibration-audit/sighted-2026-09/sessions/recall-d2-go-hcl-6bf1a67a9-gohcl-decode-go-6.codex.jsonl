@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a07648-b585-7813-a584-c33a90705446"}
+{"type":"thread.started","thread_id":"01a07675-59c0-7742-afa9-f3d321305861"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: miss\nReasoning: The report says gohcl/decode.go was planted with a gohcl-to-hcldec import, a D2 forbidden-boundary crossing, and lists it as planted but not reported."}}
-{"type":"turn.completed","usage":{"input_tokens":37155,"cached_input_tokens":20864,"output_tokens":587,"reasoning_output_tokens":495}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: miss\nReasoning: The report says gohcl/decode.go was planted with a forbidden gohcl-to-hcldec import at line 6 and listed it under Every miss, so weed did not report the planted D2 shape there."}}
+{"type":"turn.completed","usage":{"input_tokens":36896,"cached_input_tokens":20864,"output_tokens":199,"reasoning_output_tokens":97}}

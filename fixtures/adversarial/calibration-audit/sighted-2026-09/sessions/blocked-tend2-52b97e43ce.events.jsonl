@@ -1,2 +1,2 @@
-{"type": "input", "case": "blocked:tend2:52b97e43ce", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
-{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: false-positive\nReasoning: X1 mistook HTML class names ending in __key for secret assignments; the added values were renderer markup, not credentials or secret material."}
+{"type": "input", "case": "blocked:tend2:52b97e43ce", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
+{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: false-positive\nReasoning: X1 mistook CSS class names ending in `__key` inside generated HTML markup for secret assignments; no credential or secret-looking value was actually added."}
