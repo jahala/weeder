@@ -1,49 +1,51 @@
-## Blocked Commit Sample
+Blind: yes, Answered packet SHA-256: 0970c764487743009ba2d9ee448b8fd6f13c72500ec4c32dc5d04a300f2da237
 
-| Repo | Commit | Auditor verdict | Reasoning |
-|---|---|---|---|
-| tend2 | 52b97e43ce | true-positive | Adds a renderer that explicitly passes raw HTML through, creating a real injection-risk shape. |
-| umbel | 89c088bc08 | acceptable | Weakens a destructive tmux-server test for a safer isolated equivalent. |
-| umbel | 059b4c4677 | acceptable | Rewrites tests for a changed Codex home model with coherent replacement coverage. |
-| umbel | 75523a16a3 | true-positive | Adds a provider with TODO-marked, inferred tool transcript parsing. |
-| tend2 | 08529d5f56 | true-positive | Deletes the whole claude-tasks generator test file and its behavioral coverage. |
-| tilth | 7684e99e86 | true-positive | Drops assertions that pinned the truncation metadata, leaving only weaker output checks. |
-| tilth | 10bec56a41 | acceptable | Drops a brittle response-body assertion while preserving the success-path check. |
-| tend2 | 3adc642ce1 | false-positive | Replaces stale renderer-copy checks with freshness checks for the actual dist and sibling assets. |
-| tilth | 76d5d02d34 | true-positive | Deletes the entire MCP module and broad behavioral test coverage. |
-| tend2 | 78fed73b0c | true-positive | Deletes the already-encoded spike test file and its filesystem-reading coverage. |
-| tilth | 96cd4b383b | acceptable | Same brittle body assertion is removed while the required success behavior remains checked. |
-| tend2 | bf2754689c | true-positive | Deletes the whole season test file and its behavioral coverage. |
-| tilth | 136e246d8e | true-positive | Deletes the edit tool and its empty-edit parse guard test. |
-| umbel | cc3cc0c37c | true-positive | Adds action extraction with explicit TODOs for unverified transcript shapes. |
-| tend2 | 067730ddd0 | true-positive | Removes the assertion that `dist/loop.js` matches the generated bundle. |
-| tilth | bd36a43637 | true-positive | Deletes the symbol index implementation and all its tests. |
-| tilth | d422a325fc | acceptable | Refactors host entry shaping while preserving the relevant install behavior. |
-| tilth | ab7f054b73 | true-positive | Reintroduces singular `path` and removes the paths-only schema guard test. |
-| tilth | 18eb6643ff | true-positive | Deletes many scope/files/edit tests while changing MCP visibility. |
-| tilth | 11aef933c9 | true-positive | Deletes the files tool and all its scope/pattern tests. |
+**Blocked Commit Sample**
 
-## Recall Case Sample
+| Case | Verdict | Reason |
+|---|---|---|
+| blocked:tilth:3ff87caf55 | acceptable | Test shape is true, but the deleted sizing assertions targeted the removed custom implementation. |
+| blocked:tend2:bf2754689c | true-positive | Entire test file with four cases was deleted. |
+| blocked:tilth:11aef933c9 | true-positive | Entire tested tool file was deleted with eight cases. |
+| blocked:tilth:136e246d8e | true-positive | Runtime validation test disappeared with the file. |
+| blocked:tend2:3adc642ce1 | acceptable | Case count fell during test restructuring, but freshness checks remain covered. |
+| blocked:tilth:ab7f054b73 | true-positive | Paths-only schema guard was removed while singular `path` returned. |
+| blocked:tilth:10bec56a41 | acceptable | Removed body assertion was redundant with `is_ok()` for this error path. |
+| blocked:tilth:96cd4b383b | acceptable | Duplicate sample; removed body assertion was intentionally brittle. |
+| blocked:tilth:76d5d02d34 | true-positive | Large MCP module deletion removed seventeen tests. |
+| blocked:umbel:89c088bc08 | acceptable | Dropped `Array.isArray` is covered by `toEqual([])` after JSON parse. |
+| blocked:umbel:75523a16a3 | true-positive | `TODO` marker appears in production code. |
+| blocked:tilth:d422a325fc | acceptable | Refactor replaced the removed entry-style assertion with format matching. |
+| blocked:tilth:5a4edbf5c5 | true-positive | Many caller/callee behavior tests were deleted with no replacement shown. |
+| blocked:tilth:18eb6643ff | true-positive | Scope, files, and edit tests were removed from the module. |
+| blocked:tilth:59c87110ab | acceptable | Deleted tests covered removed helper now replaced by library decoding. |
+| blocked:pleach:624529b3a9 | acceptable | Secret-like fixtures are test data for the detector, but still worth review. |
+| blocked:tend2:067730ddd0 | true-positive | Byte equality between built JS artifacts was removed. |
+| blocked:tilth:bd36a43637 | true-positive | Whole symbol index file and six tests were deleted. |
+| blocked:umbel:059b4c4677 | acceptable | Assertions were reshaped around a new launch contract, not simply weakened. |
+| blocked:tilth:7684e99e86 | acceptable | Removed line-number assertion was replaced by direct output behavior checks. |
 
-| Rule | Language | Repository | Commit | Path | Auditor verdict | Reasoning |
-|---|---|---|---|---|---|---|
-| T6 | ts | tend2 | 5b1f7a471 | test/verify.test.ts:176 | miss | Weakens `toThrow(/description/)` to any thrown error. |
-| D1 | py | tilth | 5fa0c8611 | benchmark/fixtures/setup.py | caught | Only changes a version string; no D1 shape is visible. |
-| D1 | py | tilth | ec06323c7 | benchmark/fixtures/setup.py | caught | Only changes a version string; no D1 shape is visible. |
-| T6 | py | copeca | fc9c5b9e5 | tests/config/test_loader.py:37 | miss | Corrupts the pytest test signature by adding `Exception` as an argument. |
-| D1 | py | tilth | bd73c8223 | benchmark/fixtures/setup.py | caught | Only changes a version string; no D1 shape is visible. |
-| D2 | go | hcl | 2efc26623 | hclwrite/ast_body.go:6 | miss | Adds an inward package import from hclwrite code to another HCL package. |
-| D2 | go | hcl | 6a91a7547 | gohcl/types.go:6 | miss | Adds an inward package import from gohcl code to another HCL package. |
-| T6 | py | copeca | 70d669542 | tests/config/test_scenario_loader.py:38 | miss | Corrupts the pytest test signature by adding `Exception` as an argument. |
-| D1 | py | tilth | 49ccc86e9 | benchmark/fixtures/setup.py | caught | Only changes a version string; no D1 shape is visible. |
-| T6 | ts | tend2 | 8d939ec15 | test/route.test.ts:143 | miss | Weakens `toThrow(/sample/)` to any thrown error. |
-| D1 | py | tilth | 5b0539e6a | benchmark/fixtures/setup.py | caught | Only changes a version string; no D1 shape is visible. |
-| D1 | py | tilth | 5d3d16ce5 | benchmark/fixtures/setup.py | caught | Only changes a version string; no D1 shape is visible. |
-| T4 | ts | pleach | 3a1306011 | test/loop/run-work.test.ts:10 | miss | Changes an expected value so the test asserts the wrong behavior. |
-| D2 | go | hcl | e73f21667 | gohcl/schema.go:6 | miss | Adds an inward package import from gohcl schema code to another HCL package. |
-| T6 | ts | tend2 | 2a0e93933 | test/verify.test.ts:176 | miss | Weakens `toThrow(/description/)` to any thrown error. |
-| D2 | go | hcl | 0268c1604 | gohcl/types.go:6 | miss | Adds an inward package import from gohcl code to another HCL package. |
-| T6 | ts | tend2 | 6d9a1cf91 | test/route.test.ts:143 | miss | Weakens `toThrow(/sample/)` to any thrown error. |
-| T6 | ts | tend2 | ad070a0d4 | test/verify.test.ts:176 | miss | Weakens `toThrow(/description/)` to any thrown error. |
-| D1 | py | tilth | 8825050ec | benchmark/fixtures/setup.py | caught | Only changes a version string; no D1 shape is visible. |
-| D1 | py | tilth | e7ef4647e | benchmark/fixtures/setup.py | caught | Only changes a version string; no D1 shape is visible. |
+**Recall Case Sample**
+
+| Case | Verdict | Reason |
+|---|---|---|
+| recall:D2:go:hcl:ab1acc486:hclwrite/tokens.go:6 | miss | Forbidden import is present, but weed reported nothing. |
+| recall:D1:py:tilth:35dcaec21:benchmark/fixtures/setup.py | miss | Version string is not a dependency pin, so planted D1 shape is absent. |
+| recall:T6:py:copeca:70d669542:tests/config/test_scenario_loader.py:38 | miss | Function signature changed oddly, but the pytest error assertion stayed specific. |
+| recall:D2:go:hcl:e73f21667:gohcl/schema.go:6 | miss | Cross-boundary import is present, but D2 was not reported. |
+| recall:T1:ts:tend2:6d9a1cf91:test/site-paths.test.ts | miss | Test case was deleted, but weed only reported T2. |
+| recall:D1:py:tilth:5b0539e6a:benchmark/fixtures/setup.py | miss | Version field change is not a dependency manifest change. |
+| recall:T6:ts:tend2:6d9a1cf91:test/route.test.ts:143 | miss | `toThrow(/sample/)` weakened to `toThrow()`, but no T6 finding. |
+| recall:T6:py:copeca:1b01df97f:tests/runners/test_base_runner.py:62 | miss | Test signature changed, but raises assertion still names error and match. |
+| recall:T4:ts:pleach:3a1306011:test/loop/run-work.test.ts:10 | miss | Timeout widened from 1000 to 10000, but T4 was not reported. |
+| recall:T6:py:copeca:fc9c5b9e5:tests/config/test_loader.py:37 | miss | Test signature changed, but pytest assertion still names error and match. |
+| recall:D2:go:hcl:bd45ab812:hclwrite/format.go:6 | miss | Forbidden import is present, but D2 was not reported. |
+| recall:D1:py:tilth:9ebb4c65f:benchmark/fixtures/setup.py | miss | Version string change is not a dependency pin move. |
+| recall:D2:go:hcl:92f12c4e5:hcldec/gob.go:6 | miss | Cross-boundary import is present, but weed reported nothing. |
+| recall:D1:py:tilth:49ccc86e9:benchmark/fixtures/setup.py | miss | Planted site is not a dependency manifest despite other D1 output. |
+| recall:T6:ts:tend2:51035a5c8:test/verify.test.ts:176 | miss | Error matcher was removed, but weed printed no finding. |
+| recall:T6:py:copeca:41cfc63ae:tests/config/test_loader.py:37 | miss | Pytest assertion still names `SchemaValidationError` and `match`. |
+| recall:T1:ts:tend2:8d939ec15:test/renderer-fresh.test.ts | miss | `it` case was deleted, but weed reported only T2. |
+| recall:T6:ts:tend2:ad070a0d4:test/verify.test.ts:176 | miss | Error matcher was removed, but weed did not report T6. |
+| recall:D1:py:tilth:ad9eb2cdb:benchmark/fixtures/setup.py | miss | D1 finding is elsewhere; planted setup.py change is not dependency manifest. |
+| recall:D1:py:tilth:aca137834:benchmark/fixtures/setup.py | miss | D1 finding is elsewhere; planted setup.py change is not dependency manifest. |

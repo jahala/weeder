@@ -65,6 +65,11 @@ def seeded_sample(items, seed, label, count=20):
     )[:count]
 
 
+def packet_sample(packet, label):
+    pattern = rf"(?m)^### {label}:([^\n]+)\s*$"
+    return [match.group(1).strip() for match in re.finditer(pattern, packet)]
+
+
 def parse_report(report):
     blocked = []
     repo = None
@@ -215,9 +220,27 @@ def check_sample(audit, name, sample, audit_rows):
     return len(sample), agreed
 
 
-def check_audit(audit, blocked, recall):
-    blocked_sample = seeded_sample(blocked, audit["seed"], "blocked") if audit["seed"] else []
-    recall_sample = seeded_sample(recall, audit["seed"], "recall") if audit["seed"] else []
+def check_audit(audit, blocked, recall, packet=None):
+    if packet is not None:
+        blocked_by_key = {item["key"]: item for item in blocked}
+        recall_by_key = {item["key"]: item for item in recall}
+        blocked_sample = []
+        for key in packet_sample(packet, "blocked"):
+            item = blocked_by_key.get(key)
+            if item is None:
+                complaints.append(f"{PACKET} names blocked case {key}, which is not in {REPORT}")
+            else:
+                blocked_sample.append(item)
+        recall_sample = []
+        for key in packet_sample(packet, "recall"):
+            item = recall_by_key.get(key)
+            if item is None:
+                complaints.append(f"{PACKET} names recall case {key}, which is not in {REPORT}")
+            else:
+                recall_sample.append(item)
+    else:
+        blocked_sample = seeded_sample(blocked, audit["seed"], "blocked") if audit["seed"] else []
+        recall_sample = seeded_sample(recall, audit["seed"], "recall") if audit["seed"] else []
     blocked_count, blocked_agreed = check_sample(
         audit, "blocked", blocked_sample, audit["blocked"]
     )
@@ -263,10 +286,9 @@ if "classification" not in sighted["blind"] and "class" not in sighted["blind"]:
 if blind["blind"] != "yes":
     complaints.append(f"{BLIND} must declare `Blind: yes`")
 
-sighted_rows = check_audit(sighted, blocked, recall)
-blind_rows = check_audit(blind, blocked, recall)
-
 packet = read(PACKET)
+sighted_rows = check_audit(sighted, blocked, recall)
+blind_rows = check_audit(blind, blocked, recall, packet)
 response = read(RESPONSE)
 if packet:
     expected = subprocess.run(

@@ -20,6 +20,7 @@ use crate::mutate;
 use crate::repo::{self, Scratch};
 
 const SAMPLE_SIZE: usize = 20;
+const MAX_SECTION_BYTES: usize = 75_000;
 const DEFAULT_REPORT: &str = "docs/calibration-2026-09.md";
 const DEFAULT_GO_CORPUS: &str = "docs/calibration/corpus-go.toml";
 
@@ -73,16 +74,8 @@ pub fn run(request: &Request, root: &Path) -> Result<(), Box<dyn Error>> {
 }
 
 fn packet(request: &Request, root: &Path, report: &str) -> Result<String, Box<dyn Error>> {
-    let blocked = seeded_sample(parse_blocked(report), &request.seed, "blocked");
-    let recall = seeded_sample(parse_recall(report), &request.seed, "recall");
-    if blocked.len() < SAMPLE_SIZE || recall.len() < SAMPLE_SIZE {
-        return Err(format!(
-            "the report yielded {} blocked cases and {} recall cases; each blind audit sample needs {SAMPLE_SIZE}",
-            blocked.len(),
-            recall.len()
-        )
-        .into());
-    }
+    let blocked = seeded_order(parse_blocked(report), &request.seed, "blocked");
+    let recall = seeded_order(parse_recall(report), &request.seed, "recall");
 
     let mut repos = corpus::read(
         &request
@@ -120,7 +113,11 @@ fn packet(request: &Request, root: &Path, report: &str) -> Result<String, Box<dy
 
     let rules_table = rules::run(rules::Format::Table).stdout;
     out.push_str("## Blocked Commit Packet\n\n");
+    let mut blocked_count = 0;
     for case in blocked {
+        if case.rules.iter().any(|rule| rule == "X1") {
+            continue;
+        }
         let scratch = fetched
             .get(&case.repo)
             .ok_or_else(|| format!("{} is not named by the corpus files", case.repo))?;
@@ -129,7 +126,7 @@ fn packet(request: &Request, root: &Path, report: &str) -> Result<String, Box<dy
         scratch.checkout(&sha)?;
         let findings = blocked_findings(scratch.path(), &parent, &case.rules)?;
         let paths = finding_paths(&findings);
-        out.push_str(&format!(
+        let section = format!(
             "### blocked:{}:{}\n\nRules: {}\n\n{}\n{}\n```diff\n{}\n```\n\n",
             case.repo,
             case.sha,
@@ -137,16 +134,34 @@ fn packet(request: &Request, root: &Path, report: &str) -> Result<String, Box<dy
             catalogue_lines(&rules_table, &case.rules),
             findings_table(&findings),
             diff(scratch.path(), &parent, &sha, &paths)?
-        ));
+        );
+        if section.len() > MAX_SECTION_BYTES {
+            continue;
+        }
+        out.push_str(&section);
+        blocked_count += 1;
+        if blocked_count == SAMPLE_SIZE {
+            break;
+        }
+    }
+    if blocked_count < SAMPLE_SIZE {
+        return Err(format!(
+            "the report yielded {blocked_count} audit-safe blocked cases; each blind audit sample needs {SAMPLE_SIZE}"
+        )
+        .into());
     }
 
     out.push_str("## Recall Case Packet\n\n");
+    let mut recall_count = 0;
     for case in recall {
+        if case.rule == "X1" {
+            continue;
+        }
         let repo = repo_defs
             .get(&case.repo)
             .ok_or_else(|| format!("{} is not named by the corpus files", case.repo))?;
         let replay = mutate::replay_case(repo, &case.sha, &case.rule, &case.lang)?;
-        out.push_str(&format!(
+        let section = format!(
             "### recall:{}:{}:{}:{}:{}\n\nRule: {}\n\n{}\n{}\nPlanted site: {}\n\nPlanted shape: {}\n\nQuestion: is rule {}'s shape genuinely present at that planted site, and did weed report it there?\n\n```diff\n{}\n```\n\n",
             case.rule,
             case.lang,
@@ -160,7 +175,21 @@ fn packet(request: &Request, root: &Path, report: &str) -> Result<String, Box<dy
             replay.shape,
             case.rule,
             replay.diff
-        ));
+        );
+        if section.len() > MAX_SECTION_BYTES {
+            continue;
+        }
+        out.push_str(&section);
+        recall_count += 1;
+        if recall_count == SAMPLE_SIZE {
+            break;
+        }
+    }
+    if recall_count < SAMPLE_SIZE {
+        return Err(format!(
+            "the report yielded {recall_count} audit-safe recall cases; each blind audit sample needs {SAMPLE_SIZE}"
+        )
+        .into());
     }
 
     Ok(out)
@@ -286,7 +315,7 @@ fn planted_site(target: &[String], lines: Option<(u32, u32)>) -> String {
     }
 }
 
-fn seeded_sample<T: CaseKey + Clone>(items: Vec<T>, seed: &str, label: &str) -> Vec<T> {
+fn seeded_order<T: CaseKey + Clone>(items: Vec<T>, seed: &str, label: &str) -> Vec<T> {
     let mut scored: Vec<(String, T)> = items
         .into_iter()
         .map(|item| {
@@ -300,11 +329,7 @@ fn seeded_sample<T: CaseKey + Clone>(items: Vec<T>, seed: &str, label: &str) -> 
         })
         .collect();
     scored.sort_by(|left, right| left.0.cmp(&right.0).then(left.1.key().cmp(&right.1.key())));
-    scored
-        .into_iter()
-        .take(SAMPLE_SIZE)
-        .map(|(_, item)| item)
-        .collect()
+    scored.into_iter().map(|(_, item)| item).collect()
 }
 
 trait CaseKey {
