@@ -34,7 +34,10 @@ cd "$root"
 
 report="${WEED_CALIBRATION_REPORT:-docs/calibration-2026-09.md}"
 corpus="${WEED_CALIBRATION_CORPUS:-docs/calibration/corpus.toml}"
-audit="${WEED_CALIBRATION_AUDIT:-docs/calibration-audit-2026-09.md}"
+# Every audit the repository carries counts, packet, response and transcript
+# files aside: a blind re-grade under the bar keeps the verdict pending however
+# well a sighted one did. The probes name one file to read instead.
+audit="${WEED_CALIBRATION_AUDIT:-$(ls docs/calibration-audit*.md 2>/dev/null | grep -v '\.packet\.\|\.response\.\|transcript' | tr '\n' ':' | sed 's/:$//')}"
 result="${WEED_CALIBRATION_METRIC:-docs/calibration/metric.json}"
 
 command -v python3 >/dev/null 2>&1 || {
@@ -192,11 +195,24 @@ for number, line in enumerate(report.splitlines(), start=1):
 # The re-grade, read the same way the generator reads it: a row per sample with
 # how many cases were re-graded and how many agreed, and the share recomputed
 # from those two rather than taken from the column beside them.
-def regrade(path):
-    try:
-        text = open(path, encoding="utf-8").read()
-    except OSError:
+def regrade(paths):
+    """The samples of every audit file named, colon-separated, each sample named
+    by its file; None when not one of them is there."""
+    found = []
+    for path in [one for one in paths.split(":") if one]:
+        try:
+            found.append((path, open(path, encoding="utf-8").read()))
+        except OSError:
+            continue
+    if not found:
         return None
+    samples = []
+    for path, text in found:
+        samples.extend((f"{name} in {path}", regraded, agreed) for name, regraded, agreed in one_file(text))
+    return samples
+
+
+def one_file(text):
     samples = []
     for line in text.splitlines():
         line = line.strip()

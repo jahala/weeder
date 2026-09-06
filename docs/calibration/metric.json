@@ -9,13 +9,25 @@
       "agreed": 20,
       "agreement_percent": 100.0,
       "regraded": 20,
-      "sample": "blocked commits"
+      "sample": "blocked commits in docs/calibration-audit-2026-09.md"
     },
     {
       "agreed": 20,
       "agreement_percent": 100.0,
       "regraded": 20,
-      "sample": "recall cases"
+      "sample": "recall cases in docs/calibration-audit-2026-09.md"
+    },
+    {
+      "agreed": 9,
+      "agreement_percent": 45.0,
+      "regraded": 20,
+      "sample": "blocked commits in docs/calibration-audit-blind-2026-09.md"
+    },
+    {
+      "agreed": 12,
+      "agreement_percent": 60.0,
+      "regraded": 20,
+      "sample": "recall cases in docs/calibration-audit-blind-2026-09.md"
     }
   ],
   "repos": [
@@ -57,5 +69,5 @@
   ],
   "share_percent": 0.31,
   "source": "docs/calibration-2026-09.md",
-  "verdict": "ship"
+  "verdict": "ship, pending the independent re-grade"
 }

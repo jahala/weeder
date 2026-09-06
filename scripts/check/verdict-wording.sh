@@ -21,7 +21,9 @@ root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
 
 report="docs/calibration-2026-09.md"
-audit="docs/calibration-audit-2026-09.md"
+# Every audit record the repository carries, packet, response and transcript
+# files aside, colon-separated: the wording is written from all of them.
+audit="$(ls docs/calibration-audit*.md 2>/dev/null | grep -v '\.packet\.\|\.response\.\|transcript' | tr '\n' ':' | sed 's/:$//')"
 corpus="docs/calibration/corpus.toml"
 provisional="weed ships as a gate, pending the independent re-grade:"
 confirmed="weed ships as a gate:"
@@ -195,9 +197,10 @@ complaints = []
 
 sentence = next((line for line in report.splitlines()[1:] if line.strip()), "")
 samples = []
-present = os.path.exists(audit_path)
-if present:
-    for line in open(audit_path, encoding="utf-8").read().splitlines():
+audit_paths = [one for one in audit_path.split(":") if one and os.path.exists(one)]
+present = bool(audit_paths)
+for one_path in audit_paths:
+    for line in open(one_path, encoding="utf-8").read().splitlines():
         line = line.strip()
         if not line.startswith("|"):
             continue
@@ -226,7 +229,7 @@ if not stands and not sentence.startswith(provisional):
     )
 if not stands:
     reason = report.split("\n\n")[2] if len(report.split("\n\n")) > 2 else ""
-    if audit_path not in reason:
+    if not any(one_path in reason for one_path in audit_paths) and audit_path not in reason:
         complaints.append(
             "the sentence after the verdict does not name the file the qualification is waiting on"
         )

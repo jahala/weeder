@@ -1,8 +1,8 @@
 # calibration: weed over real history, 2026-09
 
-weed ships as a gate: over 635 commits of real history in 5 repositories it blocked 25, of which 2 were block-level false positives, 0.31 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level.
+weed ships as a gate, pending the independent re-grade: over 635 commits of real history in 5 repositories it blocked 25, of which 2 were block-level false positives, 0.31 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level.
 
-A second party re-graded the classification and docs/calibration-audit-2026-09.md records the agreement: blocked commits at 100.0 percent of 20 cases, recall cases at 100.0 percent of 20 cases. That is what took the qualification off this sentence. The auditor drew its sample from this file's own tables, where the builder's class sits beside each commit, so it could read the class before judging: the agreement is a sighted one until a blind re-grade is recorded.
+The classification under that number is the builder's own, and the re-grade is under the 90 percent bar: blocked commits in docs/calibration-audit-blind-2026-09.md agrees on 45.0 percent of 20 cases, recall cases in docs/calibration-audit-blind-2026-09.md agrees on 60.0 percent of 20 cases. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing.
 
 ## How this was measured
 
