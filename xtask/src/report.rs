@@ -171,7 +171,7 @@ impl<'a> Report<'a> {
         if outcome.ships {
             let _ = write!(
                 verdict,
-                "weed ships as a gate{}: over {} commits of real history in {repos} repositories it blocked {}, of which {} were block-level false positives, {share:.2} percent of the commits judged and under the two percent bar, with {} all still at block level.\n\n",
+                "weed ships as a gate{}: over {} commits of real history in {repos} repositories it blocked {}, of which {} were block-level false positives, {share:.2} percent of the commits judged and under the two percent bar, with {} all still at block level{}.\n\n",
                 if self.audit.confirms() {
                     String::new()
                 } else {
@@ -181,6 +181,13 @@ impl<'a> Report<'a> {
                 outcome.blocked,
                 outcome.tally.against_the_bar(),
                 spell(&LOAD_BEARING),
+                // The word the audit loop's evidence looks for stays inside the
+                // first sentence, so a reader who stops there has read it.
+                if self.audit.confirms() {
+                    ""
+                } else {
+                    ", and the classification under it untrusted until a re-grade agrees at the bar"
+                },
             );
             match (self.audit.pending(), &self.audit.samples) {
                 (Some(pending), _) => {
