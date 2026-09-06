@@ -1,0 +1,1 @@
+The linker writes the demo binary here.

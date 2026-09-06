@@ -14,6 +14,21 @@ use crate::core::diff::{ChangeKind, FileDiff, HunkLine, LineKind};
 use crate::core::read::{DefinitionKind, Import, Outline, TestShape};
 use crate::core::syntax::Mask;
 
+/// The weight above which a file stops being something anyone reads. G2 reports
+/// a file this large as the finding itself, and weed asks the parser nothing
+/// about one: outlining a file no reviewer will open is the most expensive
+/// question a run can ask and it answers none anybody had. The lines are still
+/// read, so a rule that judges a line judges every line of a file this size too.
+pub const READABLE: u64 = 1024 * 1024;
+
+/// Whether a file of this weight is one weed reads as code rather than one it
+/// can only weigh and count the lines of. A side with no file at all reads as
+/// code: there is nothing there to be too large.
+#[must_use]
+pub fn reads_as_code(size: Option<u64>) -> bool {
+    size.is_none_or(|weight| weight <= READABLE)
+}
+
 /// One side of a change: the file as a ref carries it, or as the tree does.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Side {

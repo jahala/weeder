@@ -1,0 +1,18 @@
+package records
+
+import (
+	"reflect"
+	"testing"
+)
+
+func TestSplitsOnCommas(t *testing.T) {
+	if !reflect.DeepEqual(Parse("a,b"), []string{"a", "b"}) {
+		t.Fatal("a comma should end a field")
+	}
+}
+
+func TestSplitsOnSemicolons(t *testing.T) {
+	if !reflect.DeepEqual(Parse("a;b"), []string{"a", "b"}) {
+		t.Fatal("a semicolon should end a field too")
+	}
+}

@@ -39,6 +39,11 @@ const AUTHOR_NAME: &str = "weed fixtures";
 const AUTHOR_EMAIL: &str = "fixtures@weed.invalid";
 /// The file `after/` uses to carry the pending commit message.
 const COMMIT_MESSAGE_FILE: &str = ".weed-commit";
+/// The file `before/` uses to carry the date it was committed on, in any spelling
+/// git reads, and never copied into the tree. A rule that asks git when a line
+/// was written needs a history rather than a state, and this is how a fixture
+/// states one without a test having to build the repository by hand.
+const COMMIT_DATE_FILE: &str = ".weed-date";
 /// The name a fixture gives an ignore file. Written as `.gitignore`, the file
 /// would govern the fixture's own directory and hide from git the very sources
 /// the fixture carries next to it; under this name it is inert until copied.
@@ -186,6 +191,19 @@ const KEY_BLOCK: &str = "{{weed:key-block}}";
 fn key_block() -> String {
     let rule = "-".repeat(5);
     format!("{rule}BEGIN RSA PRIVATE {word}{rule}", word = "KEY")
+}
+
+/// The placeholder a fixture writes where bytes that are not text belong.
+const BINARY_RUN: &str = "{{weed:binary}}";
+
+/// A run of bytes no diff can show. git's test for a file that is not text is a
+/// NUL byte, and weed asks the same question of the blob it reads, so the run
+/// opens with one and carries the rest of the control bytes behind it. A fixture
+/// that carried these bytes as bytes would be this repository carrying the very
+/// blob G2 refuses, which is why they are written here and spelled with the
+/// placeholder there.
+fn binary_run() -> String {
+    (0..=0x1f_u8).map(char::from).collect()
 }
 
 /// A conflict marker line as git writes it: seven of `character` at the start of
@@ -596,7 +614,10 @@ pub fn fixture(rule: &str, lang: &str, case: &str) -> Repo {
 
     let repo = Repo::init();
     copy_tree(&source.join("before"), repo.root());
-    repo.commit("the state the change starts from");
+    match dated(&repo) {
+        Some(date) => repo.commit_dated("the state the change starts from", &date),
+        None => repo.commit("the state the change starts from"),
+    }
 
     let after = source.join("after");
     if !after.is_dir() {
@@ -640,6 +661,18 @@ pub fn phased_fixture(rule: &str, lang: &str, case: &str) -> Repo {
         repo.commit(message);
     }
     repo
+}
+
+/// The date a fixture asked its state to be committed on, taken back out of the
+/// tree so the repository under test carries only what the fixture wrote.
+fn dated(repo: &Repo) -> Option<String> {
+    let path = repo.root().join(COMMIT_DATE_FILE);
+    if !path.is_file() {
+        return None;
+    }
+    let date = std::fs::read_to_string(&path).expect("the fixture's date should read");
+    std::fs::remove_file(&path).expect("the date should not reach the tree");
+    Some(date.trim().to_string())
 }
 
 pub fn fixture_root() -> PathBuf {
@@ -785,6 +818,7 @@ fn expand(contents: &str) -> String {
         )
     });
     text.replace(KEY_BLOCK, &key_block())
+        .replace(BINARY_RUN, &binary_run())
 }
 
 /// The caller's git configuration, their hooks and their template directory stay
