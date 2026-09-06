@@ -9,6 +9,7 @@
 //! the one in `src/`.
 
 mod audit;
+mod audit_packet;
 mod calibrate;
 mod corpus;
 mod first_run;
@@ -47,6 +48,8 @@ enum Command {
     /// Inject one anti-pattern per case into real commits of the corpus and
     /// write down what weed caught.
     Mutate(mutate::Request),
+    /// Write a blind audit packet from pinned corpus diffs and rule ids.
+    AuditPacket(audit_packet::Request),
 }
 
 #[derive(Debug, Args)]
@@ -117,6 +120,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         Command::Calibrate(args) => run_calibrate(&args),
         Command::Suppressions(args) => run_suppressions(&args),
         Command::Mutate(request) => Ok(mutate::run(&request)?),
+        Command::AuditPacket(request) => Ok(audit_packet::run(&request, &root())?),
     }
 }
 

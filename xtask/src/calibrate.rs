@@ -213,7 +213,7 @@ fn walk(
 /// The findings in a SARIF log, read the way any other consumer reads them. A
 /// log weed wrote that cannot be read back is reported against the commit rather
 /// than swallowed.
-fn results(log: &str) -> Result<Vec<Finding>, String> {
+pub(crate) fn results(log: &str) -> Result<Vec<Finding>, String> {
     let log: Value = serde_json::from_str(log)
         .map_err(|error| format!("weed wrote a log that is not json: {error}"))?;
     let results = log

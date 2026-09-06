@@ -31,6 +31,12 @@ impl Language {
         }
     }
 
+    pub fn from_slug(slug: &str) -> Option<Language> {
+        Language::ALL
+            .into_iter()
+            .find(|language| language.slug() == slug)
+    }
+
     /// The extensions a file of this language wears. TypeScript answers for the
     /// JavaScript family too: one runner, one set of conventions.
     pub fn extensions(self) -> &'static [&'static str] {
