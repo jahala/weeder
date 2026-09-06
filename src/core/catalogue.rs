@@ -57,7 +57,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Block,
         short_description: "A test was deleted",
-        full_description: "A test file was removed, or a test case disappeared from a changed test file, counted from the file's classification and its test shape at HEAD against the working tree.",
+        full_description: "A test file was removed, or a test case disappeared from a changed test file, counted from the file's classification and its test shape at HEAD against the working tree. A case the same change put into another test file moved rather than went, and is left out of the count and of what the finding claims.",
         network: Network::None,
     },
     Rule {
