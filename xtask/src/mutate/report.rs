@@ -171,22 +171,26 @@ const BARRED: &[&str] = &["T1", "T3", "S1", "X1", "C1", "G1"];
 
 fn corpus_table(outcomes: &[Outcome]) -> String {
     let mut table = String::from(
-        "| Repository | Ref | Head | Commits walked | Cases |\n|---|---|---|---|---|\n",
+        "| Repository | Source | Window ends at | Commits walked | Cases |\n|---|---|---|---|---|\n",
     );
     for outcome in outcomes {
         table.push_str(&format!(
             "| {} | `{}` | `{}` | {} | {} |\n",
             outcome.repo,
-            outcome.reference,
-            outcome.head.chars().take(9).collect::<String>(),
+            outcome.source,
+            outcome.tip,
             outcome.walked,
             outcome.cases.len()
         ));
     }
     table.push_str(
-        "\nThe garden five are the repositories calibration measures precision on. They carry no \
-         Go between them and weed judges Go, so the Go column is measured on two Go projects \
-         pinned by commit, read exactly the same way.\n",
+        "\nThe garden five are the repositories calibration measures precision on, read from \
+         `docs/calibration/corpus.toml` at the commits it pins them at. They carry no Go between \
+         them and weed judges Go, so the Go column is measured on two Go projects that \
+         `docs/calibration/corpus-go.toml` pins the same way, read exactly as the five are.\n\n\
+         Every window ends at the pin. A commit pushed to one of these sources later is outside \
+         the walk, so it plants no case and moves no number, and two runs over one corpus write \
+         this section byte for byte the same.\n",
     );
     let mut over: BTreeMap<Passed, usize> = BTreeMap::new();
     for outcome in outcomes {
@@ -415,8 +419,8 @@ pub fn write_json(path: &PathBuf, outcomes: &[Outcome]) -> Result<(), String> {
         .map(|outcome| {
             serde_json::json!({
                 "repository": outcome.repo,
-                "ref": outcome.reference,
-                "head": outcome.head,
+                "source": outcome.source,
+                "head": outcome.tip,
                 "commits": outcome.walked,
             })
         })
