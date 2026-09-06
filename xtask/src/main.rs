@@ -17,6 +17,7 @@ mod judgement;
 mod mutate;
 mod repo;
 mod report;
+mod ruling;
 mod split;
 mod suppressions;
 
@@ -166,7 +167,16 @@ fn run_calibrate(args: &CalibrateArgs) -> Result<(), Box<dyn Error>> {
     }
 
     let split = Split::measure(&first, &measurements);
+    // The ruling's record is printed into the repository's own report only:
+    // a bench report written somewhere else describes a history that never
+    // had a ruling.
+    let ruling = if args.out.is_none() {
+        ruling::read(&root().join(ruling::DEFAULT_PATH))?
+    } else {
+        None
+    };
     let report = Report {
+        ruling: ruling.as_ref(),
         repos: &measurements,
         rates: &rates,
         ledger: &ledger,

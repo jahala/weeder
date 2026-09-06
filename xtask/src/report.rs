@@ -66,6 +66,9 @@ impl Tally {
 
 /// Everything the file is written from.
 pub struct Report<'a> {
+    /// The day the audited question changed, printed beside the floor so both
+    /// numbers stay in the file; none where the question never changed.
+    pub ruling: Option<&'a crate::ruling::Ruling>,
     pub repos: &'a [RepoMeasurement],
     pub rates: &'a [RepoRate],
     pub ledger: &'a Ledger,
@@ -297,6 +300,14 @@ impl<'a> Report<'a> {
     /// off the blind re-grade's own table, so a re-grade that reads more blocks
     /// back moves this number by being written.
     fn floor_sentence(&self, outcome: &Outcome) -> String {
+        let floor = self.floor_only(outcome);
+        match self.ruling {
+            Some(ruling) => format!("{floor} {}", ruling.sentence()),
+            None => floor,
+        }
+    }
+
+    fn floor_only(&self, outcome: &Outcome) -> String {
         let ledger = share(outcome.tally.against_the_bar(), outcome.judged);
         let floor = share(outcome.floor, outcome.judged);
         if !self.audit.blind_regraded_blocks() {

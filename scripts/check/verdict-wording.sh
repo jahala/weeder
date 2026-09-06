@@ -96,7 +96,7 @@ case "$sentence" in
     ;;
 esac
 
-printf '# the re-grade\n\n| Sample | Re-graded | Agreed |\n|---|---|---|\n| blocked commits | 20 | 17 |\n' \
+printf '# the re-grade\n\nBlind: yes\n\n| Sample | Re-graded | Agreed |\n|---|---|---|\n| blocked commits | 20 | 17 |\n' \
   > "$bench/audit.md"
 judge "$bench/under.md"
 sentence="$(first_sentence "$bench/under.md")"
@@ -108,7 +108,7 @@ case "$sentence" in
     ;;
 esac
 
-printf '# the re-grade\n\n| Sample | Re-graded | Agreed |\n|---|---|---|\n| blocked commits | 20 | 19 |\n| recall cases | 20 | 20 |\n' \
+printf '# the re-grade\n\nBlind: yes\n\n| Sample | Re-graded | Agreed |\n|---|---|---|\n| blocked commits | 20 | 19 |\n| recall cases | 20 | 20 |\n' \
   > "$bench/audit.md"
 judge "$bench/confirmed.md"
 sentence="$(first_sentence "$bench/confirmed.md")"
@@ -153,7 +153,7 @@ elif ! grep -q "with no re-grade behind it" "$scratch/promoted.err"; then
   status=1
 fi
 
-printf '# the re-grade\n\n| Sample | Re-graded | Agreed |\n|---|---|---|\n| blocked commits | 20 | 17 |\n' \
+printf '# the re-grade\n\nBlind: yes\n\n| Sample | Re-graded | Agreed |\n|---|---|---|\n| blocked commits | 20 | 17 |\n' \
   > "$scratch/under-audit.md"
 if bar "$promoted" "$scratch/under-audit.md" > /dev/null 2> "$scratch/under.err"; then
   echo "calibration-bar.sh accepted '$confirmed' behind a re-grade that agrees on 85 percent" >&2
@@ -164,7 +164,7 @@ elif ! grep -q "with no re-grade behind it" "$scratch/under.err"; then
   status=1
 fi
 
-printf '# the re-grade\n\n| Sample | Re-graded | Agreed |\n|---|---|---|\n| blocked commits | 20 | 19 |\n' \
+printf '# the re-grade\n\nBlind: yes\n\n| Sample | Re-graded | Agreed |\n|---|---|---|\n| blocked commits | 20 | 19 |\n' \
   > "$scratch/good-audit.md"
 if ! bar "$promoted" "$scratch/good-audit.md" > /dev/null 2> "$scratch/good.err"; then
   echo "calibration-bar.sh refused '$confirmed' with a re-grade at the bar behind it:" >&2
