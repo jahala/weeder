@@ -1,0 +1,2 @@
+{"type": "input", "case": "blocked:tilth:5a4edbf5c5", "sha256": "e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f"}
+{"type": "answer", "answer": "Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: false-positive\nReasoning: T2's assertion-drop claim is not true because the removed callers.rs assertions were relocated into newly created bloom_walk.rs, callee_query.rs, and scope.rs tests, increasing coverage rather than leaving behavior unwatched."}

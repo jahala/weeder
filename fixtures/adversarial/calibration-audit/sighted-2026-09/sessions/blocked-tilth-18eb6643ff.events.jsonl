@@ -1,0 +1,2 @@
+{"type": "input", "case": "blocked:tilth:18eb6643ff", "sha256": "e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f"}
+{"type": "answer", "answer": "Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: false-positive\nReasoning: The removed assertions were co-located into other MCP test modules in the same commit, so the behavior did not become untested."}

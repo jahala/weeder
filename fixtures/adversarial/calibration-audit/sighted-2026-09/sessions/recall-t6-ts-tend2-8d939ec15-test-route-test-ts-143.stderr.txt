@@ -1,0 +1,6 @@
+Reading additional input from stdin...
+2026-09-06T08:55:57.433923Z ERROR codex_models_manager::cache: failed to load models cache: unknown variant `max`, expected one of `none`, `minimal`, `low`, `medium`, `high`, `xhigh` at line 29 column 25
+2026-09-06T08:55:57.641277Z ERROR codex_models_manager::manager: failed to refresh available models: exceeded retry limit, last status: 429 Too Many Requests, request id: req_a7476c7de6a0419ba6a92f9fe8f5ca1a
+2026-09-06T08:55:57.641511Z ERROR codex_models_manager::cache: failed to load models cache: unknown variant `max`, expected one of `none`, `minimal`, `low`, `medium`, `high`, `xhigh` at line 29 column 25
+2026-09-06T08:55:57.847212Z ERROR codex_models_manager::manager: failed to refresh available models: exceeded retry limit, last status: 429 Too Many Requests, request id: req_4692efc1fd9e481ebc4736a966ab3d91
+2026-09-06T08:55:59.708962Z ERROR codex_models_manager::manager: failed to refresh available models: exceeded retry limit, last status: 429 Too Many Requests, request id: req_c1915182a2074379a09fd1910275f52b

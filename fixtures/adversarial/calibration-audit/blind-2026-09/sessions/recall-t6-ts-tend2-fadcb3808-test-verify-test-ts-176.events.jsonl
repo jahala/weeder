@@ -1,2 +1,0 @@
-{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-t6-ts-tend2-fadcb3808-test-verify-test-ts-176.md", "sha256": "3c5d9470b3600caac28c494032cf5f2d016416640bcbdb7f62a8c6cb4727b3aa"}
-{"type": "answer", "answer": "Answered packet SHA-256: 3c5d9470b3600caac28c494032cf5f2d016416640bcbdb7f62a8c6cb4727b3aa\nVerdict: miss\nReasoning: The diff weakens toThrow(/description/) into toThrow(), so the error assertion stopped naming the error and weed reported no finding."}

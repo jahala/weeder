@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07605-6db4-7252-9813-1f1af8183ab9"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 606cd174211e818cad266190555501252c13a59b18e249d5a9726b11de56dc05\nVerdict: miss\nReasoning: The planted line weakens toThrow from matching /sample/ to no named error assertion, and weed reported no finding there."}}
+{"type":"turn.completed","usage":{"input_tokens":22165,"cached_input_tokens":20864,"output_tokens":102,"reasoning_output_tokens":24}}

@@ -1,2 +1,0 @@
-{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/blocked-umbel-cc3cc0c37c.md", "sha256": "029c6836bf39673a813904214df5168b95051f7156a8acb8f8f6ec5e24d6b941"}
-{"type": "answer", "answer": "Answered packet SHA-256: 029c6836bf39673a813904214df5168b95051f7156a8acb8f8f6ec5e24d6b941\nVerdict: acceptable\nReasoning: The packet reports real TODO markers in production provider files, but with the diff omitted there is no evidence they weakened behavior beyond intended TODO-blocking friction."}

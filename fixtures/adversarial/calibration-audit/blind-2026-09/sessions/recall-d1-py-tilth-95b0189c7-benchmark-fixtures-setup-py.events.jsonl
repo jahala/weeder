@@ -1,2 +1,0 @@
-{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-d1-py-tilth-95b0189c7-benchmark-fixtures-setup-py.md", "sha256": "9213e25351bdf0c4836316c22c35a9b8721e6be8428e7998c4979dc7a0e6d20d"}
-{"type": "answer", "answer": "Answered packet SHA-256: 9213e25351bdf0c4836316c22c35a9b8721e6be8428e7998c4979dc7a0e6d20d\nVerdict: not-a-case\nReasoning: The diff only changes a returned version string from 1.0.0 to 1.0.1, not a dependency manifest or dependency pin."}

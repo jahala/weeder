@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/blocked-tend2-52b97e43ce.md", "sha256": "289bcfd2bc90caee6a7fafd424b5a97f9a0fca918563f5ac92146f8983798b86"}
+{"type": "answer", "answer": "Answered packet SHA-256: 289bcfd2bc90caee6a7fafd424b5a97f9a0fca918563f5ac92146f8983798b86\nVerdict: false-positive\nReasoning: The flagged values are CSS class-like identifiers, not secret-looking credentials, and no diff evidence shows an actual key or credential was added."}

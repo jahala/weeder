@@ -1,2 +1,2 @@
-{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/blocked-pleach-624529b3a9.md", "sha256": "396a839c680aff768a356de60174201f39839c91159d781701147e99fb44ea37"}
-{"type": "answer", "answer": "Answered packet SHA-256: 396a839c680aff768a356de60174201f39839c91159d781701147e99fb44ea37\nVerdict: false-positive\nReasoning: The added private-key text is a regex pattern and test fixture delimiter, not an actual private key block or credential material."}
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/blocked-pleach-624529b3a9.md", "sha256": "eb92b02fb3e0280edb9debc9e6a0f6f7ab0c7031a4e6746ff3b87c87a47e7d11"}
+{"type": "answer", "answer": "Answered packet SHA-256: eb92b02fb3e0280edb9debc9e6a0f6f7ab0c7031a4e6746ff3b87c87a47e7d11\nVerdict: false-positive\nReasoning: The added private-key text is a regex pattern and a test fixture for detecting secrets, not an actual private key or credential added to the codebase."}

@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a07592-2a72-7973-bdd3-c8ba0cf246ca"}
+{"type":"thread.started","thread_id":"01a07604-fc5e-7241-8dd7-57e8618bd9e4"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 7df6434dd0b52bde1967e4bf3edbf2e486d3d28f3b2f6e7b261c086a2ddf81c8\nVerdict: true-positive\nReasoning: The deleted test and its assertions specifically enforced the paths-only tilth_read schema, and this diff reintroduces singular path support, leaving that behavior unwatched."}}
-{"type":"turn.completed","usage":{"input_tokens":25405,"cached_input_tokens":20864,"output_tokens":246,"reasoning_output_tokens":147}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 141cece5be56a5b4fafdc524d6cfbcaee689c077a9db1af24a636a4fea9a15b8\nVerdict: true-positive\nReasoning: The deleted test directly asserted the paths-only schema contract, and the change reintroduced singular path and removed required paths, so real coverage and assertions were weakened."}}
+{"type":"turn.completed","usage":{"input_tokens":25524,"cached_input_tokens":20864,"output_tokens":203,"reasoning_output_tokens":111}}

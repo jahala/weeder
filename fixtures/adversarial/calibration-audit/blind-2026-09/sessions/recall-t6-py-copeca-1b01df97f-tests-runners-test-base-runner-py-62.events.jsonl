@@ -1,2 +1,0 @@
-{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-t6-py-copeca-1b01df97f-tests-runners-test-base-runner-py-62.md", "sha256": "6b45f3f579c09d9728fb9969eebd716b999aca3b4304d2db5da46cc893fd0da2"}
-{"type": "answer", "answer": "Answered packet SHA-256: 6b45f3f579c09d9728fb9969eebd716b999aca3b4304d2db5da46cc893fd0da2\nVerdict: not-a-case\nReasoning: The pytest.raises assertion still names InvokeError and matches arg_map; only the test method parameter changed from self to Exception."}

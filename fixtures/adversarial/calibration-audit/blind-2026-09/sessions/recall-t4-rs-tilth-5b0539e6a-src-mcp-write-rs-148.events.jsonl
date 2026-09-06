@@ -1,2 +1,2 @@
-{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-t4-rs-tilth-5b0539e6a-src-mcp-write-rs-148.md", "sha256": "1b37b2fa146511d8dc66a8d758396ca6cdabada5869a9708e65240d39cfa0c97"}
-{"type": "answer", "answer": "Answered packet SHA-256: 1b37b2fa146511d8dc66a8d758396ca6cdabada5869a9708e65240d39cfa0c97\nVerdict: miss\nReasoning: The planted site widens a race-test deadline to 10 seconds, but weed only reported an unrelated S2 finding in another file."}
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t4-rs-tilth-5b0539e6a-src-mcp-write-rs-148.md", "sha256": "32db18f829726169a7617e22b99c8df9c5add593c83deffedf8877040e866233"}
+{"type": "answer", "answer": "Answered packet SHA-256: 32db18f829726169a7617e22b99c8df9c5add593c83deffedf8877040e866233\nVerdict: miss\nReasoning: The test deadline uses Duration::from_secs(10), matching the planted wait widening, and weed only reported S2 in another file."}

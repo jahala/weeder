@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a075ed-fc12-7a31-b7eb-702068459b62"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: acceptable\nReasoning: T2 correctly saw assertions removed, but they covered the old per-worker cwd hooks design, and the new shared CODEX_HOME behavior is tested in replacement coverage."}}
+{"type":"turn.completed","usage":{"input_tokens":37292,"cached_input_tokens":20864,"output_tokens":181,"reasoning_output_tokens":92}}

@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a075ee-077a-7b81-8944-aaec68b37053"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: true-positive\nReasoning: The TODOs were real production markers for unverified tool-call parsing, and shipping partial extraction weakened provider behavior rather than merely creating harmless review friction."}}
+{"type":"turn.completed","usage":{"input_tokens":37293,"cached_input_tokens":20864,"output_tokens":200,"reasoning_output_tokens":113}}

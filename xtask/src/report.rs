@@ -84,6 +84,11 @@ pub struct Outcome {
     pub tally: Tally,
     pub refusals: usize,
     pub ships: bool,
+    /// How many blocked commits count against the bar once every
+    /// `false-positive` a blind re-grade recorded is taken as true. It is never
+    /// below `tally.against_the_bar()`, and the two are equal where no blind
+    /// re-grade has read a block back.
+    pub floor: usize,
 }
 
 impl<'a> Report<'a> {
@@ -140,7 +145,38 @@ impl<'a> Report<'a> {
             tally,
             refusals: self.refusals(),
             ships: share < BAR && self.refusals() == 0 && self.load_bearing_intact(),
+            floor: self.floor(),
         }
+    }
+
+    /// The verdict's floor: the blocked commits that count against the bar when
+    /// the second party is believed over the ledger wherever the two disagree.
+    ///
+    /// A block counts if the ledger called it a false positive, if nobody
+    /// classified it, or if a blind re-grade called it one. Nothing here reads
+    /// the sighted re-grade: an auditor who saw the class before judging hands
+    /// the builder's own answer back, and a floor built from that would move
+    /// nothing.
+    fn floor(&self) -> usize {
+        let regraded = self.audit.blind_false_positives();
+        let mut count = 0;
+        for repo in self.repos {
+            for blocked in &repo.blocked {
+                let ledger = self
+                    .ledger
+                    .get(&repo.name, &blocked.sha)
+                    .map(|judgement| judgement.classification);
+                let against = matches!(ledger, None | Some(Classification::FalsePositive));
+                if against
+                    || regraded
+                        .iter()
+                        .any(|row| row.names(&repo.name, &blocked.sha))
+                {
+                    count += 1;
+                }
+            }
+        }
+        count
     }
 
     pub fn render(&self) -> String {
@@ -194,14 +230,11 @@ impl<'a> Report<'a> {
                 },
                 self.audit.sight(),
             );
-            match (self.audit.pending(), &self.audit.samples) {
-                (Some(pending), _) => {
-                    let _ = write!(
-                        verdict,
-                        "The classification under that number is the builder's own, and {pending}. The verdict stands as provisional until an agreement of {:.0} percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing.\n\n",
-                        crate::audit::AGREEMENT_BAR,
-                    );
-                }
+            let mut after = match (self.audit.pending(), &self.audit.samples) {
+                (Some(pending), _) => format!(
+                    "The classification under that number is the builder's own, and {pending}. The verdict stands as provisional until an agreement of {:.0} percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing.",
+                    crate::audit::AGREEMENT_BAR,
+                ),
                 (None, Some(samples)) => {
                     let read: Vec<String> = samples
                         .iter()
@@ -214,15 +247,19 @@ impl<'a> Report<'a> {
                             )
                         })
                         .collect();
-                    let _ = write!(
-                        verdict,
-                        "A second party re-graded the classification and {} records the agreement: {}. That is what took the qualification off this sentence.\n\n",
+                    format!(
+                        "A second party re-graded the classification and {} records the agreement: {}. That is what took the qualification off this sentence.",
                         self.audit.label,
                         read.join(", "),
-                    );
+                    )
                 }
-                (None, None) => {}
+                (None, None) => String::new(),
+            };
+            if !after.is_empty() {
+                after.push(' ');
             }
+            after.push_str(&self.floor_sentence(outcome));
+            let _ = write!(verdict, "{after}\n\n");
         } else {
             let _ = write!(
                 verdict,
@@ -237,6 +274,7 @@ impl<'a> Report<'a> {
                 },
                 self.audit.sight(),
             );
+            let _ = write!(verdict, "{}\n\n", self.floor_sentence(outcome));
         }
         if !self.load_bearing_intact() {
             let _ = write!(
@@ -246,6 +284,36 @@ impl<'a> Report<'a> {
             );
         }
         verdict
+    }
+
+    /// The verdict's floor, in the paragraph after the verdict: what the pooled
+    /// block-level false-positive share becomes when every `false-positive` the
+    /// blind re-grade recorded is taken as true, printed beside the ledger's own
+    /// share.
+    ///
+    /// A reader who is handed one share has to take the classification behind it
+    /// on trust. Handed both, they can see how far the number can move under the
+    /// harshest reading anybody has written down, and decide on that. It is read
+    /// off the blind re-grade's own table, so a re-grade that reads more blocks
+    /// back moves this number by being written.
+    fn floor_sentence(&self, outcome: &Outcome) -> String {
+        let ledger = share(outcome.tally.against_the_bar(), outcome.judged);
+        let floor = share(outcome.floor, outcome.judged);
+        if !self.audit.blind_regraded_blocks() {
+            return format!(
+                "No blind re-grade has read a blocked commit back, so the floor under that share is the ledger's own {ledger:.2} percent, {} of {} commits judged.",
+                outcome.tally.against_the_bar(),
+                outcome.judged,
+            );
+        }
+        format!(
+            "The floor under that share is {floor:.2} percent, {} of the {} commits judged, with every `false-positive` verdict the blind re-grade in {} recorded taken as true; the ledger's own reading is {ledger:.2} percent, {} of the same {}. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table.",
+            outcome.floor,
+            outcome.judged,
+            self.audit.blind_labels(),
+            outcome.tally.against_the_bar(),
+            outcome.judged,
+        )
     }
 
     fn method(&self) -> String {

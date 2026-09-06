@@ -1,2 +1,0 @@
-{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-d1-py-tilth-49ccc86e9-benchmark-fixtures-setup-py.md", "sha256": "3c75523da188cd79df8e15cf4db4f5f2db257d4f6b337ee33d376fabd0c49061"}
-{"type": "answer", "answer": "Answered packet SHA-256: 3c75523da188cd79df8e15cf4db4f5f2db257d4f6b337ee33d376fabd0c49061\nVerdict: not-a-case\nReasoning: The planted site only changes an application health-check version string from 1.0.0 to 1.0.1, not a dependency manifest or dependency pin."}

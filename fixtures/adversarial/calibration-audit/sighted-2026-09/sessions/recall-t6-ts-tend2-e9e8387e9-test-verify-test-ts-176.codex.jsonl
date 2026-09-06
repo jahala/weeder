@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a075ee-96b9-7df1-84f8-9db45b25cda1"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: miss\nReasoning: The report says this T6 case was planted at test/verify.test.ts:176 and not reported, and its described shape matches weakening an error assertion by dropping the named error."}}
+{"type":"turn.completed","usage":{"input_tokens":37292,"cached_input_tokens":20864,"output_tokens":255,"reasoning_output_tokens":162}}

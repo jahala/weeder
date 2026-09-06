@@ -1,2 +1,0 @@
-{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/blocked-tend2-08529d5f56.md", "sha256": "e3720a2384e7b33f601dca2d07947105296ee703c6e00b57f09d42b61a3b49c6"}
-{"type": "answer", "answer": "Answered packet SHA-256: e3720a2384e7b33f601dca2d07947105296ee703c6e00b57f09d42b61a3b49c6\nVerdict: true-positive\nReasoning: The findings report wholesale deletion of many test files and thousands of cases, so the rule claim is true and coverage was materially weakened."}

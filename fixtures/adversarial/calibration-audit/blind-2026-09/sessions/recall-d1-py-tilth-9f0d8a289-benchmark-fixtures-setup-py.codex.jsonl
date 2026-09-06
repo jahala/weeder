@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07592-80c1-79d2-9e2b-3e8508feeed8"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 9246b78130c71b640efa2123cc296229d575bbaf33b026851ea93bb405227ec3\nVerdict: not-a-case\nReasoning: The setup.py diff only changes a reported application version string from 1.0.0 to 1.0.1, not a dependency pin or dependency manifest entry."}}
-{"type":"turn.completed","usage":{"input_tokens":22343,"cached_input_tokens":20864,"output_tokens":149,"reasoning_output_tokens":60}}

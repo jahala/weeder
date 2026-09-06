@@ -262,9 +262,32 @@ impl Bench {
         declaration: Option<&str>,
         samples: &[(&str, usize, usize)],
     ) -> PathBuf {
+        self.write_audit_regrade(name, declaration, samples, &[])
+    }
+
+    /// The same, with the re-grade's own blocked commit sample under it: a
+    /// repository, a commit and the class this auditor gave it. The verdict's
+    /// floor is drawn from those rows, so a suite that wants to move the floor
+    /// writes them.
+    pub fn write_audit_regrade(
+        &self,
+        name: &str,
+        declaration: Option<&str>,
+        samples: &[(&str, usize, usize)],
+        blocked: &[(&str, &str, &str)],
+    ) -> PathBuf {
         let path = self.path().join(name);
-        std::fs::write(&path, audit_text(declaration, samples))
-            .expect("the audit should be writable");
+        let mut text = audit_text(declaration, samples);
+        if !blocked.is_empty() {
+            text.push_str("\n## Blocked Commit Sample\n\n");
+            text.push_str("| Repo | Commit | Auditor verdict | Reasoning |\n|---|---|---|---|\n");
+            for (repo, sha, verdict) in blocked {
+                text.push_str(&format!(
+                    "| {repo} | `{sha}` | {verdict} | the auditor read the finding and the change |\n"
+                ));
+            }
+        }
+        std::fs::write(&path, text).expect("the audit should be writable");
         path
     }
 
@@ -479,6 +502,22 @@ pub fn blocking_repo() -> Repo {
 
     repo.write("tests/unit.rs", &suite(2));
     repo.commit("one case fewer");
+    repo
+}
+
+/// A repository whose last three commits each block, so a suite can classify
+/// them apart and watch a share and a floor come out different.
+pub fn three_blocking_commits() -> Repo {
+    let repo = Repo::init();
+    for file in ["alpha", "beta", "gamma"] {
+        repo.write(&format!("tests/{file}.rs"), &suite(3));
+    }
+    repo.write("src/lib.rs", "pub fn one() -> u32 {\n    1\n}\n");
+    repo.commit("the repository begins");
+    for file in ["alpha", "beta", "gamma"] {
+        repo.write(&format!("tests/{file}.rs"), &suite(2));
+        repo.commit(&format!("one case fewer in {file}"));
+    }
     repo
 }
 

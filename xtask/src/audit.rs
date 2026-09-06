@@ -55,6 +55,29 @@ impl Sample {
     }
 }
 
+/// One row of a re-grade's blocked commit sample: the case it re-graded and the
+/// class it gave that case, in its own words.
+///
+/// The verdict is kept as the file spells it, lowercased and hyphenated, because
+/// a re-grade may write a word this repository has no class for and the report
+/// would rather say so than round it to one.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Regraded {
+    pub repo: String,
+    /// The commit as the re-grade names it, which is usually an abbreviation.
+    pub sha: String,
+    pub verdict: String,
+}
+
+impl Regraded {
+    /// Whether this row is about the blocked commit a measurement holds. The
+    /// re-grade abbreviates the sha and the measurement does not, so the shorter
+    /// of the two has to be a prefix of the longer.
+    pub fn names(&self, repo: &str, sha: &str) -> bool {
+        self.repo == repo && (sha.starts_with(&self.sha) || self.sha.starts_with(sha))
+    }
+}
+
 /// Whether the auditor could see the builder's classification while judging.
 ///
 /// It is read from the file's own `Blind:` declaration and from nothing else:
@@ -79,6 +102,8 @@ pub struct Record {
     pub label: String,
     pub sight: Sight,
     pub samples: Vec<Sample>,
+    /// Every row of this re-grade's blocked commit sample, as it wrote them.
+    pub blocked: Vec<Regraded>,
 }
 
 impl Record {
@@ -226,6 +251,42 @@ impl Audit {
         }
         parts.join(" ")
     }
+
+    /// Every `false-positive` a blind re-grade recorded against a blocked
+    /// commit. It is what the verdict's floor is drawn from: the harshest
+    /// reading the repository has written down, with the second party believed
+    /// over the ledger wherever the two disagree.
+    ///
+    /// Only a re-grade that declared itself blind counts. A sighted auditor read
+    /// the class before judging, so a sighted `false-positive` is the builder's
+    /// own answer coming back, and a floor built out of it would say nothing.
+    pub fn blind_false_positives(&self) -> Vec<&Regraded> {
+        self.records
+            .iter()
+            .filter(|record| record.sight == Sight::Blind)
+            .flat_map(|record| record.blocked.iter())
+            .filter(|row| row.verdict == "false-positive")
+            .collect()
+    }
+
+    /// Whether any blind re-grade re-graded a blocked commit at all. A floor
+    /// drawn from no rows is the ledger's own share, and the report says which
+    /// of the two it is printing.
+    pub fn blind_regraded_blocks(&self) -> bool {
+        self.records
+            .iter()
+            .any(|record| record.sight == Sight::Blind && !record.blocked.is_empty())
+    }
+
+    /// The blind re-grades the floor was drawn from, as the report names them.
+    pub fn blind_labels(&self) -> String {
+        let blind: Vec<&Record> = self
+            .records
+            .iter()
+            .filter(|record| record.sight == Sight::Blind && !record.blocked.is_empty())
+            .collect();
+        named(&blind)
+    }
 }
 
 /// The files behind a list of re-grades, as the report names them.
@@ -307,6 +368,7 @@ fn gather(files: &[(PathBuf, String)], name_samples_by_file: bool) -> Audit {
             label: label.clone(),
             sight: declared_sight(&text),
             samples: samples(&text),
+            blocked: blocked_rows(&text),
         });
     }
     if records.is_empty() {
@@ -364,6 +426,56 @@ fn declared_sight(text: &str) -> Sight {
         }
     }
     Sight::Undeclared
+}
+
+/// The rows of the file's blocked commit sample: `| <repo> | <commit> |
+/// <verdict> | <reasoning> |`, under the heading that names it.
+///
+/// The heading is what bounds it, because the same file carries a recall sample
+/// whose rows are shaped differently and an agreement table whose rows are
+/// numbers. Inside it, a row counts when its second cell is a commit: that is
+/// what leaves the header and the rule under it where they are.
+fn blocked_rows(text: &str) -> Vec<Regraded> {
+    let mut rows = Vec::new();
+    let mut inside = false;
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if let Some(heading) = trimmed.strip_prefix("## ") {
+            inside = heading.to_ascii_lowercase().contains("blocked commit");
+            continue;
+        }
+        if !inside || !trimmed.starts_with('|') {
+            continue;
+        }
+        let cells: Vec<&str> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(str::trim)
+            .collect();
+        if cells.len() < 3 {
+            continue;
+        }
+        let repo = plain(cells[0]);
+        let sha = plain(cells[1]);
+        let verdict = plain(cells[2]).to_ascii_lowercase().replace(' ', "-");
+        if repo.is_empty() || sha.is_empty() || verdict.is_empty() {
+            continue;
+        }
+        if !sha.chars().all(|mark| mark.is_ascii_hexdigit()) {
+            continue;
+        }
+        rows.push(Regraded { repo, sha, verdict });
+    }
+    rows
+}
+
+/// One table cell without the marks markdown puts around a value.
+fn plain(cell: &str) -> String {
+    cell.trim()
+        .trim_matches('`')
+        .trim_matches('*')
+        .trim()
+        .to_string()
 }
 
 /// The samples in the agreement table: `| <sample> | <re-graded> | <agreed> |`,

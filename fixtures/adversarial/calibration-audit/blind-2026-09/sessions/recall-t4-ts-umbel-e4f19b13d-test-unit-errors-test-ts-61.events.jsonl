@@ -1,2 +1,0 @@
-{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-t4-ts-umbel-e4f19b13d-test-unit-errors-test-ts-61.md", "sha256": "0ab2aad1555cf5a3dc7c78b35f364a18b1b0eebf816e75d5333bfba3327bae17"}
-{"type": "answer", "answer": "Answered packet SHA-256: 0ab2aad1555cf5a3dc7c78b35f364a18b1b0eebf816e75d5333bfba3327bae17\nVerdict: miss\nReasoning: The diff widens the asserted waitedMs value from 5000 to 50000 at the planted line, matching T4, and weed reported no finding there."}

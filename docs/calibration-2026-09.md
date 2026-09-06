@@ -1,8 +1,8 @@
 # calibration: weed over real history, 2026-09
 
-weed ships as a gate, pending the independent re-grade: over 635 commits of real history in 5 repositories it blocked 25, of which 2 were block-level false positives, 0.31 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level, and the classification under it untrusted until a re-grade agrees at the bar. The re-grade behind it is a sighted one: docs/calibration-audit-2026-09.md declares `Blind: no`, so its auditor could read the builder's class beside each case before judging. The blind re-grade in docs/calibration-audit-blind-2026-09.md is under the bar, so no blind agreement stands behind this number yet.
+weed ships as a gate, pending the independent re-grade: over 635 commits of real history in 5 repositories it blocked 23, of which 7 were block-level false positives, 1.10 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level, and the classification under it untrusted until a re-grade agrees at the bar. The re-grade behind it is a sighted one: docs/calibration-audit-2026-09.md declares `Blind: no`, so its auditor could read the builder's class beside each case before judging. The blind re-grade in docs/calibration-audit-blind-2026-09.md is under the bar, so no blind agreement stands behind this number yet.
 
-The classification under that number is the builder's own, and the re-grade is under the 90 percent bar: blocked commits in docs/calibration-audit-blind-2026-09.md agrees on 45.0 percent of 20 cases, recall cases in docs/calibration-audit-blind-2026-09.md agrees on 60.0 percent of 20 cases. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing.
+The classification under that number is the builder's own, and the re-grade is under the 90 percent bar: blocked commits in docs/calibration-audit-blind-2026-09.md agrees on 70.0 percent of 20 cases. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing. The floor under that share is 1.10 percent, 7 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 1.10 percent, 7 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table.
 
 ## How this was measured
 
@@ -45,25 +45,23 @@ No `weed.toml` was passed and none was read: every rule ran at the level the cat
 
 No commit in the corpus carried a `weed.toml` of its own, so no repository moved a rule off the level above.
 
-## tilth, 200 commits judged, 13 blocked, 77 warned
+## tilth, 200 commits judged, 11 blocked, 79 warned
 
 The window ends at `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905`, fetched from `https://github.com/jahala/tilth.git`: the last 200 commits reaching it that are not merges, 200 of which have a parent to be judged against.
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
-| `11aef933c9` feat(list): consolidate tilth_files into tilth_list with directory-tree rendering | T1 | acceptable | src/mcp/tools/files.rs went, and its 8 cases with it; the tool it tested was consolidated into tilth_list in the same commit and the repository's test count rose by one, so the cases moved rather than vanished. A file of tests leaving the tree is worth a person's eye either way. |
-| `10bec56a41` test(search): assert only is_ok in no_scope_no_root_defaults_to_cwd — the substring assertion flakes when search surfaces its own source text (resolve_scope behavior is pinned in mod.rs unit tests) | T2 | true positive | the commit says what it did: the substring assertion in no_scope_no_root_defaults_to_cwd was dropped because it flaked, leaving a case that asserts only is_ok. That is a test that now passes whatever search returns. |
-| `96cd4b383b` fix(write): containment guard scope_root defaults to root; root-only writes succeed | T2 | true positive | a fix to the write containment guard also took an assert out of src/mcp/tools/search.rs, 3 assertions down to 2. Production behaviour changed and a check on it went in the same breath, which is the shape T2 exists for. |
-| `7684e99e86` fix(budget): adapt regression test to upstream API surface | T2 | true positive | the regression test was adapted to the upstream API: the expect that demanded truncation and the assertion on where the cut landed both went, 10 assertions down to 9. The test was moved to fit the code. |
-| `ab7f054b73` refactor(mcp): split tilth_read paths-only into its own PR | T1, T2 | true positive | tilth_read_schema_is_paths_only was deleted with its three asserts when the feature was split into another pull request, and the repository's test count fell by one. The schema it pinned is now held by nobody. |
-| `136e246d8e` feat(mcp): tilth_write — hash/overwrite/append modes (supersedes #124) | T1 | acceptable | src/mcp/tools/edit.rs and its one case were replaced by tilth_write in the same commit, and the repository gained 19 tests. The deletion is real and the coverage went up. |
-| `18eb6643ff` refactor(mcp): tighten module visibility and co-locate tests | T1, T2 | acceptable | 10 cases and 21 assertions left src/mcp/mod.rs to sit beside the modules they test, which is what the commit set out to do; the repository's test count did not move. |
-| `76d5d02d34` refactor(mcp): split server into modules | T1 | acceptable | src/mcp.rs was split into modules, so the file and its 17 cases are gone from that path and present at the new ones; the repository's test count did not move. weed judges a file at a time and cannot follow a split, so it reports one and a person reads it. |
-| `3ff87caf55` refactor(bloom): adopt fastbloom for BloomFilter implementation | T1, T2 | acceptable | the hand-rolled bloom filter was replaced by fastbloom, and test_bloom_filter_sizing went with the implementation it sized. The behaviour the case held is no longer in the tree. |
-| `59c87110ab` refactor(mcp): adopt percent-encoding crate for file:// URI decoding | T1, T2 | acceptable | percent_decode was replaced by the percent-encoding crate and percent_decode_basic went with it. The case tested code this commit deleted. |
-| `d422a325fc` refactor(install): fold entry style into ConfigFormat as JsonLocal variant | T2 | acceptable | one assert out of 66 went because the field it read, entry_style, was folded into ConfigFormat; the two cases that carried it were renamed and kept. The property is now held by the type. |
-| `5a4edbf5c5` search: extract bloom_walk, callee_query, scope from relational queries | T1, T2 | acceptable | bloom_walk, callee_query and scope were extracted into their own modules and their cases followed: 15 cases left callers.rs and callees.rs, and the repository gained four. The move is real and so is the report. |
-| `bd36a43637` index: drop inert SymbolIndex plumbing | T1 | acceptable | SymbolIndex and its six tests were dropped together as inert plumbing. Six cases leaving the tree is exactly the change a person should have to confirm was meant. |
+| `11aef933c9` feat(list): consolidate tilth_files into tilth_list with directory-tree rendering | T1 | false positive | T1 says src/mcp/tools/files.rs went with 8 cases and whatever it covered is now covered by nobody. The same commit adds src/mcp/tools/list.rs with 8 cases over the same ground, tool_files_empty_patterns_errors reappearing as tool_list_empty_patterns_errors and so on down the file. The count is right and the sentence under it is not. |
+| `10bec56a41` test(search): assert only is_ok in no_scope_no_root_defaults_to_cwd — the substring assertion flakes when search surfaces its own source text (resolve_scope behavior is pinned in mod.rs unit tests) | T2 | acceptable | T2 says src/mcp/tools/search.rs went from 3 assertions to 2, and it did. What went was a substring match on real search output, which the commit says flakes when search surfaces its own source text; resolve_scope's own unit tests still pin the refusal-versus-default behaviour, and the case still pins that tool_search propagates success. A test losing a check is worth a person's eye, and this one survives it. |
+| `96cd4b383b` fix(write): containment guard scope_root defaults to root; root-only writes succeed | T2 | acceptable | T2 says src/mcp/tools/search.rs went from 3 assertions to 2, and it did: the same change merged in beside the write containment fix, with the flaky substring match gone. The finding is about search.rs and not about the guard this commit repairs, and on search.rs the claim is true and the change was right. |
+| `7684e99e86` fix(budget): adapt regression test to upstream API surface | T2 | acceptable | T2 says src/budget.rs went from 10 assertions to 9, and it did: the cherry-picked case called apply_with_info, which exists only in the fork, and the assertion on where the cut landed went with the call. The regression it guards is still guarded, because a cut at zero leaves no x in the output and the case still demands one. |
+| `ab7f054b73` refactor(mcp): split tilth_read paths-only into its own PR | T1, T2 | true positive | T1 says a case left src/mcp/tools/definitions.rs, 3 down to 2, and T2 says 3 assertions went with it, 9 down to 6. Both are true, nothing in the change picks them up, and what they held was the paths-only tilth_read schema, which this commit reopens to a singular path. The schema is now pinned by nobody. |
+| `18eb6643ff` refactor(mcp): tighten module visibility and co-locate tests | T2 | false positive | T2 says 21 assertions went out of src/mcp/mod.rs, 29 down to 8, so the suite reports green over behaviour nobody is holding. The commit's own subject is co-locate tests, and every one of those assertions is in src/mcp/tools/mod.rs, files.rs and edit.rs in the same change. The count holds and the consequence does not. |
+| `3ff87caf55` refactor(bloom): adopt fastbloom for BloomFilter implementation | T1, T2 | acceptable | T1 and T2 say src/index/bloom.rs lost a case and 6 assertions, and it did. They exercised private fields of the hand-written BloomFilter this commit replaces with fastbloom, so there is nothing left for them to hold. A suite shrinking under a swapped implementation is exactly what a person should see. |
+| `59c87110ab` refactor(mcp): adopt percent-encoding crate for file:// URI decoding | T1, T2 | acceptable | T1 and T2 say src/mcp.rs lost a case and 4 assertions, 17 down to 16 and 31 down to 27, and it did. They pinned a hand-rolled percent decoder that this commit hands to the percent-encoding crate, so the behaviour they held is now the library's. |
+| `d422a325fc` refactor(install): fold entry style into ConfigFormat as JsonLocal variant | T2 | acceptable | T2 says src/install.rs went from 66 assertions to 65, and it did. The one that went checked the entry_style field this commit folds into ConfigFormat, and the JsonLocal match that replaces it is asserted in the same case. |
+| `5a4edbf5c5` search: extract bloom_walk, callee_query, scope from relational queries | T2 | false positive | T2 says 21 assertions went out of src/search/callers.rs, 33 down to 12, so the suite reports green over behaviour nobody is holding. The same commit creates bloom_walk.rs, callee_query.rs and scope.rs and puts 26 assertions in them. Nothing stopped being held. |
+| `bd36a43637` index: drop inert SymbolIndex plumbing | T1 | acceptable | T1 says src/index/symbol.rs went with 6 cases, and it did. SymbolIndex was allocated and threaded through the searches and never consulted, and this commit deletes the type; the cases exercised the dead allocator, so what they covered stopped existing in the same breath. A file of tests leaving the tree is worth reading either way. |
 
 ## pleach, 152 commits judged, 1 blocked, 21 warned
 
@@ -71,7 +69,7 @@ The window ends at `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9`, fetched from `htt
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
-| `624529b3a9` feat(loop): the hygiene gate — empty-diff, secrets, deletion tripwire (§E) | X1 | acceptable | the hygiene gate lands its own secret patterns and the fixtures that exercise them, including the access key id AWS prints in its own documentation. A credential-shaped literal really was added and no scanner can tell a fixture from a live key, so the block is the rule working and the remedy is an allowance; X1 has since learned that one string as a published example and reports it as a note. The finding on hygiene.ts:27 is weaker: that line is the regular expression describing a private key block, not a key. |
+| `624529b3a9` feat(loop): the hygiene gate — empty-diff, secrets, deletion tripwire (§E) | X1 | false positive | X1 says a private key block was added to src/core/hygiene.ts and to test/unit/hygiene.test.ts, and that a credential in a commit is a credential published. Both hits are the regular expression that pleach's own secret detector matches a private key header with, and its fixture. There is no credential to rotate. |
 
 ## tend2, 200 commits judged, 6 blocked, 22 warned
 
@@ -79,12 +77,12 @@ The window ends at `51035a5c827b1a8c2f49049f07487dcfac9036c6`, fetched from `htt
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
-| `067730ddd0` polish(audit): the obsolete-and-theater sweep — seven findings, all fixed | T2 | true positive | the byte comparison of dist/loop.js against the built bundle was dropped in the sweep, leaving only the banner check: 5 assertions down to 4. A freshness guard that no longer compares bytes cannot catch a stale commit, which is what the file's own comment says it is for. |
-| `3adc642ce1` polish(root): no asset folder in the root — maps carry their own renderer | T1 | false positive | the file declares two `it(` call sites before and after; one of them now sits inside a `for` over the sibling directories, so it runs once per directory. The reader counts statically declared cases and missed the generated one, so the claim that a case disappeared is not true. |
-| `bf2754689c` polish(cli): one orientation command, one asset convention (#102) | T1 | acceptable | test/season.test.ts and its four cases went when the season command was folded into one orientation command; the repository gained three cases. The command those tests covered is not there to be tested. |
-| `08529d5f56` sunset(v1): the legacy lane leaves the tree — @plotplot/tend2 ships tend2 only | T1 | acceptable | the v1 lane was sunset: 70 test files and some 2,400 cases left the tree in one commit, along with the workflows that ran them. A change of that size is the strongest case there is for a gate that stops and asks. |
-| `78fed73b0c` cleanup: bare necessities — killed-spike tree, skein prototype, root screenshots, v1-map parkland removed (all in git history; paid facet cache untouched on disk); superseded docs to docs/archive; docs/bridge restored after its drift-guard caught the move (load-bearing spec, not history) | T1 | acceptable | the killed spike tree and the skein prototype were removed with their 500 cases, and the workflow that built them changed with it. The deletion is deliberate and it is exactly what a person should sign. |
-| `52b97e43ce` feat(loop-hole): refusal hygiene — sanitized one-line reasons + child stderr (rate limits read as rate limits); .loop-scratch gitignored | X1 | false positive | both hits are `class="detail-meta__key">` and `class="journey-row__key">` in the renderer's html builder. The value is markup, not a credential, and X1 took the class attribute for an assignment. |
+| `067730ddd0` polish(audit): the obsolete-and-theater sweep — seven findings, all fixed | T2 | acceptable | T2 says test/renderer-fresh.test.ts went from 5 assertions to 4, and it did. The one that went demanded dist/loop.js and dist/loop.global.js be byte-identical, and this commit stops emitting the second file; the case still demands the GENERATED banner and the css header. An assertion cannot hold a file that is no longer built. |
+| `3adc642ce1` polish(root): no asset folder in the root — maps carry their own renderer | T1 | false positive | T1 says a case disappeared from test/renderer-fresh.test.ts, 2 declared down to 1, and that the behaviour it held is unwatched. The case was not deleted: it became a loop over the sibling directories, so the file runs one it() declaration over several inputs. The declaration count fell and the coverage did not. |
+| `bf2754689c` polish(cli): one orientation command, one asset convention (#102) | T1 | acceptable | T1 says test/season.test.ts went with 4 cases, and it did. The season command it tested is removed by the same commit, which folds orientation into one command with its own tests, so the cases went where the feature went. A suite leaving the tree is worth a person's eye. |
+| `08529d5f56` sunset(v1): the legacy lane leaves the tree — @plotplot/tend2 ships tend2 only | T1 | acceptable | T1 says forty-odd test files went with thousands of cases, and they did. This is the v1 sunset: 240 files and 94763 lines out, the adapters, the CLI and the core they tested leaving in the same commit and recoverable at the v1-final tag. Nothing is less covered afterwards because nothing they covered is still shipped, and a deletion this size is what a gate should stop a reader on. |
+| `78fed73b0c` cleanup: bare necessities — killed-spike tree, skein prototype, root screenshots, v1-map parkland removed (all in git history; paid facet cache untouched on disk); superseded docs to docs/archive; docs/bridge restored after its drift-guard caught the move (load-bearing spec, not history) | T1 | acceptable | T1 says the spikes/loop-hole test files went with their cases, and they did. The spike was killed: 50 of its non-test files go in the same commit, so the code under those cases left with them. |
+| `52b97e43ce` feat(loop-hole): refusal hygiene — sanitized one-line reasons + child stderr (rate limits read as rate limits); .loop-scratch gitignored | X1 | false positive | X1 says a secret-looking value was added, assigned to `detail-meta__key` and to `journey-row__key`. Both hits are class attributes in the renderer's html builder, and X1 read `class="...__key">` as an assignment. The value is markup. |
 
 ## copeca, 25 commits judged, 1 blocked, 7 warned
 
@@ -92,7 +90,7 @@ The window ends at `fc9c5b9e5f34085755c10746f1d46fd46edf2945`, fetched from `htt
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
-| `70d669542a` Audit remediation, corpus 16→52, multi-CLI runners + OSS publishing prep | X1 | acceptable | the commit lands publishing workflows, which is what C1 watches and what would have blocked it on its own. |
+| `70d669542a` Audit remediation, corpus 16→52, multi-CLI runners + OSS publishing prep | X1 | false positive | X1 says a secret-looking value was added, assigned to `key`, in src/copeca/results/signing.py. The line is `key = serialization.load_pem_public_key(pem)`: a local holding the result of a call inside a public-key loader. Nothing was published and there is nothing to rotate. |
 
 ## umbel, 58 commits judged, 4 blocked, 13 warned
 
@@ -100,33 +98,33 @@ The window ends at `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d`, fetched from `htt
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
-| `89c088bc08` fix(test): stop reaping every tmux session on the machine (#58) | T2 | acceptable | the test stopped running `tmux kill-server`, which was reaping every session on the machine, and reaches the same catch path through an empty socket directory instead; one assertion of eighteen went with the teardown it no longer does. |
-| `059b4c4677` fix(codex): deliver hooks via global CODEX_HOME so worktree workers fire Stop (#34) | T2 | acceptable | the file was refactored onto a `launch()` helper: 33 assertions down to 30 while the cases went from 22 to 23. The assertions that went were the repeated construction the helper now does once. |
-| `75523a16a3` feat(opencode): add OpenCode provider (bring-any-model lane) (#18) | S1 | true positive | `TODO(opencode): verify tool-call part shape against a real tool-using transcript` shipped in src/core/providers/opencode.ts. The parser's field extraction is admitted to be unverified in the file that does it. |
-| `cc3cc0c37c` feat(mcp): agent-context Phase 1 — actions/diff/read-truncate (#9) | S1 | true positive | two work markers shipped in the codex and gemini providers, each saying the tool-call shape has not been checked against a real transcript. That is unfinished work in production code, named by the author. |
+| `89c088bc08` fix(test): stop reaping every tmux session on the machine (#58) | T2 | acceptable | T2 says test/integration/tmux.test.ts went from 18 assertions to 17, and it did. The one that went was `expect(Array.isArray(sessions)).toBe(true)` beside a `toEqual([])` that already implies it; the case now runs the adapter in a child process against an empty socket directory rather than killing every tmux server on the machine. It checks the same thing and destroys less. |
+| `059b4c4677` fix(codex): deliver hooks via global CODEX_HOME so worktree workers fire Stop (#34) | T2 | acceptable | T2 says test/unit/providers/codex.test.ts went from 33 assertions to 30, and it did. The ones that went pinned hooks.json in the worker's own cwd, which this commit replaces with a shared CODEX_HOME, and the replacement design is asserted in the same file and in two more test files the commit adds. |
+| `75523a16a3` feat(opencode): add OpenCode provider (bring-any-model lane) (#18) | S1 | true positive | S1 says a TODO reached production code at src/core/providers/opencode.ts. It is there, it reads `verify tool-call part shape against a real tool-using transcript and refine field extraction`, and the comment above it says the shapes are inferred. Unfinished parsing shipped as behaviour, which is what S1 is for. |
+| `cc3cc0c37c` feat(mcp): agent-context Phase 1 — actions/diff/read-truncate (#9) | S1 | true positive | S1 says a TODO reached production code at src/core/providers/codex.ts and at src/core/providers/gemini.ts. Both are there, and both say the tool-call event shape is unverified against a real transcript; the file's own comment admits tool extraction may be partial. The markers name work that did not happen before the code shipped. |
 
 ## Totals
 
 | Repo | Commits judged | Blocked | Warned | True positive | Acceptable | False positive | False-positive share |
 |---|---|---|---|---|---|---|---|
-| tilth | 200 | 13 | 77 | 4 | 9 | 0 | 0.00% |
-| pleach | 152 | 1 | 21 | 0 | 1 | 0 | 0.00% |
-| tend2 | 200 | 6 | 22 | 1 | 3 | 2 | 1.00% |
-| copeca | 25 | 1 | 7 | 0 | 1 | 0 | 0.00% |
+| tilth | 200 | 11 | 79 | 1 | 7 | 3 | 1.50% |
+| pleach | 152 | 1 | 21 | 0 | 0 | 1 | 0.66% |
+| tend2 | 200 | 6 | 22 | 0 | 4 | 2 | 1.00% |
+| copeca | 25 | 1 | 7 | 0 | 0 | 1 | 4.00% |
 | umbel | 58 | 4 | 13 | 2 | 2 | 0 | 0.00% |
-| **pooled** | **635** | **25** | **140** | **7** | **16** | **2** | **0.31%** |
+| **pooled** | **635** | **23** | **142** | **3** | **13** | **7** | **1.10%** |
 
-The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 0.31 percent of 635 commits, and 0 commits weed could not judge.
+The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 1.10 percent of 635 commits, and 0 commits weed could not judge.
 
-Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 204 of them at block level still, 69 at warn level, 1 at note level and 58 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files.
+Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 182 of them at block level still, 78 at warn level, 1 at note level and 71 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files; 9 moved from T1 at block level to T5 at warn level, all of them on test files.
 
-Too few commits to carry a share of their own, reported and not judged alone: copeca (25 commits, 0.00 percent). Their commits and their false positives are both in the pooled total.
+Too few commits to carry a share of their own, reported and not judged alone: copeca (25 commits, 4.00 percent). Their commits and their false positives are both in the pooled total.
 
 ## What the rules moved since the first run
 
 A rule that splits in two is supposed to take friction off the gate while keeping the finding. Until the same files are read twice that is a claim. Every file whose answer changed is here with the rule that refused it, the kind weed gives the file, and the loudest thing weed says about it now.
 
-199 of the first run's block-level findings are refused by the same rule at the same level and are left out of this table; the 133 whose answer changed are all in it.
+177 of the first run's block-level findings are refused by the same rule at the same level and are left out of this table; the 155 whose answer changed are all in it.
 
 | Repo | Commit | File | Kind | Blocked then by | Says now | At |
 |---|---|---|---|---|---|---|
@@ -182,9 +180,28 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 | pleach | `df42a0bffe` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tend2 | `07931a6742` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tend2 | `08529d5f56` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
+| tend2 | `08529d5f56` | `tests/bash/builtins.sh` | test | T1 | nothing | nothing |
+| tend2 | `08529d5f56` | `tests/bash/custom-verb-fallback.sh` | test | T1 | nothing | nothing |
+| tend2 | `08529d5f56` | `tests/bash/fixtures/builtins-fixture.tend.html` | test | T1 | T5 | warn |
+| tend2 | `08529d5f56` | `tests/bash/fixtures/fallback-fixture.tend.html` | test | T1 | T5 | warn |
+| tend2 | `08529d5f56` | `tests/bash/fixtures/run-fixture.tend.html` | test | T1 | T5 | warn |
+| tend2 | `08529d5f56` | `tests/bash/fixtures/whitespace-marker-fixture.tend.html` | test | T1 | T5 | warn |
+| tend2 | `08529d5f56` | `tests/bash/run-verb.sh` | test | T1 | nothing | nothing |
+| tend2 | `08529d5f56` | `tests/bash/whitespace-marker.sh` | test | T1 | nothing | nothing |
+| tend2 | `08529d5f56` | `tests/fixtures/audit-emit/non-discriminating/docs/tend/features/__fixture__.tend.html` | test | T1 | T5 | warn |
+| tend2 | `08529d5f56` | `tests/fixtures/audit-emit/non-discriminating/unit.mjs` | test | T1 | T5 | warn |
+| tend2 | `08529d5f56` | `tests/fixtures/audit-emit/passing/docs/tend/features/__fixture__.tend.html` | test | T1 | T5 | warn |
+| tend2 | `08529d5f56` | `tests/fixtures/audit-emit/passing/unit.mjs` | test | T1 | T5 | warn |
+| tend2 | `08529d5f56` | `tests/fixtures/audit-emit/trivial-recipe/docs/tend/features/__fixture__.tend.html` | test | T1 | T5 | warn |
 | tend2 | `1e39b91c5f` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tend2 | `40875df2c4` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tend2 | `78fed73b0c` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
+| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/cluster-fixture.ts` | test | T1 | nothing | nothing |
+| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/extract.spec.ts` | test | T1 | nothing | nothing |
+| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/facet-theme-fixtures.ts` | test | T1 | nothing | nothing |
+| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/fixtures.ts` | test | T1 | nothing | nothing |
+| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/helpers.ts` | test | T1 | nothing | nothing |
+| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/synthesis-fixtures.ts` | test | T1 | nothing | nothing |
 | tend2 | `e6f974bd1c` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tend2 | `f0a0adf343` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tilth | `088f58ca22` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
@@ -198,7 +215,8 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 | tilth | `1248c0e594` | `.github/workflows/dependency-review.yml` | workflow | C1 | C3 | warn |
 | tilth | `1248c0e594` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
 | tilth | `1248c0e594` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| tilth | `18eb6643ff` | `src/mcp/mod.rs` | prod | T2 | T1 | block |
+| tilth | `136e246d8e` | `src/mcp/tools/edit.rs` | prod | T1 | nothing | nothing |
+| tilth | `18eb6643ff` | `src/mcp/mod.rs` | prod | T1 | T2 | block |
 | tilth | `1dfc5d26ba` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tilth | `1dfc5d26ba` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
 | tilth | `2dbcbc6eb4` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
@@ -211,8 +229,10 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 | tilth | `552bc2a0fe` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
 | tilth | `552bc2a0fe` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
 | tilth | `59c87110ab` | `src/mcp.rs` | prod | T2 | T1 | block |
-| tilth | `5a4edbf5c5` | `src/search/callers.rs` | prod | T2 | T1 | block |
+| tilth | `5a4edbf5c5` | `src/search/callees.rs` | prod | T1 | nothing | nothing |
+| tilth | `5a4edbf5c5` | `src/search/callers.rs` | prod | T1 | T2 | block |
 | tilth | `6c75ff025f` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
+| tilth | `76d5d02d34` | `src/mcp.rs` | prod | T1 | nothing | nothing |
 | tilth | `8da08f6e38` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
 | tilth | `8da08f6e38` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
 | tilth | `91d213abdc` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
@@ -268,14 +288,21 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 
 Every block whose claim was not true of the change, under the rule that made it. This is the list the rule loops work from.
 
-**T1**, one block
+**T1**, 2 blocks
 
-- tend2 `3adc642ce1` polish(root): no asset folder in the root — maps carry their own renderer, the file declares two `it(` call sites before and after; one of them now sits inside a `for` over the sibling directories, so it runs once per directory. The reader counts statically declared cases and missed the generated one, so the claim that a case disappeared is not true.
+- tilth `11aef933c9` feat(list): consolidate tilth_files into tilth_list with directory-tree rendering, T1 says src/mcp/tools/files.rs went with 8 cases and whatever it covered is now covered by nobody. The same commit adds src/mcp/tools/list.rs with 8 cases over the same ground, tool_files_empty_patterns_errors reappearing as tool_list_empty_patterns_errors and so on down the file. The count is right and the sentence under it is not.
+- tend2 `3adc642ce1` polish(root): no asset folder in the root — maps carry their own renderer, T1 says a case disappeared from test/renderer-fresh.test.ts, 2 declared down to 1, and that the behaviour it held is unwatched. The case was not deleted: it became a loop over the sibling directories, so the file runs one it() declaration over several inputs. The declaration count fell and the coverage did not.
 
-**X1**, 2 blocks
+**T2**, 2 blocks
 
-- tend2 `52b97e43ce` feat(loop-hole): refusal hygiene — sanitized one-line reasons + child stderr (rate limits read as rate limits); .loop-scratch gitignored, both hits are `class="detail-meta__key">` and `class="journey-row__key">` in the renderer's html builder. The value is markup, not a credential, and X1 took the class attribute for an assignment.
-- copeca `70d669542a` Audit remediation, corpus 16→52, multi-CLI runners + OSS publishing prep, the hit is `key = serialization.load_pem_public_key(pem)` in the signing module: a local variable named key holding the result of a call, not a credential.
+- tilth `18eb6643ff` refactor(mcp): tighten module visibility and co-locate tests, T2 says 21 assertions went out of src/mcp/mod.rs, 29 down to 8, so the suite reports green over behaviour nobody is holding. The commit's own subject is co-locate tests, and every one of those assertions is in src/mcp/tools/mod.rs, files.rs and edit.rs in the same change. The count holds and the consequence does not.
+- tilth `5a4edbf5c5` search: extract bloom_walk, callee_query, scope from relational queries, T2 says 21 assertions went out of src/search/callers.rs, 33 down to 12, so the suite reports green over behaviour nobody is holding. The same commit creates bloom_walk.rs, callee_query.rs and scope.rs and puts 26 assertions in them. Nothing stopped being held.
+
+**X1**, 3 blocks
+
+- pleach `624529b3a9` feat(loop): the hygiene gate — empty-diff, secrets, deletion tripwire (§E), X1 says a private key block was added to src/core/hygiene.ts and to test/unit/hygiene.test.ts, and that a credential in a commit is a credential published. Both hits are the regular expression that pleach's own secret detector matches a private key header with, and its fixture. There is no credential to rotate.
+- tend2 `52b97e43ce` feat(loop-hole): refusal hygiene — sanitized one-line reasons + child stderr (rate limits read as rate limits); .loop-scratch gitignored, X1 says a secret-looking value was added, assigned to `detail-meta__key` and to `journey-row__key`. Both hits are class attributes in the renderer's html builder, and X1 read `class="...__key">` as an assignment. The value is markup.
+- copeca `70d669542a` Audit remediation, corpus 16→52, multi-CLI runners + OSS publishing prep, X1 says a secret-looking value was added, assigned to `key`, in src/copeca/results/signing.py. The line is `key = serialization.load_pem_public_key(pem)`: a local holding the result of a call inside a public-key loader. Nothing was published and there is nothing to rotate.
 
 ## Precision and the allowance rate
 
@@ -283,10 +310,10 @@ Precision is the share of blocks that were not false positives. The allowance ra
 
 | Repo | Block-level precision | True positives | Allowance rate |
 |---|---|---|---|
-| tilth | 100.0% | 4 | 0.0 per 100 commits (guard not installed) |
-| pleach | 100.0% | 0 | 0.0 per 100 commits (guard not installed) |
-| tend2 | 66.7% | 1 | 0.0 per 100 commits (guard not installed) |
-| copeca | 100.0% | 0 | 0.0 per 100 commits (guard not installed) |
+| tilth | 72.7% | 1 | 0.0 per 100 commits (guard not installed) |
+| pleach | 0.0% | 0 | 0.0 per 100 commits (guard not installed) |
+| tend2 | 66.7% | 0 | 0.0 per 100 commits (guard not installed) |
+| copeca | 0.0% | 0 | 0.0 per 100 commits (guard not installed) |
 | umbel | 100.0% | 2 | 0.0 per 100 commits (guard not installed) |
 
 No repository wrote an allowance before it installed guard.
@@ -298,9 +325,9 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 | Rule | Blocks | True positive | Acceptable | False positive | False-positive share of its blocks |
 |---|---|---|---|---|---|
 | S1 | 2 | 2 | 0 | 0 | 0.00% |
-| T1 | 13 | 1 | 11 | 1 | 7.69% |
-| T2 | 12 | 5 | 7 | 0 | 0.00% |
-| X1 | 3 | 0 | 1 | 2 | 66.67% |
+| T1 | 9 | 1 | 6 | 2 | 22.22% |
+| T2 | 12 | 1 | 9 | 2 | 16.67% |
+| X1 | 3 | 0 | 0 | 3 | 100.00% |
 
 
 <!-- recall:begin -->

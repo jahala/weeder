@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a075ee-28c2-7760-8721-2b14dd284425"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: miss\nReasoning: The report says hclwrite/tokens.go was planted with an import of integrationtest, matching D2's forbidden-boundary shape, and lists it under planted-but-not-reported misses."}}
+{"type":"turn.completed","usage":{"input_tokens":37288,"cached_input_tokens":20864,"output_tokens":222,"reasoning_output_tokens":127}}
