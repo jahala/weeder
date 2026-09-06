@@ -149,6 +149,14 @@ What worked, so it is on record: the spawn, send, wait, read, kill lifecycle beh
 
 **Fix.** The same fix as P8: the collector skips ignored paths and says so. Until then the map tells workers to keep scratch under `$TMPDIR`.
 
+### P11. A file written outside the worktree kills the delivery
+
+**Reproduction.** A worker writes `/tmp/weed-bite-probe/probe.sh` through its editor, deletes it, finishes. `stage()` receives the absolute path, runs `git ls-files --others --exclude-standard --cached -- /tmp/weed-bite-probe/probe.sh` inside the worktree, git exits 128 with "Invalid path '/private/tmp/weed-bite-probe': No such file or directory", `gitMust` raises, the node fails after zero attempts and the worktree is removed.
+
+**Impact.** The bite node: 36 minutes of an opus worker with all three checks stamped, gone; recovered from its transcript.
+
+**Fix.** With P8: keep only the paths under the worktree that git does not ignore, and list the rest in the receipt. A path the worker touched outside the repository is information, never a reason to destroy the repository's copy of the work.
+
 What worked: `pleach validate` turns a map's `## Needs` edges into waves with no hand editing; the marker, hygiene and smoke ladder ran in order on every node; receipts froze the facts at classify time and named the failing gate and every reason; quarantine kept failed work; `pleach land` ran the land gate on the merged stack and fast-forwarded the branch; the journal fed `tend2 watch` and `tend2 next` with no configuration; the provider-diversity check refused nothing it should have allowed. Timings for the record: core, codex, 2 attempts, 6 m 21 s; sarif, claude/opus, 1 attempt, 13 m, smoke and codex audit green first pass.
 
 ## tend2, for context

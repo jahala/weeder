@@ -22,6 +22,6 @@ This loop's pleach node is cast to a provider other than the one that built cali
 
 ## Tried
 - 2026-09-05 shaped from cape-town's binding checks; the owner may take the auditor's seat instead of a second provider, and the script does not care which
-- 2026-09-06 conductor: the pleach running these nodes collects `.loop-scratch/` into the delivery and the hygiene gate judges it with `weed check --strict` (dogfood P8 and P10), so keep scratch under `$TMPDIR`, trash anything left under `.loop-scratch/` before you finish, and never leave a credential-shaped string, even a quoted one, in a file that will be collected
+- 2026-09-06 conductor: the pleach running these nodes stages every path the Write and Edit tools touched, wherever it is. A path outside this worktree (under `$TMPDIR` or `/tmp`) makes the collector ask git about a file it cannot see, which kills the delivery and removes the worktree (dogfood P8, P11); `.loop-scratch/` is collected and judged by the hygiene gate (P10). So: never use the Write or Edit tool outside this worktree; write scratch outside it only through the shell; leave `.loop-scratch/` empty before you finish; and never leave a credential-shaped string, even a quoted one, in a file that will be collected
 </script>
 <script src="loop.js"></script>
