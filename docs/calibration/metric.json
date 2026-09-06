@@ -1,0 +1,47 @@
+{
+  "bar_percent": 2.0,
+  "blocked": 71,
+  "commits_judged": 635,
+  "false_positives": 9,
+  "metric": "block-level false-positive share across the calibration repositories",
+  "repos": [
+    {
+      "blocked": 5,
+      "commits_judged": 25,
+      "false_positives": 4,
+      "repo": "copeca",
+      "share_percent": 16.0
+    },
+    {
+      "blocked": 7,
+      "commits_judged": 152,
+      "false_positives": 1,
+      "repo": "pleach",
+      "share_percent": 0.66
+    },
+    {
+      "blocked": 11,
+      "commits_judged": 200,
+      "false_positives": 2,
+      "repo": "tend2",
+      "share_percent": 1.0
+    },
+    {
+      "blocked": 36,
+      "commits_judged": 200,
+      "false_positives": 0,
+      "repo": "tilth",
+      "share_percent": 0.0
+    },
+    {
+      "blocked": 12,
+      "commits_judged": 58,
+      "false_positives": 2,
+      "repo": "umbel",
+      "share_percent": 3.45
+    }
+  ],
+  "share_percent": 1.42,
+  "source": "docs/calibration-2026-09.md",
+  "verdict": "ship"
+}

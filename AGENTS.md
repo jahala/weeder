@@ -13,6 +13,7 @@ src/faces/     the CLI subcommands: check, scan, guard, bite, hook, rules
 tests/         integration tests that drive the real `weed` binary on real git repositories in temp dirs (assert_cmd + tempfile); tests/common/ holds the fixture harness
 fixtures/adversarial/<RULE>/<lang>/{fire,silent}/{before,after}/   one minimal repo history per rule per language: `before/` is committed as HEAD, `after/` is the working tree; a file `after/.weed-commit` carries the commit message (for trailers) and is never copied. A scan rule judges one state, so its fixture carries `before/` alone and the tree is left as `before/` committed it
 schemas/       vendored official schemas (sarif-schema-2.1.0.json)
+xtask/         weed's own measurements, a workspace member so they judge with the core the binary ships: `cargo xtask calibrate` writes docs/calibration-2026-09.md, `cargo xtask suppressions` counts the allowances each repository wrote
 scripts/check/ evidence scripts a loop cites; run.sh is the runner tend2 verify uses
 scripts/proof/ evidence that starts a real agent session and writes what happened into docs/proof-2026-09.md
 docs/          sarif.md · pleach.md · tend2-seam.md · calibration-2026-09.md · proof-2026-09.md · dogfood.md · dogfood/<loop>.md · tend2/ (the map)
@@ -46,7 +47,7 @@ Dependency direction is weed's own doctrine and its D2 rule enforces it on itsel
 ## Toolchain
 
 ```
-cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
+cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace
 bash scripts/check/run.sh tests/<name>.rs     # one evidence file, the way the verifier runs it
 tend2 next docs/tend2                          # where things stand
 ```

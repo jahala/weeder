@@ -5,6 +5,10 @@
 set -euo pipefail
 evidence="${1:?evidence path required}"
 case "$evidence" in
+  xtask/tests/*.rs)
+    name="$(basename "$evidence" .rs)"
+    exec cargo test --package xtask --test "$name" -- --nocapture
+    ;;
   tests/*.rs)
     name="$(basename "$evidence" .rs)"
     exec cargo test --test "$name" -- --nocapture
