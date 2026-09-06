@@ -1,150 +1,142 @@
 //! The repositories the campaign reads, and the working copy it reads them in.
 //!
-//! Nothing here writes to a repository weed did not make. Each source is cloned
-//! into a cache directory under the temporary directory, the clone is what gets
-//! checked out and mutated, and the source is only ever read from.
+//! The corpus is the one calibration judges. `docs/calibration/corpus.toml`
+//! names each repository by something `git fetch` can read and by the full sha
+//! its window ends at, and this campaign walks the window that ends at that
+//! sha. The pin is what makes recall a measurement rather than a reading: a
+//! branch keeps moving, and a campaign that plants its cases in "whatever the
+//! branch says today" reports a different miss list tomorrow over what is
+//! nominally one corpus.
 //!
-//! The five garden repositories are the corpus calibration measures precision
-//! on, so recall measures the same code. They carry no Go between them, and weed
-//! judges Go, so the Go column is measured on two Go projects pinned by commit:
-//! real merged history, read the same way, named in the report as what they are.
+//! The garden five write no Go between them and weed judges Go, so
+//! `docs/calibration/corpus-go.toml` pins two Go projects the same way, read
+//! exactly as the five are. Any other corpus file is read with `--corpus`,
+//! which is how the suites measure a history they built themselves.
+//!
+//! Nothing here writes to a source repository: a fetch runs `upload-pack` over
+//! there and takes objects away, and every checkout and every mutation happens
+//! in a clone under the cache directory.
 
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use super::git;
 use super::source::Language;
+use crate::corpus::Repo;
 
-/// Where a source's history comes from.
-#[derive(Debug, Clone, Copy)]
-pub enum Origin {
-    /// A repository on this machine, cloned with its object store shared.
-    Local(&'static str),
-    /// A repository fetched once and pinned, so the measurement is repeatable
-    /// on a machine that has never seen the garden.
-    Remote {
-        url: &'static str,
-        rev: &'static str,
-    },
-}
+/// The Go history recall adds to the corpus calibration judges, pinned the same
+/// way and named in the report as what it is.
+pub const GO_PATH: &str = "docs/calibration/corpus-go.toml";
 
-/// One repository the campaign reads.
-#[derive(Debug, Clone, Copy)]
-pub struct Source {
-    pub name: &'static str,
-    pub origin: Origin,
-    /// The languages this repository is asked for cases in.
-    pub languages: &'static [Language],
-}
+/// The one branch a clone carries, so the walk never has to ask which of the
+/// source's branches it landed on: it walks the pin.
+const BRANCH: &str = "refs/heads/recall";
 
-/// The corpus. The garden five first, in the order the calibration loop lists
-/// them, then the Go history that stands in for a language the garden has none
-/// of.
-pub const CORPUS: &[Source] = &[
-    Source {
-        name: "tilth",
-        origin: Origin::Local("/Users/jahala/CascadeProjects/tilth"),
-        languages: &[Language::Rs, Language::Py],
-    },
-    Source {
-        name: "pleach",
-        origin: Origin::Local("/Users/jahala/conductor/workspaces/pleach-v1/cayenne"),
-        languages: &[Language::Ts],
-    },
-    Source {
-        name: "tend2",
-        origin: Origin::Local("/Users/jahala/conductor/workspaces/feature-map/missoula"),
-        languages: &[Language::Ts],
-    },
-    Source {
-        name: "copeca",
-        origin: Origin::Local("/Users/jahala/conductor/workspaces/copeca/cancun"),
-        languages: &[Language::Py],
-    },
-    Source {
-        name: "umbel",
-        origin: Origin::Local("/Users/jahala/conductor/workspaces/rctrl/master"),
-        languages: &[Language::Ts],
-    },
-    Source {
-        name: "cobra",
-        origin: Origin::Remote {
-            url: "https://github.com/spf13/cobra.git",
-            rev: "adbc8813901bba65827259daa8e22ff94ec1f30e",
-        },
-        languages: &[Language::Go],
-    },
-    Source {
-        name: "hcl",
-        origin: Origin::Remote {
-            url: "https://github.com/hashicorp/hcl.git",
-            rev: "6abbb088cdb82416d1b3d9fcbaab29534133567a",
-        },
-        languages: &[Language::Go],
-    },
-];
+/// A language counts as one a repository writes where it holds at least a
+/// twentieth of the repository's source files. A stray file of somebody else's
+/// language is not a history to measure recall in, and asking a repository for
+/// cases in it would spend the run's quota on commits that offer no site.
+const SHARE: usize = 20;
 
-impl Source {
-    /// Where this source's history is on this machine, with the environment
-    /// having the last word: `WEED_CORPUS_TILTH=/somewhere` moves a repository
-    /// without touching the code that names it.
-    pub fn located(&self) -> Option<PathBuf> {
-        let key = format!("WEED_CORPUS_{}", self.name.to_uppercase());
-        if let Ok(named) = std::env::var(&key) {
-            return Some(PathBuf::from(named));
-        }
-        match self.origin {
-            Origin::Local(path) => Some(PathBuf::from(path)),
-            Origin::Remote { .. } => None,
+/// How many places of its window one repository is walked from at once.
+///
+/// A case costs a checkout and a run of the binary, and a campaign of thousands
+/// of them spends most of its time waiting rather than computing, so the window
+/// is walked from several places at once, each in a working copy of its own.
+/// The number is fixed rather than read off the machine: the cases a run plants
+/// are the same everywhere, and a count that followed the cores would make the
+/// report a fact about the laptop it was taken on.
+pub const SLICES: usize = 4;
+
+/// Read every corpus file named, in order. A name that appears twice is
+/// refused: two entries under one name would share a clone and a row.
+pub fn read(paths: &[PathBuf]) -> Result<Vec<Repo>, String> {
+    let mut repos: Vec<Repo> = Vec::new();
+    for path in paths {
+        for repo in crate::corpus::read(path).map_err(|error| error.to_string())? {
+            if repos.iter().any(|held| held.name == repo.name) {
+                return Err(format!(
+                    "{} is named by two corpus entries. one name is one repository, one clone and \
+                     one row.",
+                    repo.name
+                ));
+            }
+            repos.push(repo);
         }
     }
+    Ok(repos)
 }
 
-/// A clone the campaign owns: checked out, mutated and restored, and never the
-/// repository it was made from.
+/// A clone the campaign owns: fetched at the pin, checked out, mutated and
+/// restored, and never the repository it was fetched from.
 pub struct Working {
+    pub name: String,
+    /// Where the history was fetched from, as the corpus names it.
+    pub source: String,
+    /// The commit the window ends at.
+    pub tip: String,
+    /// The languages this repository writes, read off the tree at the pin.
+    pub languages: Vec<Language>,
     pub root: PathBuf,
-    /// The ref the history was walked from, as the report names it.
-    pub reference: String,
-    pub head: String,
 }
 
-/// Where the clones live between runs, so a second run costs a fetch.
+/// Where the clones live between runs, so a second run costs a fetch of what
+/// the pin needs and nothing more.
 pub fn cache_root() -> PathBuf {
     std::env::var("WEED_RECALL_CACHE")
         .map(PathBuf::from)
         .unwrap_or_else(|_| std::env::temp_dir().join("weed-recall-corpus"))
 }
 
-/// Make the working clone, fetching only what is missing.
-pub fn prepare(source: &Source) -> Result<Working, String> {
-    let root = cache_root().join(source.name);
-    std::fs::create_dir_all(cache_root())
-        .map_err(|error| format!("{}: {error}", cache_root().display()))?;
-    match source.origin {
-        Origin::Local(_) => prepare_local(source, &root)?,
-        Origin::Remote { url, rev } => prepare_remote(source, &root, url, rev)?,
+/// Make the working clone, fetching only what the pin is missing.
+pub fn prepare(repo: &Repo) -> Result<Working, String> {
+    let root = cache_root().join(&repo.name);
+    std::fs::create_dir_all(&root).map_err(|error| format!("{}: {error}", root.display()))?;
+    if !root.join(".git").exists() {
+        git::run(&root, &["init", "--quiet"])?;
     }
-    let reference = reference(source, &root)?;
-    let head = git::capture(&root, &["rev-parse", &reference])?;
+    let commit = format!("{}^{{commit}}", repo.tip);
+    if git::run(&root, &["cat-file", "-e", &commit]).is_err() {
+        git::run(
+            &root,
+            &["fetch", "--quiet", "--no-tags", &repo.source, &repo.tip],
+        )
+        .map_err(|error| {
+            format!(
+                "{}: {} would not hand over {}. the corpus pins a commit, and a source that no \
+                 longer carries it cannot be measured. {error}",
+                repo.name, repo.source, repo.tip
+            )
+        })?;
+    }
+    git::run(&root, &["update-ref", BRANCH, &repo.tip])?;
+    let head = git::capture(&root, &["rev-parse", BRANCH])?
+        .trim()
+        .to_string();
+    if head != repo.tip {
+        return Err(format!(
+            "{}: the clone is at {head} and the corpus pins {}",
+            repo.name, repo.tip
+        ));
+    }
+    let languages = languages(&root, &repo.tip)?;
     Ok(Working {
+        name: repo.name.clone(),
+        source: repo.source.clone(),
+        tip: repo.tip.clone(),
+        languages,
         root,
-        reference,
-        head: head.trim().to_string(),
     })
 }
 
-fn prepare_local(source: &Source, root: &Path) -> Result<(), String> {
-    let Some(origin) = source.located() else {
-        return Err(format!("{} has no path on this machine", source.name));
-    };
-    if !origin.join(".git").exists() && !origin.join("HEAD").exists() {
-        return Err(format!(
-            "{} is not a git repository at {}. name it with WEED_CORPUS_{}.",
-            source.name,
-            origin.display(),
-            source.name.to_uppercase()
-        ));
+/// The working copy one slice of a repository's window is walked in: a clone of
+/// the clone, sharing its objects, so a checkout in one slice is nothing to the
+/// others. It is made once and kept, like the clone it comes from.
+pub fn slice(working: &Working, index: usize) -> Result<PathBuf, String> {
+    if index == 0 {
+        return Ok(working.root.clone());
     }
+    let root = cache_root().join(format!("{}-{index}", working.name));
     if !root.join(".git").exists() {
         git::run(
             &cache_root(),
@@ -153,101 +145,81 @@ fn prepare_local(source: &Source, root: &Path) -> Result<(), String> {
                 "--quiet",
                 "--shared",
                 "--no-checkout",
-                &origin.to_string_lossy(),
+                &working.root.to_string_lossy(),
                 &root.to_string_lossy(),
             ],
         )?;
-    } else {
-        // A working repository moves on; the campaign reads what is there now.
-        git::run(root, &["fetch", "--quiet", "--prune", "origin"])?;
     }
-    Ok(())
+    git::run(&root, &["update-ref", BRANCH, &working.tip])?;
+    Ok(root)
 }
 
-fn prepare_remote(source: &Source, root: &Path, url: &str, rev: &str) -> Result<(), String> {
-    if !root.join(".git").exists() {
-        git::run(
-            &cache_root(),
-            &[
-                "clone",
-                "--quiet",
-                "--no-checkout",
-                url,
-                &root.to_string_lossy(),
-            ],
-        )
-        .map_err(|error| {
-            format!(
-                "{} could not be cloned from {url}: {error}. the corpus needs it once, and \
-                 {} keeps it afterwards.",
-                source.name,
-                cache_root().display()
-            )
-        })?;
-    }
-    if git::capture(root, &["cat-file", "-t", rev]).is_err() {
-        git::run(root, &["fetch", "--quiet", "origin"])?;
-    }
-    git::capture(root, &["cat-file", "-t", rev]).map_err(|error| {
-        format!(
-            "{}: the pinned commit {rev} is not in the clone: {error}",
-            source.name
-        )
-    })?;
-    Ok(())
-}
-
-/// The ref whose history is walked. A default branch that carries the work is
-/// what calibration reads; a workspace checkout whose `master` holds one commit
-/// is read at the branch its HEAD is on, and the report says which.
-fn reference(source: &Source, root: &Path) -> Result<String, String> {
-    if let Origin::Remote { rev, .. } = source.origin {
-        return Ok(rev.to_string());
-    }
-    const FLOOR: usize = 50;
-    for branch in ["main", "master"] {
-        let reference = format!("refs/remotes/origin/{branch}");
-        if git::capture(root, &["rev-parse", "--verify", "--quiet", &reference]).is_err() {
-            continue;
-        }
-        let counted = git::capture(root, &["rev-list", "--count", &reference])?;
-        if counted.trim().parse::<usize>().unwrap_or_default() >= FLOOR {
-            return Ok(format!("origin/{branch}"));
-        }
-    }
-    // The clone is left on a detached head between runs, so what its HEAD says
-    // is not a name to walk by; `origin/HEAD` is the branch the source repository
-    // is on, and it is resolved to that branch's name so the report says which.
-    let default = git::capture(
+/// The languages a repository writes, counted off the tree at the pin rather
+/// than declared beside its name: a corpus is a list of repositories, and what
+/// each one is written in is a fact about it that the pin fixes.
+fn languages(root: &Path, tip: &str) -> Result<Vec<Language>, String> {
+    Ok(spoken(&git::lines(
         root,
-        &[
-            "symbolic-ref",
-            "--quiet",
-            "--short",
-            "refs/remotes/origin/HEAD",
-        ],
-    )
-    .map(|found| found.trim().to_string())
-    .unwrap_or_default();
-    let checked_out = git::capture(root, &["symbolic-ref", "--quiet", "--short", "HEAD"])
-        .map(|found| found.trim().to_string())
-        .unwrap_or_default();
-    for candidate in [
-        default.as_str(),
-        checked_out.as_str(),
-        "origin/HEAD",
-        "HEAD",
-    ] {
-        if candidate.is_empty() {
-            continue;
-        }
-        if git::capture(root, &["rev-parse", "--verify", "--quiet", candidate]).is_ok() {
-            return Ok(candidate.to_string());
+        &["ls-tree", "-r", "--name-only", tip],
+    )?))
+}
+
+/// The languages a tree of paths is written in.
+fn spoken(paths: &[String]) -> Vec<Language> {
+    let mut counted: BTreeMap<Language, usize> = BTreeMap::new();
+    for path in paths {
+        for lang in Language::ALL {
+            if lang.owns(path) {
+                *counted.entry(lang).or_default() += 1;
+            }
         }
     }
-    Err(format!(
-        "{}: the clone at {} names no ref to walk",
-        source.name,
-        root.display()
-    ))
+    let held: usize = counted.values().sum();
+    Language::ALL
+        .into_iter()
+        .filter(|lang| match counted.get(lang) {
+            Some(files) => *files > 0 && files * SHARE >= held,
+            None => false,
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn paths(each: &[(&str, usize)]) -> Vec<String> {
+        let mut written = Vec::new();
+        for (extension, count) in each {
+            for number in 0..*count {
+                written.push(format!("src/{extension}/file{number}.{extension}"));
+            }
+        }
+        written
+    }
+
+    /// A repository is asked for cases in the languages it is written in, and
+    /// what it is written in is counted rather than declared beside its name.
+    #[test]
+    fn a_repository_is_read_for_every_language_it_writes() {
+        assert_eq!(
+            spoken(&paths(&[("rs", 91), ("py", 36)])),
+            vec![Language::Py, Language::Rs]
+        );
+    }
+
+    /// One file of somebody else's language is not a history to measure recall
+    /// in, and a quota spent on it is a quota spent on commits with no site.
+    #[test]
+    fn a_stray_file_is_not_a_language_the_repository_writes() {
+        assert_eq!(
+            spoken(&paths(&[("ts", 119), ("go", 1)])),
+            vec![Language::Ts]
+        );
+    }
+
+    #[test]
+    fn a_tree_with_no_source_in_it_is_read_for_nothing() {
+        assert!(spoken(&paths(&[("md", 12)])).is_empty());
+    }
 }

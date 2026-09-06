@@ -16,7 +16,7 @@ schemas/       vendored official schemas (sarif-schema-2.1.0.json)
 xtask/         weed's own measurements, the bench and never the product, a workspace member so they judge with the core the binary ships: `cargo xtask calibrate` writes docs/calibration-2026-09.md, `cargo xtask suppressions` counts the allowances each repository wrote, `cargo xtask mutate` is the recall campaign that plants one anti-pattern per case in real commits of the same corpus and writes the recall section of the same file
 scripts/check/ evidence scripts a loop cites; run.sh is the runner tend2 verify uses, and scripts/corpus-scratch.sh fetches the calibration corpus at its pins so the evidence reads the same history the measurement did
 scripts/proof/ evidence that starts a real agent session and writes what happened into docs/proof-2026-09.md
-docs/          sarif.md · pleach.md · tend2-seam.md · calibration-2026-09.md · proof-2026-09.md · dogfood.md · dogfood/<loop>.md · tend2/ (the map) · calibration/ (corpus.toml pins every repository the calibration judges by source and full sha, judgements.toml classifies each block, first-run.toml is what the first run refused and is history rather than output)
+docs/          sarif.md · pleach.md · tend2-seam.md · calibration-2026-09.md · proof-2026-09.md · dogfood.md · dogfood/<loop>.md · tend2/ (the map) · calibration/ (corpus.toml pins every repository the calibration judges by source and full sha, corpus-go.toml pins the Go history the recall campaign adds to it, judgements.toml classifies each block, first-run.toml is what the first run refused and is history rather than output)
 examples/      pleach/plan.json · ci/github.yml
 garden.json    the manifest the umbrella reads (F1); schemas/garden.schema.json is its vendored, flagged schema
 SKILL.md       the whole binary in one file for an agent; its body must name every subcommand and flag `weed --help` prints
@@ -53,12 +53,15 @@ bash scripts/check/run.sh tests/<name>.rs     # one evidence file, the way the v
 tend2 next docs/tend2                          # where things stand
 ```
 
-The corpus `cargo xtask mutate` reads is cloned into `weed-recall-corpus` under the
-temporary directory, or wherever `WEED_RECALL_CACHE` names, and the source
-repositories are only ever read from. It is the one place in the repository that
-names paths on the conductor's machine, because the calibration loop names those
-five repositories; each is moved with `WEED_CORPUS_<NAME>`, and the two Go
-projects the garden has no Go for are pinned by commit and fetched once.
+`cargo xtask mutate` reads the corpus calibration judges,
+`docs/calibration/corpus.toml`, and walks the window that ends at each entry's
+pinned tip, so a commit pushed to a source after the pin plants no case and
+moves no number. The garden five write no Go between them, so
+`docs/calibration/corpus-go.toml` pins two Go projects the same way and the
+campaign reads both files; `--corpus <path>` reads another instead, which is how
+the suites measure a history they built themselves. Every source is fetched at
+its pin into `weed-recall-corpus` under the temporary directory, or wherever
+`WEED_RECALL_CACHE` names, and is only ever read from.
 
 `tilth-core` is a git dependency on `https://github.com/jahala/tilth`, pinned by rev to the commit the tilth agent landed (the tilth-core loop names it). Nothing weed is built from points at a path on this machine; the worktree at `.context/tilth-core` exists only so the evidence script can run the crate's own suite.
 
