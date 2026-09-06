@@ -149,3 +149,123 @@ fn copy_tree(source: &Path, target: &Path) {
         }
     }
 }
+
+/// A relative import that climbs more than one directory is the ordinary way a
+/// suite or a nested module reaches its neighbour, and it has to resolve to the
+/// file it names. Read as anything else, the arrow lands in the wrong layer:
+/// the import is missed where it crosses, and reported where it does not.
+#[test]
+fn d2_follows_a_relative_import_up_more_than_one_directory() {
+    let repo = Repo::init();
+    repo.write(
+        "weed.toml",
+        "[deps]\nlayers = { core = [\"src/core/**\"], seams = [\"src/seams/**\"] }\nallow = [\n    { from = \"seams\", to = \"core\" },\n]\n",
+    );
+    repo.write(
+        "src/seams/git.ts",
+        "export function read(path: string) {\n  return path;\n}\n",
+    );
+    repo.write(
+        "src/core/render/finding.ts",
+        "export function render(rule: string): string {\n  return rule;\n}\n",
+    );
+    repo.stage_all();
+    repo.commit("the layers, with every arrow running the way they allow");
+
+    let climbing = "src/core/render/finding.ts";
+    let source = std::fs::read_to_string(repo.root().join(climbing)).expect("the file reads");
+    repo.write(
+        climbing,
+        &format!("import {{ read }} from \"../../seams/git\";\n{source}"),
+    );
+    repo.stage_all();
+
+    let run = repo.weed(&["check"]);
+    assert_eq!(
+        d2(&run),
+        vec![climbing.to_string()],
+        "a `../../` import reaches the file it names, and that one crosses the boundary\n{}",
+        run.stderr
+    );
+    assert_eq!(run.code, 2, "a forbidden direction blocks");
+}
+
+/// A climb of three, with a sibling directory sitting where a wrongly-read
+/// climb would land. Counting the dots rather than walking the segments puts
+/// the module two directories from where it is, and the path that answers
+/// there is in the other layer, so the two answers cancel and the arrow
+/// disappears. The import has to resolve where it points.
+#[test]
+fn d2_follows_a_climb_past_a_sibling_that_would_answer_a_misread_one() {
+    let repo = Repo::init();
+    repo.write(
+        "weed.toml",
+        "[deps]\nlayers = { suite = [\"test/**\"], tools = [\"scripts/**\"] }\nallow = []\n",
+    );
+    repo.write(
+        "scripts/build.ts",
+        "export function build() {\n  return 1;\n}\n",
+    );
+    repo.write("test/smoke/helpers.ts", "export const HERE = 1;\n");
+    repo.write(
+        "test/smoke/claude/resume.test.ts",
+        "import { HERE } from \"../helpers\";\n\nexport const seen = HERE;\n",
+    );
+    repo.stage_all();
+    repo.commit("a suite, its helpers, and the tools beside them");
+
+    let climbing = "test/smoke/claude/resume.test.ts";
+    let source = std::fs::read_to_string(repo.root().join(climbing)).expect("the file reads");
+    repo.write(
+        climbing,
+        &format!("import {{ build }} from \"../../../scripts/build\";\n{source}"),
+    );
+    repo.stage_all();
+
+    let run = repo.weed(&["check"]);
+    assert_eq!(
+        d2(&run),
+        vec![climbing.to_string()],
+        "the import names scripts/build.ts, three directories up, and that crosses\n{}",
+        run.stderr
+    );
+    assert_eq!(run.code, 2, "a forbidden direction blocks");
+}
+
+/// The same climb, in the direction the repository allows: an import that
+/// resolves correctly is silent, and one resolved into the wrong layer would
+/// not be.
+#[test]
+fn d2_stays_silent_where_the_climb_runs_the_way_the_layers_allow() {
+    let repo = Repo::init();
+    repo.write(
+        "weed.toml",
+        "[deps]\nlayers = { core = [\"src/core/**\"], seams = [\"src/seams/**\"] }\nallow = [\n    { from = \"seams\", to = \"core\" },\n]\n",
+    );
+    repo.write(
+        "src/core/finding.ts",
+        "export function render(rule: string): string {\n  return rule;\n}\n",
+    );
+    repo.write(
+        "src/seams/git/reader.ts",
+        "export function read(path: string) {\n  return path;\n}\n",
+    );
+    repo.stage_all();
+    repo.commit("the layers");
+
+    let climbing = "src/seams/git/reader.ts";
+    let source = std::fs::read_to_string(repo.root().join(climbing)).expect("the file reads");
+    repo.write(
+        climbing,
+        &format!("import {{ render }} from \"../../core/finding\";\n{source}"),
+    );
+    repo.stage_all();
+
+    let run = repo.weed(&["check"]);
+    assert_eq!(
+        d2(&run),
+        Vec::<String>::new(),
+        "a seam reaching the core is the direction the arrows run in\n{}",
+        run.stderr
+    );
+}

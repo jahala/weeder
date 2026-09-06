@@ -1,0 +1,3 @@
+# `cargo xtask <task>` is how weed runs the measurements it makes about itself.
+[alias]
+xtask = "run --release --package xtask --"

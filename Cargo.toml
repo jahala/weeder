@@ -1,3 +1,9 @@
+[workspace]
+# The binary is the product; xtask is the bench weed is measured on. It is a
+# workspace member rather than a script so a measurement runs the same core the
+# release runs, built by the same compiler, and never ships inside the binary.
+members = ["xtask"]
+
 [package]
 name = "weed"
 version = "0.1.0"
