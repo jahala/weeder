@@ -37,6 +37,6 @@ Suppressions: a commit trailer `Weed-allow: T2 <reason>` or an inline `weed-allo
 - 2026-09-05 review fixes applied inline by the conductor and re-verified: a Rust file with an inline `#[cfg(test)]` module was classified as a test file, which would have blinded S1 on its production code, now `prod` with `has_inline_tests`; the config accepted two spellings for each of scope, deps and guard keys, now one, and `[deps]` gained the `layers` map D2 needs; a helper that returned the same string on both branches was removed
 - 2026-09-05 known limit, kept honest: a `diff --git` header with quoted paths (spaces or unusual bytes) fails the whole parse, which the face turns into exit 3 rather than a partial judgement; lifting it is a later loop
 - 2026-09-05 the shared fixture harness `tests/common/mod.rs` was named in this loop's first Tried line but not delivered, because a Tried line is not a check; it moves to check-face, the first loop that drives the binary on fixture repos
-- 2026-09-06 agent-drafted from the run journal: failed after 2 attempts — evidence at quarantine/core @eb861c5
+- 2026-09-06 agent-drafted from the run journal: failed after 2 attempts, evidence at quarantine/core @eb861c5
 </script>
 <script src="loop.js"></script>

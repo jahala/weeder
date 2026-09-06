@@ -66,7 +66,7 @@ doing it.
 
 The five garden repositories all have a GitHub remote whose default branch was
 exactly what the local checkouts held, so pinning changed no number: 635 commits
-judged before and after. That will not be true next time, and it is the point —
+judged before and after. That will not be true next time, and it is the point , 
 the pins are now the thing that has to be edited for the report to move.
 
 Fetching a bare sha works from GitHub and from a path on this machine alike, so
@@ -87,8 +87,8 @@ to 25, nine block-level false positives down to two, and 58 of the first run's
 findings are reported by nobody now. Pooled share 0.31 percent.
 
 What is still not reproducible is the recall campaign. `cargo xtask mutate`
-picks its own branch per repository — tilth at `origin/main`, tend2 at
-`origin/landing-rewrite` — and reads whatever those say today, so the miss list
+picks its own branch per repository, tilth at `origin/main`, tend2 at
+`origin/landing-rewrite`, and reads whatever those say today, so the miss list
 can move between two runs over what is nominally the same corpus. Pointing it at
 the pinned corpus would change which commits it walks and so the recall figures
 themselves, which is the recall loop's measurement to re-take, not this one's to
@@ -107,8 +107,8 @@ and neither can weed, which is why the judgement beside that commit reads
 acceptable. Nothing here needs a scanner that is cleverer. What it needs is for
 the journal to redact what it quotes.
 
-The same run left 836 MB under `.loop-scratch/` — a whole second copy of the
-repository, taken so the first run's tree could be read — and the collector
+The same run left 836 MB under `.loop-scratch/`, a whole second copy of the
+repository, taken so the first run's tree could be read, and the collector
 staged all of it, because this repository stopped ignoring that directory after
 P8. `weed check --base HEAD --strict` on the delivery exited 3 on that copy: it
 carries weed's own X1 prefix table and an allowance with no reason written on

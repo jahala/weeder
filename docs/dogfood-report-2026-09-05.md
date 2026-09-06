@@ -133,6 +133,22 @@ What worked, so it is on record: the spawn, send, wait, read, kill lifecycle beh
 
 **Fix.** Run `git check-ignore -q` on each path before the existence probe and drop the ignored ones, which also honours the prompt's promise that scratch is never collected. And treat a staging failure like a failed gate: the tree exists and is the evidence, so quarantine it.
 
+### P9. The secret scan reads the worker's journal, and a quoted finding is a finding
+
+**Reproduction.** A calibration worker classifies a commit X1 blocked for carrying the AWS documentation key in its message, and its scratch journal quotes that message. pleach's delivery gate runs the secret scan over the collected tree, finds the key in the journal, and refuses the run.
+
+**Impact.** One attempt of a node whose work was finished, on a string that was a finding rather than a credential. Every worker on a secrets rule will produce such strings; it is what the rule finds.
+
+**Fix.** Redact what the journal quotes (the shape is known: the same table weed uses), or scan only the paths the plan delivers rather than the journal beside them.
+
+### P10. A collected scratch directory is not scratch
+
+**Reproduction.** With `.loop-scratch/` un-ignored to dodge P8, a worker left 836 MB under it (a second copy of the repository, taken to read the first run's tree). The collector staged all of it and `weed check --base HEAD --strict` on the delivery exited 3, on findings that were fine where they lived and findings once pasted into a diff.
+
+**Impact.** The prompt promises "it is never collected"; under P8 it is fatal when ignored and collected when not. Either way the worker cannot use it as told.
+
+**Fix.** The same fix as P8: the collector skips ignored paths and says so. Until then the map tells workers to keep scratch under `$TMPDIR`.
+
 What worked: `pleach validate` turns a map's `## Needs` edges into waves with no hand editing; the marker, hygiene and smoke ladder ran in order on every node; receipts froze the facts at classify time and named the failing gate and every reason; quarantine kept failed work; `pleach land` ran the land gate on the merged stack and fast-forwarded the branch; the journal fed `tend2 watch` and `tend2 next` with no configuration; the provider-diversity check refused nothing it should have allowed. Timings for the record: core, codex, 2 attempts, 6 m 21 s; sarif, claude/opus, 1 attempt, 13 m, smoke and codex audit green first pass.
 
 ## tend2, for context
