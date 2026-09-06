@@ -1,0 +1,1 @@
+Failed blindness: the packet's diff fences carried the builder's prose summary rather than verbatim git hunks.
