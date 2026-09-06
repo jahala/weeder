@@ -14,7 +14,7 @@ seed="$(sed -n 's/^Seed:[[:space:]]*//p' "$audit" | head -1)"
 scratch="$(mktemp -d)"
 trap 'command -v trash >/dev/null 2>&1 && trash "$scratch"' EXIT
 mkdir -p "$scratch/empty-cache" "$scratch/a" "$scratch/b"
-WEED_RECALL_CACHE="$scratch/empty-cache" cargo xtask audit-packet --seed "$seed" --dir "$scratch/a" >/dev/null
+WEEDER_RECALL_CACHE="$scratch/empty-cache" cargo xtask audit-packet --seed "$seed" --dir "$scratch/a" >/dev/null
 cargo xtask audit-packet --seed "$seed" --dir "$scratch/b" >/dev/null
 count_a="$(ls "$scratch/a"/*.md | wc -l | tr -d ' ')"
 count_b="$(ls "$scratch/b"/*.md | wc -l | tr -d ' ')"

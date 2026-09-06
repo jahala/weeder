@@ -1,2 +1,2 @@
-{"type": "input", "case": "recall:T1:go:cobra:3f3b81882:doc/man_examples_test.go", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
-{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: miss\nReasoning: The report states the T1 mutation deleted Go test example `ExampleGenManTree` in `doc/man_examples_test.go` and weed did not report that planted deletion."}
+{"type": "input", "case": "recall:T1:go:cobra:3f3b81882:doc/man_examples_test.go", "sha256": "c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119"}
+{"type": "answer", "answer": "Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: miss\nReasoning: ExampleGenManTree is a Go example test in a _test.go file, so deleting it is genuinely a T1 test deletion, and the report says weeder did not report it."}

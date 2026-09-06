@@ -1,2 +1,2 @@
-{"type": "input", "case": "recall:D2:go:hcl:ab1acc486:hclwrite/tokens.go:6", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
-{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: miss\nReasoning: The report says hclwrite/tokens.go was made to import integrationtest, which is a forbidden boundary crossing for D2, and it was planted but not reported."}
+{"type": "input", "case": "recall:D2:go:hcl:ab1acc486:hclwrite/tokens.go:6", "sha256": "c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119"}
+{"type": "answer", "answer": "Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: miss\nReasoning: The report says the D2 shape was planted at hclwrite/tokens.go:6 by importing integrationtest, a forbidden boundary, and it was not reported there."}

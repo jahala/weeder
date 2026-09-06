@@ -63,7 +63,7 @@ fn the_caveat_sits_in_the_first_paragraph_right_after_the_verdict() {
     let opening = opening(&bench);
     let verdict = bench.verdict();
     assert!(
-        verdict.starts_with("weed ships as a gate"),
+        verdict.starts_with("weeder ships as a gate"),
         "the verdict opens the paragraph: {verdict}"
     );
     let caveat = "The re-grade behind it is a sighted one";
@@ -75,7 +75,7 @@ fn the_caveat_sits_in_the_first_paragraph_right_after_the_verdict() {
     // qualification, so the verdict sentence may end on the pending tail; the
     // caveat still follows it with nothing in between.
     assert!(
-        before.starts_with("weed ships as a gate")
+        before.starts_with("weeder ships as a gate")
             && (before.ends_with("all still at block level.")
                 || before.ends_with("until a re-grade agrees at the bar.")),
         "nothing stands between the verdict and the caveat: {before}"

@@ -42,7 +42,7 @@ pub fn block(lang: Lang, mask: &Mask, from: u32, after: usize) -> Option<Block> 
 /// The block a brace opens, counted from the character the caller points at.
 ///
 /// The brace has to be on the line that opens the block. A language lets an
-/// author put it on the next one, and weed would then have to guess how far to
+/// author put it on the next one, and weeder would then have to guess how far to
 /// keep looking; a rule that guesses reports things nobody wrote.
 fn braced_block(mask: &Mask, from: u32, after: usize) -> Option<Block> {
     let opening = mask

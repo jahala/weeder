@@ -10,7 +10,7 @@
 //! of qualifiers: the error kinds they name, and the messages they match on. A
 //! pair that lost qualifiers and gained none was weakened. A pair that gained
 //! any is a different claim, a kind swapped for another kind, a message
-//! rewritten, and weed leaves it alone rather than guessing which is narrower.
+//! rewritten, and weeder leaves it alone rather than guessing which is narrower.
 
 use crate::core::change::Replacement;
 use crate::core::finding::{Finding, Level, Message, Region};

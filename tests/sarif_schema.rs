@@ -2,8 +2,8 @@ use std::fs;
 use std::path::Path;
 
 use jsonschema::Validator;
-use weed::core::sarif::{render, to_json, Context, Log};
-use weed::core::{Finding, Fix, Level, Message, Region, Suppression, SuppressionSource};
+use weeder::core::sarif::{render, to_json, Context, Log};
+use weeder::core::{Finding, Fix, Level, Message, Region, Suppression, SuppressionSource};
 
 fn validator() -> Validator {
     let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("schemas/sarif-schema-2.1.0.json");
@@ -12,12 +12,12 @@ fn validator() -> Validator {
     jsonschema::validator_for(&schema).expect("the vendored schema should compile")
 }
 
-/// Validation reads the json weed writes, not an in-memory value, so the text a
+/// Validation reads the json weeder writes, not an in-memory value, so the text a
 /// consumer receives is the text under test.
 fn assert_validates(log: &Log) {
     let written = to_json(log);
     let value: serde_json::Value =
-        serde_json::from_str(&written).expect("weed should write parseable json");
+        serde_json::from_str(&written).expect("weeder should write parseable json");
     let validator = validator();
     let complaints: Vec<String> = validator
         .iter_errors(&value)
@@ -32,7 +32,7 @@ fn assert_validates(log: &Log) {
 }
 
 fn context() -> Context {
-    Context::new("0.1.0").with_docs_base("file:///srv/weed/")
+    Context::new("0.1.0").with_docs_base("file:///srv/weeder/")
 }
 
 fn finding(rule: &str, level: Level, path: &str, start_line: u32) -> Finding {
@@ -114,6 +114,6 @@ fn suppressed_finding_validates_against_the_vendored_schema() {
 
 #[test]
 fn could_not_run_log_validates_against_the_vendored_schema() {
-    let context = context().could_not_run("the diff names a path weed cannot parse.");
+    let context = context().could_not_run("the diff names a path weeder cannot parse.");
     assert_validates(&render(&[], &context));
 }

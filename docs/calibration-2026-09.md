@@ -1,12 +1,12 @@
-# calibration: weed over real history, 2026-09
+# calibration: weeder over real history, 2026-09
 
-weed ships as a gate: over 635 commits of real history in 5 repositories it blocked 20, of which 4 were block-level false positives, 0.63 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level. The re-grade behind it is blind: docs/calibration-audit-blind-2026-09.md declares `Blind: yes` and agrees at the bar, so its auditor judged the cases from a packet with the builder's class out of sight, and the sighted re-grade in docs/calibration-audit-2026-09.md is recorded beside it.
+weeder ships as a gate: over 635 commits of real history in 5 repositories it blocked 20, of which 4 were block-level false positives, 0.63 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level. The re-grade behind it is blind: docs/calibration-audit-blind-2026-09.md declares `Blind: yes` and agrees at the bar, so its auditor judged the cases from a packet with the builder's class out of sight, and the sighted re-grade in docs/calibration-audit-2026-09.md is recorded beside it.
 
 A second party re-graded the classification and docs/calibration-audit-2026-09.md and docs/calibration-audit-blind-2026-09.md records the agreement: blocked commits in docs/calibration-audit-blind-2026-09.md at 95.0 percent of 20 cases, recall cases in docs/calibration-audit-blind-2026-09.md at 100.0 percent of 20 cases. That is what took the qualification off this sentence. The floor under that share is 0.63 percent, 4 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 0.63 percent, 4 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table. Both numbers stay in this file: under the three classes in use before the ruling of 2026-09-06 the same 23 blocked commits counted 7 false positives, 1.10 percent, and under it, where a blocked commit is claim-true or claim-false and `acceptable` is a label the audit never counts, they count 4, 0.63 percent. The definition changed on that date and the question was corrected, not the goalpost moved.
 
 ## How this was measured
 
-`cargo xtask calibrate` takes the last 200 commits ending at the commit `docs/calibration/corpus.toml` pins each repository at, and judges each one against its first parent with the same `check` face the binary runs: `weed check --base <parent> --strict`, read back as SARIF. A history with fewer commits contributes all of them, and a repository judged on fewer than 50 commits is reported rather than judged on its own share.
+`cargo xtask calibrate` takes the last 200 commits ending at the commit `docs/calibration/corpus.toml` pins each repository at, and judges each one against its first parent with the same `check` face the binary runs: `weeder check --base <parent> --strict`, read back as SARIF. A history with fewer commits contributes all of them, and a repository judged on fewer than 50 commits is reported rather than judged on its own share.
 
 The corpus names each repository by a source `git fetch` can read and by the full sha its window ends at. The pin is what a reader can hold this file to: a commit pushed to any of these repositories after the pin falls outside the window and cannot move a number here, and the same corpus judges the same history on a machine that has never seen any of these repositories. Moving a pin is an edit to that file, and the run that follows it is a new measurement.
 
@@ -18,7 +18,7 @@ A block is classified by whoever ran the calibration, in `docs/calibration/judge
 
 ## The rules that ran
 
-No `weed.toml` was passed and none was read: every rule ran at the level the catalogue ships it at. The four rules the kill bar names are first.
+No `weeder.toml` was passed and none was read: every rule ran at the level the catalogue ships it at. The four rules the kill bar names are first.
 
 | Rule | Level in this run | What it finds |
 |---|---|---|
@@ -43,7 +43,7 @@ No `weed.toml` was passed and none was read: every rule ran at the level the cat
 | X1 | block | A secret-looking string was added |
 | X2 | block | A file outside the scope was touched |
 
-No commit in the corpus carried a `weed.toml` of its own, so no repository moved a rule off the level above.
+No commit in the corpus carried a `weeder.toml` of its own, so no repository moved a rule off the level above.
 
 ## tilth, 200 commits judged, 8 blocked, 80 warned
 
@@ -111,7 +111,7 @@ The window ends at `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d`, fetched from `htt
 | umbel | 58 | 4 | 13 | 2 | 2 | 0 | 0.00% |
 | **pooled** | **635** | **20** | **143** | **3** | **13** | **4** | **0.63%** |
 
-The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 0.63 percent of 635 commits, and 0 commits weed could not judge.
+The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 0.63 percent of 635 commits, and 0 commits weeder could not judge.
 
 Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 177 of them at block level still, 78 at warn level, 1 at note level and 76 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files; 9 moved from T1 at block level to T5 at warn level, all of them on test files.
 
@@ -119,7 +119,7 @@ Too few commits to carry a share of their own, reported and not judged alone: co
 
 ## What the rules moved since the first run
 
-A rule that splits in two is supposed to take friction off the gate while keeping the finding. Until the same files are read twice that is a claim. Every file whose answer changed is here with the rule that refused it, the kind weed gives the file, and the loudest thing weed says about it now.
+A rule that splits in two is supposed to take friction off the gate while keeping the finding. Until the same files are read twice that is a claim. Every file whose answer changed is here with the rule that refused it, the kind weeder gives the file, and the loudest thing weeder says about it now.
 
 174 of the first run's block-level findings are refused by the same rule at the same level and are left out of this table; the 158 whose answer changed are all in it.
 
@@ -284,7 +284,7 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 | umbel | `e4483b814c` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
 | umbel | `e4483b814c` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
 
-## Where weed was wrong
+## Where weeder was wrong
 
 Every block whose claim was not true of the change, under the rule that made it. This is the list the rule loops work from.
 
@@ -328,9 +328,9 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 
 ## Recall
 
-Every rule that blocks, T1, T3, S1, X1, C1, G1, catches at least 95 percent of the anti-patterns planted for it, in each of ts, py, rs and go. 2791 cases were planted one anti-pattern at a time in real commits, and 2762 of them were caught on the site they were planted in.
+Every rule that blocks, T1, T3, S1, X1, C1, G1, catches at least 95 percent of the anti-patterns planted for it, in each of ts, py, rs and go. 2791 cases were planted one anti-pattern at a time in real commits, and 2761 of them were caught on the site they were planted in.
 
-The campaign is `cargo xtask mutate`. For each case it checks out a real commit of a corpus repository, plants one anti-pattern in its tree with a scanner that knows nothing about weed's detectors, and runs `weed check --base <parent> --strict`. A case counts as caught only where the rule fires on the file the shape was planted in, on the lines it was planted on where it has lines. A site the unmutated commit already fires that rule on is passed over, so no hit is inherited from the commit itself.
+The campaign is `cargo xtask mutate`. For each case it checks out a real commit of a corpus repository, plants one anti-pattern in its tree with a scanner that knows nothing about weeder's detectors, and runs `weeder check --base <parent> --strict`. A case counts as caught only where the rule fires on the file the shape was planted in, on the lines it was planted on where it has lines. A site the unmutated commit already fires that rule on is passed over, so no hit is inherited from the commit itself.
 
 ### The corpus
 
@@ -344,7 +344,7 @@ The campaign is `cargo xtask mutate`. For each case it checks out a real commit 
 | tilth | `https://github.com/jahala/tilth.git` | `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905` | 191 | 1020 |
 | umbel | `https://github.com/jahala/umbel.git` | `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d` | 34 | 280 |
 
-The garden five are the repositories calibration measures precision on, read from `docs/calibration/corpus.toml` at the commits it pins them at. They carry no Go between them and weed judges Go, so the Go column is measured on two Go projects that `docs/calibration/corpus-go.toml` pins the same way, read exactly as the five are.
+The garden five are the repositories calibration measures precision on, read from `docs/calibration/corpus.toml` at the commits it pins them at. They carry no Go between them and weeder judges Go, so the Go column is measured on two Go projects that `docs/calibration/corpus-go.toml` pins the same way, read exactly as the five are.
 
 Every window ends at the pin. A commit pushed to one of these sources later is outside the walk, so it plants no case and moves no number, and two runs over one corpus write this section byte for byte the same.
 
@@ -363,7 +363,7 @@ Files the injector planted nothing in, counted once for each commit they were re
 | T1 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
 | T1 | block | go | 40 | 39 | 1 | 0 | 97.5% |
 | T2 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
-| T2 | block | py | 34 | 34 | 0 | 0 | 100.0% |
+| T2 | block | py | 34 | 33 | 1 | 0 | 97.1% |
 | T2 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
 | T2 | block | go | 40 | 40 | 0 | 0 | 100.0% |
 | T3 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
@@ -439,13 +439,14 @@ Files the injector planted nothing in, counted once for each commit they were re
 | G2 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
 | G2 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
 
-Unplantable is the column the misses have to be read beside. The injector writes its shape into the tree and then reads the tree back with its own scanner, and where the shape is not there afterwards — a version string that pins nothing, a marker written past the end of the case it was meant for — the case is thrown away rather than counted. It is neither a hit nor a miss: weed was never shown the anti-pattern, so neither number may be charged with it.
+Unplantable is the column the misses have to be read beside. The injector writes its shape into the tree and then reads the tree back with its own scanner, and where the shape is not there afterwards, a version string that pins nothing, a marker written past the end of the case it was meant for, the case is thrown away rather than counted. It is neither a hit nor a miss: weeder was never shown the anti-pattern, so neither number may be charged with it.
 
 ### Every miss
 
-Each of these was planted and not reported. The before and after of every one is kept under the campaign's cache directory, as `cases/<rule>/<language>/<repository>-<commit>`, so a number nobody believes can be replayed by hand. `WEED_RECALL_CACHE` says where that directory is; it sits under the temporary directory otherwise.
+Each of these was planted and not reported. The before and after of every one is kept under the campaign's cache directory, as `cases/<rule>/<language>/<repository>-<commit>`, so a number nobody believes can be replayed by hand. `WEEDER_RECALL_CACHE` says where that directory is; it sits under the temporary directory otherwise.
 
 - T1 · go · cobra `3f3b81882` · `doc/man_examples_test.go`, the case `ExampleGenManTree` was deleted
+- T2 · py · copeca `70d669542` · `tests/config/test_mode_models.py`, the assertion on line 66 was deleted
 - S2 · py · copeca `387932ad5` · `tests/e2e/fake_agent.py:61`, a handler was added that catches and says nothing
 - D2 · go · hcl `9466647a1` · `hclwrite/ast_block.go:6`, `hclwrite` was made to import `integrationtest`
 - D2 · go · hcl `bd45ab812` · `hclwrite/format.go:6`, `hclwrite` was made to import `integrationtest`

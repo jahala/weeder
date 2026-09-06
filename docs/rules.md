@@ -1,25 +1,25 @@
 # The rules
 
-weed's whole catalogue: what each rule reports, what it reads to decide, and the
-level it carries until a repository says otherwise. `weed rules` prints the same
+weeder's whole catalogue: what each rule reports, what it reads to decide, and the
+level it carries until a repository says otherwise. `weeder rules` prints the same
 rows from the same table in the binary, so this page and the judgement cannot
-come apart. Every SARIF result weed writes links back here by rule id.
+come apart. Every SARIF result weeder writes links back here by rule id.
 
 `check` judges a diff and may stop a change. `scan` judges the tree and never
 does. `bite` runs a test command over two states of a repository, which makes it
-the one judgement weed reaches by running something rather than by reading. A
+the one judgement weeder reaches by running something rather than by reading. A
 check rule and a bite rule are `block`, `warn` or `off`; a scan rule is `on` or
 `off`. A rule blocks only where what it found admits one reading. The warnings
 are for the person at the pull request, not an instruction to the agent that
 wrote it.
 
-weed does not offer the `bite` face today, so the one rule under it reports
+weeder does not offer the `bite` face today, so the one rule under it reports
 nothing: `docs/bite-2026-09.md` holds the measurement that left the face
 unshipped, and what would turn it back on.
 
 ## What a repository states
 
-`weed.toml` at the root of the repository, every section optional.
+`weeder.toml` at the root of the repository, every section optional.
 
 | Section | What it sets | Rules that read it |
 |---|---|---|
@@ -31,17 +31,17 @@ unshipped, and what would turn it back on.
 | `[entrypoints] cli` | the modules that are the command line itself, where printing is the product | S3 |
 | `[thresholds] todo_age_days` | how old a work marker may get | R3 |
 | `[thresholds] dependency_lag` | how far behind a pin may fall | R4 |
-| `[guard] protected` | the branches the git hooks refuse to rewrite | `weed guard` |
+| `[guard] protected` | the branches the git hooks refuse to rewrite | `weeder guard` |
 | `[guardrails] paths` | the path globs this repository holds at the constitution tier | C3 |
 
-`weed check --scope <glob>` names the scope for one run and takes precedence
+`weeder check --scope <glob>` names the scope for one run and takes precedence
 over `[scope] allow`. A run given neither allows every path, so X2 has nothing
-to report: weed will not invent the sentence a change was meant to be held to.
+to report: weeder will not invent the sentence a change was meant to be held to.
 
 `[scope] specimens` is the one place a repository takes paths away from the
 rules, and it may only take away directories under `fixtures/adversarial/`. An
-adversarial fixture is written to look dishonest, so weed reading it as
-production code is weed being right about the wrong file. An entry pointing
+adversarial fixture is written to look dishonest, so weeder reading it as
+production code is weeder being right about the wrong file. An entry pointing
 anywhere else, a glob that can name a path outside that root, and a rule id in
 the list are each refused with exit 3, naming what was written. Every path an
 exclusion covers is reported once, at note level, under the id `SPECIMEN`: the
@@ -158,7 +158,7 @@ A changed file matches no scope glob the run allows, and the finding names what 
 
 `check` · blocks by default
 
-A change touched a harness settings file, a git hook, `weed.toml`, or the hard-limits section of `AGENTS.md` or `CLAUDE.md`.
+A change touched a harness settings file, a git hook, `weeder.toml`, or the hard-limits section of `AGENTS.md` or `CLAUDE.md`.
 
 <a id="C2"></a>
 ## C2: An ignore file was broadened over source or tests
@@ -188,11 +188,11 @@ An added line is a merge conflict marker, so the file carries both sides of a me
 
 An added file is larger than one mebibyte, or holds binary content, and was not tracked before.
 
-One mebibyte is also where weed stops reading a file as code. Above it a file is
+One mebibyte is also where weeder stops reading a file as code. Above it a file is
 weighed and its lines are read, and nothing is asked of the parser: an outline of
 a blob nobody will open is the most expensive question a run can ask and it
 answers none anybody had. Every rule that judges a line still judges every line
-of a file that size, so this is a cost weed declines to pay rather than a place
+of a file that size, so this is a cost weeder declines to pay rather than a place
 to hide a change in.
 
 <a id="B1"></a>
@@ -202,7 +202,7 @@ to hide a change in.
 
 The test command passed with the test commit alone applied to the base, so the cases that commit added were green before the implementation existed.
 
-The cases are named from the test shape of each side of the test commit, so what a finding points at is the case that commit added, at the line it was written on. A file whose language weed reads no tests in is reported by the file instead.
+The cases are named from the test shape of each side of the test commit, so what a finding points at is the case that commit added, at the line it was written on. A file whose language weeder reads no tests in is reported by the file instead.
 
 <a id="R1"></a>
 ## R1: The docs cite something that no longer exists
@@ -230,4 +230,4 @@ A line carrying `TODO`, `FIXME` or `XXX` was last touched further back than `[th
 
 `scan` · on by default
 
-A manifest pin is further behind the latest release than `[thresholds] dependency_lag` allows, measured against the committed registry snapshot. `weed scan --refresh-snapshot` is the one path that reaches the registries, and it asks curl to do the reaching.
+A manifest pin is further behind the latest release than `[thresholds] dependency_lag` allows, measured against the committed registry snapshot. `weeder scan --refresh-snapshot` is the one path that reaches the registries, and it asks curl to do the reaching.

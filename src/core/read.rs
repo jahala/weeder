@@ -1,4 +1,4 @@
-//! What weed knows about a file once it has been read: the shapes the reader
+//! What weeder knows about a file once it has been read: the shapes the reader
 //! seam returns and the rules take as arguments.
 //!
 //! Every type here is plain data with no parser behind it. A rule that counts
@@ -10,7 +10,7 @@ use std::path::PathBuf;
 
 /// What a definition is, as far as a rule needs to care. Languages spell these
 /// differently and the reader maps each language's word onto one of them;
-/// anything weed has no name for arrives as `Other` rather than being dropped.
+/// anything weeder has no name for arrives as `Other` rather than being dropped.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DefinitionKind {
     Import,
@@ -59,7 +59,7 @@ pub struct Outline {
 
 impl Outline {
     /// The first definition of that name at any depth. Names repeat across
-    /// scopes in every language weed reads, so a caller that needs all of them
+    /// scopes in every language weeder reads, so a caller that needs all of them
     /// walks [`Outline::flatten`] instead.
     #[must_use]
     pub fn find(&self, name: &str) -> Option<&Definition> {

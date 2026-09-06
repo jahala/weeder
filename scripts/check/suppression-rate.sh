@@ -8,7 +8,7 @@
 # scratch fetched at the same pins the corpus names rather than in any checkout
 # on this machine: the commit that first brought a guard bundle into the tree,
 # the commits from there to the pin, the trailers on them, and the trailers
-# written before. The marker the install is found by is read out of weed's own
+# written before. The marker the install is found by is read out of weeder's own
 # source, so the script and the binary cannot drift apart into agreeing about the
 # wrong string.
 #
@@ -29,7 +29,7 @@ command -v python3 >/dev/null 2>&1 || {
 }
 command -v git >/dev/null 2>&1 || { echo "git is not on PATH" >&2; exit 3; }
 
-# The line `weed guard install` writes into every bundle, taken from the source
+# The line `weeder guard install` writes into every bundle, taken from the source
 # that writes it rather than copied.
 marker="$(sed -n 's/^pub const BINARY_MARKER: &str = "\(.*\)";$/\1/p' src/core/guard.rs)"
 [ -n "$marker" ] || {

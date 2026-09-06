@@ -1,4 +1,4 @@
 # demo
 
-Write the log with `weed scan --format sarif`. For one rule at a time, the way
-a hygiene loop reads it, use `weed scan --rules R1`.
+Write the log with `weeder scan --format sarif`. For one rule at a time, the way
+a hygiene loop reads it, use `weeder scan --rules R1`.

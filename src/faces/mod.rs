@@ -20,11 +20,11 @@ use crate::seams::git::Blob;
 use crate::seams::{fs, git, reader};
 
 /// The name of the file a repository states its law in.
-pub const CONFIG_FILE: &str = "weed.toml";
+pub const CONFIG_FILE: &str = "weeder.toml";
 
 /// This repository's configuration, or the defaults where it states none. A
-/// config a caller pointed at and weed cannot read is a run that never happened;
-/// a repository with no `weed.toml` simply takes the defaults.
+/// config a caller pointed at and weeder cannot read is a run that never happened;
+/// a repository with no `weeder.toml` simply takes the defaults.
 pub fn read_config(root: &Path, from: Option<&Path>) -> Result<Config, String> {
     let path = match from {
         Some(path) => path.to_path_buf(),
@@ -33,7 +33,7 @@ pub fn read_config(root: &Path, from: Option<&Path>) -> Result<Config, String> {
     let text = match from {
         Some(_) => Some(
             fs::read(&path)
-                .map_err(|error| format!("{error} --config must name a file weed can read."))?,
+                .map_err(|error| format!("{error} --config must name a file weeder can read."))?,
         ),
         None => fs::read_if_present(&path).map_err(|error| error.to_string())?,
     };
@@ -68,7 +68,7 @@ pub fn format_for(requested: Option<Format>, stdout_is_terminal: bool) -> Format
 pub struct Answer {
     pub code: i32,
     pub stdout: String,
-    /// One line per thing weed could not do, in the order it met them.
+    /// One line per thing weeder could not do, in the order it met them.
     pub stderr: Vec<String>,
 }
 
@@ -84,7 +84,7 @@ pub enum Source {
 }
 
 /// Each changed file with both of its sides read: the text, what the path is,
-/// and what the reader makes of the inside of it. This is the one place weed
+/// and what the reader makes of the inside of it. This is the one place weeder
 /// touches a file for the rules, so a detector stays pure and testable whole.
 ///
 /// Both sides of every file are read in one question to the seam rather than
@@ -126,7 +126,7 @@ fn sides(root: &Path, source: &Source, paths: &[Option<&str>]) -> Result<Vec<Sid
             Some(path) => {
                 let blob = read
                     .next()
-                    .ok_or_else(|| format!("git answered for fewer files than weed asked about, and {path} was one of them. report it with the change that caused it."))?;
+                    .ok_or_else(|| format!("git answered for fewer files than weeder asked about, and {path} was one of them. report it with the change that caused it."))?;
                 Ok(blob.map_or_else(Side::default, |blob| side(path, &blob)))
             }
         })

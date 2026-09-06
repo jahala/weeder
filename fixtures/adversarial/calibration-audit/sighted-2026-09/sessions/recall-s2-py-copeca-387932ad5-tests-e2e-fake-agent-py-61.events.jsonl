@@ -1,2 +1,2 @@
-{"type": "input", "case": "recall:S2:py:copeca:387932ad5:tests/e2e/fake_agent.py:61", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
-{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: miss\nReasoning: The report says an S2 shape was planted there: a handler catches an error and does nothing, and weed did not report it at that site."}
+{"type": "input", "case": "recall:S2:py:copeca:387932ad5:tests/e2e/fake_agent.py:61", "sha256": "c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119"}
+{"type": "answer", "answer": "Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: miss\nReasoning: The report says S2\u2019s swallowed-error handler was planted at that exact Python site and was not reported there, so it remains a genuine miss."}

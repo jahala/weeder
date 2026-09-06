@@ -1,9 +1,9 @@
-//! `weed scan`, the tree judged.
+//! `weeder scan`, the tree judged.
 //!
 //! The claim this file holds up is that a scan is about the state a repository
 //! is in and not about a change: the same tree answers the same way whether the
 //! work is untracked, staged or committed. It also holds the face's contract ,
-//! 0 with warnings, 3 when weed could not run, SARIF on a pipe and a table on a
+//! 0 with warnings, 3 when weeder could not run, SARIF on a pipe and a table on a
 //! terminal, because a consumer reads the exit code before it reads anything
 //! else.
 
@@ -11,11 +11,11 @@ mod common;
 
 use std::process::Command;
 
-use common::{weed_in, Repo, Run};
+use common::{weeder_in, Repo, Run};
 use serde_json::Value;
 use tempfile::TempDir;
-use weed::core::catalogue::{self, Face};
-use weed::core::finding::Level;
+use weeder::core::catalogue::{self, Face};
+use weeder::core::finding::Level;
 
 /// Three environments a run must not be able to tell apart. Turkish is here
 /// because it is the locale that breaks case folding done the naive way: its
@@ -55,11 +55,11 @@ fn results(stdout: &str) -> Vec<Value> {
 fn the_same_tree_answers_the_same_way_untracked_staged_and_committed() {
     let repo = untidy_repository();
 
-    let untracked = repo.weed(&["scan", "--format", "sarif"]);
+    let untracked = repo.weeder(&["scan", "--format", "sarif"]);
     repo.stage_all();
-    let staged = repo.weed(&["scan", "--format", "sarif"]);
+    let staged = repo.weeder(&["scan", "--format", "sarif"]);
     repo.commit("the parser lands");
-    let committed = repo.weed(&["scan", "--format", "sarif"]);
+    let committed = repo.weeder(&["scan", "--format", "sarif"]);
 
     let found = results(&untracked.stdout);
     assert!(
@@ -85,7 +85,7 @@ fn the_same_tree_answers_the_same_way_untracked_staged_and_committed() {
 fn a_change_the_working_tree_makes_is_judged_and_the_committed_state_is_not() {
     let repo = untidy_repository();
     repo.commit("the parser lands");
-    let before = repo.weed(&["scan", "--format", "sarif"]);
+    let before = repo.weeder(&["scan", "--format", "sarif"]);
 
     // The file the docs were missing is written and never staged. A diff would
     // see an added file; a scan sees a repository that is no longer wrong.
@@ -93,7 +93,7 @@ fn a_change_the_working_tree_makes_is_judged_and_the_committed_state_is_not() {
         "docs/parser.md",
         "# How the parser decides\n\nAt a comma.\n",
     );
-    let after = repo.weed(&["scan", "--format", "sarif"]);
+    let after = repo.weeder(&["scan", "--format", "sarif"]);
 
     let citations = |stdout: &str| {
         results(stdout)
@@ -116,7 +116,7 @@ fn a_change_the_working_tree_makes_is_judged_and_the_committed_state_is_not() {
 #[test]
 fn a_scan_that_finds_warnings_leaves_with_zero() {
     let repo = untidy_repository();
-    let run = repo.weed(&["scan", "--format", "sarif"]);
+    let run = repo.weeder(&["scan", "--format", "sarif"]);
     assert_eq!(run.code, 0);
     assert_eq!(run.stderr, "");
 
@@ -137,7 +137,7 @@ fn a_scan_that_finds_warnings_leaves_with_zero() {
 #[test]
 fn a_scan_outside_a_repository_leaves_with_three_and_says_why() {
     let anywhere = TempDir::new().expect("a directory to run in");
-    let run = weed_in(anywhere.path(), &["scan", "--format", "sarif"]);
+    let run = weeder_in(anywhere.path(), &["scan", "--format", "sarif"]);
 
     assert_eq!(run.code, 3, "a run that judged nothing fails closed");
     assert!(
@@ -160,10 +160,10 @@ fn a_scan_outside_a_repository_leaves_with_three_and_says_why() {
 fn a_check_rule_asked_of_the_scan_face_is_a_run_that_never_happened() {
     let repo = untidy_repository();
     for (asked, expected) in [("T1", "check rule"), ("R9", "knows no rule")] {
-        let run = repo.weed(&["scan", "--rules", asked, "--format", "sarif"]);
+        let run = repo.weeder(&["scan", "--rules", asked, "--format", "sarif"]);
         assert_eq!(
             run.code, 3,
-            "weed should refuse `--rules {asked}` rather than quietly answer a smaller question"
+            "weeder should refuse `--rules {asked}` rather than quietly answer a smaller question"
         );
         assert!(
             run.stderr.contains(expected),
@@ -176,8 +176,8 @@ fn a_check_rule_asked_of_the_scan_face_is_a_run_that_never_happened() {
 #[test]
 fn rules_narrows_the_run_and_a_comma_separates_them() {
     let repo = untidy_repository();
-    let only_r1 = repo.weed(&["scan", "--rules", "R1", "--format", "sarif"]);
-    let both = repo.weed(&["scan", "--rules", "R1,R2", "--format", "sarif"]);
+    let only_r1 = repo.weeder(&["scan", "--rules", "R1", "--format", "sarif"]);
+    let both = repo.weeder(&["scan", "--rules", "R1,R2", "--format", "sarif"]);
 
     let rules = |stdout: &str| {
         let mut found: Vec<String> = results(stdout)
@@ -199,21 +199,21 @@ fn rules_narrows_the_run_and_a_comma_separates_them() {
 fn a_pipe_gets_sarif_a_terminal_gets_a_table_and_format_overrides_both() {
     let repo = untidy_repository();
 
-    let piped = repo.weed(&["scan"]);
+    let piped = repo.weeder(&["scan"]);
     assert!(
         piped.stdout.trim_start().starts_with('{'),
         "a pipe gets the log: {}",
         piped.stdout
     );
 
-    let terminal = repo.weed_on_a_terminal(&["scan"]);
+    let terminal = repo.weeder_on_a_terminal(&["scan"]);
     assert!(
         terminal.stdout.contains("warning"),
         "a terminal gets the table: {}",
         terminal.stdout
     );
 
-    let forced = repo.weed(&["scan", "--format", "table"]);
+    let forced = repo.weeder(&["scan", "--format", "table"]);
     assert_eq!(
         forced.stdout, terminal.stdout,
         "--format table is the same table the terminal got"
@@ -223,7 +223,7 @@ fn a_pipe_gets_sarif_a_terminal_gets_a_table_and_format_overrides_both() {
 #[test]
 fn the_table_reads_like_the_one_check_writes() {
     let repo = untidy_repository();
-    let run = repo.weed(&["scan", "--format", "table"]);
+    let run = repo.weeder(&["scan", "--format", "table"]);
     assert_eq!(run.code, 0);
 
     let lines: Vec<&str> = run.stdout.lines().collect();
@@ -245,7 +245,7 @@ fn the_table_reads_like_the_one_check_writes() {
 #[test]
 fn the_log_declares_the_scan_rules_and_no_others() {
     let repo = untidy_repository();
-    let run = repo.weed(&["scan", "--format", "sarif"]);
+    let run = repo.weeder(&["scan", "--format", "sarif"]);
     let log: Value = serde_json::from_str(&run.stdout).expect("a log");
     let declared: Vec<String> = log["runs"][0]["tool"]["driver"]["rules"]
         .as_array()
@@ -281,20 +281,20 @@ fn a_scan_writes_the_same_bytes_in_every_locale_and_time_zone() {
         let first = &replays[0];
         assert!(
             !first.stdout.is_empty(),
-            "`weed {}` wrote nothing, so the replays compare nothing",
+            "`weeder {}` wrote nothing, so the replays compare nothing",
             arguments.join(" ")
         );
         for (replay, (locale, zone)) in replays.iter().zip(ENVIRONMENTS) {
             assert_eq!(
                 replay.stdout,
                 first.stdout,
-                "`weed {}` wrote different bytes under LANG={locale} TZ={zone}",
+                "`weeder {}` wrote different bytes under LANG={locale} TZ={zone}",
                 arguments.join(" ")
             );
             assert_eq!(
                 replay.code,
                 first.code,
-                "`weed {}` left with a different code under LANG={locale} TZ={zone}",
+                "`weeder {}` left with a different code under LANG={locale} TZ={zone}",
                 arguments.join(" ")
             );
         }
@@ -322,7 +322,7 @@ fn no_rule_on_this_face_carries_a_blocking_level() {
 #[test]
 fn every_result_carries_its_path_for_a_consumer_that_aggregates_by_file() {
     let repo = untidy_repository();
-    let run = repo.weed(&["scan", "--format", "sarif"]);
+    let run = repo.weeder(&["scan", "--format", "sarif"]);
     let found = results(&run.stdout);
     assert!(!found.is_empty());
     for result in &found {
@@ -337,12 +337,15 @@ fn every_result_carries_its_path_for_a_consumer_that_aggregates_by_file() {
 /// The built binary in this repository, in a locale and a time zone of the
 /// caller's choosing. Everything else about the runs is the same.
 fn in_locale(repo: &Repo, arguments: &[&str], locale: &str, zone: &str) -> Run {
-    let mut command = repo.weed_command(arguments);
+    let mut command = repo.weeder_command(arguments);
     let output = with_locale(&mut command, locale, zone)
         .output()
-        .expect("the weed binary should run");
+        .expect("the weeder binary should run");
     Run {
-        code: output.status.code().expect("weed should leave with a code"),
+        code: output
+            .status
+            .code()
+            .expect("weeder should leave with a code"),
         stdout: String::from_utf8_lossy(&output.stdout).to_string(),
         stderr: String::from_utf8_lossy(&output.stderr).to_string(),
     }

@@ -9,7 +9,7 @@ pub enum Face {
     Bite,
 }
 
-/// What a rule may reach over a network, and under which flag. weed is a judge:
+/// What a rule may reach over a network, and under which flag. weeder is a judge:
 /// it reads a tree and writes a verdict, and the one question it cannot answer
 /// from what the repository holds is what the registries have released since.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -24,7 +24,7 @@ pub enum Network {
 }
 
 impl Network {
-    /// The one line `weed rules` prints in its network column.
+    /// The one line `weeder rules` prints in its network column.
     #[must_use]
     pub fn spelled(self) -> String {
         match self {
@@ -35,7 +35,7 @@ impl Network {
 }
 
 /// One rule as the catalogue knows it. This is the single source for the ids
-/// `weed rules` prints, the defaults `Config::default()` ships, and the rules
+/// `weeder rules` prints, the defaults `Config::default()` ships, and the rules
 /// array in a SARIF tool component.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Rule {
@@ -177,7 +177,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Block,
         short_description: "A guardrail file was edited",
-        full_description: "A change touched a harness settings file, a git hook, `weed.toml`, or the hard-limits section of `AGENTS.md` or `CLAUDE.md`.",
+        full_description: "A change touched a harness settings file, a git hook, `weeder.toml`, or the hard-limits section of `AGENTS.md` or `CLAUDE.md`.",
         network: Network::None,
     },
     Rule {
@@ -249,7 +249,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Scan,
         default_level: Level::Warn,
         short_description: "A dependency pin lags the registry",
-        full_description: "A manifest pin is further behind the latest release than `[thresholds] dependency_lag` allows, measured against the committed registry snapshot. `weed scan --refresh-snapshot` is the one path that reaches the registries, and it asks curl to do the reaching.",
+        full_description: "A manifest pin is further behind the latest release than `[thresholds] dependency_lag` allows, measured against the committed registry snapshot. `weeder scan --refresh-snapshot` is the one path that reaches the registries, and it asks curl to do the reaching.",
         network: Network::Reaches {
             what: "registries",
             under: "--refresh-snapshot",
@@ -257,12 +257,12 @@ const CATALOGUE: &[Rule] = &[
     },
 ];
 
-/// Every rule weed knows, in catalogue order.
+/// Every rule weeder knows, in catalogue order.
 pub fn rules() -> &'static [Rule] {
     CATALOGUE
 }
 
-/// The catalogue entry for an id, or `None` for an id weed does not know.
+/// The catalogue entry for an id, or `None` for an id weeder does not know.
 pub fn rule(id: &str) -> Option<&'static Rule> {
     CATALOGUE.iter().find(|rule| rule.id == id)
 }

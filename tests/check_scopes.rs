@@ -1,9 +1,9 @@
-//! What `weed check` judges, and against what.
+//! What `weeder check` judges, and against what.
 //!
 //! The repository below carries a distinct conflict in each zone: one in a
 //! commit past the base ref, one in the index, one in the working tree alone.
 //! Each mode reports exactly the zones it claims to read, so the paths in the
-//! SARIF say which diff weed asked git for.
+//! SARIF say which diff weeder asked git for.
 
 mod common;
 
@@ -30,9 +30,9 @@ fn three_zones() -> (Repo, String) {
 }
 
 #[test]
-fn with_no_flags_weed_judges_the_index_and_the_working_tree_against_head() {
+fn with_no_flags_weeder_judges_the_index_and_the_working_tree_against_head() {
     let (repo, _) = three_zones();
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
 
     assert_eq!(
         run.paths(),
@@ -45,7 +45,7 @@ fn with_no_flags_weed_judges_the_index_and_the_working_tree_against_head() {
 #[test]
 fn staged_judges_the_index_alone() {
     let (repo, _) = three_zones();
-    let run = repo.weed(&["check", "--staged"]);
+    let run = repo.weeder(&["check", "--staged"]);
 
     assert_eq!(
         run.paths(),
@@ -58,7 +58,7 @@ fn staged_judges_the_index_alone() {
 #[test]
 fn base_judges_the_tree_against_that_ref() {
     let (repo, base) = three_zones();
-    let run = repo.weed(&["check", "--base", &base]);
+    let run = repo.weeder(&["check", "--base", &base]);
 
     assert_eq!(
         run.paths(),
@@ -71,10 +71,10 @@ fn base_judges_the_tree_against_that_ref() {
 #[test]
 fn scope_never_hides_a_finding() {
     // `--scope` names the paths a change may touch. Every file is still judged;
-    // a file outside the scope is X2's finding (rules-prod), not a file weed
+    // a file outside the scope is X2's finding (rules-prod), not a file weeder
     // looks away from.
     let (repo, _) = three_zones();
-    let run = repo.weed(&["check", "--scope", "src/**"]);
+    let run = repo.weeder(&["check", "--scope", "src/**"]);
     assert_eq!(
         run.paths(),
         vec!["src/nested.ts", "staged.ts", "tracked.ts"],
@@ -84,9 +84,9 @@ fn scope_never_hides_a_finding() {
 }
 
 #[test]
-fn base_and_staged_together_are_two_questions_so_weed_asks_for_one() {
+fn base_and_staged_together_are_two_questions_so_weeder_asks_for_one() {
     let (repo, base) = three_zones();
-    let run = repo.weed(&["check", "--base", &base, "--staged"]);
+    let run = repo.weeder(&["check", "--base", &base, "--staged"]);
 
     assert_eq!(
         run.code, 3,
@@ -102,7 +102,7 @@ fn a_repository_before_its_first_commit_still_has_its_change_judged() {
     repo.write("staged.ts", &conflicted_parser(None));
     repo.stage_all();
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert_eq!(
         run.paths(),
         vec!["staged.ts"],

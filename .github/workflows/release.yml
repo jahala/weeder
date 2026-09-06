@@ -12,7 +12,7 @@ env:
 
 jobs:
   # Fail before anything is published if the tag, the crate and the npm wrapper
-  # disagree about which weed this is.
+  # disagree about which weeder this is.
   version-check:
     runs-on: ubuntu-latest
     steps:
@@ -93,7 +93,7 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/release
-          tar czf ../../../weed-${{ matrix.target }}.tar.gz weed
+          tar czf ../../../weeder-${{ matrix.target }}.tar.gz weeder
           cd ../../..
 
       - name: Package (windows)
@@ -101,14 +101,14 @@ jobs:
         shell: bash
         run: |
           cd target/${{ matrix.target }}/release
-          7z a ../../../weed-${{ matrix.target }}.zip weed.exe
+          7z a ../../../weeder-${{ matrix.target }}.zip weeder.exe
           cd ../../..
 
       - uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # ratchet:softprops/action-gh-release@v3
         with:
           files: |
-            weed-*.tar.gz
-            weed-*.zip
+            weeder-*.tar.gz
+            weeder-*.zip
           # Notes on one leg only. When the release already exists the action
           # appends freshly generated notes to the body, so every extra matrix
           # leg would add another copy of what changed.
@@ -120,7 +120,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v6
       - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # ratchet:dtolnay/rust-toolchain@stable
-      - name: Publish weed
+      - name: Publish weeder
         run: cargo publish --locked
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

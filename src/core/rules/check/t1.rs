@@ -20,7 +20,7 @@
 //! the change, by the name their runner collects them under and, where the move
 //! renamed them, by everything they hold with that name taken out. A case found
 //! there is not a deletion and is not counted as one, and what is left over is
-//! what the finding reports. Only when nothing was found anywhere does weed say
+//! what the finding reports. Only when nothing was found anywhere does weeder say
 //! the behaviour is covered by nobody; where some cases moved, the finding names
 //! the files they moved into, because a sentence a reader can disprove in one
 //! click costs more than the finding is worth.
@@ -280,7 +280,7 @@ fn cases_gone(
     }
 }
 
-/// The files a set of cases moved into, in the order weed sorts paths.
+/// The files a set of cases moved into, in the order weeder sorts paths.
 fn named(paths: &BTreeSet<String>) -> String {
     paths
         .iter()

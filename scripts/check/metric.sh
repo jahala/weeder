@@ -20,7 +20,7 @@ command -v python3 >/dev/null 2>&1 || {
   exit 3
 }
 command -v git >/dev/null 2>&1 || { echo "git is not on PATH" >&2; exit 3; }
-[ -f "$manifest" ] || { echo "$manifest is missing: weed publishes no manifest for the umbrella to read" >&2; exit 1; }
+[ -f "$manifest" ] || { echo "$manifest is missing: weeder publishes no manifest for the umbrella to read" >&2; exit 1; }
 
 command="$(python3 -c 'import json,sys; print((json.load(open(sys.argv[1]))
     .get("metric") or {}).get("command", ""))' "$manifest")"
@@ -56,7 +56,7 @@ cp "$result" "$committed"
 
 if ! bash -c "$command" > /dev/null; then
   cp "$committed" "$result"
-  echo "the metric command garden.json names did not pass: weed publishes a measurement it does not meet" >&2
+  echo "the metric command garden.json names did not pass: weeder publishes a measurement it does not meet" >&2
   exit 1
 fi
 

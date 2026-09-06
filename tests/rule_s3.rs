@@ -7,7 +7,7 @@
 //!
 //! The neighbour is the same line where printing is the work: a test saying
 //! what it saw, the program's entry point, and a module the repository's own
-//! `weed.toml` names as a command-line face.
+//! `weeder.toml` names as a command-line face.
 
 mod common;
 
@@ -40,7 +40,7 @@ const SHAPES: [(&str, &str, &[&str]); 4] = [
 ];
 
 /// The files the silent neighbour writes a leftover into, and why each one is
-/// allowed to: a test, the entry point, and a module `weed.toml` names.
+/// allowed to: a test, the entry point, and a module `weeder.toml` names.
 const EXEMPT: [(&str, &[&str]); 4] = [
     ("ts", &["src/report.test.ts", "src/cli/render.ts"]),
     ("py", &["tests/test_report.py", "src/cli/render.py"]),
@@ -55,7 +55,7 @@ const EXEMPT: [(&str, &[&str]); 4] = [
 fn s3_warns_on_every_debug_leftover_in_a_production_file_in_every_language() {
     for (lang, path, shapes) in SHAPES {
         let repo = fixture("S3", lang, "fire");
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
 
         assert_eq!(
             run.code, 0,
@@ -92,7 +92,7 @@ fn s3_stays_silent_in_a_test_in_the_entry_point_and_in_a_module_the_config_names
             );
         }
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.findings(),
             Vec::new(),
@@ -106,13 +106,13 @@ fn s3_stays_silent_in_a_test_in_the_entry_point_and_in_a_module_the_config_names
 fn the_config_is_what_exempts_a_command_line_face_and_not_its_name() {
     // Judge the same tree against a config that names no entry point, and the
     // same module is an ordinary one again: the exemption is something the
-    // repository states, not a folder name weed has heard of.
+    // repository states, not a folder name weeder has heard of.
     let repo = fixture("S3", "ts", "silent");
     let elsewhere = TempDir::new().expect("a directory to keep a config in");
-    let config = elsewhere.path().join("weed.toml");
+    let config = elsewhere.path().join("weeder.toml");
     std::fs::write(&config, "[rules]\nT1 = \"block\"\n").expect("the config should be writable");
 
-    let run = repo.weed(&[
+    let run = repo.weeder(&[
         "check",
         "--config",
         config.to_str().expect("the temp path is utf-8"),

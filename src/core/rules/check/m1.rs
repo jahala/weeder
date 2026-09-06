@@ -5,13 +5,13 @@
 //! is the part being changed, the suite exercises the stand-in, the change
 //! ships unexercised, and the run is green because nothing ran.
 //!
-//! weed only says so where both halves are in front of it. A test file in the
+//! weeder only says so where both halves are in front of it. A test file in the
 //! diff is read for the doubles it sets up, and each one is resolved against
 //! the production files the same diff touches. That happens two ways, because
 //! doubles are named two ways: by module, where the framework is handed a path
 //! or a dotted module name, and by symbol, where the double wears the name of
 //! the thing it stands in for. A double of something outside the diff is a
-//! decision weed has no opinion about.
+//! decision weeder has no opinion about.
 
 use crate::core::change::Change;
 use crate::core::classify::FileKind;
@@ -138,7 +138,7 @@ fn resolve<'a>(double: &Double, test: &str, production: &[&'a Change]) -> Option
 /// A specifier written as a relative path is resolved against the directory the
 /// test sits in, the way the language resolves an import. A specifier written
 /// as a dotted module name is matched against the tail of the path, because the
-/// root it counts from is the runner's to know and not weed's, and the tail is
+/// root it counts from is the runner's to know and not weeder's, and the tail is
 /// tried shorter and shorter, so a specifier that names an attribute inside a
 /// module still finds the module.
 fn names_module(module: &str, test: &str, path: &str) -> bool {

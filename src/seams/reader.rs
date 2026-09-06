@@ -1,6 +1,6 @@
-//! The reader seam: everything weed knows about the inside of a file.
+//! The reader seam: everything weeder knows about the inside of a file.
 //!
-//! weed parses nothing. Outlines, language detection, test structure, imports
+//! weeder parses nothing. Outlines, language detection, test structure, imports
 //! and call sites all come from `tilth-core`, and this is the only module that
 //! names it. What leaves here is the plain data in [`crate::core::read`], so an
 //! upgrade of the substrate is a change to this file and to nothing else.
@@ -30,7 +30,7 @@ use crate::core::read::{
 const CALLER_LIMIT: usize = 200;
 
 /// Reading failed on the way to the answer. The scope travels with the message,
-/// so a face can say which tree weed could not walk.
+/// so a face can say which tree weeder could not walk.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ReadError {
     pub scope: String,
@@ -45,8 +45,8 @@ impl std::fmt::Display for ReadError {
 
 impl std::error::Error for ReadError {}
 
-/// The language a path is written in, as far as weed has rules for it. A file
-/// in a language weed carries no rules for, and anything that is not code at
+/// The language a path is written in, as far as weeder has rules for it. A file
+/// in a language weeder carries no rules for, and anything that is not code at
 /// all, reads as [`Lang::Other`].
 #[must_use]
 pub fn language(path: &Path) -> Lang {
@@ -125,11 +125,11 @@ pub fn test_shape(path: &Path, content: &str) -> TestShape {
 
 /// The import statements a file makes, in source order.
 ///
-/// tilth judges an import by the line it starts on, and so does weed: a
+/// tilth judges an import by the line it starts on, and so does weeder: a
 /// statement written across several lines carries the range it spans and the
 /// source read off the whole of it. A language that lists several sources in
 /// one statement, Go's parenthesised block, is one import here, because the
-/// substrate names one source per statement and weed adds no parser of its own.
+/// substrate names one source per statement and weeder adds no parser of its own.
 #[must_use]
 pub fn imports(path: &Path, content: &str) -> Vec<Import> {
     let Some(lang) = code_language(path) else {
@@ -179,7 +179,7 @@ pub fn related_files(path: &Path, content: &str) -> Vec<PathBuf> {
 }
 
 /// Every call site of `symbols` under `scope`, sorted by file and line so two
-/// runs of weed produce the same findings in the same order.
+/// runs of weeder produce the same findings in the same order.
 ///
 /// The walk honours the ignore files the tree carries, so a build directory is
 /// not a blast radius.
@@ -238,7 +238,7 @@ fn definition(entry: OutlineEntry) -> Definition {
     }
 }
 
-/// tilth's word for a declaration, in weed's own vocabulary. A binding that
+/// tilth's word for a declaration, in weeder's own vocabulary. A binding that
 /// cannot be reassigned is a constant here whichever keyword declared it, and
 /// the two kinds no grammar emits arrive as `Other` rather than as a promise.
 fn definition_kind(kind: OutlineKind) -> DefinitionKind {

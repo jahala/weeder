@@ -22,7 +22,7 @@ pub mod r4;
 
 type Detector = fn(&Tree, &Config) -> Vec<Finding>;
 
-/// The detectors weed has on this face, in catalogue order.
+/// The detectors weeder has on this face, in catalogue order.
 const DETECTORS: &[(&str, Detector)] = &[
     ("R1", r1::evaluate),
     ("R2", r2::evaluate),

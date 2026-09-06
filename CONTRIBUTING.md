@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest. weed is small on purpose: one core, three faces, and a rule catalogue where every rule is proven by a fixture. Clean, focused changes are the easiest to land.
+Thanks for your interest. weeder is small on purpose: one core, three faces, and a rule catalogue where every rule is proven by a fixture. Clean, focused changes are the easiest to land.
 
 ## Workflow
 
@@ -17,7 +17,7 @@ CI runs the same three commands on every change, and runs the suite again on a r
 
 ## What helps
 
-- **A fixture first.** A new rule, or a change to what one fires on, lands as a fire and a silent fixture under `fixtures/adversarial/<RULE>/<lang>/` in every language weed reads, then the detector. A test that cannot fail is not a test.
+- **A fixture first.** A new rule, or a change to what one fires on, lands as a fire and a silent fixture under `fixtures/adversarial/<RULE>/<lang>/` in every language weeder reads, then the detector. A test that cannot fail is not a test.
 - **Nothing mocked.** Tests build a real git repository in a temp dir and run the built binary. `tests/common/mod.rs` is the harness; use it rather than a shortcut.
 - **Small PRs.** Easier to review, easier to merge.
 - **A commit body that says why.** The log is the project's reasoning trail; the subject says what, the body says why.
@@ -25,7 +25,7 @@ CI runs the same three commands on every change, and runs the suite again on a r
 
 ## The map
 
-Work here is planned on loops. `docs/tend2/` holds one page per module with the checks that prove it, and `AGENTS.md` carries the layout, the dependency direction weed enforces on itself, the voice, and the rules any change is held to. For anything that adds a rule, a face or a flag, read the loop that owns it first; for anything the map has no loop for, open an issue so the shape is agreed before the code.
+Work here is planned on loops. `docs/tend2/` holds one page per module with the checks that prove it, and `AGENTS.md` carries the layout, the dependency direction weeder enforces on itself, the voice, and the rules any change is held to. For anything that adds a rule, a face or a flag, read the loop that owns it first; for anything the map has no loop for, open an issue so the shape is agreed before the code.
 
 ## Code style
 

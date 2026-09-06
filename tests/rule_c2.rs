@@ -22,7 +22,7 @@ const BROADENING: [&str; 2] = ["src/", "*.test.ts"];
 #[test]
 fn c2_warns_on_every_added_pattern_that_covers_source_or_tests() {
     let repo = fixture("C2", "paths", "fire");
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
 
     assert_eq!(
         run.code, 0,
@@ -63,7 +63,7 @@ fn c2_stays_silent_on_build_output() {
         "the neighbour must be in the diff, or the silence proves nothing"
     );
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert_eq!(
         run.findings(),
         Vec::new(),

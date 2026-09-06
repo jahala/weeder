@@ -2,11 +2,11 @@
 //!
 //! A workflow says how the checks are run on a server. It decides less than a
 //! guardrail does and is rewritten far more often, a step reordered, a runner
-//! bumped, a cache key changed, so weed names the change and lets it through:
+//! bumped, a cache key changed, so weeder names the change and lets it through:
 //! this is a warning for the person reading the pull request, not a wall.
 //!
 //! One repository's by-law is another's constitution. Where the workflow is
-//! what publishes, `[guardrails] paths` in `weed.toml` names it, and weed
+//! what publishes, `[guardrails] paths` in `weeder.toml` names it, and weeder
 //! reports that path at block level instead. Only the paths the repository
 //! wrote down move; the rest stay warnings.
 

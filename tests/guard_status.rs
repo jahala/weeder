@@ -1,4 +1,4 @@
-//! `weed guard status`, every way a hook stops being the law, named.
+//! `weeder guard status`, every way a hook stops being the law, named.
 //!
 //! A gate that has quietly stopped running is worse than no gate, so each case
 //! breaks the installation in one way and asks status what it can see.
@@ -13,11 +13,11 @@ use common::Repo;
 fn status_says_so_when_guard_has_installed_nothing() {
     let repo = Repo::init();
 
-    let run = repo.weed(&["guard", "status"]);
+    let run = repo.weeder(&["guard", "status"]);
 
     assert_eq!(run.code, 2, "nothing installed is a miss\n{}", run.stderr);
     assert!(
-        run.stdout.contains("weed guard install"),
+        run.stdout.contains("weeder guard install"),
         "status says what to do about it:\n{}",
         run.stdout
     );
@@ -28,7 +28,7 @@ fn status_names_a_hook_that_is_missing() {
     let repo = installed();
     std::fs::remove_file(repo.root().join(".githooks/pre-push")).expect("the hook is on disk");
 
-    let run = repo.weed(&["guard", "status"]);
+    let run = repo.weeder(&["guard", "status"]);
 
     assert_eq!(run.code, 2, "a missing hook is a miss\n{}", run.stderr);
     assert!(
@@ -50,7 +50,7 @@ fn status_names_a_hook_git_cannot_run() {
     std::fs::set_permissions(&hook, std::fs::Permissions::from_mode(0o644))
         .expect("the hook's mode is the test's to change");
 
-    let run = repo.weed(&["guard", "status"]);
+    let run = repo.weeder(&["guard", "status"]);
 
     assert_eq!(run.code, 2, "a hook git skips is a miss\n{}", run.stderr);
     assert!(
@@ -65,7 +65,7 @@ fn status_names_a_hooks_path_that_points_elsewhere() {
     let repo = installed();
     repo.git(&["config", "core.hooksPath", ".their-hooks"]);
 
-    let run = repo.weed(&["guard", "status"]);
+    let run = repo.weeder(&["guard", "status"]);
 
     assert_eq!(
         run.code, 2,
@@ -84,7 +84,7 @@ fn status_names_a_hooks_path_that_is_set_no_more() {
     let repo = installed();
     repo.git(&["config", "--unset", "core.hooksPath"]);
 
-    let run = repo.weed(&["guard", "status"]);
+    let run = repo.weeder(&["guard", "status"]);
 
     assert_eq!(
         run.code, 2,
@@ -102,8 +102,8 @@ fn status_names_a_hooks_path_that_is_set_no_more() {
 fn status_names_a_hook_whose_binary_is_gone() {
     let repo = Repo::init();
     let elsewhere = tempfile::TempDir::new().expect("a temp directory for the copy");
-    let copy = elsewhere.path().join("weed");
-    std::fs::copy(common::binary(), &copy).expect("weed should copy");
+    let copy = elsewhere.path().join("weeder");
+    std::fs::copy(common::binary(), &copy).expect("weeder should copy");
     std::fs::set_permissions(&copy, std::fs::Permissions::from_mode(0o755))
         .expect("the copy should be runnable");
 
@@ -119,7 +119,7 @@ fn status_names_a_hook_whose_binary_is_gone() {
     );
     std::fs::remove_file(&copy).expect("the copy is the test's to take away");
 
-    let run = repo.weed(&["guard", "status"]);
+    let run = repo.weeder(&["guard", "status"]);
 
     assert_eq!(
         run.code, 2,
@@ -137,14 +137,14 @@ fn status_names_a_hook_whose_binary_is_gone() {
 fn status_is_clean_when_nothing_is_broken() {
     let repo = installed();
 
-    let run = repo.weed(&["guard", "status"]);
+    let run = repo.weeder(&["guard", "status"]);
 
     assert_eq!(run.code, 0, "an untouched install is live\n{}", run.stderr);
 }
 
 fn installed() -> Repo {
     let repo = Repo::init();
-    let run = repo.weed(&["guard", "install"]);
+    let run = repo.weeder(&["guard", "install"]);
     assert_eq!(run.code, 0, "install runs clean\n{}", run.stderr);
     repo
 }

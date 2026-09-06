@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T2:py:copeca:70d669542:tests/config/test_mode_models.py", "sha256": "c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119"}
+{"type": "answer", "answer": "Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: miss\nReasoning: The report lists this planted T2 case as an assertion deletion in a test file and says it was planted but not reported."}

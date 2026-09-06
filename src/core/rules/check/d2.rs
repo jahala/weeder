@@ -5,7 +5,7 @@
 //! else is an arrow drawn the wrong way: one line to write, and a long time to
 //! take back out once everything below it depends on everything above.
 //!
-//! An import names a module, and weed has to work out which file that module is.
+//! An import names a module, and weeder has to work out which file that module is.
 //! It does that against the repository's own paths rather than against a build
 //! system: the module's name is broken into segments, a relative one is resolved
 //! from the file that wrote it, and the repository path whose own segments end
@@ -28,7 +28,7 @@ use crate::core::rules::check::Judgement;
 const CODE_EXTENSIONS: &[&str] = &["ts", "tsx", "js", "jsx", "mjs", "cjs", "py", "rs", "go"];
 
 /// What separates one segment of a module name from the next, in every language
-/// weed reads, together with the punctuation a statement wraps them in.
+/// weeder reads, together with the punctuation a statement wraps them in.
 const SEPARATORS: [char; 9] = ['/', ':', '.', '{', '}', ',', ' ', '"', '\''];
 
 pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
@@ -96,7 +96,7 @@ fn points_at(importer: &str, source: &str, judged: &Judgement) -> Option<String>
             continue;
         }
         // Two paths answer the import equally well. They are the same answer
-        // only where they sit in the same layer; otherwise weed does not know.
+        // only where they sit in the same layer; otherwise weeder does not know.
         if layer != found {
             found = None;
         }

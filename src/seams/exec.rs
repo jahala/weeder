@@ -1,10 +1,10 @@
 //! The exec seam: one command, run once, with a deadline it cannot outlive.
 //!
-//! git has a seam of its own because weed asks it a dozen different questions.
-//! Everything else weed runs is a stranger, a CLI whose help a repository's
+//! git has a seam of its own because weeder asks it a dozen different questions.
+//! Everything else weeder runs is a stranger, a CLI whose help a repository's
 //! docs cite, a fetch of a registry's latest release, so it arrives here as a
 //! program and an argument array, never a shell string, and it is given a
-//! deadline. A command that will not finish is a command weed stops waiting on:
+//! deadline. A command that will not finish is a command weeder stops waiting on:
 //! a scan is measured in milliseconds, and a hung child would spend the budget
 //! of every rule behind it.
 
@@ -30,11 +30,11 @@ impl std::fmt::Display for ExecError {
         match self {
             ExecError::Unavailable { program, message } => write!(
                 f,
-                "weed could not run {program}: {message}. install it, or put it on PATH."
+                "weeder could not run {program}: {message}. install it, or put it on PATH."
             ),
             ExecError::TimedOut { program, seconds } => write!(
                 f,
-                "{program} was still running after {seconds}s and weed stopped waiting. a scan is measured in milliseconds, so the command it waits on has to answer in one."
+                "{program} was still running after {seconds}s and weeder stopped waiting. a scan is measured in milliseconds, so the command it waits on has to answer in one."
             ),
         }
     }
@@ -53,7 +53,7 @@ pub struct Output {
 
 /// One command, in a directory, with a deadline. Its output is read as lossy
 /// text: a help listing or a registry's answer is read for the ascii shapes in
-/// it, and a byte weed cannot read was never part of one.
+/// it, and a byte weeder cannot read was never part of one.
 pub fn run(
     directory: &Path,
     program: &str,

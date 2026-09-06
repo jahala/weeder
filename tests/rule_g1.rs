@@ -26,7 +26,7 @@ fn markers() -> [String; 3] {
 fn g1_fires_at_block_level_on_every_conflict_marker_in_every_language() {
     for (lang, path) in LANGUAGES {
         let repo = fixture("G1", lang, "fire");
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
 
         assert_eq!(
             run.code, 2,
@@ -69,7 +69,7 @@ fn g1_stays_silent_on_a_separator_in_a_string_and_a_markdown_rule() {
             "{lang}: the silent neighbour must be in the diff, or the silence proves nothing"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.findings(),
             Vec::new(),
@@ -83,12 +83,12 @@ fn g1_stays_silent_on_a_separator_in_a_string_and_a_markdown_rule() {
 fn the_pending_commit_message_never_reaches_the_tree() {
     let repo = fixture("G1", "ts", "fire");
     assert!(
-        !repo.root().join(".weed-commit").exists(),
+        !repo.root().join(".weeder-commit").exists(),
         "the fixture's commit message is not a file of the change"
     );
     let staged = repo.git(&["diff", "--cached", "--name-only"]);
     assert!(
-        !staged.lines().any(|path| path == ".weed-commit"),
+        !staged.lines().any(|path| path == ".weeder-commit"),
         "the fixture's commit message is never staged"
     );
 }

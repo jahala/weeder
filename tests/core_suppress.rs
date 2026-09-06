@@ -1,4 +1,4 @@
-use weed::core::{
+use weeder::core::{
     apply_suppressions, parse_commit_suppressions, parse_diff, parse_inline_suppressions, Finding,
     Level, Message, Region, SuppressionSource,
 };

@@ -49,15 +49,15 @@ trap 'command -v trash >/dev/null 2>&1 && trash "$scratch"' EXIT
 # The T1 that judged the ledger follows a case into the file it moved to.
 #
 # The redo was asked for because the old T1 called a moved case a deleted one,
-# and a ledger read under that T1 is a ledger about findings weed no longer
+# and a ledger read under that T1 is a ledger about findings weeder no longer
 # makes. So the shipped binary is put to a history where a case moves and a
 # history where one vanishes, and it has to tell them apart.
 # ---------------------------------------------------------------------------
 probe="$scratch/t1"
 mkdir -p "$probe/tests"
 git -C "$probe" init --quiet --initial-branch=main
-git -C "$probe" config user.name "weed measurements"
-git -C "$probe" config user.email "measurements@weed.invalid"
+git -C "$probe" config user.name "weeder measurements"
+git -C "$probe" config user.email "measurements@weeder.invalid"
 cat > "$probe/tests/parser.rs" <<'RUST'
 #[test]
 fn parses_a_name() {
@@ -97,12 +97,12 @@ fn parses_a_pair() {
     assert_eq!(parse("a b"), "a b");
 }
 RUST
-weed_check() {
-  ( cd "$1" && cargo run -q --manifest-path "$root/Cargo.toml" -p weed -- check --base "$2" --strict --format sarif ) 2>/dev/null
+weeder_check() {
+  ( cd "$1" && cargo run -q --manifest-path "$root/Cargo.toml" -p weeder -- check --base "$2" --strict --format sarif ) 2>/dev/null
 }
-# weed exits 2 on a block-level finding, and this probe reads one rule out of
+# weeder exits 2 on a block-level finding, and this probe reads one rule out of
 # what it wrote rather than asking whether it refused.
-moved="$(weed_check "$probe" HEAD || true)"
+moved="$(weeder_check "$probe" HEAD || true)"
 if printf '%s' "$moved" | python3 -c 'import json,sys
 log = json.load(sys.stdin)
 runs = log.get("runs") or [{}]
@@ -119,7 +119,7 @@ fn formats_a_name() {
     assert_eq!(format("a"), "a");
 }
 RUST
-gone="$(weed_check "$probe" HEAD || true)"
+gone="$(weeder_check "$probe" HEAD || true)"
 if ! printf '%s' "$gone" | python3 -c 'import json,sys
 log = json.load(sys.stdin)
 runs = log.get("runs") or [{}]

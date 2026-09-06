@@ -1,16 +1,16 @@
-# weed on a pull request.
+# weeder on a pull request.
 #
-# Copy this to .github/workflows/weed.yml in your own repository. It judges the
+# Copy this to .github/workflows/weeder.yml in your own repository. It judges the
 # pull request against the branch it is opening onto, writes SARIF, and hands
 # that to GitHub's code scanning, so every finding lands as an annotation on the
 # diff a reviewer is already reading.
 #
-# The job fails when weed blocks: `weed check` leaves with 2 for a block-level
+# The job fails when weeder blocks: `weeder check` leaves with 2 for a block-level
 # finding, 0 for a clean run or warnings only, and 3 when it could not run at
 # all. The upload runs either way, because the run that blocked is exactly the
 # one whose findings a reviewer needs to see.
 
-name: weed
+name: weeder
 
 on:
   pull_request:
@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 jobs:
-  weed:
+  weeder:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -27,19 +27,19 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # weed diffs against the base branch, so the base branch has to be
+          # weeder diffs against the base branch, so the base branch has to be
           # in the clone. A shallow one does not carry it.
           fetch-depth: 0
 
-      - name: Install weed
-        run: npm install -g @plotplot/weed
+      - name: Install weeder
+        run: npm install -g @plotplot/weeder
 
       - name: Judge the pull request
-        run: weed check --base origin/${{ github.base_ref }} --strict --format sarif > weed.sarif
+        run: weeder check --base origin/${{ github.base_ref }} --strict --format sarif > weeder.sarif
 
       - name: Upload the findings
         if: always()
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: weed.sarif
-          category: weed
+          sarif_file: weeder.sarif
+          category: weeder

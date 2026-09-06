@@ -1,11 +1,11 @@
 use serde_json::Value;
 
-use weed::core::catalogue::{self, Face};
-use weed::core::sarif::{render, Context, SARIF_VERSION, SCHEMA_URI};
-use weed::core::{Finding, Fix, Level, Message, Region, Suppression, SuppressionSource};
+use weeder::core::catalogue::{self, Face};
+use weeder::core::sarif::{render, Context, SARIF_VERSION, SCHEMA_URI};
+use weeder::core::{Finding, Fix, Level, Message, Region, Suppression, SuppressionSource};
 
 fn context() -> Context {
-    Context::new("0.1.0").with_docs_base("file:///srv/weed/")
+    Context::new("0.1.0").with_docs_base("file:///srv/weeder/")
 }
 
 fn json(findings: &[Finding], context: &Context) -> Value {
@@ -50,7 +50,7 @@ fn log_holds_one_run_with_the_schema_uri_and_version() {
     );
     assert_eq!(
         log["runs"][0]["tool"]["driver"]["name"],
-        Value::from("weed")
+        Value::from("weeder")
     );
     assert_eq!(
         log["runs"][0]["tool"]["driver"]["version"],
@@ -287,7 +287,7 @@ fn tool_component_lists_every_catalogue_rule_with_its_default_level() {
         );
         assert_eq!(
             rendered["helpUri"],
-            Value::from(format!("file:///srv/weed/docs/rules.md#{}", rule.id))
+            Value::from(format!("file:///srv/weeder/docs/rules.md#{}", rule.id))
         );
     }
 
@@ -306,7 +306,7 @@ fn tool_component_lists_every_catalogue_rule_with_its_default_level() {
 }
 
 #[test]
-fn the_invocation_reports_the_exit_code_and_the_reason_weed_could_not_run() {
+fn the_invocation_reports_the_exit_code_and_the_reason_weeder_could_not_run() {
     let clean = json(&[], &context());
     assert_eq!(
         clean["runs"][0]["invocations"][0]["executionSuccessful"],
@@ -337,13 +337,13 @@ fn the_invocation_reports_the_exit_code_and_the_reason_weed_could_not_run() {
 
     let stopped = json(
         &[],
-        &context().could_not_run("the diff names a path weed cannot parse."),
+        &context().could_not_run("the diff names a path weeder cannot parse."),
     );
     let invocation = &stopped["runs"][0]["invocations"][0];
     assert_eq!(invocation["executionSuccessful"], Value::from(false));
     assert_eq!(invocation["exitCode"], Value::from(3));
     assert_eq!(
         invocation["toolExecutionNotifications"][0]["message"]["text"],
-        Value::from("the diff names a path weed cannot parse.")
+        Value::from("the diff names a path weeder cannot parse.")
     );
 }

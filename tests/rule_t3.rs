@@ -1,7 +1,7 @@
 //! T3, a skip or a focus marker was added.
 //!
 //! Each language spells the marker in its own grammar, and the fire fixture adds
-//! every form the rule names. The lines weed must report are read off the
+//! every form the rule names. The lines weeder must report are read off the
 //! fixture here, by looking for the forms themselves, so the expectation does
 //! not depend on how the detector goes about finding them.
 //!
@@ -47,7 +47,7 @@ const LANGUAGES: [Language; 4] = [
 fn t3_fires_at_block_level_on_every_added_skip_or_focus_form() {
     for language in LANGUAGES {
         let repo = fixture("T3", language.name, "fire");
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         let name = language.name;
 
         assert_eq!(run.code, 2, "{name}: a marker blocks\n{}", run.stderr);
@@ -89,7 +89,7 @@ fn t3_stays_silent_when_the_same_token_sits_in_a_string_or_a_comment() {
             "{name}: the neighbour has to write the tokens down, or it is not a neighbour"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.findings(),
             Vec::new(),

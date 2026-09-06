@@ -10,7 +10,7 @@
 //! passed over for each. A file the commit itself added has no earlier version,
 //! so a shape about something being taken away could not be planted in it
 //! honestly. A file carrying a NUL byte is one git writes no text diff for and
-//! weed judges no lines in, by the same test git uses and for the reason weed
+//! weeder judges no lines in, by the same test git uses and for the reason weeder
 //! states: those bytes carry no lines. And a file that announces it was
 //! generated is nobody's hand-written code, so a stub or a print left in it is
 //! a fact about a generator rather than about a change.

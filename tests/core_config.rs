@@ -1,4 +1,4 @@
-use weed::core::{parse_config, RuleSetting};
+use weeder::core::{parse_config, RuleSetting};
 
 #[test]
 fn parses_typed_config_and_defaults() {
@@ -59,7 +59,7 @@ paths = [".github/workflows/release.yml"]
     );
     assert!(
         defaults.guardrail_paths.is_empty(),
-        "a repository that names no path of its own holds only the guardrails weed knows"
+        "a repository that names no path of its own holds only the guardrails weeder knows"
     );
 }
 

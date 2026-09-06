@@ -1,14 +1,14 @@
-//! `weed hook codex`, the Codex CLI hook event, and the events it cannot refuse.
+//! `weeder hook codex`, the Codex CLI hook event, and the events it cannot refuse.
 //!
 //! Codex ships a JSON schema for every hook event's input and output inside its
 //! own binary, and those schemas say plainly which events carry a decision. Two
-//! of them are where weed stands: `PreToolUse` refuses a tool call, `Stop`
+//! of them are where weeder stands: `PreToolUse` refuses a tool call, `Stop`
 //! refuses the end of a turn. Four carry no decision at all, and a hook wired to
-//! one of those can be heard but cannot refuse, so weed says one line and
+//! one of those can be heard but cannot refuse, so weeder says one line and
 //! judges nothing, rather than looking like a gate that is not there.
 //!
 //! `docs/proof-2026-09.md` is where that reading is written down. This file
-//! reads it back and holds weed to it, in both directions: every event the doc
+//! reads it back and holds weeder to it, in both directions: every event the doc
 //! calls deaf gets the note, every event it does not stays silent.
 
 mod common;
@@ -25,7 +25,7 @@ const ALLOWED: i32 = 0;
 const SECTION: &str = "## codex: what a hook may refuse";
 /// What the doc's middle column says of an event that takes no decision.
 const NO_DECISION: &str = "no decision";
-/// The two events weed stands at, and so the two the rest of the contract is
+/// The two events weeder stands at, and so the two the rest of the contract is
 /// measured against.
 const STANDING: [&str; 2] = ["PreToolUse", "Stop"];
 
@@ -35,7 +35,7 @@ fn a_commit_over_an_index_that_blocks_is_denied_in_codexs_shape() {
     repo.write("src/parser.ts", &conflicted_parser(None));
     repo.stage_all();
 
-    let run = repo.weed_reading(
+    let run = repo.weeder_reading(
         &["hook", "codex"],
         &tool_event(
             &repo,
@@ -46,7 +46,7 @@ fn a_commit_over_an_index_that_blocks_is_denied_in_codexs_shape() {
     assert_eq!(
         run.code,
         REFUSED,
-        "weed refuses the commit: {}",
+        "weeder refuses the commit: {}",
         run.output()
     );
     let answer = answer(&run.stdout);
@@ -67,8 +67,8 @@ fn a_commit_over_an_index_that_blocks_is_denied_in_codexs_shape() {
         "the reason names the file:\n{reason}"
     );
 
-    // Codex hands a shell call its argv, so weed reads the script out of it.
-    let string_form = repo.weed_reading(
+    // Codex hands a shell call its argv, so weeder reads the script out of it.
+    let string_form = repo.weeder_reading(
         &["hook", "codex"],
         &tool_event(&repo, json!("git commit -m 'half finished'")),
     );
@@ -89,7 +89,7 @@ fn a_commit_over_a_clean_index_is_not_denied() {
     );
     repo.stage_all();
 
-    let run = repo.weed_reading(
+    let run = repo.weeder_reading(
         &["hook", "codex"],
         &tool_event(&repo, json!(["bash", "-lc", "git commit -m 'finished'"])),
     );
@@ -97,7 +97,7 @@ fn a_commit_over_a_clean_index_is_not_denied() {
     assert_eq!(run.code, ALLOWED, "a clean index commits: {}", run.output());
     assert_eq!(
         run.stdout, "",
-        "weed says nothing where it has nothing to say"
+        "weeder says nothing where it has nothing to say"
     );
 }
 
@@ -111,9 +111,14 @@ fn a_stop_over_a_tree_that_blocks_is_blocked_in_codexs_shape() {
     repo.commit("the parser");
     repo.write("src/parser.ts", &conflicted_parser(None));
 
-    let run = repo.weed_reading(&["hook", "codex"], &stop_event(&repo));
+    let run = repo.weeder_reading(&["hook", "codex"], &stop_event(&repo));
 
-    assert_eq!(run.code, REFUSED, "weed blocks the stop: {}", run.output());
+    assert_eq!(
+        run.code,
+        REFUSED,
+        "weeder blocks the stop: {}",
+        run.output()
+    );
     let answer = answer(&run.stdout);
     assert_eq!(answer["decision"], "block");
     let reason = answer["reason"]
@@ -126,7 +131,7 @@ fn a_stop_over_a_tree_that_blocks_is_blocked_in_codexs_shape() {
 #[test]
 fn the_events_codex_takes_no_decision_from_get_one_line_and_no_answer() {
     let repo = Repo::init();
-    // Red, so silence here is weed declining to answer rather than weed
+    // Red, so silence here is weeder declining to answer rather than weeder
     // finding nothing to say.
     repo.write("src/parser.ts", &conflicted_parser(None));
     repo.stage_all();
@@ -154,15 +159,15 @@ fn the_events_codex_takes_no_decision_from_get_one_line_and_no_answer() {
         .to_string();
 
     for (event, deaf) in &contract {
-        // The two weed stands at answer for themselves, above.
+        // The two weeder stands at answer for themselves, above.
         if STANDING.contains(&event.as_str()) {
             continue;
         }
-        let run = repo.weed_reading(&["hook", "codex"], &event_named(&repo, event));
+        let run = repo.weeder_reading(&["hook", "codex"], &event_named(&repo, event));
         assert_eq!(
             run.stdout,
             "",
-            "{event} is not one of the two places weed stands, so it gets no answer: {}",
+            "{event} is not one of the two places weeder stands, so it gets no answer: {}",
             run.output()
         );
         assert_eq!(
@@ -185,19 +190,19 @@ fn the_events_codex_takes_no_decision_from_get_one_line_and_no_answer() {
             assert_eq!(
                 note,
                 recorded.replace(&example, event),
-                "the line weed prints at {event} is not the line docs/proof-2026-09.md records"
+                "the line weeder prints at {event} is not the line docs/proof-2026-09.md records"
             );
         } else {
             assert_eq!(
                 run.stderr, "",
-                "{event} carries a decision, so weed has nothing to explain"
+                "{event} carries a decision, so weeder has nothing to explain"
             );
         }
     }
 }
 
 #[test]
-fn the_two_events_weed_stands_at_are_the_ones_the_document_says_carry_a_decision() {
+fn the_two_events_weeder_stands_at_are_the_ones_the_document_says_carry_a_decision() {
     let doc = read_proof();
     let contract = contract(&doc);
 
@@ -208,7 +213,7 @@ fn the_two_events_weed_stands_at_are_the_ones_the_document_says_carry_a_decision
             .unwrap_or_else(|| panic!("{SECTION} has no row for {standing}"));
         assert!(
             !row.1,
-            "weed refuses at {standing}, so the document may not call it deaf"
+            "weeder refuses at {standing}, so the document may not call it deaf"
         );
     }
 }
@@ -245,7 +250,7 @@ fn stop_event(repo: &Repo) -> String {
     .to_string()
 }
 
-/// An event of the named kind, carrying a commit weed would refuse if it were
+/// An event of the named kind, carrying a commit weeder would refuse if it were
 /// standing there. Every event but `PreToolUse` and `Stop` must let it past.
 fn event_named(repo: &Repo, event: &str) -> String {
     json!({
@@ -298,7 +303,7 @@ fn contract(doc: &str) -> Vec<(String, bool)> {
     rows
 }
 
-/// The one line the section quotes, as weed would have to print it.
+/// The one line the section quotes, as weeder would have to print it.
 fn quoted(doc: &str) -> String {
     let section = doc
         .split_once(SECTION)
@@ -307,7 +312,7 @@ fn quoted(doc: &str) -> String {
     let section = section.split("\n## ").next().unwrap_or(section);
     let block = section
         .split_once("\n```\n")
-        .unwrap_or_else(|| panic!("`{SECTION}` quotes no line weed prints"))
+        .unwrap_or_else(|| panic!("`{SECTION}` quotes no line weeder prints"))
         .1;
     block
         .split_once("\n```")

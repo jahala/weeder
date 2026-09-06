@@ -5,7 +5,7 @@
 //! asked for, and it is the quiet way a small change grows. The finding names
 //! the blast radius with it: who calls the definitions that just moved.
 //!
-//! The neighbour is the same edit with no scope named at all. weed will not
+//! The neighbour is the same edit with no scope named at all. weeder will not
 //! invent one, so a run that was given no sentence has nothing to hold the
 //! change against.
 
@@ -24,7 +24,7 @@ const MOVED: &str = "sendPayload";
 #[test]
 fn x2_fires_at_block_level_on_the_file_outside_the_scope_and_names_its_callers() {
     let repo = fixture("X2", "paths", "fire");
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
 
     assert_eq!(
         run.code, 2,
@@ -63,11 +63,11 @@ fn x2_stays_silent_where_no_scope_was_named() {
         "the neighbour must be in the diff, or the silence proves nothing"
     );
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert_eq!(
         run.findings(),
         Vec::new(),
-        "with no sentence to hold the change against, weed will not invent one"
+        "with no sentence to hold the change against, weeder will not invent one"
     );
     assert_eq!(run.code, 0, "nothing found, nothing blocked");
 }
@@ -76,7 +76,7 @@ fn x2_stays_silent_where_no_scope_was_named() {
 fn the_scope_flag_decides_it_just_as_the_config_does() {
     let repo = fixture("X2", "paths", "silent");
 
-    let inside = repo.weed(&["check", "--scope", "src/wire/**"]);
+    let inside = repo.weeder(&["check", "--scope", "src/wire/**"]);
     assert_eq!(
         inside.findings(),
         Vec::new(),
@@ -85,7 +85,7 @@ fn the_scope_flag_decides_it_just_as_the_config_does() {
     );
     assert_eq!(inside.code, 0);
 
-    let outside = repo.weed(&["check", "--scope", "src/report/**"]);
+    let outside = repo.weeder(&["check", "--scope", "src/report/**"]);
     assert_eq!(
         outside.paths(),
         vec![OUTSIDE.to_string()],

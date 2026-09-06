@@ -29,7 +29,7 @@ const MANIFESTS: &[(&str, &str, &str, &str)] = &[
 
 fn findings(lang: &str, case: &str) -> Vec<Finding> {
     let repo = fixture("R4", lang, case);
-    let run = repo.weed(&["scan", "--rules", "R4", "--format", "sarif"]);
+    let run = repo.weeder(&["scan", "--rules", "R4", "--format", "sarif"]);
     assert_eq!(
         run.code, 0,
         "a scan never blocks, and R4/{lang}/{case} left with {}: {}",
@@ -45,7 +45,7 @@ fn a_pin_further_behind_than_the_threshold_is_reported_for_every_manifest_kind()
         assert_eq!(
             found.len(),
             1,
-            "R4/{lang}/fire pins one package too far back, and weed reported: {found:#?}"
+            "R4/{lang}/fire pins one package too far back, and weeder reported: {found:#?}"
         );
         let finding = &found[0];
         assert_eq!(finding.rule, "R4");
@@ -65,7 +65,7 @@ fn a_pin_inside_the_threshold_is_left_alone() {
         let found = findings(lang, "silent");
         assert!(
             found.is_empty(),
-            "R4/{lang}/silent is two minor releases back and the default allows three, and weed reported: {found:#?}"
+            "R4/{lang}/silent is two minor releases back and the default allows three, and weeder reported: {found:#?}"
         );
     }
 }
@@ -73,14 +73,14 @@ fn a_pin_inside_the_threshold_is_left_alone() {
 #[test]
 fn the_threshold_is_the_repository_s_own() {
     let repo = fixture("R4", "ts", "silent");
-    repo.write("weed.toml", "[thresholds]\ndependency_lag = 1\n");
-    let run = repo.weed(&["scan", "--rules", "R4", "--format", "sarif"]);
+    repo.write("weeder.toml", "[thresholds]\ndependency_lag = 1\n");
+    let run = repo.weeder(&["scan", "--rules", "R4", "--format", "sarif"]);
     assert_eq!(run.code, 0);
     let found = run.findings();
     assert_eq!(
         found.len(),
         1,
-        "a repository that allows one minor release finds this pin too far back, and weed reported: {found:#?}"
+        "a repository that allows one minor release finds this pin too far back, and weeder reported: {found:#?}"
     );
 }
 
@@ -98,7 +98,7 @@ fn a_scan_reaches_no_registry() {
         bin.path().display(),
         std::env::var("PATH").unwrap_or_default()
     );
-    let run = repo.weed_with(&["scan", "--format", "sarif"], &[("PATH", &path)]);
+    let run = repo.weeder_with(&["scan", "--format", "sarif"], &[("PATH", &path)]);
 
     assert_eq!(run.code, 0, "the scan should have run: {}", run.stderr);
     assert!(
@@ -114,14 +114,14 @@ fn a_scan_reaches_no_registry() {
 #[test]
 fn a_refresh_says_so_when_this_machine_has_no_fetcher() {
     // A PATH with git on it and nothing else. `--refresh-snapshot` is the one
-    // thing weed does over the network, and a machine that cannot do it has to
+    // thing weeder does over the network, and a machine that cannot do it has to
     // hear that rather than get a snapshot with nothing in it.
     let bin = TempDir::new().expect("a directory for git alone");
     link_git(bin.path());
 
     let repo = fixture("R4", "ts", "fire");
     let path = bin.path().display().to_string();
-    let run = repo.weed_with(
+    let run = repo.weeder_with(
         &["scan", "--refresh-snapshot", "--format", "sarif"],
         &[("PATH", &path)],
     );
@@ -154,12 +154,12 @@ fn a_refresh_keeps_what_it_could_not_get_a_fresh_answer_about() {
         "{\n  \"dependencies\": {\n    \"left-pad\": \"1.0.0\"\n  }\n}\n",
     );
     repo.write(
-        ".weed/registry-snapshot.json",
+        ".weeder/registry-snapshot.json",
         "{\n  \"cargo\": {\n    \"ordered-float\": \"1.9.0\"\n  },\n  \"npm\": {\n    \"left-pad\": \"1.1.0\"\n  }\n}\n",
     );
 
     let path = bin.path().display().to_string();
-    let run = repo.weed_with(
+    let run = repo.weeder_with(
         &["scan", "--refresh-snapshot", "--format", "sarif"],
         &[("PATH", &path)],
     );
@@ -171,11 +171,11 @@ fn a_refresh_keeps_what_it_could_not_get_a_fresh_answer_about() {
     );
     assert!(
         run.stderr.contains("could not reach crates.io"),
-        "the registry weed could not reach is named: {}",
+        "the registry weeder could not reach is named: {}",
         run.stderr
     );
 
-    let written = std::fs::read_to_string(repo.root().join(".weed/registry-snapshot.json"))
+    let written = std::fs::read_to_string(repo.root().join(".weeder/registry-snapshot.json"))
         .expect("the snapshot should have been written");
     let snapshot: serde_json::Value = serde_json::from_str(&written).expect("json is json");
     assert_eq!(
@@ -184,7 +184,7 @@ fn a_refresh_keeps_what_it_could_not_get_a_fresh_answer_about() {
     );
     assert_eq!(
         snapshot["cargo"]["ordered-float"], "1.9.0",
-        "the registry weed could not reach leaves its package as the repository committed it: {written}"
+        "the registry weeder could not reach leaves its package as the repository committed it: {written}"
     );
 }
 

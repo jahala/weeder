@@ -1,5 +1,5 @@
 //! What a guard hook is before anything is written down: the shell bundle git
-//! runs, the marker that says weed wrote it, and the ref lines git feeds a
+//! runs, the marker that says weeder wrote it, and the ref lines git feeds a
 //! pre-push hook on stdin. The face does the writing and the reading; nothing
 //! here touches a disk.
 
@@ -7,7 +7,7 @@ use std::path::Path;
 
 use crate::core::glob;
 
-/// The hooks guard installs. Each name is git's own and is also the `weed guard`
+/// The hooks guard installs. Each name is git's own and is also the `weeder guard`
 /// subcommand its bundle calls, so whoever reads a hook can run by hand exactly
 /// what git runs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -17,10 +17,10 @@ pub enum Hook {
     PreRebase,
 }
 
-/// The line a bundle carries so weed can tell a hook it wrote from one it did
+/// The line a bundle carries so weeder can tell a hook it wrote from one it did
 /// not, and read back the binary that bundle names. It is public because it is
 /// also how a measurement finds the day a repository installed guard.
-pub const BINARY_MARKER: &str = "# weed-guard-binary:";
+pub const BINARY_MARKER: &str = "# weeder-guard-binary:";
 
 impl Hook {
     pub const ALL: [Hook; 3] = [Hook::PreCommit, Hook::PrePush, Hook::PreRebase];
@@ -36,7 +36,7 @@ impl Hook {
     /// The one line saying what this hook refuses, for `install` to print.
     pub fn refuses(self) -> &'static str {
         match self {
-            Hook::PreCommit => "an index that carries a finding weed blocks on",
+            Hook::PreCommit => "an index that carries a finding weeder blocks on",
             Hook::PrePush => {
                 "a pushed range that blocks, and a non-fast-forward to a protected branch"
             }
@@ -56,13 +56,13 @@ impl Hook {
 }
 
 /// The bundle `install` writes for a hook: a POSIX shell script that finds the
-/// weed binary and hands git's own arguments to the matching `weed guard`
-/// subcommand. It names the binary by the absolute path weed resolved at
+/// weeder binary and hands git's own arguments to the matching `weeder guard`
+/// subcommand. It names the binary by the absolute path weeder resolved at
 /// install time and falls back to `PATH`, so a binary that moved is an error
 /// git prints rather than a gate that quietly stops running.
 pub fn script(hook: Hook, binary: &Path, protected: &[String]) -> String {
     let named = binary.display().to_string();
-    let mut call = format!("exec \"$weed\" guard {}", hook.name());
+    let mut call = format!("exec \"$weeder\" guard {}", hook.name());
     if hook.judges_a_branch() {
         for branch in protected {
             call.push_str(&format!(" --protect {}", quote(branch)));
@@ -72,14 +72,14 @@ pub fn script(hook: Hook, binary: &Path, protected: &[String]) -> String {
 
     format!(
         "#!/bin/sh\n\
-         # weed guard, the law in git. `weed guard install` wrote this file;\n\
-         # `weed guard uninstall` takes it away and puts back what was here.\n\
+         # weeder guard, the law in git. `weeder guard install` wrote this file;\n\
+         # `weeder guard uninstall` takes it away and puts back what was here.\n\
          {BINARY_MARKER} {named}\n\
          set -eu\n\
          \n\
-         weed={quoted}\n\
-         [ -x \"$weed\" ] || weed=\"$(command -v weed || true)\"\n\
-         if [ ! -x \"$weed\" ]; then\n\
+         weeder={quoted}\n\
+         [ -x \"$weeder\" ] || weeder=\"$(command -v weeder || true)\"\n\
+         if [ ! -x \"$weeder\" ]; then\n\
          \tprintf '%s\\n' {complaint} >&2\n\
          \texit 1\n\
          fi\n\
@@ -87,14 +87,14 @@ pub fn script(hook: Hook, binary: &Path, protected: &[String]) -> String {
          {call}\n",
         quoted = quote(&named),
         complaint = quote(&format!(
-            "weed guard: the {} hook names the weed binary at {named}, which is not there, and none is on PATH. run weed guard install again.",
+            "weeder guard: the {} hook names the weeder binary at {named}, which is not there, and none is on PATH. run weeder guard install again.",
             hook.name()
         )),
     )
 }
 
-/// The binary a bundle names, or `None` when weed did not write this file. It is
-/// how `status` knows a hook is still weed's and `uninstall` knows which files
+/// The binary a bundle names, or `None` when weeder did not write this file. It is
+/// how `status` knows a hook is still weeder's and `uninstall` knows which files
 /// are its own to take away.
 pub fn binary_named(script: &str) -> Option<&str> {
     script
@@ -109,9 +109,9 @@ pub fn hook_named(path: &str) -> Option<Hook> {
     Hook::ALL.into_iter().find(|hook| hook.name() == name)
 }
 
-/// Whether a file is, byte for byte, the bundle weed writes for this hook: the
+/// Whether a file is, byte for byte, the bundle weeder writes for this hook: the
 /// binary its marker names and the branches its exec line protects, handed back
-/// to [`script`], produce exactly this text. Adopting weed is then a change C1
+/// to [`script`], produce exactly this text. Adopting weeder is then a change C1
 /// can tell from a hook someone rewrote, so it goes through the gate rather than
 /// around it; one byte of difference, and the file is a guardrail edit again.
 pub fn is_own_bundle(hook: Hook, text: &str) -> bool {
@@ -126,7 +126,7 @@ pub fn is_own_bundle(hook: Hook, text: &str) -> bool {
 fn protected_in(text: &str) -> Vec<String> {
     let Some(line) = text
         .lines()
-        .find(|line| line.trim_start().starts_with("exec \"$weed\" guard"))
+        .find(|line| line.trim_start().starts_with("exec \"$weeder\" guard"))
     else {
         return Vec::new();
     };
@@ -177,7 +177,7 @@ impl PushRef {
     }
 }
 
-/// The refs a push carries. A line weed cannot read as four fields is not a ref
+/// The refs a push carries. A line weeder cannot read as four fields is not a ref
 /// git wrote, and is left out rather than guessed at.
 pub fn parse_push_refs(input: &str) -> Vec<PushRef> {
     input

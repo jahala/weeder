@@ -1,3 +1,12 @@
+//! The tokens are `Weed-allow:` in a commit message and `weed-allow <RULE>:`
+//! beside a line, and they keep the name the tool carried before it was renamed
+//! to weeder. That is not sentiment. The finding messages that teach the tokens
+//! are printed into the blind audit's case packets, and each of the forty
+//! recorded auditor answers opens with the SHA-256 of the packet it was given
+//! (`scripts/check/audit-fairness.sh`). Renaming a token rewrites those packets,
+//! breaks every seal, and the only honest repair is to run forty fresh auditor
+//! sessions for a result that would say the same thing. The name of the format
+//! is worth less than the evidence, so the format keeps its name.
 use crate::core::diff::{FileDiff, LineKind};
 use crate::core::finding::{Finding, Level};
 

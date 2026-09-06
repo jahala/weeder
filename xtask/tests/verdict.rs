@@ -1,7 +1,7 @@
 //! The first sentence is written from the re-grade, never typed.
 //!
 //! The classification a calibration rests on is a judgement, and the builder's
-//! own judgement is not what weed ships on. So the verdict carries a
+//! own judgement is not what weeder ships on. So the verdict carries a
 //! qualification until a second party has read the classifications back and
 //! agreed, and the generator decides that from the audit file: nobody can
 //! promote a provisional verdict by editing the report, because the next run
@@ -11,8 +11,8 @@ mod common;
 
 use common::{blocking_repo, cleared, Bench};
 
-const PROVISIONAL: &str = "weed ships as a gate, pending the independent re-grade:";
-const CONFIRMED: &str = "weed ships as a gate:";
+const PROVISIONAL: &str = "weeder ships as a gate, pending the independent re-grade:";
+const CONFIRMED: &str = "weeder ships as a gate:";
 
 #[test]
 fn without_a_re_grade_the_verdict_is_pending() {
@@ -154,7 +154,9 @@ fn a_run_that_does_not_clear_the_bar_says_so_whatever_the_re_grade_says() {
     bench.calibrate("probe", &repo, &[]).succeeded();
 
     assert!(
-        bench.verdict().starts_with("weed does not ship as a gate:"),
+        bench
+            .verdict()
+            .starts_with("weeder does not ship as a gate:"),
         "an unread block is a false positive, and no re-grade turns that into a ship: {}",
         bench.verdict()
     );

@@ -14,7 +14,7 @@
 # its own, so sameness is the pin's doing rather than a clone that never went
 # back to the source.
 #
-# Then the corpus weed ships: both files fetched at their pins, the campaign run
+# Then the corpus weeder ships: both files fetched at their pins, the campaign run
 # over them twice into files of its own, the two sections compared byte for
 # byte, and every commit a case was planted in held to the window git counts
 # from the pin. The report is written to a scratch here — the numbers in
@@ -37,8 +37,8 @@ scratch="$(mktemp -d)"
 trap 'command -v trash >/dev/null 2>&1 && trash "$scratch"' EXIT
 status=0
 
-cases="${WEED_PINNED_CASES:-3}"
-commits="${WEED_PINNED_COMMITS:-25}"
+cases="${WEEDER_PINNED_CASES:-3}"
+commits="${WEEDER_PINNED_COMMITS:-25}"
 
 # The recall section of a report, and nothing else of it.
 section() {
@@ -62,8 +62,8 @@ PY
 source="$scratch/source"
 mkdir -p "$source/src" "$source/test" "$source/.github/workflows"
 git -C "$source" init --quiet --initial-branch=main
-git -C "$source" config user.name "weed measurements"
-git -C "$source" config user.email "measurements@weed.invalid"
+git -C "$source" config user.name "weeder measurements"
+git -C "$source" config user.email "measurements@weeder.invalid"
 commit() {
   git -C "$source" add -A
   GIT_AUTHOR_DATE="2026-09-06T09:00:00+00:00" GIT_COMMITTER_DATE="2026-09-06T09:00:00+00:00" \
@@ -214,7 +214,7 @@ pinned_corpus() {
 campaign() { # <run-name> <out.md> <out.json>
   local cache="$scratch/cache-$1"
   mkdir -p "$cache"
-  if ! WEED_RECALL_CACHE="$cache" cargo run -q -p xtask -- mutate \
+  if ! WEEDER_RECALL_CACHE="$cache" cargo run -q -p xtask -- mutate \
     --corpus "$bench/corpus.toml" \
     --cases 3 \
     --commits 12 \

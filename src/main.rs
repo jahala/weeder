@@ -1,18 +1,18 @@
 //! The command line. Every subcommand parses its flags here, asks its face for
 //! an `Answer`, writes it, and leaves with the code the contract names: 0 clean
-//! or warnings only, 2 at least one block-level result, 3 weed could not run.
+//! or warnings only, 2 at least one block-level result, 3 weeder could not run.
 
 use std::io::{IsTerminal, Read, Write};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use weed::core::hook::Harness;
-use weed::core::sarif::EXIT_COULD_NOT_RUN;
-use weed::faces::{bite, check, format_for, guard, hook, rules, scan, Answer, Format};
+use weeder::core::hook::Harness;
+use weeder::core::sarif::EXIT_COULD_NOT_RUN;
+use weeder::faces::{bite, check, format_for, guard, hook, rules, scan, Answer, Format};
 
 #[derive(Debug, Parser)]
-#[command(name = "weed", version, about = "the judge of the diff")]
+#[command(name = "weeder", version, about = "the judge of the diff")]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -25,7 +25,7 @@ enum Command {
     /// Judge the repository as it is: what the docs cite and the tree no longer
     /// has, exports nothing references, stale work markers, lagging pins.
     Scan(ScanArgs),
-    /// Put weed's judgement in git itself, through hooks git cannot be talked
+    /// Put weeder's judgement in git itself, through hooks git cannot be talked
     /// out of running.
     Guard(GuardArgs),
     /// Answer an agent harness's hook event, read as JSON on stdin, in the
@@ -36,12 +36,12 @@ enum Command {
     /// Prove a test fails without the change it covers: run the command over
     /// the test commit alone on the base, then over the implementation.
     ///
-    /// weed does not offer this face, and `docs/bite-2026-09.md` holds the
+    /// weeder does not offer this face, and `docs/bite-2026-09.md` holds the
     /// measurement that decided it. A phased node lands one commit, its tests
     /// and its implementation together, so the test commit bite has to apply on
     /// its own is one no conductor here produces. The code and its proofs stay
     /// in the tree so the measurement can be run again; the day a conductor
-    /// commits its phases apart, this line loses its `hide` and weed offers the
+    /// commits its phases apart, this line loses its `hide` and weeder offers the
     /// face.
     #[command(hide = true)]
     Bite(BiteArgs),
@@ -68,7 +68,7 @@ struct BiteArgs {
     /// Write SARIF or a table, rather than choosing by what stdout is.
     #[arg(long, value_enum, value_name = "format")]
     format: Option<CheckFormat>,
-    /// Read weed.toml from here instead of the repository root.
+    /// Read weeder.toml from here instead of the repository root.
     #[arg(long, value_name = "path")]
     config: Option<PathBuf>,
 }
@@ -116,7 +116,7 @@ struct InstallArgs {
     #[arg(long, value_name = "dir")]
     hooks_dir: Option<PathBuf>,
     /// A branch the hooks refuse to rewrite. Repeat it for more; leaving it out
-    /// leaves the hooks reading weed.toml every time git runs them.
+    /// leaves the hooks reading weeder.toml every time git runs them.
     #[arg(long, value_name = "branch")]
     protect: Vec<String>,
 }
@@ -148,7 +148,7 @@ struct CheckArgs {
     /// Write SARIF or a table, rather than choosing by what stdout is.
     #[arg(long, value_enum, value_name = "format")]
     format: Option<CheckFormat>,
-    /// Read weed.toml from here instead of the repository root.
+    /// Read weeder.toml from here instead of the repository root.
     #[arg(long, value_name = "path")]
     config: Option<PathBuf>,
     /// The message of the commit being prepared, for its Weed-allow trailers.
@@ -159,17 +159,17 @@ struct CheckArgs {
 #[derive(Debug, Args)]
 struct ScanArgs {
     /// The rules to run, by id. Repeat the flag or separate ids with a comma;
-    /// leaving it out runs every scan rule weed.toml leaves on.
+    /// leaving it out runs every scan rule weeder.toml leaves on.
     #[arg(long, value_name = "ids")]
     rules: Vec<String>,
     /// Write SARIF or a table, rather than choosing by what stdout is.
     #[arg(long, value_enum, value_name = "format")]
     format: Option<CheckFormat>,
-    /// Read weed.toml from here instead of the repository root.
+    /// Read weeder.toml from here instead of the repository root.
     #[arg(long, value_name = "path")]
     config: Option<PathBuf>,
     /// Ask the registries for the latest release of everything the manifests
-    /// pin, write .weed/registry-snapshot.json, and scan against it.
+    /// pin, write .weeder/registry-snapshot.json, and scan against it.
     #[arg(long)]
     refresh_snapshot: bool,
 }
@@ -231,7 +231,7 @@ fn run_check(args: CheckArgs) -> Answer {
         Ok(cwd) => cwd,
         Err(error) => {
             return could_not_run(format!(
-                "weed could not read the directory it was called from: {error}. run it from a directory that exists."
+                "weeder could not read the directory it was called from: {error}. run it from a directory that exists."
             ))
         }
     };
@@ -263,7 +263,7 @@ fn run_scan(args: ScanArgs) -> Answer {
         Ok(cwd) => cwd,
         Err(error) => {
             return could_not_run(format!(
-                "weed could not read the directory it was called from: {error}. run it from a directory that exists."
+                "weeder could not read the directory it was called from: {error}. run it from a directory that exists."
             ))
         }
     };
@@ -291,7 +291,7 @@ fn run_bite(args: BiteArgs) -> Answer {
         Ok(cwd) => cwd,
         Err(error) => {
             return could_not_run(format!(
-                "weed could not read the directory it was called from: {error}. run it from a directory that exists."
+                "weeder could not read the directory it was called from: {error}. run it from a directory that exists."
             ))
         }
     };
@@ -314,21 +314,21 @@ fn run_guard(args: GuardArgs) -> Answer {
         Ok(cwd) => cwd,
         Err(error) => {
             return could_not_run(format!(
-                "weed could not read the directory it was called from: {error}. run it from a directory that exists."
+                "weeder could not read the directory it was called from: {error}. run it from a directory that exists."
             ))
         }
     };
 
     let command = match args.command {
         GuardCommand::Install(args) => {
-            // The path weed is running from is what the hooks will name, and it
+            // The path weeder is running from is what the hooks will name, and it
             // is resolved here rather than inside the face: asking the operating
             // system where this process came from is I/O like any other.
             let binary = match std::env::current_exe() {
                 Ok(binary) => binary,
                 Err(error) => {
                     return could_not_run(format!(
-                        "weed could not find out where it is running from: {error}. a hook has to name the binary by its path, so install it from a weed on disk."
+                        "weeder could not find out where it is running from: {error}. a hook has to name the binary by its path, so install it from a weeder on disk."
                     ))
                 }
             };
@@ -345,7 +345,7 @@ fn run_guard(args: GuardArgs) -> Answer {
             let mut refs = String::new();
             if let Err(error) = std::io::stdin().read_to_string(&mut refs) {
                 return could_not_run(format!(
-                    "weed could not read the refs git writes on a pre-push hook's stdin: {error}. the push is refused rather than judged on nothing."
+                    "weeder could not read the refs git writes on a pre-push hook's stdin: {error}. the push is refused rather than judged on nothing."
                 ));
             }
             guard::Command::PrePush(guard::PrePush {
@@ -372,7 +372,7 @@ fn run_hook(args: HarnessArgs) -> Answer {
         Ok(cwd) => cwd,
         Err(error) => {
             return could_not_run(format!(
-                "weed could not read the directory it was called from: {error}. run it from a directory that exists."
+                "weeder could not read the directory it was called from: {error}. run it from a directory that exists."
             ))
         }
     };
@@ -380,7 +380,7 @@ fn run_hook(args: HarnessArgs) -> Answer {
     let mut event = String::new();
     if let Err(error) = std::io::stdin().read_to_string(&mut event) {
         return could_not_run(format!(
-            "weed could not read the event its harness wrote on stdin: {error}. a hook is asked on stdin, and weed will not answer a question it did not hear."
+            "weeder could not read the event its harness wrote on stdin: {error}. a hook is asked on stdin, and weeder will not answer a question it did not hear."
         ));
     }
 
@@ -396,7 +396,7 @@ fn run_hook(args: HarnessArgs) -> Answer {
     })
 }
 
-/// A panic is a bug in weed, never a verdict, and a gate that dies part way
+/// A panic is a bug in weeder, never a verdict, and a gate that dies part way
 /// through judging still has to fail closed: exit 3, one line, and the line says
 /// whose fault it is. The hook leaves through `exit` rather than by letting the
 /// panic unwind, so a release build, which aborts on a panic and would
@@ -406,7 +406,7 @@ fn install_panic_hook() {
         let mut stderr = std::io::stderr().lock();
         let _ = writeln!(
             stderr,
-            "weed hit a bug and stopped rather than judge: {}. report it with the diff.",
+            "weeder hit a bug and stopped rather than judge: {}. report it with the diff.",
             fault(panic)
         );
         let _ = stderr.flush();
@@ -432,13 +432,13 @@ fn fault(panic: &std::panic::PanicHookInfo<'_>) -> String {
 }
 
 /// The door a debug build leaves open so the panic hook can be proven on the
-/// real binary rather than argued about: weed panics where it is told to, with
+/// real binary rather than argued about: weeder panics where it is told to, with
 /// the words it is given. `cfg(debug_assertions)` keeps it out of a release
-/// build, so the weed anyone installs has no way to be made to fall over from
+/// build, so the weeder anyone installs has no way to be made to fall over from
 /// outside it.
 #[cfg(debug_assertions)]
 fn fault_if_asked() {
-    const ASKED: &str = "WEED_PANIC_FOR_TESTS";
+    const ASKED: &str = "WEEDER_PANIC_FOR_TESTS";
     if let Some(reason) = std::env::var_os(ASKED) {
         panic!("{}", reason.to_string_lossy());
     }
@@ -453,7 +453,7 @@ fn could_not_run(reason: String) -> Answer {
     }
 }
 
-/// `--help` and `--version` are answers, not failures. Anything else weed could
+/// `--help` and `--version` are answers, not failures. Anything else weeder could
 /// not parse is a run that never happened, so it fails closed with exit 3.
 fn usage(error: &clap::Error) -> ExitCode {
     let _ = error.print();

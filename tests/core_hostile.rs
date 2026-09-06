@@ -9,7 +9,7 @@
 //! The corpus is real. A git repository is built with the shapes that hurt ,
 //! renames, a symlink, a binary file, CRLF, a mode change, a file with no
 //! newline at the end, a deletion, and git's own diffs of it are what the
-//! mutations start from. Bytes weed cannot read as utf-8 arrive as the seam
+//! mutations start from. Bytes weeder cannot read as utf-8 arrive as the seam
 //! hands them over: lossy text, with the replacement character where the byte
 //! was.
 
@@ -20,13 +20,13 @@ use std::sync::OnceLock;
 use proptest::prelude::*;
 
 use common::Repo;
-use weed::core::diff::{FileDiff, LineKind};
-use weed::core::{classify_file, parse_diff, FileKind, Lang};
+use weeder::core::diff::{FileDiff, LineKind};
+use weeder::core::{classify_file, parse_diff, FileKind, Lang};
 
 proptest! {
     /// Bytes with no shape at all. Most of these carry no `diff --git` line and
     /// parse to nothing, which is the right answer; the point is that none of
-    /// them stops weed.
+    /// them stops weeder.
     #[test]
     fn arbitrary_bytes_are_judged_or_refused(bytes in proptest::collection::vec(any::<u8>(), 0..4096)) {
         let _ = judge(&String::from_utf8_lossy(&bytes));
@@ -65,11 +65,11 @@ proptest! {
     }
 }
 
-/// Numbers a hunk header can carry that weed still has to read. The last two are
+/// Numbers a hunk header can carry that weeder still has to read. The last two are
 /// the end of the range a line number lives in: counting on from there leaves it.
 const PARSEABLE_NUMBERS: &[&str] = &["0", "1", "7", "4294967294", "4294967295"];
 
-/// Numbers a hunk header can carry that weed cannot read at all, too large for
+/// Numbers a hunk header can carry that weeder cannot read at all, too large for
 /// the range, negative, empty, or not a number.
 const UNREADABLE_NUMBERS: &[&str] = &[
     "4294967296",
@@ -82,7 +82,7 @@ const UNREADABLE_NUMBERS: &[&str] = &[
 ];
 
 /// A number for a hunk header, weighted towards the ones that parse. A header
-/// weed refuses tells nothing about what happens after it, so most of them have
+/// weeder refuses tells nothing about what happens after it, so most of them have
 /// to get through.
 fn hostile_number() -> impl Strategy<Value = &'static str> {
     prop_oneof![
@@ -91,7 +91,7 @@ fn hostile_number() -> impl Strategy<Value = &'static str> {
     ]
 }
 
-/// The whole diff at once, no fixture is this big, and weed must not care.
+/// The whole diff at once, no fixture is this big, and weeder must not care.
 #[test]
 fn a_huge_diff_is_judged_without_falling_over() {
     let mut huge = String::from("diff --git a/src/huge.ts b/src/huge.ts\n");
@@ -111,7 +111,7 @@ fn a_huge_diff_is_judged_without_falling_over() {
 }
 
 /// A hunk that starts at the last line a `u32` can name. Counting on from there
-/// leaves the range, and weed has to answer rather than come apart.
+/// leaves the range, and weeder has to answer rather than come apart.
 #[test]
 fn a_hunk_numbered_at_the_end_of_the_range_is_judged() {
     let diff = [
@@ -149,7 +149,7 @@ fn a_diff_with_no_line_ends_is_judged() {
 /// The property, in full: the call comes back, an error says something, and an
 /// answer agrees with itself. Parsing the same bytes twice gives the same
 /// answer, which is the order law's foundation.
-fn judge(input: &str) -> Result<Vec<FileDiff>, weed::core::DiffError> {
+fn judge(input: &str) -> Result<Vec<FileDiff>, weeder::core::DiffError> {
     let parsed = parse_diff(input);
     assert_eq!(
         parse_diff(input),
@@ -321,7 +321,7 @@ fn file_shaped_path() -> impl Strategy<Value = String> {
         Just("parser_test.go".to_string()),
         Just("mod.rs".to_string()),
         Just("tests.rs".to_string()),
-        Just("weed.toml".to_string()),
+        Just("weeder.toml".to_string()),
         Just("Cargo.toml".to_string()),
         Just("bundle.min.js".to_string()),
         Just(".gitignore".to_string()),

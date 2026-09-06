@@ -1,7 +1,7 @@
 //! C1, a guardrail was edited.
 //!
 //! A guardrail decides what the other checks do, so any change to one is the
-//! finding: the harness settings, the hook, weed's own law. The two markdown
+//! finding: the harness settings, the hook, weeder's own law. The two markdown
 //! files are read section by section instead, because most of what they hold is
 //! prose and one section of them is law.
 //!
@@ -23,7 +23,7 @@ const GUARDRAILS: [&str; 5] = [
     ".codex/config.toml",
     ".gemini/settings.json",
     ".githooks/pre-commit",
-    "weed.toml",
+    "weeder.toml",
 ];
 
 /// The by-law the fire fixture edits alongside them. It is a change C3 reports,
@@ -39,7 +39,7 @@ const LIMITS: &str = "hard limits";
 #[test]
 fn c1_fires_at_block_level_on_every_guardrail_path_and_inside_the_hard_limits() {
     let repo = fixture("C1", CASE, "fire");
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
 
     assert_eq!(run.code, 2, "a guardrail edit blocks\n{}", run.stderr);
     let findings: Vec<common::Finding> = run
@@ -120,7 +120,7 @@ fn c1_stays_silent_on_codeowners_and_on_a_hunk_elsewhere_in_the_instructions() {
         );
     }
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert_eq!(
         run.findings(),
         Vec::new(),
@@ -157,9 +157,9 @@ fn rank(line: &str) -> Option<usize> {
 }
 
 #[test]
-fn c1_stays_silent_on_weeds_own_hooks_and_fires_once_one_is_edited() {
+fn c1_stays_silent_on_weeders_own_hooks_and_fires_once_one_is_edited() {
     let repo = Repo::init();
-    let installed = repo.weed(&["guard", "install", "--protect", "main"]);
+    let installed = repo.weeder(&["guard", "install", "--protect", "main"]);
     assert_eq!(
         installed.code, 0,
         "install runs clean\n{}",
@@ -167,21 +167,21 @@ fn c1_stays_silent_on_weeds_own_hooks_and_fires_once_one_is_edited() {
     );
     repo.stage_all();
 
-    let adoption = repo.weed(&["check", "--staged", "--strict"]);
+    let adoption = repo.weeder(&["check", "--staged", "--strict"]);
     assert_eq!(
         adoption.findings(),
         Vec::new(),
-        "the bundle weed wrote is not a guardrail edit: adopting weed goes through the gate"
+        "the bundle weeder wrote is not a guardrail edit: adopting weeder goes through the gate"
     );
     assert_eq!(adoption.code, 0);
 
     let hook = repo.root().join(".githooks/pre-commit");
-    let mut text = std::fs::read_to_string(&hook).expect("the hook weed wrote is readable");
+    let mut text = std::fs::read_to_string(&hook).expect("the hook weeder wrote is readable");
     text = text.replace("set -eu\n", "set -eu\nexit 0\n");
     std::fs::write(&hook, text).expect("the hook is writable");
     repo.stage_all();
 
-    let edited = repo.weed(&["check", "--staged", "--strict"]);
+    let edited = repo.weeder(&["check", "--staged", "--strict"]);
     assert_eq!(
         edited.code, 2,
         "one line added to the bundle is a guardrail edit again"

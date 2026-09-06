@@ -47,7 +47,7 @@ fn aged_repository() -> Repo {
 fn findings(repo: &Repo, arguments: &[&str]) -> Vec<Finding> {
     let mut all = vec!["scan", "--rules", "R3", "--format", "sarif"];
     all.extend_from_slice(arguments);
-    let run = repo.weed(&all);
+    let run = repo.weeder(&all);
     assert_eq!(
         run.code, 0,
         "a scan never blocks, and this one left with {}: {}",
@@ -63,7 +63,7 @@ fn a_marker_older_than_the_threshold_is_reported_and_a_fresh_one_is_not() {
     assert_eq!(
         found.len(),
         1,
-        "only the old marker is past the threshold, and weed reported: {found:#?}"
+        "only the old marker is past the threshold, and weeder reported: {found:#?}"
     );
     let finding = &found[0];
     assert_eq!(finding.rule, "R3");
@@ -80,12 +80,12 @@ fn a_marker_older_than_the_threshold_is_reported_and_a_fresh_one_is_not() {
 #[test]
 fn the_threshold_is_the_repository_s_own() {
     let repo = aged_repository();
-    repo.write("weed.toml", "[thresholds]\ntodo_age_days = 3650\n");
+    repo.write("weeder.toml", "[thresholds]\ntodo_age_days = 3650\n");
     repo.commit_dated("the repository allows a decade", &seconds_ago(0));
     let found = findings(&repo, &[]);
     assert!(
         found.is_empty(),
-        "a repository that allows ten years of a marker has none that are old, and weed reported: {found:#?}"
+        "a repository that allows ten years of a marker has none that are old, and weeder reported: {found:#?}"
     );
 }
 
@@ -100,6 +100,6 @@ fn a_marker_in_a_string_is_a_message_rather_than_a_note() {
     let found = findings(&repo, &[]);
     assert!(
         found.is_empty(),
-        "a marker inside a literal is something the program says, and weed reported: {found:#?}"
+        "a marker inside a literal is something the program says, and weeder reported: {found:#?}"
     );
 }

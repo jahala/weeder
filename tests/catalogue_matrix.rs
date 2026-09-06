@@ -1,6 +1,6 @@
 //! The catalogue, walked.
 //!
-//! Every rule `weed rules` prints has two fixtures in each of the four
+//! Every rule `weeder rules` prints has two fixtures in each of the four
 //! languages: a `fire` that is the dishonest change the rule exists for, and a
 //! `silent` that is its nearest honest neighbour. This test walks that matrix,
 //! replays each fixture through the real binary in a real repository, and holds
@@ -11,9 +11,9 @@
 //! Nothing else is the hard half. A fixture written for one rule usually trips a
 //! neighbour on the way past, and a matrix that shrugged at that would stop
 //! telling a rule that fires from a rule that fires on everything. So each cell
-//! runs with a `weed.toml` that leaves one rule on, built on top of whatever the
+//! runs with a `weeder.toml` that leaves one rule on, built on top of whatever the
 //! fixture itself wrote, and `--rules` does the same for the scan face. The
-//! configuration is weed's own, not a switch this test invented.
+//! configuration is weeder's own, not a switch this test invented.
 //!
 //! Each face is asked its own question. `check` judges the index against HEAD,
 //! `scan` judges a tree that has one state and no diff, and `bite` runs a real
@@ -28,7 +28,7 @@ use std::path::PathBuf;
 
 use tempfile::TempDir;
 
-use common::{fixture, fixture_root, phased_fixture, weed_in, which, Repo, Run};
+use common::{fixture, fixture_root, phased_fixture, weeder_in, which, Repo, Run};
 
 /// The languages every rule answers for.
 const LANGS: [&str; 4] = ["ts", "py", "rs", "go"];
@@ -37,7 +37,7 @@ const LANGS: [&str; 4] = ["ts", "py", "rs", "go"];
 const CASES: [&str; 2] = ["fire", "silent"];
 
 /// The command each language's `bite` fixture runs its suite under, and the
-/// program that has to be on PATH for it to mean anything. weed runs whatever
+/// program that has to be on PATH for it to mean anything. weeder runs whatever
 /// the caller names, so these are the four projects' own runners.
 const SUITES: [(&str, &str, &str); 4] = [
     ("ts", "node", "node --test"),
@@ -48,9 +48,9 @@ const SUITES: [(&str, &str, &str); 4] = [
 
 /// The file a fixture states its own law in, and the file this test writes the
 /// one-rule law over.
-const CONFIG: &str = "weed.toml";
+const CONFIG: &str = "weeder.toml";
 
-/// One rule as `weed rules` prints it. The catalogue is read from the binary
+/// One rule as `weeder rules` prints it. The catalogue is read from the binary
 /// rather than from a list here: a rule that reaches the catalogue and not the
 /// fixtures is exactly what this test is for.
 #[derive(Debug, Clone)]
@@ -82,7 +82,7 @@ impl Rule {
 }
 
 fn catalogue() -> Vec<Rule> {
-    let run = weed_in(
+    let run = weeder_in(
         &PathBuf::from(env!("CARGO_MANIFEST_DIR")),
         &["rules", "--format", "json"],
     );
@@ -105,7 +105,7 @@ fn string(value: &serde_json::Value) -> String {
         .to_string()
 }
 
-/// A `weed.toml` that leaves one rule on and every other rule off, written on
+/// A `weeder.toml` that leaves one rule on and every other rule off, written on
 /// top of whatever law the fixture itself wrote, so a cell that needs layers or
 /// a scope keeps them.
 fn one_rule_config(rule: &Rule, repo: &Repo, catalogue: &[Rule], desk: &TempDir) -> PathBuf {
@@ -170,7 +170,7 @@ fn judge(rule: &Rule, lang: &str, case: &str, catalogue: &[Rule], desk: &TempDir
                 cell(rule, lang, case)
             );
             let config = one_rule_config(rule, &repo, catalogue, desk);
-            repo.weed(&[
+            repo.weeder(&[
                 "check",
                 "--format",
                 "sarif",
@@ -185,7 +185,7 @@ fn judge(rule: &Rule, lang: &str, case: &str, catalogue: &[Rule], desk: &TempDir
                 "{} commits no tree for a scan rule to read",
                 cell(rule, lang, case)
             );
-            repo.weed(&["scan", "--rules", &rule.id, "--format", "sarif"])
+            repo.weeder(&["scan", "--rules", &rule.id, "--format", "sarif"])
         }
         "bite" => {
             let repo = phased_fixture(&rule.id, lang, case);
@@ -196,7 +196,7 @@ fn judge(rule: &Rule, lang: &str, case: &str, catalogue: &[Rule], desk: &TempDir
                 "{} needs the three commits a phased node leaves: base, tests, implementation",
                 cell(rule, lang, case)
             );
-            repo.weed(&["bite", "--test", suite(lang), "--format", "sarif"])
+            repo.weeder(&["bite", "--test", suite(lang), "--format", "sarif"])
         }
         other => panic!(
             "{} belongs to a face this test has never met: {other}",

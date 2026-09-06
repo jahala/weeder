@@ -1,5 +1,5 @@
-//! The binary, asked. Nothing in the campaign reads weed's core directly: a
-//! case is judged by running `weed check` the way a gate runs it, and by
+//! The binary, asked. Nothing in the campaign reads weeder's core directly: a
+//! case is judged by running `weeder check` the way a gate runs it, and by
 //! reading the SARIF that comes back.
 
 use std::path::Path;
@@ -7,7 +7,7 @@ use std::process::Command;
 
 use serde::Deserialize;
 
-/// One result weed reported.
+/// One result weeder reported.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Finding {
     pub rule: String,
@@ -16,8 +16,8 @@ pub struct Finding {
     pub line: Option<u32>,
 }
 
-/// Run `weed check --base <base> --strict` over the working tree and answer
-/// with what it found. An exit of 3 is weed saying it could not run, and that
+/// Run `weeder check --base <base> --strict` over the working tree and answer
+/// with what it found. An exit of 3 is weeder saying it could not run, and that
 /// is never a clean case.
 pub fn check(
     binary: &Path,
@@ -34,13 +34,13 @@ pub fn check(
     let code = output.status.code().unwrap_or(-1);
     if code == 3 || code < 0 {
         return Err(format!(
-            "weed could not run on {} at {base}: {}",
+            "weeder could not run on {} at {base}: {}",
             root.display(),
             String::from_utf8_lossy(&output.stderr).trim()
         ));
     }
     let text = String::from_utf8_lossy(&output.stdout);
-    parse(&text).map_err(|error| format!("weed wrote SARIF weed's own reader refused: {error}"))
+    parse(&text).map_err(|error| format!("weeder wrote SARIF weeder's own reader refused: {error}"))
 }
 
 #[derive(Deserialize)]

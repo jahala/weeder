@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Evidence for recall.tend2.html c1: `cargo xtask mutate` injects one anti-pattern
 # per case for every check rule in each of ts, py, rs and go, from the same
-# corpus calibration measures precision on, runs weed on each case, and writes
+# corpus calibration measures precision on, runs weeder on each case, and writes
 # the recall section of docs/calibration-2026-09.md with every miss named.
 #
 # The campaign is run here rather than read from the file, so this check can
@@ -23,15 +23,15 @@ command -v cargo >/dev/null 2>&1 || {
   exit 3
 }
 
-cases="${WEED_RECALL_CASES:-40}"
-commits="${WEED_RECALL_COMMITS:-200}"
+cases="${WEEDER_RECALL_CASES:-40}"
+commits="${WEEDER_RECALL_COMMITS:-200}"
 report="docs/calibration-2026-09.md"
 # The run's own numbers land beside the cases the campaign keeps, under one
 # known path that the next run writes over: nothing here deletes anything.
-run="${WEED_RECALL_CACHE:-${TMPDIR:-/tmp}/weed-recall-corpus}"
+run="${WEEDER_RECALL_CACHE:-${TMPDIR:-/tmp}/weeder-recall-corpus}"
 mkdir -p "$run"
 
-# The injector's own scanner is what makes the measurement independent of weed,
+# The injector's own scanner is what makes the measurement independent of weeder,
 # so it is held up by its own tests before it is trusted to find a site.
 cargo test --release --quiet -p xtask
 
@@ -42,7 +42,7 @@ if ! cargo xtask mutate \
   --commits "$commits" \
   --out "$report" \
   --json "$run/cases.json"; then
-  echo "the campaign could not run. every repository of the corpus has to be readable; name one somewhere else with WEED_CORPUS_<NAME>." >&2
+  echo "the campaign could not run. every repository of the corpus has to be readable; name one somewhere else with WEEDER_CORPUS_<NAME>." >&2
   exit 3
 fi
 
@@ -64,7 +64,7 @@ LANGUAGES = ["ts", "py", "rs", "go"]
 # check starts asking about tomorrow.
 catalogue = json.loads(
     subprocess.run(
-        ["./target/release/weed", "rules", "--format", "json"],
+        ["./target/release/weeder", "rules", "--format", "json"],
         capture_output=True, text=True, check=True,
     ).stdout
 )

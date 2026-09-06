@@ -20,17 +20,17 @@ const key = `${process.platform}-${process.arch}`;
 const target = PLATFORM_MAP[key];
 
 if (!target) {
-  console.error(`weed: no release binary for ${key}`);
+  console.error(`weeder: no release binary for ${key}`);
   console.error(`Released for: ${Object.keys(PLATFORM_MAP).join(", ")}`);
-  console.error("Build it instead: cargo install weed");
+  console.error("Build it instead: cargo install weeder");
   process.exit(1);
 }
 
 const version = require("./package.json").version;
 const isWindows = process.platform === "win32";
 const ext = isWindows ? "zip" : "tar.gz";
-const binName = isWindows ? "weed.exe" : "weed";
-const url = `https://github.com/jahala/weed/releases/download/v${version}/weed-${target}.${ext}`;
+const binName = isWindows ? "weeder.exe" : "weeder";
+const url = `https://github.com/jahala/weeder/releases/download/v${version}/weeder-${target}.${ext}`;
 
 const binDir = path.join(__dirname, "bin");
 const binPath = path.join(binDir, binName);
@@ -42,26 +42,26 @@ if (fs.existsSync(binPath)) {
 
 fs.mkdirSync(binDir, { recursive: true });
 
-console.log(`weed: downloading the ${target} binary`);
+console.log(`weeder: downloading the ${target} binary`);
 
 function follow(url, callback) {
   const mod = url.startsWith("https") ? https : http;
   mod
-    .get(url, { headers: { "User-Agent": "weed-npm" } }, (res) => {
+    .get(url, { headers: { "User-Agent": "weeder-npm" } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         follow(res.headers.location, callback);
       } else if (res.statusCode !== 200) {
-        console.error(`weed: the download answered HTTP ${res.statusCode}`);
+        console.error(`weeder: the download answered HTTP ${res.statusCode}`);
         console.error(`URL: ${url}`);
-        console.error("Install it another way: cargo install weed");
+        console.error("Install it another way: cargo install weeder");
         process.exit(1);
       } else {
         callback(res);
       }
     })
     .on("error", (err) => {
-      console.error(`weed: the download did not finish: ${err.message}`);
-      console.error("Install it another way: cargo install weed");
+      console.error(`weeder: the download did not finish: ${err.message}`);
+      console.error("Install it another way: cargo install weeder");
       process.exit(1);
     });
 }
@@ -69,7 +69,7 @@ function follow(url, callback) {
 follow(url, (res) => {
   if (isWindows) {
     // tar reads a zip on modern Windows, so there is no archive library here.
-    const tmpZip = path.join(binDir, "weed.zip");
+    const tmpZip = path.join(binDir, "weeder.zip");
     const out = fs.createWriteStream(tmpZip);
     res.pipe(out);
     out.on("finish", () => {
@@ -77,9 +77,9 @@ follow(url, (res) => {
       try {
         execSync(`tar -xf "${tmpZip}" -C "${binDir}"`, { stdio: "ignore" });
         fs.unlinkSync(tmpZip);
-        console.log("weed: installed");
+        console.log("weeder: installed");
       } catch {
-        console.error("weed: the archive did not extract. Install it another way: cargo install weed");
+        console.error("weeder: the archive did not extract. Install it another way: cargo install weeder");
         process.exit(1);
       }
     });
@@ -90,11 +90,11 @@ follow(url, (res) => {
     res.pipe(tar.stdin);
     tar.on("close", (code) => {
       if (code !== 0) {
-        console.error("weed: the archive did not extract. Install it another way: cargo install weed");
+        console.error("weeder: the archive did not extract. Install it another way: cargo install weeder");
         process.exit(1);
       }
       fs.chmodSync(binPath, 0o755);
-      console.log("weed: installed");
+      console.log("weeder: installed");
     });
   }
 });

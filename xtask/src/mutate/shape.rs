@@ -5,13 +5,13 @@
 //! does that sometimes reads a shape that was never there: a version string
 //! that pins nothing, a call whose name only ends in the word a claim is
 //! written with. A case planted on a site like that is worthless in both
-//! directions. weed firing on it inflates recall, and weed staying quiet is
+//! directions. weeder firing on it inflates recall, and weeder staying quiet is
 //! charged to the product as a miss for a shape it was never shown, which is
 //! the worse of the two: it hides a broken injector behind a number that reads
 //! like a gap in the binary.
 //!
 //! So the tree is read back after the case is written into it, by the same
-//! scanner the injector finds its sites with and by nothing of weed's, and the
+//! scanner the injector finds its sites with and by nothing of weeder's, and the
 //! shape has to be there, on the line the case named. A case that is not
 //! confirmed is unplantable: counted per rule and language, reported beside the
 //! misses, and neither a hit nor a miss.

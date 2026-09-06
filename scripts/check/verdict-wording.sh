@@ -25,8 +25,8 @@ report="docs/calibration-2026-09.md"
 # files aside, colon-separated: the wording is written from all of them.
 audit="$(grep -l '^Blind: yes' docs/calibration-audit*.md 2>/dev/null | grep -v '\.packet\.\|\.response\.\|transcript' | tr '\n' ':' | sed 's/:$//')"
 corpus="docs/calibration/corpus.toml"
-provisional="weed ships as a gate, pending the independent re-grade:"
-confirmed="weed ships as a gate:"
+provisional="weeder ships as a gate, pending the independent re-grade:"
+confirmed="weeder ships as a gate:"
 
 command -v python3 >/dev/null 2>&1 || {
   echo "python3 is not on PATH, so the report cannot be read. The check refuses to pass on an unread file." >&2
@@ -46,8 +46,8 @@ status=0
 source="$scratch/source"
 mkdir -p "$source/tests"
 git -C "$source" init --quiet --initial-branch=main
-git -C "$source" config user.name "weed measurements"
-git -C "$source" config user.email "measurements@weed.invalid"
+git -C "$source" config user.name "weeder measurements"
+git -C "$source" config user.email "measurements@weeder.invalid"
 commit() {
   git -C "$source" add -A
   GIT_AUTHOR_DATE="2026-09-06T09:00:00+00:00" GIT_COMMITTER_DATE="2026-09-06T09:00:00+00:00" \
@@ -137,10 +137,10 @@ open(out_path, "w", encoding="utf-8").write(text)
 PY
 
 bar() {
-  WEED_CALIBRATION_REPORT="$1" \
-  WEED_CALIBRATION_AUDIT="$2" \
-  WEED_CALIBRATION_CORPUS="$corpus" \
-  WEED_CALIBRATION_METRIC="$scratch/metric.json" \
+  WEEDER_CALIBRATION_REPORT="$1" \
+  WEEDER_CALIBRATION_AUDIT="$2" \
+  WEEDER_CALIBRATION_CORPUS="$corpus" \
+  WEEDER_CALIBRATION_METRIC="$scratch/metric.json" \
     bash scripts/check/calibration-bar.sh
 }
 
@@ -175,7 +175,7 @@ fi
 # the tree may already read confirmed, so the pending sentence is written into a
 # probe rather than assumed of the file.
 pending="$scratch/pending.md"
-sed "1,3s/^weed ships as a gate: /weed ships as a gate, pending the independent re-grade: /" "$report" > "$pending"
+sed "1,3s/^weeder ships as a gate: /weeder ships as a gate, pending the independent re-grade: /" "$report" > "$pending"
 if bar "$pending" "$scratch/good-audit.md" > /dev/null 2> "$scratch/stale.err"; then
   echo "calibration-bar.sh accepted a pending sentence while the re-grade agrees at the bar, so the wording can go stale unnoticed" >&2
   status=1
@@ -216,7 +216,7 @@ stands = bool(samples) and all(
     regraded >= 20 and agreed <= regraded and agreed * 100.0 / regraded >= 90.0
     for _, regraded, agreed in samples
 )
-if sentence.startswith("weed does not ship as a gate:"):
+if sentence.startswith("weeder does not ship as a gate:"):
     print("the calibration does not clear the bar, so the re-grade decides nothing about its wording")
     raise SystemExit(0)
 if stands and not sentence.startswith(confirmed):
@@ -233,7 +233,7 @@ if not stands:
         complaints.append(
             "the sentence after the verdict does not name the file the qualification is waiting on"
         )
-if re.search(r"^weed ships as a gate, pending", report, re.M) and stands:
+if re.search(r"^weeder ships as a gate, pending", report, re.M) and stands:
     complaints.append("the wording is behind the audit file it is written from")
 
 for complaint in complaints:

@@ -1,12 +1,12 @@
 # The Go history the recall campaign adds to the corpus calibration judges.
 #
 # `docs/calibration/corpus.toml` names the five garden repositories, and between
-# them they write no Go. weed judges Go, so a recall figure for Go has to be
+# them they write no Go. weeder judges Go, so a recall figure for Go has to be
 # taken on Go somebody else wrote: two projects with long merged histories,
 # pinned by full sha and read exactly the way the five are, and named in the
 # report as what they are. Precision is not measured here — calibration judges
 # the garden's own commits, and a false block on somebody else's repository is a
-# judgement about their conventions rather than about weed.
+# judgement about their conventions rather than about weeder.
 #
 # The pins move the same way the others do: a deliberate edit, and the run after
 # it is a new measurement.

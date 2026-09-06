@@ -1,4 +1,4 @@
-//! The measurement: `weed check --base <parent> --strict` over real history.
+//! The measurement: `weeder check --base <parent> --strict` over real history.
 //!
 //! Every commit in the window is checked out in a scratch repository and judged
 //! against its parent by the same `check` face the binary runs, reading back the
@@ -10,7 +10,7 @@ use std::error::Error;
 use std::path::Path;
 
 use serde_json::Value;
-use weed::faces::{check, Format};
+use weeder::faces::{check, Format};
 
 use crate::corpus::Repo;
 use crate::repo::{fingerprint, Scratch};
@@ -33,7 +33,7 @@ pub struct Finding {
     pub message: String,
 }
 
-/// A commit weed refused, with everything a person needs to classify it.
+/// A commit weeder refused, with everything a person needs to classify it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Blocked {
     pub sha: String,
@@ -44,7 +44,7 @@ pub struct Blocked {
     pub findings: Vec<Finding>,
 }
 
-/// A commit weed could not judge at all. It is neither a pass nor a block, and
+/// A commit weeder could not judge at all. It is neither a pass nor a block, and
 /// it is never quietly dropped: a gate that could not run is its own failure.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Refusal {
@@ -69,7 +69,7 @@ pub struct RepoMeasurement {
     /// Commits with no parent to be judged against.
     pub roots: usize,
     pub refusals: Vec<Refusal>,
-    /// How many judged commits carried a `weed.toml` of their own. Where this is
+    /// How many judged commits carried a `weeder.toml` of their own. Where this is
     /// zero, every rule ran at its catalogue level.
     pub configured: usize,
     /// Every finding on the commits an earlier run recorded, blocked or not, so
@@ -170,7 +170,7 @@ fn walk(
                 continue;
             }
         };
-        if answer.code == weed::core::sarif::EXIT_COULD_NOT_RUN {
+        if answer.code == weeder::core::sarif::EXIT_COULD_NOT_RUN {
             measurement.refusals.push(Refusal {
                 sha: sha.clone(),
                 reason: answer.stderr.join(" "),
@@ -211,15 +211,15 @@ fn walk(
 }
 
 /// The findings in a SARIF log, read the way any other consumer reads them. A
-/// log weed wrote that cannot be read back is reported against the commit rather
+/// log weeder wrote that cannot be read back is reported against the commit rather
 /// than swallowed.
 pub(crate) fn results(log: &str) -> Result<Vec<Finding>, String> {
     let log: Value = serde_json::from_str(log)
-        .map_err(|error| format!("weed wrote a log that is not json: {error}"))?;
+        .map_err(|error| format!("weeder wrote a log that is not json: {error}"))?;
     let results = log
         .pointer("/runs/0/results")
         .and_then(Value::as_array)
-        .ok_or_else(|| "weed wrote a log with no results array".to_string())?;
+        .ok_or_else(|| "weeder wrote a log with no results array".to_string())?;
     results
         .iter()
         .map(|result| {

@@ -17,7 +17,7 @@ use tempfile::TempDir;
 /// The command the fixture's tests run under.
 const SUITE: &str = "python3 -m unittest -v test_parse";
 
-/// A command that answers to nothing and outlives any deadline weed gives it.
+/// A command that answers to nothing and outlives any deadline weeder gives it.
 const HANGS: &str = "sleep 30";
 
 /// A command that fails whatever is applied: the module it names is in no
@@ -36,7 +36,7 @@ fn interpreter() {
 fn bite(repo: &Repo, temp: &TempDir, arguments: &[&str]) -> Run {
     let mut all = vec!["bite"];
     all.extend_from_slice(arguments);
-    repo.weed_with(
+    repo.weeder_with(
         &all,
         &[(
             "TMPDIR",
@@ -92,7 +92,7 @@ fn a_test_command_that_hangs_is_exit_three_with_the_timeout_named() {
     assert_eq!(run.stderr.lines().count(), 1, "one line saying why");
     assert!(
         run.stderr.contains("1s"),
-        "the deadline weed stopped waiting at is named: {}",
+        "the deadline weeder stopped waiting at is named: {}",
         run.stderr
     );
     assert!(
@@ -150,5 +150,5 @@ fn a_run_that_never_starts_leaves_no_worktree_at_all() {
     );
 
     assert_eq!(run.code, 3);
-    assert_nothing_left(&repo, &temp, "after a ref weed could not resolve");
+    assert_nothing_left(&repo, &temp, "after a ref weeder could not resolve");
 }

@@ -1,8 +1,8 @@
-//! `weed hook claude`, the Claude Code hook event, answered in Claude's shape.
+//! `weeder hook claude`, the Claude Code hook event, answered in Claude's shape.
 //!
 //! Nothing here is mocked: the events are the JSON Claude Code writes on a
 //! hook's stdin, the repository is real, and what the tests read is the JSON
-//! weed writes back and the code it leaves with. The proof that a real session
+//! weeder writes back and the code it leaves with. The proof that a real session
 //! honours that answer is `scripts/proof/claude-stop.sh`, cited by the loop.
 
 mod common;
@@ -14,7 +14,7 @@ use serde_json::{json, Value};
 const RESOLVED: &str = "export function parse(input: string): string[] {\n  \
                         return input.split(\";\");\n}\n";
 
-/// weed's contract: 2 is at least one block-level result.
+/// weeder's contract: 2 is at least one block-level result.
 const REFUSED: i32 = 2;
 const ALLOWED: i32 = 0;
 
@@ -24,7 +24,7 @@ fn a_commit_over_an_index_that_blocks_is_denied_with_the_findings_as_the_reason(
     repo.write("src/parser.ts", &conflicted_parser(None));
     repo.stage_all();
 
-    let run = repo.weed_reading(
+    let run = repo.weeder_reading(
         &["hook", "claude"],
         &tool_event(&repo, "git commit -m 'the merge, half finished'"),
     );
@@ -32,7 +32,7 @@ fn a_commit_over_an_index_that_blocks_is_denied_with_the_findings_as_the_reason(
     assert_eq!(
         run.code,
         REFUSED,
-        "weed refuses the commit: {}",
+        "weeder refuses the commit: {}",
         run.output()
     );
     let answer: Value = serde_json::from_str(&run.stdout).unwrap_or_else(|error| {
@@ -53,7 +53,7 @@ fn a_commit_over_an_index_that_blocks_is_denied_with_the_findings_as_the_reason(
         "the reason names the file:\n{reason}"
     );
     assert!(
-        reason.contains("weed hook refused"),
+        reason.contains("weeder hook refused"),
         "the reason says which gate refused and what to do:\n{reason}"
     );
 }
@@ -64,7 +64,7 @@ fn a_commit_over_a_clean_index_is_not_denied() {
     repo.write("src/parser.ts", RESOLVED);
     repo.stage_all();
 
-    let run = repo.weed_reading(
+    let run = repo.weeder_reading(
         &["hook", "claude"],
         &tool_event(&repo, "git commit -m 'the merge, finished'"),
     );
@@ -72,7 +72,7 @@ fn a_commit_over_a_clean_index_is_not_denied() {
     assert_eq!(run.code, ALLOWED, "a clean index commits: {}", run.output());
     assert_eq!(
         run.stdout, "",
-        "weed says nothing where it has nothing to say"
+        "weeder says nothing where it has nothing to say"
     );
 }
 
@@ -89,10 +89,10 @@ fn a_commit_that_tells_git_to_skip_its_hooks_is_denied_however_it_is_spelled() {
         "git commit -nm 'quick'",
         "git commit -am 'quick' --no-verify",
         "git -c core.hooksPath=/dev/null commit -m 'quick'",
-        // git reads the last of the pair, and so does weed.
+        // git reads the last of the pair, and so does weeder.
         "git commit --verify --no-verify -m 'quick'",
     ] {
-        let run = repo.weed_reading(&["hook", "claude"], &tool_event(&repo, command));
+        let run = repo.weeder_reading(&["hook", "claude"], &tool_event(&repo, command));
         assert_eq!(
             run.code,
             REFUSED,
@@ -101,8 +101,8 @@ fn a_commit_that_tells_git_to_skip_its_hooks_is_denied_however_it_is_spelled() {
         );
         let reason = deny_reason(&run.stdout);
         assert!(
-            reason.contains("weed hook refused"),
-            "`{command}` is refused in weed's voice:\n{reason}"
+            reason.contains("weeder hook refused"),
+            "`{command}` is refused in weeder's voice:\n{reason}"
         );
     }
 
@@ -114,11 +114,11 @@ fn a_commit_that_tells_git_to_skip_its_hooks_is_denied_however_it_is_spelled() {
         // The message is the word `--no-verify`, and a value is not a flag.
         "git commit --message --no-verify",
     ] {
-        let run = repo.weed_reading(&["hook", "claude"], &tool_event(&repo, command));
+        let run = repo.weeder_reading(&["hook", "claude"], &tool_event(&repo, command));
         assert_eq!(
             run.code,
             ALLOWED,
-            "`{command}` asks git for nothing weed refuses: {}",
+            "`{command}` asks git for nothing weeder refuses: {}",
             run.output()
         );
     }
@@ -132,9 +132,14 @@ fn a_stop_over_a_tree_that_blocks_is_blocked_and_a_clean_one_is_allowed() {
     // Never staged: a turn ends over the working tree, whatever the index holds.
     repo.write("src/parser.ts", &conflicted_parser(None));
 
-    let run = repo.weed_reading(&["hook", "claude"], &stop_event(&repo, false));
+    let run = repo.weeder_reading(&["hook", "claude"], &stop_event(&repo, false));
 
-    assert_eq!(run.code, REFUSED, "weed blocks the stop: {}", run.output());
+    assert_eq!(
+        run.code,
+        REFUSED,
+        "weeder blocks the stop: {}",
+        run.output()
+    );
     let answer: Value = serde_json::from_str(&run.stdout).unwrap_or_else(|error| {
         panic!(
             "stdout should be Claude's hook JSON: {error}\n{}",
@@ -151,12 +156,12 @@ fn a_stop_over_a_tree_that_blocks_is_blocked_and_a_clean_one_is_allowed() {
         "the reason names the file:\n{reason}"
     );
     assert!(
-        reason.contains("weed hook refused"),
+        reason.contains("weeder hook refused"),
         "the reason says which gate refused and what to do:\n{reason}"
     );
 
     repo.write("src/parser.ts", RESOLVED);
-    let allowed = repo.weed_reading(&["hook", "claude"], &stop_event(&repo, false));
+    let allowed = repo.weeder_reading(&["hook", "claude"], &stop_event(&repo, false));
     assert_eq!(
         allowed.code,
         ALLOWED,
@@ -165,7 +170,7 @@ fn a_stop_over_a_tree_that_blocks_is_blocked_and_a_clean_one_is_allowed() {
     );
     assert_eq!(
         allowed.stdout, "",
-        "weed lets a clean stop go without a word"
+        "weeder lets a clean stop go without a word"
     );
 }
 
@@ -176,7 +181,7 @@ fn a_stop_that_is_already_blocking_blocks_again_over_a_tree_that_still_blocks() 
     repo.commit("the parser");
     repo.write("src/parser.ts", &conflicted_parser(None));
 
-    let run = repo.weed_reading(&["hook", "claude"], &stop_event(&repo, true));
+    let run = repo.weeder_reading(&["hook", "claude"], &stop_event(&repo, true));
 
     assert_eq!(
         run.code,
@@ -191,7 +196,7 @@ fn a_stop_that_is_already_blocking_blocks_again_over_a_tree_that_still_blocks() 
 #[test]
 fn every_other_event_passes_through() {
     let repo = Repo::init();
-    // Red, so an event weed passes through is passed through on its own merits.
+    // Red, so an event weeder passes through is passed through on its own merits.
     repo.write("src/parser.ts", &conflicted_parser(None));
     repo.stage_all();
 
@@ -207,18 +212,18 @@ fn every_other_event_passes_through() {
     for event in elsewhere {
         let mut event = event;
         event["cwd"] = json!(repo.root().display().to_string());
-        let run = repo.weed_reading(&["hook", "claude"], &event.to_string());
+        let run = repo.weeder_reading(&["hook", "claude"], &event.to_string());
         assert_eq!(
             run.code,
             ALLOWED,
-            "weed has no business at {}: {}",
+            "weeder has no business at {}: {}",
             event["hook_event_name"],
             run.output()
         );
         assert_eq!(
             run.output(),
             "",
-            "weed says nothing at {}",
+            "weeder says nothing at {}",
             event["hook_event_name"]
         );
     }
@@ -238,11 +243,11 @@ fn the_commit_is_found_wherever_the_command_line_hides_it() {
         "git commit -m 'half finished' > /tmp/commit.log 2>&1",
         "GIT_AUTHOR_NAME=someone git commit -m 'half finished'",
         "bash -lc \"sh -c \\\"git commit -m half-finished\\\"\"",
-        // The commit may still run, so weed judges as if it will.
+        // The commit may still run, so weeder judges as if it will.
         "true || git commit -m 'half finished'",
         "git commit --amend --no-edit",
     ] {
-        let run = repo.weed_reading(&["hook", "claude"], &tool_event(&repo, command));
+        let run = repo.weeder_reading(&["hook", "claude"], &tool_event(&repo, command));
         assert_eq!(
             run.code,
             REFUSED,
@@ -267,11 +272,11 @@ fn a_command_that_only_talks_about_committing_is_left_alone() {
         "git commit-tree $(git write-tree) -p HEAD -m 'plumbing'",
         "git stash",
     ] {
-        let run = repo.weed_reading(&["hook", "claude"], &tool_event(&repo, command));
+        let run = repo.weeder_reading(&["hook", "claude"], &tool_event(&repo, command));
         assert_eq!(
             run.code,
             ALLOWED,
-            "`{command}` makes no commit, and weed judges what runs: {}",
+            "`{command}` makes no commit, and weeder judges what runs: {}",
             run.output()
         );
     }
@@ -299,7 +304,7 @@ fn the_commit_is_judged_in_the_repository_the_command_names() {
     let staged = common::git_in(&inner, &["add", "-A"]);
     assert_eq!(staged.code, 0, "the inner index: {}", staged.output());
 
-    let run = outer.weed_reading(
+    let run = outer.weeder_reading(
         &["hook", "claude"],
         &tool_event(&outer, "git -C vendor/inner commit -m 'half finished'"),
     );
@@ -329,12 +334,12 @@ fn a_turn_that_ends_outside_a_repository_is_not_blocked() {
     })
     .to_string();
 
-    let run = common::weed_reading_in(elsewhere.path(), &["hook", "claude"], &event);
+    let run = common::weeder_reading_in(elsewhere.path(), &["hook", "claude"], &event);
 
     assert_eq!(
         run.code,
         ALLOWED,
-        "there is no diff to judge where there is no repository, and weed does not hold a turn hostage to that: {}",
+        "there is no diff to judge where there is no repository, and weeder does not hold a turn hostage to that: {}",
         run.output()
     );
     assert_eq!(run.output(), "", "and it says nothing about it");

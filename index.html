@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>weed · the judge of the diff</title>
-<meta name="description" content="weed reads the diff an agent just wrote and refuses the cheap road to green: a deleted test, a dropped assertion, a skip, a stub, a swallowed error, a secret. one static binary, milliseconds, no model in the loop.">
+<title>weeder · the judge of the diff</title>
+<meta name="description" content="weeder reads the diff an agent just wrote and refuses the cheap road to green: a deleted test, a dropped assertion, a skip, a stub, a swallowed error, a secret. one static binary, milliseconds, no model in the loop.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20d%3D%22M13.2%2028.4%20C12.8%2022.4%2C%2013.2%2013.4%2C%2013.8%206.2%22%20fill%3D%22none%22%20stroke%3D%22%23357E2C%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M13%2025.6%20L11.5%2024.9%22%20fill%3D%22none%22%20stroke%3D%22%23357E2C%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M13.4%2013%20L15.1%2012.3%22%20fill%3D%22none%22%20stroke%3D%22%23357E2C%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M13.6%209.8%20L12.1%209.2%22%20fill%3D%22none%22%20stroke%3D%22%23357E2C%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%2F%3E%3Cellipse%20cx%3D%229.6%22%20cy%3D%2224.2%22%20rx%3D%222.8%22%20ry%3D%221.2%22%20transform%3D%22rotate%2830%209.6%2024.2%29%22%20fill%3D%22%23357E2C%22%2F%3E%3Cellipse%20cx%3D%2217.5%22%20cy%3D%2211.2%22%20rx%3D%222.8%22%20ry%3D%221.2%22%20transform%3D%22rotate%28-30%2017.5%2011.2%29%22%20fill%3D%22%23357E2C%22%2F%3E%3Cellipse%20cx%3D%2210.2%22%20cy%3D%228.6%22%20rx%3D%222.8%22%20ry%3D%221.2%22%20transform%3D%22rotate%2830%2010.2%208.6%29%22%20fill%3D%22%23357E2C%22%2F%3E%3Cpath%20d%3D%22M11.2%2016.1%20L24.5%2022.75%22%20fill%3D%22none%22%20stroke%3D%22%238E3B5E%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M11.2%2021.9%20L24.5%2015.25%22%20fill%3D%22none%22%20stroke%3D%22%238E3B5E%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%2F%3E%3Ccircle%20cx%3D%2226.5%22%20cy%3D%2223.75%22%20r%3D%222.2%22%20fill%3D%22none%22%20stroke%3D%22%238E3B5E%22%20stroke-width%3D%221.6%22%2F%3E%3Ccircle%20cx%3D%2226.5%22%20cy%3D%2214.25%22%20r%3D%222.2%22%20fill%3D%22none%22%20stroke%3D%22%238E3B5E%22%20stroke-width%3D%221.6%22%2F%3E%3C%2Fsvg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +20,7 @@
     /* semantic */
     --pp-healthy:#46913C; --pp-caution:#B0741C; --pp-error:#BC4126; --pp-info:#3F7186; --pp-muted:#9A8C72;
     /* product blooms */
-    --pp-tilth:#4E88A6; --pp-tend:#D6502F; --pp-petals:#E588A0; --pp-pleach:#97539B; --pp-umbel:#E89227; --pp-copeca:#1F8A7B; --pp-pollen:#C8B330; --pp-pollen-ink:#7E6A08; --pp-weed:#8E3B5E; --pp-weed-word:#8E3B5E;
+    --pp-tilth:#4E88A6; --pp-tend:#D6502F; --pp-petals:#E588A0; --pp-pleach:#97539B; --pp-umbel:#E89227; --pp-copeca:#1F8A7B; --pp-pollen:#C8B330; --pp-pollen-ink:#7E6A08; --pp-weeder:#8E3B5E; --pp-weeder-word:#8E3B5E;
     /* soil-night terminal (fixed in both themes) */
     --pp-term-bg:#1C1610; --pp-term-surface:#262019; --pp-term-border:#403628;
     --pp-term-green:#84C56A; --pp-term-sun:#F2A93B; --pp-term-text:#F3ECD9;
@@ -47,7 +47,7 @@
     --pp-text:#F3ECD9; --pp-text-soft:#C9BBA0;
     --pp-bg:#1C1610; --pp-bg-band:#211A12; --pp-surface:#262019; --pp-border:#403628;
     --pp-pollen-ink:#D9C44A;
-    --pp-weed-word:#B85C82;
+    --pp-weeder-word:#B85C82;
     --pp-shadow-rest:0 1px 0 #403628, 0 12px 40px -16px rgba(8,6,4,0.6);
     --pp-shadow-lift:0 2px 4px rgba(8,6,4,0.3), 0 14px 32px rgba(8,6,4,0.45);
   }
@@ -67,7 +67,7 @@
   :focus-visible{outline:2px solid var(--pp-primary);outline-offset:3px;border-radius:var(--pp-radius-xs)}
   code{font-family:var(--pp-font-code);font-size:.88em}
   .kicker{font-family:var(--pp-font-code);font-size:.74rem;font-weight:500;
-    text-transform:uppercase;letter-spacing:.2em;color:var(--pp-weed-word);margin:0 0 var(--pp-space-xs)}
+    text-transform:uppercase;letter-spacing:.2em;color:var(--pp-weeder-word);margin:0 0 var(--pp-space-xs)}
   .lede{font-size:1.3rem;line-height:1.5;color:var(--pp-text-soft)}
   .sec-head{max-width:46ch;margin-bottom:var(--pp-space-xl)}
   .sec-head h2{margin-top:var(--pp-space-2xs)}
@@ -94,8 +94,8 @@
   .mark{width:28px;height:28px;flex:none}
   .w-plant{fill:none;stroke:var(--pp-primary);stroke-linecap:round}
   .w-leaf{fill:var(--pp-primary)}
-  .w-blade{fill:none;stroke:var(--pp-weed);stroke-linecap:round}
-  .w-loop{fill:none;stroke:var(--pp-weed)}
+  .w-blade{fill:none;stroke:var(--pp-weeder);stroke-linecap:round}
+  .w-loop{fill:none;stroke:var(--pp-weeder)}
   .nav{display:flex;align-items:center;gap:var(--pp-space-sm)}
   .nav a{color:var(--pp-text-soft);font-size:.95rem}
   .nav a:hover{color:var(--pp-primary)}
@@ -139,11 +139,11 @@
   .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--pp-space-md)}
   .cards.four{grid-template-columns:repeat(4,minmax(0,1fr))}
   .card{background:var(--pp-surface);border:1px solid var(--pp-border);border-radius:var(--pp-radius-lg);
-    padding:var(--pp-space-md);border-top:3px solid var(--pp-weed)}
+    padding:var(--pp-space-md);border-top:3px solid var(--pp-weeder)}
   .card h3{font-size:1.32rem;margin-bottom:var(--pp-space-3xs)}
   .card p{margin:var(--pp-space-3xs) 0 0;color:var(--pp-text-soft);font-size:.98rem}
   .card .label{font-family:var(--pp-font-code);font-size:.72rem;text-transform:uppercase;
-    letter-spacing:.14em;margin:0;color:var(--pp-weed-word)}
+    letter-spacing:.14em;margin:0;color:var(--pp-weeder-word)}
 
   /* the catalogue */
   .cat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--pp-space-md) var(--pp-space-xl)}
@@ -153,7 +153,7 @@
   .rules li{display:grid;grid-template-columns:2.6rem 1fr;gap:var(--pp-space-3xs);
     align-items:baseline;font-size:.95rem;color:var(--pp-text-soft);
     padding:var(--pp-space-4xs) 0;border-bottom:1px solid var(--pp-border)}
-  .rid{font-family:var(--pp-font-code);font-size:.82rem;font-weight:700;color:var(--pp-weed-word)}
+  .rid{font-family:var(--pp-font-code);font-size:.82rem;font-weight:700;color:var(--pp-weeder-word)}
   .chip{font-family:var(--pp-font-code);font-size:.66rem;text-transform:uppercase;letter-spacing:.12em;
     padding:var(--pp-space-4xs) var(--pp-space-3xs);border-radius:var(--pp-radius-full);
     border:1px solid var(--pp-border);color:var(--pp-text-soft)}
@@ -164,7 +164,7 @@
   /* numbers */
   .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--pp-space-md);
     margin-bottom:var(--pp-space-xl)}
-  .stat{border-top:3px solid var(--pp-weed);padding-top:var(--pp-space-2xs)}
+  .stat{border-top:3px solid var(--pp-weeder);padding-top:var(--pp-space-2xs)}
   .stat b{display:block;font-family:var(--pp-font-heading);font-weight:620;
     font-size:2.7rem;line-height:1;letter-spacing:-.02em}
   .stat span{display:block;margin-top:var(--pp-space-3xs);font-size:.92rem;color:var(--pp-text-soft)}
@@ -246,7 +246,7 @@
 
 <header class="site">
   <div class="wrap">
-    <a class="brand" href="#top" aria-label="weed home">
+    <a class="brand" href="#top" aria-label="weeder home">
       <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
         <path class="w-plant" d="M13.2 28.4 C12.8 22.4, 13.2 13.4, 13.8 6.2" stroke-width="1.9"/>
         <path class="w-plant" d="M13 25.6 L11.5 24.9" stroke-width="1.1"/>
@@ -260,13 +260,13 @@
         <circle class="w-loop" cx="26.5" cy="23.75" r="2.2" stroke-width="1.6"/>
         <circle class="w-loop" cx="26.5" cy="14.25" r="2.2" stroke-width="1.6"/>
       </svg>
-      <span class="wordmark">weed</span>
+      <span class="wordmark">weeder</span>
     </a>
     <nav class="nav">
       <a href="#rules" class="lbl">the rules</a>
       <a href="#numbers" class="lbl">the numbers</a>
       <a href="#start">install</a>
-      <a href="https://github.com/jahala/weed">github</a>
+      <a href="https://github.com/jahala/weeder">github</a>
       <button class="toggle" id="theme" type="button" aria-label="Toggle soil-night">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21 13.2A9 9 0 1 1 10.8 3 7 7 0 0 0 21 13.2z"/></svg>
       </button>
@@ -280,26 +280,26 @@
       <div class="hero-copy rise">
         <p class="kicker">the judge</p>
         <h1>tests still mean what they meant.</h1>
-        <p class="lede">weed reads the diff an agent just wrote and refuses the cheap road to green: a deleted test, a dropped assertion, a skip, a stub, a swallowed error, a secret, a guardrail edited. one static binary, milliseconds, no model in the loop.</p>
+        <p class="lede">weeder reads the diff an agent just wrote and refuses the cheap road to green: a deleted test, a dropped assertion, a skip, a stub, a swallowed error, a secret, a guardrail edited. one static binary, milliseconds, no model in the loop.</p>
         <div class="cta">
-          <a class="btn primary" href="#start">install weed</a>
-          <a class="btn ghost" href="https://github.com/jahala/weed">read the source</a>
+          <a class="btn primary" href="#start">install weeder</a>
+          <a class="btn ghost" href="https://github.com/jahala/weeder">read the source</a>
         </div>
         <p class="under">rust · exit 2 blocks · every finding as sarif</p>
       </div>
       <div class="hero-term rise">
         <div class="term">
-          <div class="term-bar"><span class="tdot e"></span><span class="tdot c"></span><span class="tdot k"></span><span class="term-title">weed · zsh</span></div>
-<pre class="term-body"><span class="t-dim">~/project</span> <span class="t-prompt">$</span> weed check
+          <div class="term-bar"><span class="tdot e"></span><span class="tdot c"></span><span class="tdot k"></span><span class="term-title">weeder · zsh</span></div>
+<pre class="term-body"><span class="t-dim">~/project</span> <span class="t-prompt">$</span> weeder check
 <span class="t-block">error</span>  <span class="t-path">T1</span>  src/parser.test.ts  a test file was deleted, and 2 test cases went with it.
 1 error, 0 warnings, 0 notes
 
-<span class="t-dim">~/project</span> <span class="t-prompt">$</span> weed guard install
-weed guard is installed: git runs its hooks from .githooks.
-<span class="t-dim">pre-commit  refuses an index that carries a finding weed blocks on
+<span class="t-dim">~/project</span> <span class="t-prompt">$</span> weeder guard install
+weeder guard is installed: git runs its hooks from .githooks.
+<span class="t-dim">pre-commit  refuses an index that carries a finding weeder blocks on
 pre-push    refuses a pushed range that blocks, and a non-fast-forward to a protected branch
 pre-rebase  refuses a rebase that would rewrite a protected branch</span>
-protected: main, master (as weed.toml has them today).
+protected: main, master (as weeder.toml has them today).
 </pre>
         </div>
       </div>
@@ -309,7 +309,7 @@ protected: main, master (as weed.toml has them today).
   <section class="band pad" id="why" aria-labelledby="why-heading">
     <div class="wrap">
       <div class="sec-head rise">
-        <p class="kicker">why weed</p>
+        <p class="kicker">why weeder</p>
         <h2 id="why-heading">an agent is the worst judge of the diff it just wrote</h2>
         <p class="lede">it is asked for green and it will find green. the shortest road there is almost never the code.</p>
       </div>
@@ -325,9 +325,9 @@ protected: main, master (as weed.toml has them today).
           <p>asking a model to review what a model produced puts one kind of judgement in both chairs. it is also slow, priced per token, and different every time you ask. a gate has to answer the same way twice.</p>
         </div>
         <div class="card">
-          <p class="label">what weed does</p>
+          <p class="label">what weeder does</p>
           <h3>reads the change, not the code</h3>
-          <p>weed compares what is there now against what was there before and reports shapes: a case that is gone, an assertion that was dropped, a stub where an implementation belongs. no prompt, no score, no opinion about style. an exit code, and a sarif log for the pull request.</p>
+          <p>weeder compares what is there now against what was there before and reports shapes: a case that is gone, an assertion that was dropped, a stub where an implementation belongs. no prompt, no score, no opinion about style. an exit code, and a sarif log for the pull request.</p>
         </div>
       </div>
     </div>
@@ -388,28 +388,28 @@ protected: main, master (as weed.toml has them today).
       <div class="sec-head rise">
         <p class="kicker">where it runs</p>
         <h2 id="where-heading">the gate belongs where the work lands</h2>
-        <p class="lede">a rule nobody runs is a preference. weed is wired into the four places a change passes through on its way in.</p>
+        <p class="lede">a rule nobody runs is a preference. weeder is wired into the four places a change passes through on its way in.</p>
       </div>
       <div class="cards four rise">
         <div class="card">
           <p class="label">in git</p>
           <h3>guard</h3>
-          <p><code>weed guard install</code> writes the hooks and points <code>core.hooksPath</code> at them. pre-commit judges the index, pre-push judges the range and refuses a rewrite of a protected branch. it holds for every agent and every human alike.</p>
+          <p><code>weeder guard install</code> writes the hooks and points <code>core.hooksPath</code> at them. pre-commit judges the index, pre-push judges the range and refuses a rewrite of a protected branch. it holds for every agent and every human alike.</p>
         </div>
         <div class="card">
           <p class="label">in the harness</p>
           <h3>the stop hook</h3>
-          <p><code>weed hook</code> answers a harness's hook event on stdin and replies in the shape that harness reads. the turn ends against weed's verdict rather than against the agent's own account of it.</p>
+          <p><code>weeder hook</code> answers a harness's hook event on stdin and replies in the shape that harness reads. the turn ends against weeder's verdict rather than against the agent's own account of it.</p>
         </div>
         <div class="card">
           <p class="label">in the plan</p>
           <h3>pleach's gate</h3>
-          <p>pleach runs agent work as a graph of gated nodes. weed is the gate on each one, so a node whose diff blocks does not publish, and the plan never merges a step that got green the cheap way.</p>
+          <p>pleach runs agent work as a graph of gated nodes. weeder is the gate on each one, so a node whose diff blocks does not publish, and the plan never merges a step that got green the cheap way.</p>
         </div>
         <div class="card">
           <p class="label">on the pull request</p>
           <h3>the action</h3>
-          <p>in ci, <code>weed check</code> judges the pull request against the branch it opens onto and writes sarif. code scanning takes the log as it is, so every finding lands as an annotation on the diff a reviewer is already reading.</p>
+          <p>in ci, <code>weeder check</code> judges the pull request against the branch it opens onto and writes sarif. code scanning takes the log as it is, so every finding lands as an annotation on the diff a reviewer is already reading.</p>
         </div>
       </div>
     </div>
@@ -420,16 +420,16 @@ protected: main, master (as weed.toml has them today).
       <div class="sec-head rise">
         <p class="kicker">measured, 2026-09</p>
         <h2 id="numbers-heading">a gate is only worth having if it is almost never wrong</h2>
-        <p class="lede">weed was run over real history at pinned commits, every block was classified by hand with one line of reasoning, and a second party re-graded the classification blind.</p>
+        <p class="lede">weeder was run over real history at pinned commits, every block was classified by hand with one line of reasoning, and a second party re-graded the classification blind.</p>
       </div>
       <div class="stats rise">
         <div class="stat"><b>635</b><span>commits of real history judged, in 5 repositories, each against its own parent</span></div>
         <div class="stat"><b>20</b><span>commits blocked, of which 4 were block-level false positives</span></div>
         <div class="stat"><b>0.63%</b><span>false-positive share of the commits judged, under the two percent bar</span></div>
-        <div class="stat"><b>2762</b><span>of 2791 planted anti-patterns caught, each on the site it was planted in</span></div>
+        <div class="stat"><b>2761</b><span>of 2791 planted anti-patterns caught, each on the site it was planted in</span></div>
       </div>
       <div class="prose rise">
-        <p><strong>recall holds per rule and per language.</strong> every rule that blocks stays at or above 95 percent in each of typescript, python, rust and go. the cases are planted one anti-pattern at a time into real commits by a scanner that knows nothing about weed's detectors, and a site the commit already fired on is passed over, so no hit is inherited.</p>
+        <p><strong>recall holds per rule and per language.</strong> every rule that blocks stays at or above 95 percent in each of typescript, python, rust and go. the cases are planted one anti-pattern at a time into real commits by a scanner that knows nothing about weeder's detectors, and a site the commit already fired on is passed over, so no hit is inherited.</p>
         <p><strong>the classification is a second party's.</strong> the blind re-grade judged each case from a packet with the builder's class out of sight, and agreed on 19 of 20 blocked commits and 20 of 20 recall cases. the false-positive floor takes every verdict it called wrong as true.</p>
         <p><strong>both readings stay in the report.</strong> under the three classes in use before the ruling of 2026-09-06, the same 23 blocked commits counted 7 false positives, 1.10 percent. under the ruling, where a block is claim-true or claim-false, they count 4, 0.63 percent. the definition changed on that date; the question was corrected rather than the goalpost moved.</p>
         <p>the corpus, the pins, the judgement of every block and the script that checks the arithmetic are in the repository, at <code>docs/calibration-2026-09.md</code>. a commit pushed to any of those sources after the pin falls outside the window and cannot move a number here.</p>
@@ -441,28 +441,28 @@ protected: main, master (as weed.toml has them today).
     <div class="wrap">
       <div class="sec-head rise">
         <p class="kicker">honest scope</p>
-        <h2 id="fit-heading">what weed decides, and what it leaves alone</h2>
+        <h2 id="fit-heading">what weeder decides, and what it leaves alone</h2>
       </div>
       <div class="cards four rise">
         <div class="card">
           <p class="label">on its own</p>
           <h3>one binary, one command</h3>
-          <p>install it, run <code>weed guard install</code>, and the repository has a gate. nothing else in the garden has to be there, no service runs, and no token is spent.</p>
+          <p>install it, run <code>weeder guard install</code>, and the repository has a gate. nothing else in the garden has to be there, no service runs, and no token is spent.</p>
         </div>
         <div class="card">
           <p class="label">with the garden</p>
           <h3>tend2 and pleach</h3>
-          <p>tend2 holds the map and only its verifier writes a pass. pleach runs the work as gated nodes. weed is the gate they call, so a loop's checks stay honest because the diff that would have weakened them never lands.</p>
+          <p>tend2 holds the map and only its verifier writes a pass. pleach runs the work as gated nodes. weeder is the gate they call, so a loop's checks stay honest because the diff that would have weakened them never lands.</p>
         </div>
         <div class="card">
           <p class="label">beside what you already run</p>
           <h3>with the linter and the scanner</h3>
-          <p>a linter reads style, a scanner reads for secrets, a review bot reads the shape of a pull request. weed reads the change against the tests and the guardrails, and says only what it can prove. it replaces none of them and argues with none of them.</p>
+          <p>a linter reads style, a scanner reads for secrets, a review bot reads the shape of a pull request. weeder reads the change against the tests and the guardrails, and says only what it can prove. it replaces none of them and argues with none of them.</p>
         </div>
         <div class="card">
           <p class="label">what it will not say</p>
           <h3>whether the code is good</h3>
-          <p>weed has no view on style, structure, naming, or whether the feature was worth building. it decides one thing, and says so in an exit code: whether the tests still mean what they meant.</p>
+          <p>weeder has no view on style, structure, naming, or whether the feature was worth building. it decides one thing, and says so in an exit code: whether the tests still mean what they meant.</p>
         </div>
       </div>
     </div>
@@ -476,14 +476,14 @@ protected: main, master (as weed.toml has them today).
           <h2 id="start-heading">install it, then put it inside git</h2>
           <p class="lede">the binary is static and the install is one line. release binaries are built for linux and macos on x86_64 and aarch64, and for windows on x86_64. the second line is the one that matters: after <code>guard install</code> the gate runs whether anyone remembers it or not.</p>
           <div class="cta">
-            <a class="btn primary" href="https://github.com/jahala/weed">weed on github</a>
-            <a class="btn ghost" href="https://github.com/jahala/weed/releases">release binaries</a>
+            <a class="btn primary" href="https://github.com/jahala/weeder">weeder on github</a>
+            <a class="btn ghost" href="https://github.com/jahala/weeder/releases">release binaries</a>
           </div>
         </div>
         <div class="snips rise">
-          <div class="snip"><span class="t-dim">from crates.io</span>cargo install weed</div>
-          <div class="snip"><span class="t-dim">or the npm wrapper, which fetches the binary for your platform</span>npm install -g @plotplot/weed</div>
-          <div class="snip"><span class="t-dim">then put the judgement inside git</span>weed guard install --protect main</div>
+          <div class="snip"><span class="t-dim">from crates.io</span>cargo install weeder</div>
+          <div class="snip"><span class="t-dim">or the npm wrapper, which fetches the binary for your platform</span>npm install -g @plotplot/weeder</div>
+          <div class="snip"><span class="t-dim">then put the judgement inside git</span>weeder guard install --protect main</div>
         </div>
       </div>
     </div>
@@ -513,9 +513,9 @@ protected: main, master (as weed.toml has them today).
 
       <!-- 1 · identity — per product -->
       <div class="gf-col">
-        <h4>weed</h4>
+        <h4>weeder</h4>
         <p class="gf-soft">the judge of the diff. it reads what an agent produced and refuses dishonest growth, in milliseconds, with no model in the loop.</p>
-        <p class="gf-soft"><a href="https://github.com/jahala/weed">github →</a> &nbsp;·&nbsp; MIT</p>
+        <p class="gf-soft"><a href="https://github.com/jahala/weeder">github →</a> &nbsp;·&nbsp; MIT</p>
       </div>
 
       <!-- 2 · the garden — identical on every page; add .is-current to THIS product -->
@@ -529,7 +529,7 @@ protected: main, master (as weed.toml has them today).
           <a href="https://jahala.github.io/umbel/"  style="--bloom:var(--pp-umbel)"><span class="gf-dot"></span>umbel</a>
           <a href="https://jahala.github.io/copeca/" style="--bloom:var(--pp-copeca)"><span class="gf-dot"></span>copeca</a>
           <a href="https://jahala.github.io/pollen/" style="--bloom:var(--pp-pollen)"><span class="gf-dot"></span>pollen</a>
-          <a href="https://jahala.github.io/weed/"   style="--bloom:var(--pp-weed)" class="is-current"><span class="gf-dot"></span>weed</a>
+          <a href="https://jahala.github.io/weeder/"   style="--bloom:var(--pp-weeder)" class="is-current"><span class="gf-dot"></span>weeder</a>
         </nav>
         <p class="gf-soft">small, sharp tools for building with agents.</p>
       </div>
@@ -544,7 +544,7 @@ protected: main, master (as weed.toml has them today).
     </div>
     <div class="gf-bottom">
       <span>© 2026 · a plotplot garden tool · MIT</span>
-      <span>agents produce; weed decides.</span>
+      <span>agents produce; weeder decides.</span>
     </div>
   </div>
 </footer>

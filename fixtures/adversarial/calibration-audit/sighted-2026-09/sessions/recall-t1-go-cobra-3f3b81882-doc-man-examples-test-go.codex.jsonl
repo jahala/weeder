@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a07675-86c2-72f1-9d8d-8da1bc01a9b3"}
+{"type":"thread.started","thread_id":"01a077cf-2c3b-7702-b31d-d5df57f8b146"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: miss\nReasoning: The report states the T1 mutation deleted Go test example `ExampleGenManTree` in `doc/man_examples_test.go` and weed did not report that planted deletion."}}
-{"type":"turn.completed","usage":{"input_tokens":36893,"cached_input_tokens":20864,"output_tokens":252,"reasoning_output_tokens":161}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: miss\nReasoning: ExampleGenManTree is a Go example test in a _test.go file, so deleting it is genuinely a T1 test deletion, and the report says weeder did not report it."}}
+{"type":"turn.completed","usage":{"input_tokens":36946,"cached_input_tokens":20864,"output_tokens":221,"reasoning_output_tokens":124}}

@@ -3,7 +3,7 @@
 //! R4 asks how far a pin is behind the registry, and the answer a judge gives
 //! has to be the same answer in CI six months from now: what the registries
 //! last said lives in a committed snapshot, and reading it is arithmetic.
-//! `weed scan --refresh-snapshot` is the one command that goes and asks.
+//! `weeder scan --refresh-snapshot` is the one command that goes and asks.
 //!
 //! The proof is a real denial rather than a promise. Every run here is started
 //! inside whatever this machine uses to take the network away from a process,
@@ -12,7 +12,7 @@
 //! could not be reached. A denial that did nothing would let the refresh
 //! through to crates.io and fail that test. The last two tests ask the source
 //! tree and the catalogue the same question from the other side: nothing in
-//! `src/` opens a socket, and `weed rules` says which rule may reach a network
+//! `src/` opens a socket, and `weeder rules` says which rule may reach a network
 //! and under which flag.
 
 mod common;
@@ -20,19 +20,19 @@ mod common;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use common::{binary, command_in, fixture, weed_in, Repo, Run};
+use common::{binary, command_in, fixture, weeder_in, Repo, Run};
 use tempfile::TempDir;
 
 /// The rule the registries belong to, and the one rule that may reach one.
 const FETCHING_RULE: &str = "R4";
 
-/// The flag that lets it, and the only way weed leaves the machine.
+/// The flag that lets it, and the only way weeder leaves the machine.
 const FETCHING_FLAG: &str = "--refresh-snapshot";
 
 /// What a rule that reads what the repository already holds says it reaches.
 const NOTHING: &str = "none";
 
-/// How a Rust program opens a socket, and the crates that open one for it. weed
+/// How a Rust program opens a socket, and the crates that open one for it. weeder
 /// reads a tree and writes a verdict; either of these in `src/` would be a judge
 /// that had started making calls of its own.
 const SOCKETS: &[&str] = &[
@@ -44,7 +44,7 @@ const SOCKETS: &[&str] = &[
 ];
 
 /// The crates a Rust program speaks HTTP or raw sockets through. None of them
-/// is a dependency, and nothing in the source reaches for one. weed names curl
+/// is a dependency, and nothing in the source reaches for one. weeder names curl
 /// as a program it asks, which is a string rather than a crate, so a source line
 /// is read for the two shapes a crate is reached for by.
 const CLIENTS: &[&str] = &[
@@ -71,27 +71,27 @@ fn a_scan_under_a_denied_network_leaves_clean_with_findings() {
     let found = run.findings();
     assert!(
         found.iter().any(|finding| finding.rule == FETCHING_RULE),
-        "the pin is nine minor releases behind what the committed snapshot holds, and weed with no network reported: {found:#?}"
+        "the pin is nine minor releases behind what the committed snapshot holds, and weeder with no network reported: {found:#?}"
     );
 }
 
 #[test]
 fn a_refresh_under_a_denied_network_says_the_registry_was_unreachable() {
     let repo = fixture(FETCHING_RULE, "rs", "fire");
-    let snapshot = repo.root().join(".weed/registry-snapshot.json");
+    let snapshot = repo.root().join(".weeder/registry-snapshot.json");
     let before = std::fs::read_to_string(&snapshot).expect("the fixture commits a snapshot");
 
     let run = denied(&repo, &["scan", FETCHING_FLAG, "--format", "sarif"]);
 
     assert_eq!(
         run.code, 3,
-        "a refresh that reached no registry did not happen, and weed says so rather than judging on it: {}{}",
+        "a refresh that reached no registry did not happen, and weeder says so rather than judging on it: {}{}",
         run.stdout, run.stderr
     );
     let said = format!("{}{}", run.stdout, run.stderr);
     assert!(
         said.contains("crates.io") && said.contains("could not reach"),
-        "the message names the registry weed could not reach: {said}"
+        "the message names the registry weeder could not reach: {said}"
     );
     assert_eq!(
         std::fs::read_to_string(&snapshot).expect("the snapshot should still be readable"),
@@ -120,7 +120,7 @@ fn nothing_in_the_source_opens_a_socket() {
     }
     assert!(
         found.is_empty(),
-        "weed reaches a registry by asking curl for it, so nothing in src/ speaks a network itself:\n{}",
+        "weeder reaches a registry by asking curl for it, so nothing in src/ speaks a network itself:\n{}",
         found.join("\n")
     );
 
@@ -130,14 +130,14 @@ fn nothing_in_the_source_opens_a_socket() {
         .collect();
     assert!(
         clients.is_empty(),
-        "a network client linked into the binary is a network weed could reach without anybody asking: {clients:?}"
+        "a network client linked into the binary is a network weeder could reach without anybody asking: {clients:?}"
     );
 }
 
 #[test]
 fn the_catalogue_names_the_one_rule_that_may_reach_a_network() {
     let anywhere = TempDir::new().expect("a directory to run in");
-    let run = weed_in(anywhere.path(), &["rules", "--format", "json"]);
+    let run = weeder_in(anywhere.path(), &["rules", "--format", "json"]);
     assert_eq!(run.code, 0);
 
     let entries: Vec<serde_json::Value> = serde_json::from_str(&run.stdout).expect("json is json");
@@ -167,8 +167,8 @@ fn the_catalogue_names_the_one_rule_that_may_reach_a_network() {
     );
 
     // The table carries the same column, between the face and what the rule
-    // reports, so the answer is in front of whoever runs `weed rules`.
-    let table = weed_in(anywhere.path(), &["rules"]);
+    // reports, so the answer is in front of whoever runs `weeder rules`.
+    let table = weeder_in(anywhere.path(), &["rules"]);
     assert_eq!(table.code, 0);
     let lines = table.stdout_lines();
     assert_eq!(lines.len(), entries.len(), "one line per rule");
@@ -199,16 +199,19 @@ fn the_catalogue_names_the_one_rule_that_may_reach_a_network() {
 /// test does.
 fn denied(repo: &Repo, arguments: &[&str]) -> Run {
     let denial = Denial::on_this_machine();
-    let weed = binary().display().to_string();
+    let weeder = binary().display().to_string();
     let mut wrapped: Vec<&str> = denial.arguments.iter().map(String::as_str).collect();
-    wrapped.push(&weed);
+    wrapped.push(&weeder);
     wrapped.extend(arguments);
 
     let output = command_in(Path::new(&denial.program), repo.root(), &wrapped)
         .output()
         .expect("the denial should start the binary");
     Run {
-        code: output.status.code().expect("weed should leave with a code"),
+        code: output
+            .status
+            .code()
+            .expect("weeder should leave with a code"),
         stdout: String::from_utf8_lossy(&output.stdout).to_string(),
         stderr: String::from_utf8_lossy(&output.stderr).to_string(),
     }
@@ -275,7 +278,7 @@ fn reaches_for(line: &str, crate_name: &str) -> bool {
     line.contains(&format!("{crate_name}::")) || line.contains(&format!("use {crate_name}"))
 }
 
-/// weed's own source, the tree this test reads.
+/// weeder's own source, the tree this test reads.
 fn source_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("src")
 }

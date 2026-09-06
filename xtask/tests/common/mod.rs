@@ -13,8 +13,8 @@ use tempfile::TempDir;
 
 /// Fixed, so two runs of a suite build the same commits.
 const AUTHOR_DATE: &str = "2026-09-05T09:00:00+00:00";
-const AUTHOR_NAME: &str = "weed measurements";
-const AUTHOR_EMAIL: &str = "measurements@weed.invalid";
+const AUTHOR_NAME: &str = "weeder measurements";
+const AUTHOR_EMAIL: &str = "measurements@weeder.invalid";
 
 pub struct Repo {
     directory: TempDir,

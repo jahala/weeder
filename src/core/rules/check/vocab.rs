@@ -66,7 +66,7 @@ impl<'a> Name<'a> {
     }
 
     /// Whether the name names a type or a value the language capitalises, an
-    /// error kind, a sentinel, a class. Every language weed reads writes those
+    /// error kind, a sentinel, a class. Every language weeder reads writes those
     /// with a capital and its ordinary bindings without one.
     #[must_use]
     pub fn is_capitalised(&self) -> bool {
@@ -517,7 +517,7 @@ pub struct Number {
 /// The numbers a line of code writes, in the order it writes them.
 ///
 /// A run of digits that a name runs into is part of the name and not a number.
-/// A literal a suffix runs into, a radix, a unit, a type, is a number weed
+/// A literal a suffix runs into, a radix, a unit, a type, is a number weeder
 /// cannot compare against another one, so it is left where it is rather than
 /// read wrongly.
 #[must_use]

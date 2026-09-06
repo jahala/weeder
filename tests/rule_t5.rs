@@ -4,7 +4,7 @@
 //! and the recorded expectation changed with it, in one commit. Each language
 //! keeps its expectations where its own runner writes them, a snapshot
 //! directory, a golden file under the data directory, and the fixture puts
-//! them there rather than somewhere weed would find convenient.
+//! them there rather than somewhere weeder would find convenient.
 //!
 //! Two neighbours, because there are two innocent halves. One moves the
 //! expectation and leaves the code alone: a recording accepted on its own. The
@@ -58,7 +58,7 @@ fn t5_warns_on_an_expectation_that_moved_with_the_code_it_judges() {
             "{name}: the fixture has to move both halves: {changed:?}"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         let findings = reported(&run.findings());
         assert_eq!(findings.len(), 1, "{name}: one expectation, one finding");
         let finding = &findings[0];
@@ -90,7 +90,7 @@ fn t5_stays_silent_when_only_the_expectation_moved() {
             "{name}: the neighbour moves the expectation and nothing else"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             reported(&run.findings()),
             Vec::new(),
@@ -112,7 +112,7 @@ fn t5_stays_silent_when_only_the_code_moved() {
             "{name}: the neighbour moves the code and leaves the expectation: {changed:?}"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             reported(&run.findings()),
             Vec::new(),

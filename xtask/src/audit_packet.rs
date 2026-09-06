@@ -5,6 +5,11 @@
 //! returns to the pinned corpus for the bytes a blind reader should see: case
 //! identity, rule id, and the verbatim diff produced by git. It does not read
 //! the judgement ledger.
+//! The packet text below is frozen at the name the tool carried when the
+//! auditors answered. Every recorded answer names its packet's SHA-256, and
+//! `scripts/check/audit-fairness.sh` regenerates the kept packets and compares
+//! them byte for byte, so renaming a word here would invalidate re-grades that
+//! cannot be collected a second time. The crate paths move; the packets do not.
 
 use std::collections::BTreeMap;
 use std::error::Error;
@@ -13,7 +18,7 @@ use std::path::{Path, PathBuf};
 
 use clap::Args;
 use sha2::{Digest, Sha256};
-use weed::faces::{check, rules, Format};
+use weeder::faces::{check, rules, Format};
 
 use crate::calibrate;
 use crate::corpus;
@@ -829,7 +834,7 @@ fn is_sha(value: &str) -> bool {
 /// this repository a scanner stops on. The marker is machine-derived and says
 /// nothing an auditor could not read off the stamp.
 fn masked(text: &str) -> String {
-    weed::core::rules::check::x1::published_examples()
+    weeder::core::rules::check::x1::published_examples()
         .iter()
         .fold(text.to_string(), |text, (whole, stamp)| {
             text.replace(

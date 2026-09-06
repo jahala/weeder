@@ -5,9 +5,9 @@
 //! wrong way, and it is the kind of change that reads as one line and takes a
 //! week to undo.
 //!
-//! weed holds itself to this rule: core computes and reaches nothing, the seams
+//! weeder holds itself to this rule: core computes and reaches nothing, the seams
 //! reach the world, the faces put the two together. The last case here copies
-//! weed's own source into a repository, finds nothing, and then draws one arrow
+//! weeder's own source into a repository, finds nothing, and then draws one arrow
 //! backwards.
 
 mod common;
@@ -25,7 +25,7 @@ const LAYERS: [(&str, &str, &str); 4] = [
     ("go", "core/finding.go", "faces/check.go"),
 ];
 
-/// The layers the fixtures and weed's own `weed.toml` name.
+/// The layers the fixtures and weeder's own `weeder.toml` name.
 const CORE: &str = "core";
 const SEAMS: &str = "seams";
 
@@ -33,7 +33,7 @@ const SEAMS: &str = "seams";
 fn d2_fires_at_block_level_where_a_layer_reaches_one_it_may_not_in_every_language() {
     for (lang, offender, _) in LAYERS {
         let repo = fixture("D2", lang, "fire");
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
 
         assert_eq!(
             run.code, 2,
@@ -71,7 +71,7 @@ fn d2_stays_silent_on_a_direction_the_repository_allows() {
             "{lang}: {allowed} must be in the diff, or the silence proves nothing"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.findings(),
             Vec::new(),
@@ -82,13 +82,13 @@ fn d2_stays_silent_on_a_direction_the_repository_allows() {
 }
 
 #[test]
-fn weeds_own_source_holds_its_doctrine_until_one_arrow_is_drawn_backwards() {
-    let repo = weeds_own_source();
-    let clean = repo.weed(&["check"]);
+fn weeders_own_source_holds_its_doctrine_until_one_arrow_is_drawn_backwards() {
+    let repo = weeders_own_source();
+    let clean = repo.weeder(&["check"]);
     assert_eq!(
         d2(&clean),
         Vec::<String>::new(),
-        "every import in weed's own source runs the way weed's own weed.toml allows\n{}",
+        "every import in weeder's own source runs the way weeder's own weeder.toml allows\n{}",
         clean.stderr
     );
 
@@ -101,7 +101,7 @@ fn weeds_own_source_holds_its_doctrine_until_one_arrow_is_drawn_backwards() {
     );
     repo.stage_all();
 
-    let broken = repo.weed(&["check"]);
+    let broken = repo.weeder(&["check"]);
     assert_eq!(
         d2(&broken),
         vec![core.to_string()],
@@ -111,14 +111,15 @@ fn weeds_own_source_holds_its_doctrine_until_one_arrow_is_drawn_backwards() {
     assert_eq!(broken.code, 2, "a forbidden direction blocks");
 }
 
-/// A repository holding weed's own source and weed's own `weed.toml`, with all
+/// A repository holding weeder's own source and weeder's own `weeder.toml`, with all
 /// of it staged as the change to judge.
-fn weeds_own_source() -> Repo {
+fn weeders_own_source() -> Repo {
     let repo = Repo::init();
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     copy_tree(&root.join("src"), &repo.root().join("src"));
-    let config = std::fs::read_to_string(root.join("weed.toml")).expect("weed states its own law");
-    repo.write("weed.toml", &config);
+    let config =
+        std::fs::read_to_string(root.join("weeder.toml")).expect("weeder states its own law");
+    repo.write("weeder.toml", &config);
     repo.stage_all();
     repo
 }
@@ -138,7 +139,7 @@ fn d2(run: &common::Run) -> Vec<String> {
 
 fn copy_tree(source: &Path, target: &Path) {
     std::fs::create_dir_all(target).expect("a directory for the copy");
-    for entry in std::fs::read_dir(source).expect("weed's own source should be readable") {
+    for entry in std::fs::read_dir(source).expect("weeder's own source should be readable") {
         let entry = entry.expect("a source entry should be readable");
         let from = entry.path();
         let to = target.join(entry.file_name());
@@ -158,7 +159,7 @@ fn copy_tree(source: &Path, target: &Path) {
 fn d2_follows_a_relative_import_up_more_than_one_directory() {
     let repo = Repo::init();
     repo.write(
-        "weed.toml",
+        "weeder.toml",
         "[deps]\nlayers = { core = [\"src/core/**\"], seams = [\"src/seams/**\"] }\nallow = [\n    { from = \"seams\", to = \"core\" },\n]\n",
     );
     repo.write(
@@ -180,7 +181,7 @@ fn d2_follows_a_relative_import_up_more_than_one_directory() {
     );
     repo.stage_all();
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert_eq!(
         d2(&run),
         vec![climbing.to_string()],
@@ -199,7 +200,7 @@ fn d2_follows_a_relative_import_up_more_than_one_directory() {
 fn d2_follows_a_climb_past_a_sibling_that_would_answer_a_misread_one() {
     let repo = Repo::init();
     repo.write(
-        "weed.toml",
+        "weeder.toml",
         "[deps]\nlayers = { suite = [\"test/**\"], tools = [\"scripts/**\"] }\nallow = []\n",
     );
     repo.write(
@@ -222,7 +223,7 @@ fn d2_follows_a_climb_past_a_sibling_that_would_answer_a_misread_one() {
     );
     repo.stage_all();
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert_eq!(
         d2(&run),
         vec![climbing.to_string()],
@@ -239,7 +240,7 @@ fn d2_follows_a_climb_past_a_sibling_that_would_answer_a_misread_one() {
 fn d2_stays_silent_where_the_climb_runs_the_way_the_layers_allow() {
     let repo = Repo::init();
     repo.write(
-        "weed.toml",
+        "weeder.toml",
         "[deps]\nlayers = { core = [\"src/core/**\"], seams = [\"src/seams/**\"] }\nallow = [\n    { from = \"seams\", to = \"core\" },\n]\n",
     );
     repo.write(
@@ -261,7 +262,7 @@ fn d2_stays_silent_where_the_climb_runs_the_way_the_layers_allow() {
     );
     repo.stage_all();
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert_eq!(
         d2(&run),
         Vec::<String>::new(),

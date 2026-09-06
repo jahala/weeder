@@ -1,6 +1,6 @@
 //! How often a repository writes itself an allowance.
 //!
-//! Precision says how often weed was wrong. It says nothing about a gate that is
+//! Precision says how often weeder was wrong. It says nothing about a gate that is
 //! right and routed around anyway, and the number that shows that is the rate of
 //! `Weed-allow:` trailers: rising allowances against flat true positives means
 //! the gate is being gamed, or is tuned to fire where nobody agrees with it.
@@ -13,13 +13,13 @@
 use std::error::Error;
 use std::path::Path;
 
-use weed::core::guard::BINARY_MARKER;
-use weed::core::suppress::parse_commit_suppressions;
+use weeder::core::guard::BINARY_MARKER;
+use weeder::core::suppress::parse_commit_suppressions;
 
 use crate::corpus::Repo;
 use crate::repo::{fingerprint, git, Scratch};
 
-/// When a repository put weed's hooks in git.
+/// When a repository put weeder's hooks in git.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Installed {
     pub sha: String,
@@ -123,7 +123,7 @@ fn count(repo: &Repo, scratch_parent: &Path) -> Result<RepoRate, Box<dyn Error>>
 }
 
 /// The commit that brought guard's hooks into the tree, which is the day the
-/// gate started running. It is found by the marker `weed guard install` writes
+/// gate started running. It is found by the marker `weeder guard install` writes
 /// into every bundle it creates, so a repository that installed the hooks under
 /// any directory name is still found.
 fn install(scratch: &Scratch) -> Result<Option<Installed>, Box<dyn Error>> {

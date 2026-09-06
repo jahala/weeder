@@ -210,8 +210,8 @@ trap 'command -v trash >/dev/null 2>&1 && trash "$scratch"' EXIT
 source="$scratch/source"
 mkdir -p "$source/tests"
 git -C "$source" init --quiet --initial-branch=main
-git -C "$source" config user.name "weed measurements"
-git -C "$source" config user.email "measurements@weed.invalid"
+git -C "$source" config user.name "weeder measurements"
+git -C "$source" config user.email "measurements@weeder.invalid"
 commit() {
   git -C "$source" add -A
   GIT_AUTHOR_DATE="2026-09-06T09:00:00+00:00" GIT_COMMITTER_DATE="2026-09-06T09:00:00+00:00" \

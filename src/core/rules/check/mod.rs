@@ -56,7 +56,7 @@ pub struct Judgement<'a> {
 
 type Detector = fn(&Judgement) -> Vec<Finding>;
 
-/// The detectors weed has on this face. A catalogue rule absent from this table
+/// The detectors weeder has on this face. A catalogue rule absent from this table
 /// is not run; the loop that lands its detector adds the entry here.
 const DETECTORS: &[(&str, Detector)] = &[
     ("T1", t1::evaluate),

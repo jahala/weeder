@@ -10,7 +10,7 @@ pub const SARIF_VERSION: &str = "2.1.0";
 pub const SCHEMA_URI: &str =
     "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json";
 /// The tool component's name.
-pub const TOOL_NAME: &str = "weed";
+pub const TOOL_NAME: &str = "weeder";
 /// Where a rule is documented, relative to the repository root.
 pub const RULES_DOC: &str = "docs/rules.md";
 
@@ -18,7 +18,7 @@ pub const RULES_DOC: &str = "docs/rules.md";
 pub const EXIT_CLEAN: i32 = 0;
 /// At least one block-level result.
 pub const EXIT_BLOCKED: i32 = 2;
-/// weed could not run, so the gate fails closed.
+/// weeder could not run, so the gate fails closed.
 pub const EXIT_COULD_NOT_RUN: i32 = 3;
 
 /// Whether the run reached a judgement at all.
@@ -35,7 +35,7 @@ pub struct Context {
     pub tool_version: String,
     pub catalogue: Vec<Rule>,
     /// An absolute URI that `docs/rules.md#<id>` resolves against. SARIF wants
-    /// an absolute `helpUri`, so without a base weed writes no `helpUri` at all
+    /// an absolute `helpUri`, so without a base weeder writes no `helpUri` at all
     /// rather than a relative one no consumer would accept.
     pub docs_base: Option<String>,
     pub outcome: Outcome,
@@ -176,7 +176,7 @@ pub struct SarifResult {
 /// What a consumer needs about a result that SARIF has no field of its own for.
 /// The path is already in the location; it is repeated here because aggregating
 /// per file is the first thing every consumer does, and reaching three levels
-/// into a location to do it is how a consumer ends up parsing weed wrong.
+/// into a location to do it is how a consumer ends up parsing weeder wrong.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct ResultProperties {
     pub path: String,
@@ -289,7 +289,7 @@ pub fn render(findings: &[Finding], context: &Context) -> Log {
 
 /// The order law: file, then line, then rule id, and the message where a file,
 /// a line and a rule still name two results. Fixing the order here, once, is
-/// what lets weed promise the same bytes on two runs: a detector may report in
+/// what lets weeder promise the same bytes on two runs: a detector may report in
 /// whatever order suits it, a face may add findings from several passes, and the
 /// log still comes out the same. A finding with no region points at the whole
 /// file and sorts at line zero, above every line in it. The message closes the

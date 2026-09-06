@@ -78,7 +78,7 @@ fn m1_warns_when_the_double_stands_in_for_a_file_the_change_edits() {
             "{name}: the fire fixture has to double the unit the change edits"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         let findings = reported(&run.findings());
         assert_eq!(
             findings.len(),
@@ -125,7 +125,7 @@ fn m1_stays_silent_when_the_double_stands_in_for_something_outside_the_change() 
             "{name}: and the double it sets up stands in for something else entirely"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             reported(&run.findings()),
             Vec::new(),

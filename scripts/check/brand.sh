@@ -11,7 +11,7 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
 
-layer=".brand/products/weed"
+layer=".brand/products/weeder"
 status=0
 
 command -v python3 >/dev/null 2>&1 || {
@@ -27,7 +27,7 @@ for file in identity.md colors.md voice.md petalsrc.example; do
     status=1
   fi
 done
-for mark in weed-mark.svg weed-mark-night.svg; do
+for mark in weeder-mark.svg weeder-mark-night.svg; do
   if [ ! -f "$layer/assets/$mark" ]; then
     echo "$layer/assets/$mark is missing: a mark is drawn for paper and for soil-night" >&2
     status=1
@@ -49,7 +49,7 @@ for heading in "## Positioning" "## Mark" "## Logo usage"; do
   fi
 done
 
-# The voice delta carries weed's terminology, in both directions: the word to
+# The voice delta carries weeder's terminology, in both directions: the word to
 # use and the word never to use.
 if ! grep -qF "## Terminology" "$layer/voice.md"; then
   echo "$layer/voice.md has no terminology table: the voice delta is the terminology" >&2
@@ -79,7 +79,7 @@ else
     echo "$layer/colors.md never names the accent $accent the identity claims" >&2
     status=1
   fi
-  for mark in weed-mark.svg weed-mark-night.svg; do
+  for mark in weeder-mark.svg weeder-mark-night.svg; do
     if ! grep -qiF "$accent" "$layer/assets/$mark"; then
       echo "$layer/assets/$mark does not use the accent $accent" >&2
       status=1
@@ -168,12 +168,12 @@ PY
 )" || status=1
 
 # petalsrc.example points at the umbrella and names this product's layer.
-if ! grep -qF "product: weed" "$layer/petalsrc.example"; then
-  echo "$layer/petalsrc.example does not name weed as the product layer to fetch" >&2
+if ! grep -qF "product: weeder" "$layer/petalsrc.example"; then
+  echo "$layer/petalsrc.example does not name weeder as the product layer to fetch" >&2
   status=1
 fi
 
 if [ "$status" -eq 0 ]; then
-  echo ".brand/products/weed: the shape is whole, the accent $accent is one value everywhere, $measured contrast ratios measured and correct"
+  echo ".brand/products/weeder: the shape is whole, the accent $accent is one value everywhere, $measured contrast ratios measured and correct"
 fi
 exit "$status"

@@ -1,7 +1,7 @@
 export function parse(input: string): string[] {
-{{weed:ours}} HEAD
+{{weeder:ours}} HEAD
   return input.split(",");
-{{weed:separator}}
+{{weeder:separator}}
   return input.split(";");
-{{weed:theirs}} feature/split-on-semicolons
+{{weeder:theirs}} feature/split-on-semicolons
 }

@@ -6,7 +6,7 @@
 //! that the new output is right.
 //!
 //! On its own that is housekeeping, a file renamed, a fixture extended, so
-//! weed says nothing. It is the pairing that reads badly: the code changed and
+//! weeder says nothing. It is the pairing that reads badly: the code changed and
 //! the expectation moved with it, in the same change, which is the shape of an
 //! expectation that was made to agree rather than checked. The finding lands on
 //! the expectation and names the production file it moved alongside.
@@ -54,7 +54,7 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
 }
 
 /// Whether the change is to production code. An expectation that happens to be
-/// written in a language weed reads is still an expectation, so the paths are
+/// written in a language weeder reads is still an expectation, so the paths are
 /// asked first.
 fn is_production(change: &Change) -> bool {
     change.path().is_some_and(|path| {

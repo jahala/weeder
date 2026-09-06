@@ -1,7 +1,7 @@
 //! The independent re-grade, and what the verdict may say because of it.
 //!
 //! Whether a block was a false positive is a judgement, and the builder's own
-//! judgement is not the number weed ships on. A second party re-classifies a
+//! judgement is not the number weeder ships on. A second party re-classifies a
 //! sample blind and writes `docs/calibration-audit-2026-09.md`; until that file
 //! records agreement at or above ninety percent on every sample it drew, the
 //! calibration's first sentence says the verdict is pending.

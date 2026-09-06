@@ -16,7 +16,7 @@ fn a_commit_trailer_makes_a_block_finding_a_note_and_strict_gives_it_back() {
     let repo = fixture("G1", "ts", "fire");
     repo.pending_message(&format!("Split on semicolons\n\nWeed-allow: G1 {REASON}\n"));
 
-    let honoured = repo.weed(&["check"]);
+    let honoured = repo.weeder(&["check"]);
     let findings = honoured.findings();
     assert!(!findings.is_empty(), "the rule still reports");
     assert!(
@@ -29,7 +29,7 @@ fn a_commit_trailer_makes_a_block_finding_a_note_and_strict_gives_it_back() {
     );
     assert_eq!(honoured.code, 0);
 
-    let strict = repo.weed(&["check", "--strict"]);
+    let strict = repo.weeder(&["check", "--strict"]);
     let findings = strict.findings();
     assert!(
         findings.iter().all(|finding| finding.level == "error"),
@@ -54,7 +54,7 @@ Weed-allow: G1 {REASON}
 "
     ));
 
-    let honoured = repo.weed(&["check", "--base", &base]);
+    let honoured = repo.weeder(&["check", "--base", &base]);
     assert!(honoured.findings().iter().all(|finding| finding.suppressed));
     assert_eq!(
         honoured.code, 0,
@@ -65,7 +65,7 @@ Weed-allow: G1 {REASON}
     // change must not inherit it.
     repo.write("src/other.ts", &conflicted_parser(None));
     repo.stage_all();
-    let later = repo.weed(&["check"]);
+    let later = repo.weeder(&["check"]);
     assert!(
         later.findings().iter().all(|finding| !finding.suppressed),
         "a trailer never outlives the change it was written for"
@@ -82,7 +82,7 @@ fn an_inline_comment_makes_a_block_finding_a_note_and_strict_gives_it_back() {
     );
     repo.stage_all();
 
-    let honoured = repo.weed(&["check"]);
+    let honoured = repo.weeder(&["check"]);
     let findings = honoured.findings();
     assert_eq!(findings.len(), 3, "one finding per marker");
     assert!(
@@ -92,7 +92,7 @@ fn an_inline_comment_makes_a_block_finding_a_note_and_strict_gives_it_back() {
     assert!(findings.iter().all(|finding| finding.level == "note"));
     assert_eq!(honoured.code, 0);
 
-    let strict = repo.weed(&["check", "--strict"]);
+    let strict = repo.weeder(&["check", "--strict"]);
     let findings = strict.findings();
     assert_eq!(findings.len(), 3);
     assert!(findings.iter().all(|finding| finding.level == "error"));
@@ -100,7 +100,7 @@ fn an_inline_comment_makes_a_block_finding_a_note_and_strict_gives_it_back() {
 }
 
 #[test]
-fn a_weed_allow_with_no_reason_is_a_complaint_and_strict_refuses_to_run() {
+fn a_weeder_allow_with_no_reason_is_a_complaint_and_strict_refuses_to_run() {
     let repo = Repo::init();
     repo.write(
         "src/parser.ts",
@@ -117,18 +117,18 @@ fn a_weed_allow_with_no_reason_is_a_complaint_and_strict_refuses_to_run() {
     );
     repo.stage_all();
 
-    let lenient = repo.weed(&["check"]);
+    let lenient = repo.weeder(&["check"]);
     assert_eq!(lenient.code, 2, "the findings still stand");
     assert_eq!(
         lenient.stderr_lines().len(),
         1,
-        "the suppression weed could not read is said out loud"
+        "the suppression weeder could not read is said out loud"
     );
 
-    let strict = repo.weed(&["check", "--strict"]);
+    let strict = repo.weeder(&["check", "--strict"]);
     assert_eq!(
         strict.code, 3,
-        "under --strict weed will not judge what it cannot read"
+        "under --strict weeder will not judge what it cannot read"
     );
     assert_eq!(strict.stderr_lines().len(), 1, "one line, naming the cause");
 }

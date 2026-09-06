@@ -2,9 +2,9 @@
 //!
 //! git writes four markers into a conflicted file, each exactly seven of its
 //! character at the start of a line, alone or followed by a space and a label.
-//! `<<<<<<<` and `>>>>>>>` mean nothing else in any language weed reads, so they
+//! `<<<<<<<` and `>>>>>>>` mean nothing else in any language weeder reads, so they
 //! are reported wherever they are added. `=======` and `|||||||` are also a
-//! setext heading rule, a comment divider and a table rule, so weed reports them
+//! setext heading rule, a comment divider and a table rule, so weeder reports them
 //! only in a file whose new content carries an opener or a closer as well: a
 //! separator with no conflict around it is punctuation, not a conflict.
 

@@ -1,8 +1,8 @@
-//! `weed guard install`, the hooks written, and whatever was there kept.
+//! `weeder guard install`, the hooks written, and whatever was there kept.
 //!
 //! Every case runs the built binary in a real temp repository and then asks git
 //! itself what it now believes, so the proof is git's configuration and the
-//! files on disk rather than anything weed says about them.
+//! files on disk rather than anything weeder says about them.
 
 mod common;
 
@@ -14,13 +14,13 @@ use common::Repo;
 /// The hooks guard installs, in the order it names them.
 const HOOKS: [&str; 3] = ["pre-commit", "pre-push", "pre-rebase"];
 /// The line a bundle carries to say which binary it calls.
-const BINARY_MARKER: &str = "# weed-guard-binary:";
+const BINARY_MARKER: &str = "# weeder-guard-binary:";
 const HOOKS_PATH: [&str; 4] = ["config", "--local", "--get", "core.hooksPath"];
 
 #[test]
 fn install_writes_every_hook_and_points_git_at_them() {
     let repo = Repo::init();
-    let run = repo.weed(&["guard", "install"]);
+    let run = repo.weeder(&["guard", "install"]);
     assert_eq!(run.code, 0, "install runs clean\n{}", run.stderr);
 
     for hook in HOOKS {
@@ -53,25 +53,25 @@ fn install_writes_every_hook_and_points_git_at_them() {
     assert_eq!(
         repo.git(&HOOKS_PATH).trim(),
         ".githooks",
-        "git runs its hooks from where weed wrote them"
+        "git runs its hooks from where weeder wrote them"
     );
 }
 
 #[test]
 fn install_writes_where_it_is_told_to() {
     let repo = Repo::init();
-    let run = repo.weed(&["guard", "install", "--hooks-dir", ".hooks/weed"]);
+    let run = repo.weeder(&["guard", "install", "--hooks-dir", ".hooks/weeder"]);
     assert_eq!(run.code, 0, "{}", run.stderr);
 
     for hook in HOOKS {
         assert!(
-            repo.root().join(".hooks/weed").join(hook).is_file(),
+            repo.root().join(".hooks/weeder").join(hook).is_file(),
             "{hook} is written where --hooks-dir named"
         );
     }
-    assert_eq!(repo.git(&HOOKS_PATH).trim(), ".hooks/weed");
+    assert_eq!(repo.git(&HOOKS_PATH).trim(), ".hooks/weeder");
     assert_eq!(
-        repo.weed(&["guard", "status"]).code,
+        repo.weeder(&["guard", "status"]).code,
         0,
         "status follows the record rather than assuming the default directory"
     );
@@ -80,7 +80,7 @@ fn install_writes_where_it_is_told_to() {
 #[test]
 fn install_bakes_the_branches_it_was_told_to_protect_into_the_hooks() {
     let repo = Repo::init();
-    repo.weed(&["guard", "install", "--protect", "release/*"]);
+    repo.weeder(&["guard", "install", "--protect", "release/*"]);
 
     for hook in ["pre-push", "pre-rebase"] {
         let script = read(&repo.root().join(".githooks").join(hook));
@@ -100,15 +100,15 @@ fn install_bakes_the_branches_it_was_told_to_protect_into_the_hooks() {
 fn install_records_the_hooks_path_that_was_there_and_uninstall_puts_it_back() {
     let repo = Repo::init();
     repo.git(&["config", "core.hooksPath", ".their-hooks"]);
-    repo.weed(&["guard", "install"]);
+    repo.weeder(&["guard", "install"]);
 
     assert_eq!(
-        read(&repo.root().join(".git/weed/previous-hooks-path")).trim(),
+        read(&repo.root().join(".git/weeder/previous-hooks-path")).trim(),
         ".their-hooks",
         "what the repository had is written down before it is overwritten"
     );
 
-    let run = repo.weed(&["guard", "uninstall"]);
+    let run = repo.weeder(&["guard", "uninstall"]);
     assert_eq!(run.code, 0, "uninstall runs clean\n{}", run.stderr);
     assert_eq!(
         repo.git(&HOOKS_PATH).trim(),
@@ -127,28 +127,28 @@ fn install_records_the_hooks_path_that_was_there_and_uninstall_puts_it_back() {
 fn a_second_install_keeps_the_first_record_of_what_was_there() {
     let repo = Repo::init();
     repo.git(&["config", "core.hooksPath", ".their-hooks"]);
-    repo.weed(&["guard", "install"]);
-    repo.weed(&["guard", "install"]);
+    repo.weeder(&["guard", "install"]);
+    repo.weeder(&["guard", "install"]);
 
     assert_eq!(
-        read(&repo.root().join(".git/weed/previous-hooks-path")).trim(),
+        read(&repo.root().join(".git/weeder/previous-hooks-path")).trim(),
         ".their-hooks",
         "installing twice must not record guard's own directory as what was there"
     );
-    repo.weed(&["guard", "uninstall"]);
+    repo.weeder(&["guard", "uninstall"]);
     assert_eq!(repo.git(&HOOKS_PATH).trim(), ".their-hooks");
 }
 
 #[test]
 fn uninstall_unsets_a_hooks_path_this_repository_never_had() {
     let repo = Repo::init();
-    repo.weed(&["guard", "install"]);
-    repo.weed(&["guard", "uninstall"]);
+    repo.weeder(&["guard", "install"]);
+    repo.weeder(&["guard", "uninstall"]);
 
     let asked = repo.try_git(&HOOKS_PATH);
     assert_ne!(
         asked.code, 0,
-        "the setting is gone again, not left pointing at a directory weed emptied: {}",
+        "the setting is gone again, not left pointing at a directory weeder emptied: {}",
         asked.stdout
     );
 }
@@ -156,7 +156,7 @@ fn uninstall_unsets_a_hooks_path_this_repository_never_had() {
 #[test]
 fn uninstall_removes_only_the_files_it_wrote() {
     let repo = Repo::init();
-    repo.weed(&["guard", "install"]);
+    repo.weeder(&["guard", "install"]);
 
     let theirs = repo.root().join(".githooks/post-commit");
     let theirs_says = "#!/bin/sh\necho a hook of their own\n";
@@ -165,13 +165,13 @@ fn uninstall_removes_only_the_files_it_wrote() {
     let replaced_says = "#!/bin/sh\necho this one is mine now\n";
     std::fs::write(&replaced, replaced_says).expect("the replacement should be writable");
 
-    let run = repo.weed(&["guard", "uninstall"]);
+    let run = repo.weeder(&["guard", "uninstall"]);
     assert_eq!(run.code, 0, "{}", run.stderr);
 
     assert_eq!(
         read(&theirs),
         theirs_says,
-        "a hook weed never wrote is not weed's to take away"
+        "a hook weeder never wrote is not weeder's to take away"
     );
     assert_eq!(
         read(&replaced),
@@ -180,7 +180,7 @@ fn uninstall_removes_only_the_files_it_wrote() {
     );
     assert!(
         !repo.root().join(".githooks/pre-commit").exists(),
-        "the hooks weed did write are gone"
+        "the hooks weeder did write are gone"
     );
     assert!(
         run.stdout.contains("pre-push"),
@@ -192,9 +192,9 @@ fn uninstall_removes_only_the_files_it_wrote() {
 #[test]
 fn status_reports_every_hook_live_after_install() {
     let repo = Repo::init();
-    repo.weed(&["guard", "install"]);
+    repo.weeder(&["guard", "install"]);
 
-    let run = repo.weed(&["guard", "status"]);
+    let run = repo.weeder(&["guard", "status"]);
     assert_eq!(
         run.code, 0,
         "nothing is missing\n{}{}",

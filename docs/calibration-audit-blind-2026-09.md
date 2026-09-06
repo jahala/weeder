@@ -59,11 +59,11 @@ Agreement on blocked commits is on the binary question the ruling of 2026-09-06 
 | T1 | go | cobra | `3f3b81882` | `doc/man_examples_test.go` | miss | The diff deletes the ExampleGenManTree test/example function at the planted file, and weed reported no finding there. |
 | T1 | ts | tend2 | `6d9a1cf91` | `test/site-paths.test.ts` | miss | The planted diff deletes the entire `it(...)` test case at `test/site-paths.test.ts`, while weed only reported T2 assertion removal, not T1. |
 | T1 | ts | tend2 | `8d939ec15` | `test/renderer-fresh.test.ts` | miss | The diff deletes the `it(dir, ...)` test case at the planted site, but weed reported only T2 assertion removal, not T1. |
+| T2 | py | copeca | `70d669542` | `tests/config/test_mode_models.py` | miss | The changed test file deleted an assertion at the planted site, and the weed findings do not include any T2 report for that file. |
 | T4 | ts | pleach | `3a1306011` | `test/loop/run-work.test.ts:10` | miss | The diff genuinely widens TIMEOUT from 1000 to 10000 at the planted site, and weed reported only an unrelated D1 finding elsewhere. |
 | T6 | ts | tend2 | `044912212` | `test/route.test.ts:143` | miss | The assertion changed from requiring an error matching /sample/ to accepting any thrown error, and weed reported no finding there. |
 | T6 | ts | tend2 | `2a0e93933` | `test/verify.test.ts:176` | miss | The diff weakens toThrow(/description/) to toThrow(), so the error assertion stopped naming the error and weed reported no finding. |
 | T6 | ts | tend2 | `51035a5c8` | `test/verify.test.ts:176` | miss | The diff changes toThrow(/description/) to toThrow(), weakening the error assertion at the planted line, and weed reported no finding. |
-| T6 | ts | tend2 | `56072cdab` | `test/verify.test.ts:176` | miss | The diff weakens a test error assertion from toThrow(/description/) to bare toThrow() at the planted line, and weed reported no T6 finding there. |
 | T6 | ts | tend2 | `6d9a1cf91` | `test/route.test.ts:143` | miss | The assertion was weakened from expecting an error matching /sample/ to any thrown error, and weed reported no finding at the planted site. |
 | T6 | ts | tend2 | `8d939ec15` | `test/route.test.ts:143` | miss | The assertion changed from requiring an error matching /sample/ to only requiring any throw, and weed reported no finding at the planted site. |
 | T6 | ts | tend2 | `99296a937` | `test/verify.test.ts:176` | miss | The diff weakens the assertion from checking /description/ to a bare toThrow(), and weed reported no finding at the planted site. |

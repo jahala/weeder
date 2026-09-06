@@ -4,9 +4,9 @@ import "strings"
 
 // Parse splits an input row into its fields.
 func Parse(input string) []string {
-{{weed:ours}} HEAD
+{{weeder:ours}} HEAD
 	return strings.Split(input, ",")
-{{weed:separator}}
+{{weeder:separator}}
 	return strings.Split(input, ";")
-{{weed:theirs}} feature/split-on-semicolons
+{{weeder:theirs}} feature/split-on-semicolons
 }

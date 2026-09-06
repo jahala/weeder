@@ -1705,7 +1705,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "weed"
+name = "weeder"
 version = "0.1.0"
 dependencies = [
  "assert_cmd",
@@ -1776,7 +1776,7 @@ dependencies = [
  "sha2",
  "tempfile",
  "toml 0.8.23",
- "weed",
+ "weeder",
 ]
 
 [[package]]

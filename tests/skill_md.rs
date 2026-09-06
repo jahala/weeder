@@ -2,7 +2,7 @@
 //! worth installing: a description short enough to sit in a listing without
 //! costing a paragraph, and a body that covers the whole binary. The second is
 //! the one that rots, so it is checked against the binary rather than against a
-//! list written down beside it, every command and every flag weed prints, all
+//! list written down beside it, every command and every flag weeder prints, all
 //! the way down the tree, has to appear in SKILL.md.
 
 mod common;
@@ -10,7 +10,7 @@ mod common;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use common::weed_command_in;
+use common::weeder_command_in;
 
 fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf()
@@ -72,15 +72,15 @@ fn sentences(text: &str) -> usize {
     count
 }
 
-/// Every command and every flag the binary prints, walked from `weed --help`
+/// Every command and every flag the binary prints, walked from `weeder --help`
 /// down through each subcommand's own help. clap's `help` command is its
-/// furniture rather than a face of weed, so the walk steps around it.
+/// furniture rather than a face of weeder, so the walk steps around it.
 fn printed_surface() -> BTreeSet<String> {
     let mut found = BTreeSet::new();
     walk(&[], &mut found);
     assert!(
         found.iter().any(|name| !name.starts_with('-')),
-        "weed --help printed no commands"
+        "weeder --help printed no commands"
     );
     found
 }
@@ -88,9 +88,9 @@ fn printed_surface() -> BTreeSet<String> {
 fn walk(path: &[String], found: &mut BTreeSet<String>) {
     let mut arguments: Vec<&str> = path.iter().map(String::as_str).collect();
     arguments.push("--help");
-    let printed = weed_command_in(&root(), &arguments)
+    let printed = weeder_command_in(&root(), &arguments)
         .output()
-        .expect("the weed binary should run");
+        .expect("the weeder binary should run");
     let text = String::from_utf8_lossy(&printed.stdout).to_string();
 
     for flag in section(&text, "Options:")

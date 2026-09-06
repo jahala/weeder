@@ -1,6 +1,6 @@
 //! A planted case is a real instance of its rule's shape, or it is no case.
 //!
-//! Recall only means something where every case is one weed could have caught.
+//! Recall only means something where every case is one weeder could have caught.
 //! A site the injector read a shape into that was never there is worthless
 //! twice over: a hit on it inflates the number, and a miss on it is charged to
 //! the binary for an anti-pattern it was never shown, which is worse, because a
@@ -194,7 +194,7 @@ fn go_history() -> Repo {
 
 /// The binary the campaign judges with, built once for the whole suite so the
 /// runs do not queue behind one another for the build lock.
-fn weed() -> &'static PathBuf {
+fn weeder() -> &'static PathBuf {
     static BUILT: OnceLock<PathBuf> = OnceLock::new();
     BUILT.get_or_init(|| {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -203,7 +203,7 @@ fn weed() -> &'static PathBuf {
             .to_path_buf();
         let status = Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string()))
             .current_dir(&root)
-            .args(["build", "--release", "--quiet", "--bin", "weed"])
+            .args(["build", "--release", "--quiet", "--bin", "weeder"])
             .status()
             .expect("cargo should be on PATH");
         assert!(status.success(), "the release binary should build");
@@ -211,7 +211,7 @@ fn weed() -> &'static PathBuf {
             .parent()
             .and_then(|debug| debug.parent())
             .expect("the target directory")
-            .join("release/weed");
+            .join("release/weeder");
         assert!(binary.exists(), "{} should be built", binary.display());
         binary
     })
@@ -220,7 +220,7 @@ fn weed() -> &'static PathBuf {
 /// Walk one history for one rule in one language, and hand back the run with
 /// the numbers it wrote.
 fn campaign(bench: &Bench, name: &str, repo: &Repo, rule: &str, language: &str) -> Run {
-    let binary = weed().display().to_string();
+    let binary = weeder().display().to_string();
     bench.mutate(
         name,
         repo,
@@ -305,7 +305,7 @@ fn a_case_named_after_a_failure_is_no_claim_about_one() {
     );
     assert!(
         !bench.report().contains("- T6 · py ·"),
-        "a broken signature is named as a claim weed missed:\n{}",
+        "a broken signature is named as a claim weeder missed:\n{}",
         bench.report()
     );
 }

@@ -1,7 +1,7 @@
 //! A command line read the way a shell reads one.
 //!
-//! weed runs nothing here. A harness hands its hook the text of a command an
-//! agent is about to run, and weed has to know whether that text asks git for a
+//! weeder runs nothing here. A harness hands its hook the text of a command an
+//! agent is about to run, and weeder has to know whether that text asks git for a
 //! commit, behind an `&&`, down a pipe, inside a `bash -lc` a wrapper built, or
 //! nowhere at all because the words only sit inside an `echo`. Quoting is what
 //! makes that question hard, so quoting is what this module does: the words a
@@ -13,7 +13,7 @@
 //! becomes a command's name where the shell would run it as one.
 
 /// How deep a `sh -c` inside a `sh -c` is followed. Deeper than this is nothing
-/// a person wrote, and weed stops rather than recurses forever.
+/// a person wrote, and weeder stops rather than recurses forever.
 const MAX_DEPTH: usize = 8;
 
 /// The programs that take a script as an argument and run it as a command line.
@@ -21,7 +21,7 @@ const SHELLS: [&str; 6] = ["sh", "bash", "zsh", "dash", "ksh", "ash"];
 
 /// Every command a line runs, in the order it runs them, each broken into the
 /// words a shell would hand the program. A shell called with a script takes the
-/// place of the script's own commands, because what will run is what weed is
+/// place of the script's own commands, because what will run is what weeder is
 /// being asked about.
 pub fn commands(line: &str) -> Vec<Vec<String>> {
     opened(grouped(&tokens(line)), 0)
@@ -282,7 +282,7 @@ fn script(command: &[String]) -> Option<String> {
         }
         if !word.starts_with('-') || word.len() < 2 {
             // The first word that is not an option is the script's name on
-            // disk, which weed cannot read from here.
+            // disk, which weeder cannot read from here.
             return None;
         }
         if word[1..].contains('c') {

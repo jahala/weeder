@@ -1,30 +1,31 @@
-//! The seam holds: one file in weed names `tilth_core`, and everything weed
+//! The seam holds: one file in weeder names `tilth_core`, and everything weeder
 //! decides with is plain data that compiles without a parser behind it.
 //!
 //! The source tree is the subject here, so these cases read it. A rule that
 //! reached for tilth directly, or a core type that carried a tree-sitter node,
-//! would still pass every other test in this repository and quietly cost weed
+//! would still pass every other test in this repository and quietly cost weeder
 //! the ability to swap the dependency.
 
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use weed::core::read::{
+use weeder::core::read::{
     CallerSite, Definition, DefinitionKind, Import, Outline, TestShape, TestUnit, TestUnitKind,
 };
-use weed::seams::reader;
+use weeder::seams::reader;
 
 /// The one module allowed to name the parsing substrate.
 const SEAM: &str = "src/seams/reader.rs";
 
-/// Every Rust source file weed ships, as a path relative to the repository root.
+/// Every Rust source file weeder ships, as a path relative to the repository root.
 fn sources(under: &str) -> Vec<String> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut found = Vec::new();
     let mut stack = vec![root.join(under)];
     while let Some(dir) = stack.pop() {
-        for entry in fs::read_dir(&dir).expect("a source directory weed ships should be readable") {
+        for entry in fs::read_dir(&dir).expect("a source directory weeder ships should be readable")
+        {
             let path = entry.expect("a source entry should be readable").path();
             if path.is_dir() {
                 stack.push(path);
@@ -42,7 +43,7 @@ fn sources(under: &str) -> Vec<String> {
 
 fn contents(relative: &str) -> String {
     let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(relative);
-    fs::read_to_string(&path).expect("a source file weed ships should be readable")
+    fs::read_to_string(&path).expect("a source file weeder ships should be readable")
 }
 
 #[test]

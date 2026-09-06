@@ -25,11 +25,11 @@ pub fn levels(binary: &Path) -> Result<BTreeMap<String, String>, String> {
         .output()
         .map_err(|error| format!("{} rules: {error}", binary.display()))?;
     if !output.status.success() {
-        return Err("weed rules refused to print the catalogue".to_string());
+        return Err("weeder rules refused to print the catalogue".to_string());
     }
     let catalogue: Vec<serde_json::Value> =
         serde_json::from_str(&String::from_utf8_lossy(&output.stdout))
-            .map_err(|error| format!("weed rules wrote json weed could not read: {error}"))?;
+            .map_err(|error| format!("weeder rules wrote json weeder could not read: {error}"))?;
     Ok(catalogue
         .into_iter()
         .filter_map(|rule| {
@@ -164,8 +164,8 @@ fn opening(rows: &[Row], cases: &[&Case]) -> String {
         "{verdict} {} cases were planted one anti-pattern at a time in real commits, and {hits} of \
          them were caught on the site they were planted in.\n\nThe campaign is `cargo xtask \
          mutate`. For each case it checks out a real commit of a corpus repository, plants one \
-         anti-pattern in its tree with a scanner that knows nothing about weed's detectors, and \
-         runs `weed check --base <parent> --strict`. A case counts as caught only where the rule \
+         anti-pattern in its tree with a scanner that knows nothing about weeder's detectors, and \
+         runs `weeder check --base <parent> --strict`. A case counts as caught only where the rule \
          fires on the file the shape was planted in, on the lines it was planted on where it has \
          lines. A site the unmutated commit already fires that rule on is passed over, so no hit \
          is inherited from the commit itself.",
@@ -193,7 +193,7 @@ fn corpus_table(outcomes: &[Outcome]) -> String {
     table.push_str(
         "\nThe garden five are the repositories calibration measures precision on, read from \
          `docs/calibration/corpus.toml` at the commits it pins them at. They carry no Go between \
-         them and weed judges Go, so the Go column is measured on two Go projects that \
+         them and weeder judges Go, so the Go column is measured on two Go projects that \
          `docs/calibration/corpus-go.toml` pins the same way, read exactly as the five are.\n\n\
          Every window ends at the pin. A commit pushed to one of these sources later is outside \
          the walk, so it plants no case and moves no number, and two runs over one corpus write \
@@ -241,7 +241,7 @@ fn recall_table(rows: &[Row]) -> String {
          shape into the tree and then reads the tree back with its own scanner, and where the \
          shape is not there afterwards, a version string that pins nothing, a marker written \
          past the end of the case it was meant for, the case is thrown away rather than \
-         counted. It is neither a hit nor a miss: weed was never shown the anti-pattern, so \
+         counted. It is neither a hit nor a miss: weeder was never shown the anti-pattern, so \
          neither number may be charged with it.\n",
     );
     table
@@ -255,7 +255,7 @@ fn misses(cases: &[&Case]) -> String {
     let mut written = String::from(
         "Each of these was planted and not reported. The before and after of every one is kept \
          under the campaign's cache directory, as `cases/<rule>/<language>/<repository>-<commit>`, \
-         so a number nobody believes can be replayed by hand. `WEED_RECALL_CACHE` says where that \
+         so a number nobody believes can be replayed by hand. `WEEDER_RECALL_CACHE` says where that \
          directory is; it sits under the temporary directory otherwise.\n\n",
     );
     for case in missed {
@@ -356,7 +356,7 @@ fn splice(existing: &str, section: &str) -> String {
 /// has been made.
 fn preamble() -> String {
     String::from(
-        "# Calibration, 2026-09\n\nweed is measured twice on the same code before it is allowed \
+        "# Calibration, 2026-09\n\nweeder is measured twice on the same code before it is allowed \
          to block anyone: precision, how often it stops a commit that was fine, and recall, how \
          often it catches an anti-pattern that is really there. A gate that fires on nothing has \
          perfect precision, which is why neither number means anything without the other.\n\n\
@@ -505,7 +505,7 @@ mod tests {
     }
 
     /// The one thing the recall number may not do is round a miss away. A case
-    /// weed did not catch is named where anyone can go and replay it, and a run
+    /// weeder did not catch is named where anyone can go and replay it, and a run
     /// that missed something never reads like one that missed nothing.
     #[test]
     fn every_miss_is_named_by_repository_commit_and_site() {
@@ -522,7 +522,7 @@ mod tests {
         );
         assert!(
             !written.contains("T1"),
-            "a case weed caught is not a miss: {written}"
+            "a case weeder caught is not a miss: {written}"
         );
         assert!(
             !written.contains("No case was missed"),

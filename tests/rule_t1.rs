@@ -3,12 +3,12 @@
 //! Two shapes, in four languages. A test file removed takes every case it held;
 //! a test file that stayed and declares fewer cases lost the difference. The
 //! neighbour does the two honest things that look the same from a distance, a
-//! case renamed where it stands, and a case added, and weed says nothing.
+//! case renamed where it stands, and a case added, and weeder says nothing.
 //!
 //! A third pair reads the move a growing suite makes: the cases stop being
 //! written out one at a time and come from a table instead, a `for` around an
 //! `it`, a `t.Run` in a range, a `parametrize` list, a macro invoked once per
-//! line. Nothing is covered less afterwards, so weed counts the entries and
+//! line. Nothing is covered less afterwards, so weeder counts the entries and
 //! says nothing; a table that leaves a case behind is still a case gone.
 //!
 //! A fourth pair reads the move a suite makes between files. Splitting one file
@@ -60,7 +60,7 @@ const LANGUAGES: [Language; 4] = [
 fn t1_fires_at_block_level_on_a_deleted_test_file_and_a_thinned_one() {
     for language in LANGUAGES {
         let repo = fixture("T1", language.name, "fire");
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         let name = language.name;
 
         assert_eq!(run.code, 2, "{name}: a deleted test blocks\n{}", run.stderr);
@@ -137,7 +137,7 @@ fn t1_stays_silent_when_a_case_is_renamed_in_place_or_a_new_one_is_added() {
             "{name}: the neighbour renames one case and adds another, so the count rises"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.findings(),
             Vec::new(),
@@ -235,7 +235,7 @@ fn t1_stays_silent_when_the_cases_move_into_a_table() {
             "{name}: the neighbour has to declare fewer cases than it runs, or a reader counting declarations sees no drop to be wrong about"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         let reported: Vec<common::Finding> = run
             .findings()
             .into_iter()
@@ -275,7 +275,7 @@ fn t1_fires_when_a_table_leaves_a_case_behind() {
             "{name}: the table has to hold fewer entries than the file declared cases"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         let reported: Vec<common::Finding> = run
             .findings()
             .into_iter()
@@ -444,7 +444,7 @@ fn t1_stays_silent_when_every_case_moved_into_another_file_in_the_diff() {
             "{name}: the file the cases left must be in the diff, or the silence proves nothing"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.findings(),
             Vec::new(),
@@ -479,7 +479,7 @@ fn t1_counts_the_cases_that_left_the_diff_and_names_where_the_others_went() {
         );
 
         let repo = fixture("T1", name, "moved-partly");
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         let reported: Vec<common::Finding> = run
             .findings()
             .into_iter()

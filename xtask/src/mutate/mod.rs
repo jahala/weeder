@@ -1,6 +1,6 @@
-//! The recall campaign: what weed catches when the anti-pattern is really there.
+//! The recall campaign: what weeder catches when the anti-pattern is really there.
 //!
-//! Calibration asks how often weed blocks a good commit. This asks the mirror
+//! Calibration asks how often weeder blocks a good commit. This asks the mirror
 //! question, and it has to be asked on the same code, or the answer is about
 //! fixtures rather than about work. So the campaign walks the commits
 //! calibration walks, plants exactly one anti-pattern in each case, runs the
@@ -8,7 +8,7 @@
 //! site and nowhere else.
 //!
 //! Three things keep the number honest. The injector finds its sites with its
-//! own scanner, never with weed's reader. A site the unmutated commit already
+//! own scanner, never with weeder's reader. A site the unmutated commit already
 //! fires that rule on is not used, so a hit is never something the commit
 //! brought with it. And every miss is written down by repository, commit and
 //! site, with its before and after kept on disk, so a number nobody believes can
@@ -28,7 +28,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
 use clap::Args;
-use weed::faces::{check, Format};
+use weeder::faces::{check, Format};
 
 use corpus::Working;
 use inject::{Mutation, NoSite};
@@ -68,12 +68,12 @@ pub struct Request {
     /// numbers than prose.
     #[arg(long)]
     pub json: Option<PathBuf>,
-    /// The weed to run. The release binary of this workspace by default.
+    /// The weeder to run. The release binary of this workspace by default.
     #[arg(long)]
     pub binary: Option<PathBuf>,
 }
 
-/// One planted anti-pattern and what weed did about it.
+/// One planted anti-pattern and what weeder did about it.
 #[derive(Debug, Clone)]
 pub struct Case {
     pub rule: String,
@@ -114,7 +114,7 @@ pub struct Outcome {
     /// there, where a hit would prove nothing.
     pub passed_over: BTreeMap<(String, Language), usize>,
     /// Cases written into the tree where the shape the rule is about was not
-    /// there afterwards. They are neither hits nor misses: weed was never shown
+    /// there afterwards. They are neither hits nor misses: weeder was never shown
     /// the anti-pattern, so it cannot be held to it.
     pub unplantable: BTreeMap<(String, Language), usize>,
     /// Files that are no site at all, by the reason, counted over every commit
@@ -124,7 +124,7 @@ pub struct Outcome {
 
 pub fn run(request: &Request) -> Result<(), String> {
     let root = workspace_root();
-    let binary = weed_binary(request, &root)?;
+    let binary = weeder_binary(request, &root)?;
     let levels = report::levels(&binary)?;
     let cases_dir = request
         .cases_dir
@@ -224,7 +224,7 @@ pub fn replay_case_in(
     })?;
     let _before = apply(&root, &planted, &tree)?;
     let config_dir = tempfile::tempdir().map_err(|error| error.to_string())?;
-    let config = config_dir.path().join("weed.toml");
+    let config = config_dir.path().join("weeder.toml");
     prepare_config(&planted, &config)?;
     let answer = check::run(&check::Request {
         cwd: root.clone(),
@@ -447,7 +447,7 @@ fn walk(
     .skip(slice)
     .step_by(corpus::SLICES)
     .collect();
-    let config = corpus::cache_root().join(format!("{}-{slice}.weed.toml", working.name));
+    let config = corpus::cache_root().join(format!("{}-{slice}.weeder.toml", working.name));
 
     for entry in history {
         if wanted.values().all(|owed| *owed == 0) {
@@ -513,7 +513,7 @@ fn walk(
 
                 let before = apply(&root, &planted, &tree)?;
                 // The tree is read back before the binary is asked anything: a
-                // shape that is not there is a case about nothing, and weed is
+                // shape that is not there is a case about nothing, and weeder is
                 // held to neither a hit nor a miss on it.
                 if !shape::present(rule, *lang, &planted, &tree, &before) {
                     restore(&root, &planted, &tree)?;
@@ -556,7 +556,7 @@ fn walk(
     Ok(outcome)
 }
 
-/// Whether weed reported this rule on the site the injector planted it in.
+/// Whether weeder reported this rule on the site the injector planted it in.
 fn caught(found: &[judge::Finding], planted: &Mutation, rule: &str) -> bool {
     found.iter().any(|finding| {
         finding.rule == rule
@@ -694,7 +694,7 @@ fn workspace_root() -> PathBuf {
 
 /// The binary the campaign judges with: the one asked for, or the release build
 /// of this workspace, built if it is not there.
-fn weed_binary(request: &Request, root: &Path) -> Result<PathBuf, String> {
+fn weeder_binary(request: &Request, root: &Path) -> Result<PathBuf, String> {
     if let Some(named) = &request.binary {
         return named
             .exists()
@@ -703,11 +703,11 @@ fn weed_binary(request: &Request, root: &Path) -> Result<PathBuf, String> {
     }
     // Always built, never merely found: a campaign that judged with yesterday's
     // binary would report yesterday's recall.
-    let built = root.join("target/release/weed");
+    let built = root.join("target/release/weeder");
     let status =
         std::process::Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string()))
             .current_dir(root)
-            .args(["build", "--release", "--bin", "weed"])
+            .args(["build", "--release", "--bin", "weeder"])
             .status()
             .map_err(|error| format!("cargo build: {error}"))?;
     if !status.success() {
@@ -716,5 +716,5 @@ fn weed_binary(request: &Request, root: &Path) -> Result<PathBuf, String> {
     built
         .exists()
         .then_some(built)
-        .ok_or_else(|| "target/release/weed is not there to run".to_string())
+        .ok_or_else(|| "target/release/weeder is not there to run".to_string())
 }

@@ -95,7 +95,7 @@ pub fn remove_file(path: &Path) -> Result<(), FsError> {
 }
 
 /// A directory taken away, and only when nothing is left in it. A directory that
-/// still holds something is left alone: weed removes what it wrote, not what it
+/// still holds something is left alone: weeder removes what it wrote, not what it
 /// found.
 pub fn remove_dir_if_empty(path: &Path) -> Result<(), FsError> {
     match std::fs::remove_dir(path) {

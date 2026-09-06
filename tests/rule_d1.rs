@@ -26,7 +26,7 @@ const MANIFESTS: [(&str, &[&str]); 4] = [
 fn d1_warns_on_every_manifest_and_lockfile_in_every_language() {
     for (lang, manifests) in MANIFESTS {
         let repo = fixture("D1", lang, "fire");
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
 
         assert_eq!(
             run.code, 0,
@@ -55,7 +55,7 @@ fn d1_stays_silent_on_a_readme_that_names_a_package() {
             "{lang}: the neighbour must be in the diff, or the silence proves nothing"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.findings(),
             Vec::new(),
@@ -68,7 +68,7 @@ fn d1_stays_silent_on_a_readme_that_names_a_package() {
 #[test]
 fn d1_blocks_when_the_scope_the_run_was_given_excludes_the_manifest() {
     let repo = fixture("D1", "scope", "fire");
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
 
     assert_eq!(
         run.code, 2,
@@ -98,7 +98,7 @@ fn d1_blocks_when_the_scope_the_run_was_given_excludes_the_manifest() {
 #[test]
 fn a_manifest_inside_the_scope_is_still_only_a_warning() {
     let repo = fixture("D1", "scope", "fire");
-    let run = repo.weed(&["check", "--scope", "**/*"]);
+    let run = repo.weeder(&["check", "--scope", "**/*"]);
 
     let manifest: Vec<common::Finding> = run
         .findings()

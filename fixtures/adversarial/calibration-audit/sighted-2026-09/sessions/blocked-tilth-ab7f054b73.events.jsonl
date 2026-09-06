@@ -1,2 +1,2 @@
-{"type": "input", "case": "blocked:tilth:ab7f054b73", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
-{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: true-positive\nReasoning: T1 and T2 accurately identify removed coverage and assertions, and the paths-only tilth_read schema was reopened to singular path without replacement tests, leaving real behavior unpinned."}
+{"type": "input", "case": "blocked:tilth:ab7f054b73", "sha256": "c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119"}
+{"type": "answer", "answer": "Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: true-positive\nReasoning: The report says the deleted test and assertions were not replaced, leaving the paths-only tilth_read schema unpinned and allowing singular path behavior again."}

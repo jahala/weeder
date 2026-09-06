@@ -52,13 +52,13 @@ fn judges_every_commit_that_has_a_parent_and_writes_the_verdict_first() {
     let mut lines = report.lines();
     assert_eq!(
         lines.next(),
-        Some("# calibration: weed over real history, 2026-09"),
+        Some("# calibration: weeder over real history, 2026-09"),
         "the file opens with its title"
     );
     lines.next();
     let verdict = lines.next().expect("a verdict sentence");
     assert!(
-        verdict.starts_with("weed does not ship as a gate:"),
+        verdict.starts_with("weeder does not ship as a gate:"),
         "the verdict is the first sentence, and an unread block is not a pass: {verdict}"
     );
 
@@ -115,7 +115,7 @@ fn a_classified_block_takes_the_class_the_ledger_gives_it() {
     assert!(
         bench
             .verdict()
-            .starts_with("weed ships as a gate, pending the independent re-grade:"),
+            .starts_with("weeder ships as a gate, pending the independent re-grade:"),
         "with nothing false left the verdict is ship, and no re-grade has read it back:\n{report}"
     );
     assert!(
@@ -124,7 +124,7 @@ fn a_classified_block_takes_the_class_the_ledger_gives_it() {
     );
     assert!(
         report.contains("No block's claim turned out to be untrue."),
-        "with no false positive there is nothing under `Where weed was wrong`:\n{report}"
+        "with no false positive there is nothing under `Where weeder was wrong`:\n{report}"
     );
 }
 

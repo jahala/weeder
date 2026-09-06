@@ -1,0 +1,32 @@
+# weeder, judged by weeder.
+#
+# Read from the root commit, every file this repository carries is one weeder has
+# never seen, and C1 is right that a guardrail arrived with the rest. There was
+# no gate here to loosen: the root commit holds a single empty file. The
+# allowance says so once, and the finding is reported as a note rather than
+# hidden.
+# weed-allow C1: the root commit carries no earlier weeder.toml for this one to loosen
+#
+# The layers below are this repository's own doctrine, and D2 is what holds
+# them: core computes and reaches nothing, the seams reach the world, the faces
+# put the two together. Every arrow runs downwards, and the ones written here
+# are the only ones there are.
+
+# The adversarial fixtures are written to look dishonest, so weeder reads none of
+# them. Every path this covers still comes back as a note, once for the path, so
+# the exclusion is as visible in the log as an allowance would be.
+[scope]
+specimens = ["fixtures/adversarial"]
+
+[deps]
+layers = { core = ["src/core/**"], seams = ["src/seams/**"], faces = ["src/faces/**"] }
+allow = [
+    { from = "faces", to = "core" },
+    { from = "faces", to = "seams" },
+    { from = "seams", to = "core" },
+]
+
+# `weeder check` on this repository judges its own source, and the command line is
+# the one place in it that prints for a person to read.
+[entrypoints]
+cli = ["src/main.rs"]

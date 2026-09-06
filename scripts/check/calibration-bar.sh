@@ -19,7 +19,7 @@
 # The verdict's wording is held to the re-grade. Whether a block was a false
 # positive is a person's reading, and the person who ran the calibration read
 # them all, so until a second party has re-graded a sample and agreed the first
-# sentence has to say the verdict is pending. An unqualified `weed ships as a
+# sentence has to say the verdict is pending. An unqualified `weeder ships as a
 # gate:` while `docs/calibration-audit-2026-09.md` is missing, or under the bar,
 # is refused here.
 #
@@ -32,13 +32,13 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
 
-report="${WEED_CALIBRATION_REPORT:-docs/calibration-2026-09.md}"
-corpus="${WEED_CALIBRATION_CORPUS:-docs/calibration/corpus.toml}"
+report="${WEEDER_CALIBRATION_REPORT:-docs/calibration-2026-09.md}"
+corpus="${WEEDER_CALIBRATION_CORPUS:-docs/calibration/corpus.toml}"
 # Every audit the repository carries counts, packet, response and transcript
 # files aside: a blind re-grade under the bar keeps the verdict pending however
 # well a sighted one did. The probes name one file to read instead.
-audit="${WEED_CALIBRATION_AUDIT:-$(grep -l '^Blind: yes' docs/calibration-audit*.md 2>/dev/null | grep -v '\.packet\.\|\.response\.\|transcript' | tr '\n' ':' | sed 's/:$//')}"
-result="${WEED_CALIBRATION_METRIC:-docs/calibration/metric.json}"
+audit="${WEEDER_CALIBRATION_AUDIT:-$(grep -l '^Blind: yes' docs/calibration-audit*.md 2>/dev/null | grep -v '\.packet\.\|\.response\.\|transcript' | tr '\n' ':' | sed 's/:$//')}"
+result="${WEEDER_CALIBRATION_METRIC:-docs/calibration/metric.json}"
 
 command -v python3 >/dev/null 2>&1 || {
   echo "python3 is not on PATH, so the report cannot be added up. The check refuses to pass on unchecked arithmetic." >&2
@@ -60,8 +60,8 @@ AGREEMENT_BAR = 90.0
 SAMPLE_FLOOR = 20
 LOAD_BEARING = ("T1", "T2", "T3", "S1")
 CLASSES = ("true positive", "acceptable", "false positive", "unclassified")
-PROVISIONAL = "weed ships as a gate, pending the independent re-grade:"
-CONFIRMED = "weed ships as a gate:"
+PROVISIONAL = "weeder ships as a gate, pending the independent re-grade:"
+CONFIRMED = "weeder ships as a gate:"
 
 
 def rounded(part, whole):
@@ -171,7 +171,7 @@ if pooled["judged"] == 0:
 elif share >= BAR:
     complaints.append(
         f"the pooled block-level false-positive share is {share}% of {pooled['judged']} commits, "
-        f"at or over the {BAR}% bar. weed does not ship as a gate on this measurement."
+        f"at or over the {BAR}% bar. weeder does not ship as a gate on this measurement."
     )
 
 # The kill bar: the four rules it names ran at block level, and no line of the
@@ -243,10 +243,10 @@ verdict = next((line for line in report.splitlines()[1:] if line.strip()), "")
 provisional = verdict.startswith(PROVISIONAL)
 ships = verdict.startswith(CONFIRMED) or provisional
 if ships and complaints:
-    complaints.append("the file claims weed ships as a gate, and the numbers under it do not agree")
+    complaints.append("the file claims weeder ships as a gate, and the numbers under it do not agree")
 if not ships and not complaints:
     complaints.append(
-        "the numbers clear the bar and the file's first sentence does not say weed ships as a gate"
+        "the numbers clear the bar and the file's first sentence does not say weeder ships as a gate"
     )
 if ships and not confirmed and not provisional:
     why = (

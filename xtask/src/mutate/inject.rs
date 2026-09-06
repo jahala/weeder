@@ -1,7 +1,7 @@
 //! One anti-pattern, planted once, in a real commit's tree.
 //!
 //! Every injection here is the shape the rule exists for, written the way the
-//! language writes it and nothing like the way weed detects it: a case taken
+//! language writes it and nothing like the way weeder detects it: a case taken
 //! out of a suite, a skip marker on a case, a body that does nothing, a handler
 //! that catches and says nothing, a credential assigned to a name that says so,
 //! a conflict left in the file, a guardrail edited. The site is found with the
@@ -30,7 +30,7 @@ pub struct Mutation {
     pub writes: Vec<(String, Option<String>)>,
     /// Arguments this case's run needs on top of `check --base <parent>`.
     pub arguments: Vec<String>,
-    /// A `weed.toml` this case's run reads, written outside the repository so
+    /// A `weeder.toml` this case's run reads, written outside the repository so
     /// the config is not itself part of the diff being judged.
     pub config: Option<String>,
 }
@@ -709,7 +709,7 @@ pub(super) fn exported_type(source: &Source) -> Option<String> {
 // The production code
 // ---------------------------------------------------------------------------
 
-/// The marker a stub is left under, assembled rather than written: weed refuses
+/// The marker a stub is left under, assembled rather than written: weeder refuses
 /// a work marker in production code, and the injector is production code.
 pub(super) fn work_marker() -> String {
     ['T', 'O', 'D', 'O'].iter().collect()
@@ -1277,14 +1277,14 @@ fn edit_a_guardrail(_lang: Language, tree: &Tree, seed: u64) -> Option<Mutation>
 }
 
 /// The guardrail files whose law lives in one section rather than in the whole
-/// file, as weed reads them.
+/// file, as weeder reads them.
 fn is_instructions(path: &str) -> bool {
     matches!(path, "AGENTS.md" | "CLAUDE.md")
 }
 
 pub(super) fn is_guardrail(path: &str) -> bool {
     is_instructions(path)
-        || path == "weed.toml"
+        || path == "weeder.toml"
         || path == ".gemini/settings.json"
         || path.starts_with(".codex/")
         || path.starts_with(".githooks/")

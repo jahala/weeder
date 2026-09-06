@@ -1,7 +1,7 @@
-//! `[scope] specimens`, the paths a repository states weed does not judge.
+//! `[scope] specimens`, the paths a repository states weeder does not judge.
 //!
-//! An adversarial fixture is written to look dishonest, and weed reading it as
-//! though it were production code is weed being right about the wrong file. A
+//! An adversarial fixture is written to look dishonest, and weeder reading it as
+//! though it were production code is weeder being right about the wrong file. A
 //! repository says which paths those are, and what it may say is bounded on
 //! purpose: directories under [`ROOT`], never a rule, never a pattern that can
 //! name a path somewhere else. An exclusion that could reach anywhere is a rule
@@ -41,7 +41,7 @@ pub fn refusal(entry: &str) -> Option<String> {
             )
         } else {
             format!(
-                "`{entry}` is outside {ROOT}/, the one root a specimen exclusion may name. move the specimens under it, or let weed judge them"
+                "`{entry}` is outside {ROOT}/, the one root a specimen exclusion may name. move the specimens under it, or let weeder judge them"
             )
         });
     }
@@ -83,7 +83,7 @@ pub fn skipped(specimens: &[String], path: &str) -> bool {
     })
 }
 
-/// What weed says about a path it did not judge.
+/// What weeder says about a path it did not judge.
 #[must_use]
 pub fn notice(path: &str) -> Finding {
     Finding {
@@ -92,9 +92,9 @@ pub fn notice(path: &str) -> Finding {
         path: path.to_string(),
         region: None,
         message: Message {
-            what: format!("weed did not judge {path}."),
+            what: format!("weeder did not judge {path}."),
             why: "[scope] specimens names it as an adversarial fixture, which is written to look dishonest, so no rule read it.".to_string(),
-            next: "read the exclusion as you would an allowance; take the entry out of [scope] specimens to have weed judge the path again.".to_string(),
+            next: "read the exclusion as you would an allowance; take the entry out of [scope] specimens to have weeder judge the path again.".to_string(),
         },
         fix: None,
         suppressed: None,

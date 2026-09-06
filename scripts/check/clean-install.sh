@@ -8,7 +8,7 @@
 # .context worktree, no cargo config from this repo. If the build there needs a
 # file that only exists on this machine, it fails here.
 #
-# What this cannot prove is the network half. weed pins tilth-core by git rev,
+# What this cannot prove is the network half. weeder pins tilth-core by git rev,
 # and until that rev is on the remote the build resolves it from the local cargo
 # cache, the same cache a clean machine would fill on its first fetch. That is
 # the gap between this check and F3, and it closes when the branch is pushed.
@@ -51,10 +51,10 @@ if ! (cd "$clone" && cargo build --release --locked); then
   exit 1
 fi
 
-binary="$clone/target/release/weed"
+binary="$clone/target/release/weeder"
 [ -x "$binary" ] || { echo "the build produced no $binary" >&2; exit 1; }
 
-printed="$("$binary" --version)" || { echo "weed --version left with a code" >&2; exit 1; }
+printed="$("$binary" --version)" || { echo "weeder --version left with a code" >&2; exit 1; }
 case "$printed" in
   *"$version"*) ;;
   *)

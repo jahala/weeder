@@ -71,7 +71,7 @@ fn t2_fires_at_block_level_when_a_changed_test_file_makes_fewer_claims() {
             "{name}: the fixture has to drop assertions and keep some, not empty the file"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.code, 2,
             "{name}: dropped assertions block\n{}",
@@ -122,7 +122,7 @@ fn t2_stays_silent_when_the_same_claims_are_made_from_another_case() {
             "{name}: the neighbour moves an assertion and drops none"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.findings(),
             Vec::new(),
@@ -141,7 +141,7 @@ fn t2_is_allowed_by_a_trailer_that_carries_a_reason() {
             "Fold the padding cases together\n\nWeed-allow: T2 {REASON}\n"
         ));
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         let findings = run.findings();
         assert!(
             findings.iter().any(|finding| finding.rule == "T2"),
@@ -167,7 +167,7 @@ fn t2_refuses_a_trailer_with_no_reason() {
     let repo = fixture("T2", language.name, "fire");
     repo.pending_message("Fold the padding cases together\n\nWeed-allow: T2\n");
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert!(
         run.findings()
             .iter()
@@ -407,7 +407,7 @@ fn t2_stays_silent_when_every_dropped_claim_moved_into_another_file_in_the_diff(
             "{name}: the file the claims left must be in the diff, or the silence proves nothing"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.findings(),
             Vec::new(),
@@ -434,7 +434,7 @@ fn t2_counts_the_claims_that_left_the_diff_and_names_where_the_others_went() {
         );
 
         let repo = fixture("T2", name, "moved-partly");
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         let reported: Vec<common::Finding> = run
             .findings()
             .into_iter()

@@ -1,7 +1,7 @@
-//! A file read the way the injector reads it, and nothing weed reads it with.
+//! A file read the way the injector reads it, and nothing weeder reads it with.
 //!
 //! The whole measurement turns on this file being independent. If the injector
-//! asked weed where the test cases are, a rule that cannot see a case would
+//! asked weeder where the test cases are, a rule that cannot see a case would
 //! never be given one to miss, and recall would measure agreement rather than
 //! detection. So the shapes here are the ones the languages' own runners
 //! document: a `.test.ts` file, a `def test_` function, a `#[test]` attribute,

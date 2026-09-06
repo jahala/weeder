@@ -1,4 +1,4 @@
-//! The one way every weed test builds its world.
+//! The one way every weeder test builds its world.
 //!
 //! A test asks for a temp git repository, writes files into it, and runs the
 //! built binary there. Nothing is mocked: the repository is real, the diff comes
@@ -7,14 +7,14 @@
 //! `fixture(rule, lang, case)` builds the repository from
 //! `fixtures/adversarial/<RULE>/<lang>/<case>/`: `before/` is committed as HEAD,
 //! `after/` replaces the tree, and files that `after/` does not carry are
-//! deleted. `after/.weed-commit` is the message of the commit being prepared ,
-//! the harness hands it to weed with `--message-file` and never copies it into
+//! deleted. `after/.weeder-commit` is the message of the commit being prepared ,
+//! the harness hands it to weeder with `--message-file` and never copies it into
 //! the tree, because a pre-commit gate has no commit to read a trailer from.
 //! A rule that judges the tree rather than a diff has one state to read and not
 //! two, so its fixture carries `before/` alone and the tree is left as `before/`
 //! committed it.
 //!
-//! weed does not carry what it refuses, so no file in this repository opens a
+//! weeder does not carry what it refuses, so no file in this repository opens a
 //! line with a conflict marker or holds a string shaped like a credential. Rust
 //! tests build their markers with [`marker`] and its three shorthands; fixture
 //! files spell theirs with the placeholders in `PLACEHOLDERS`, and spell a
@@ -35,23 +35,23 @@ use tempfile::TempDir;
 
 /// Fixed so two runs of the same fixture produce the same commit.
 const AUTHOR_DATE: &str = "2026-09-05T09:00:00+00:00";
-const AUTHOR_NAME: &str = "weed fixtures";
-const AUTHOR_EMAIL: &str = "fixtures@weed.invalid";
+const AUTHOR_NAME: &str = "weeder fixtures";
+const AUTHOR_EMAIL: &str = "fixtures@weeder.invalid";
 /// The file `after/` uses to carry the pending commit message.
-const COMMIT_MESSAGE_FILE: &str = ".weed-commit";
+const COMMIT_MESSAGE_FILE: &str = ".weeder-commit";
 /// The file `before/` uses to carry the date it was committed on, in any spelling
 /// git reads, and never copied into the tree. A rule that asks git when a line
 /// was written needs a history rather than a state, and this is how a fixture
 /// states one without a test having to build the repository by hand.
-const COMMIT_DATE_FILE: &str = ".weed-date";
+const COMMIT_DATE_FILE: &str = ".weeder-date";
 /// The name a fixture gives an ignore file. Written as `.gitignore`, the file
 /// would govern the fixture's own directory and hide from git the very sources
 /// the fixture carries next to it; under this name it is inert until copied.
-pub const IGNORE_FILE_IN_FIXTURE: &str = "weed.gitignore";
+pub const IGNORE_FILE_IN_FIXTURE: &str = "weeder.gitignore";
 /// What that file is called once it is in the repository under test.
 pub const IGNORE_FILE: &str = ".gitignore";
-/// Where the harness keeps that message, outside the tree, until weed is run.
-const PENDING_MESSAGE_FILE: &str = "weed-pending-message";
+/// Where the harness keeps that message, outside the tree, until weeder is run.
+const PENDING_MESSAGE_FILE: &str = "weeder-pending-message";
 
 /// How many times a conflict marker repeats its character. git writes seven.
 const MARKER_WIDTH: usize = 7;
@@ -59,55 +59,59 @@ const MARKER_WIDTH: usize = 7;
 /// What a fixture file writes where a conflict marker belongs, and the character
 /// the harness expands it into.
 const PLACEHOLDERS: &[(&str, char)] = &[
-    ("{{weed:ours}}", '<'),
-    ("{{weed:base}}", '|'),
-    ("{{weed:separator}}", '='),
-    ("{{weed:theirs}}", '>'),
+    ("{{weeder:ours}}", '<'),
+    ("{{weeder:base}}", '|'),
+    ("{{weeder:separator}}", '='),
+    ("{{weeder:theirs}}", '>'),
 ];
 
 /// What a fixture writes where a credential belongs: the placeholder, the stamp
 /// an issuer puts on the front, and the opaque tail behind it. Neither half is a
 /// credential on its own, so this repository carries none.
 const CREDENTIALS: &[(&str, &str, &str)] = &[
-    ("{{weed:cloud-id}}", "AKIA", "3XAMPL3QRSTUVWXY"),
+    ("{{weeder:cloud-id}}", "AKIA", "3XAMPL3QRSTUVWXY"),
     (
-        "{{weed:forge-token}}",
+        "{{weeder:forge-token}}",
         "ghp_",
         "0123456789abcdefghijklmnopqrstuvwx",
     ),
     (
-        "{{weed:forge-pat}}",
+        "{{weeder:forge-pat}}",
         "github_pat_",
         "11ABCDE0aBcDeFgHiJkLmNoPqRsTuVwXyZ",
     ),
     (
-        "{{weed:model-key}}",
+        "{{weeder:model-key}}",
         "sk-",
         "example0api0key0000000abcdefghij",
     ),
     (
-        "{{weed:chat-token}}",
+        "{{weeder:chat-token}}",
         "xoxb-",
         "1111111111-2222222222-abcdefghijklmnopqrst",
     ),
     (
-        "{{weed:maps-key}}",
+        "{{weeder:maps-key}}",
         "AIza",
         "SyA0example0key0value00000000000000",
     ),
-    ("{{weed:pipeline-token}}", "glpat-", "0123456789abcdefghij"),
     (
-        "{{weed:registry-token}}",
+        "{{weeder:pipeline-token}}",
+        "glpat-",
+        "0123456789abcdefghij",
+    ),
+    (
+        "{{weeder:registry-token}}",
         "npm_",
         "0123456789abcdefghijklmnopqrstuvwxyzAB",
     ),
     (
-        "{{weed:signed-token}}",
+        "{{weeder:signed-token}}",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
         ".eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVPmB92K27uhbUJU1p1r-wW1gFWFOEjXk",
     ),
     (
-        "{{weed:disordered}}",
+        "{{weeder:disordered}}",
         "",
         "9f3Kx2Qv7LmT4pR8sN1bY6cZ0dHwJ5eA",
     ),
@@ -116,13 +120,13 @@ const CREDENTIALS: &[(&str, &str, &str)] = &[
 /// The credentials vendors print in their own documentation, so a reader can
 /// follow the page without one of their own: the name a fixture calls each by,
 /// the stamp and the tail. These are quotations rather than keys, no issuer will
-/// honour one, and weed says so about them, which is what the fixtures here
+/// honour one, and weeder says so about them, which is what the fixtures here
 /// prove. Written whole they would be the strings this repository refuses to
 /// carry, so they are written apart and joined on the way into the temp
 /// repository, the way every other credential is.
 ///
-/// A fixture writes `{{weed:example-<name>}}` for the example as its vendor
-/// prints it, and `{{weed:altered-<name>}}` for the same string with one
+/// A fixture writes `{{weeder:example-<name>}}` for the example as its vendor
+/// prints it, and `{{weeder:altered-<name>}}` for the same string with one
 /// character changed, which is a credential again and nothing anyone published.
 const PUBLISHED: &[(&str, &str, &str)] = &[
     ("cloud-id", "AKIA", "IOSFODNN7EXAMPLE"),
@@ -184,20 +188,20 @@ fn stepped(character: char) -> char {
 }
 
 /// The placeholder a fixture writes where a private key block belongs.
-const KEY_BLOCK: &str = "{{weed:key-block}}";
+const KEY_BLOCK: &str = "{{weeder:key-block}}";
 
 /// The line a key file opens with, built from its parts. Written whole it would
-/// be the very thing weed refuses, so it is written in pieces and joined here.
+/// be the very thing weeder refuses, so it is written in pieces and joined here.
 fn key_block() -> String {
     let rule = "-".repeat(5);
     format!("{rule}BEGIN RSA PRIVATE {word}{rule}", word = "KEY")
 }
 
 /// The placeholder a fixture writes where bytes that are not text belong.
-const BINARY_RUN: &str = "{{weed:binary}}";
+const BINARY_RUN: &str = "{{weeder:binary}}";
 
 /// A run of bytes no diff can show. git's test for a file that is not text is a
-/// NUL byte, and weed asks the same question of the blob it reads, so the run
+/// NUL byte, and weeder asks the same question of the blob it reads, so the run
 /// opens with one and carries the rest of the control bytes behind it. A fixture
 /// that carried these bytes as bytes would be this repository carrying the very
 /// blob G2 refuses, which is why they are written here and spelled with the
@@ -332,7 +336,7 @@ impl Repo {
     }
 
     /// The message of the commit being prepared. It lives in the git dir, outside
-    /// the tree, and every `weed check` this repo runs passes it with `--message-file`.
+    /// the tree, and every `weeder check` this repo runs passes it with `--message-file`.
     pub fn pending_message(&self, message: &str) {
         std::fs::write(self.pending_message_path(), message)
             .expect("the pending message should be writable");
@@ -378,11 +382,11 @@ impl Repo {
     }
 
     /// The built binary, run in this repository with stdout on a pipe.
-    pub fn weed(&self, arguments: &[&str]) -> Run {
+    pub fn weeder(&self, arguments: &[&str]) -> Run {
         let output = self
-            .weed_command(arguments)
+            .weeder_command(arguments)
             .output()
-            .expect("the weed binary should run");
+            .expect("the weeder binary should run");
         Run {
             code: code(output.status),
             stdout: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -393,12 +397,12 @@ impl Repo {
     /// The built binary, run in this repository with something added to its
     /// environment. A repository whose docs cite a command needs that command
     /// on PATH, and the binary under test is the command the fixtures cite.
-    pub fn weed_with(&self, arguments: &[&str], environment: &[(&str, &str)]) -> Run {
-        let mut command = self.weed_command(arguments);
+    pub fn weeder_with(&self, arguments: &[&str], environment: &[(&str, &str)]) -> Run {
+        let mut command = self.weeder_command(arguments);
         for (name, value) in environment {
             command.env(name, value);
         }
-        let output = command.output().expect("the weed binary should run");
+        let output = command.output().expect("the weeder binary should run");
         Run {
             code: code(output.status),
             stdout: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -407,29 +411,29 @@ impl Repo {
     }
 
     /// The built binary, run with an event written on its stdin. A harness hook
-    /// is handed its event that way, so a test that asks what weed does about
+    /// is handed its event that way, so a test that asks what weeder does about
     /// one has to hand it over the same channel.
-    pub fn weed_reading(&self, arguments: &[&str], stdin: &str) -> Run {
-        read_from(self.weed_command(arguments), stdin)
+    pub fn weeder_reading(&self, arguments: &[&str], stdin: &str) -> Run {
+        read_from(self.weeder_command(arguments), stdin)
     }
 
     /// The built binary, run with a real pseudo-terminal on stdout, so it
     /// answers the question a terminal asks rather than being told the answer.
-    pub fn weed_on_a_terminal(&self, arguments: &[&str]) -> Run {
+    pub fn weeder_on_a_terminal(&self, arguments: &[&str]) -> Run {
         let terminal = Terminal::open();
         let mut child = self
-            .weed_command(arguments)
+            .weeder_command(arguments)
             .stdout(terminal.device())
             .stderr(Stdio::piped())
             .spawn()
-            .expect("the weed binary should run");
+            .expect("the weeder binary should run");
         let stdout = terminal.read_to_end();
         let mut stderr = String::new();
         if let Some(mut pipe) = child.stderr.take() {
             pipe.read_to_string(&mut stderr)
                 .expect("stderr should read");
         }
-        let status = child.wait().expect("the weed binary should finish");
+        let status = child.wait().expect("the weeder binary should finish");
         Run {
             code: code(status),
             stdout,
@@ -439,8 +443,8 @@ impl Repo {
 
     /// The binary in this repository; a pending message, where one was written,
     /// rides along as `--message-file` on every `check`.
-    pub fn weed_command(&self, arguments: &[&str]) -> Command {
-        let mut command = weed_command_in(self.root(), arguments);
+    pub fn weeder_command(&self, arguments: &[&str]) -> Command {
+        let mut command = weeder_command_in(self.root(), arguments);
         let pending = self.pending_message_path();
         if arguments.first() == Some(&"check") && pending.is_file() {
             command.arg("--message-file").arg(pending);
@@ -450,10 +454,10 @@ impl Repo {
 }
 
 /// The built binary, run in a directory the caller made, a repository or not.
-pub fn weed_in(directory: &Path, arguments: &[&str]) -> Run {
-    let output = weed_command_in(directory, arguments)
+pub fn weeder_in(directory: &Path, arguments: &[&str]) -> Run {
+    let output = weeder_command_in(directory, arguments)
         .output()
-        .expect("the weed binary should run");
+        .expect("the weeder binary should run");
     Run {
         code: code(output.status),
         stdout: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -464,8 +468,8 @@ pub fn weed_in(directory: &Path, arguments: &[&str]) -> Run {
 /// The built binary, run in a directory the caller made, with an event on its
 /// stdin. A hook is handed its event that way even where no `Repo` built the
 /// directory, a turn can end anywhere, including outside a repository.
-pub fn weed_reading_in(directory: &Path, arguments: &[&str], stdin: &str) -> Run {
-    read_from(weed_command_in(directory, arguments), stdin)
+pub fn weeder_reading_in(directory: &Path, arguments: &[&str], stdin: &str) -> Run {
+    read_from(weeder_command_in(directory, arguments), stdin)
 }
 
 /// git, in a directory the caller made, with the caller's own configuration
@@ -494,7 +498,7 @@ fn read_from(mut command: Command, stdin: &str) -> Run {
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .expect("the weed binary should run");
+        .expect("the weeder binary should run");
     child
         .stdin
         .take()
@@ -503,7 +507,7 @@ fn read_from(mut command: Command, stdin: &str) -> Run {
         .expect("the event should be writable");
     let output = child
         .wait_with_output()
-        .expect("the weed binary should finish");
+        .expect("the weeder binary should finish");
     Run {
         code: code(output.status),
         stdout: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -511,12 +515,12 @@ fn read_from(mut command: Command, stdin: &str) -> Run {
     }
 }
 
-pub fn weed_command_in(directory: &Path, arguments: &[&str]) -> Command {
+pub fn weeder_command_in(directory: &Path, arguments: &[&str]) -> Command {
     command_in(&binary(), directory, arguments)
 }
 
-/// A weed binary a test put somewhere of its own, a copy, so the test can take
-/// it away again and see what weed says about a hook naming a binary that is gone.
+/// A weeder binary a test put somewhere of its own, a copy, so the test can take
+/// it away again and see what weeder says about a hook naming a binary that is gone.
 pub fn command_in(binary: &Path, directory: &Path, arguments: &[&str]) -> Command {
     let mut command = isolated(Command::new(binary));
     command
@@ -532,7 +536,7 @@ pub struct Run {
 }
 
 impl Run {
-    /// The SARIF log weed wrote.
+    /// The SARIF log weeder wrote.
     pub fn log(&self) -> serde_json::Value {
         serde_json::from_str(&self.stdout).unwrap_or_else(|error| {
             panic!(
@@ -542,7 +546,7 @@ impl Run {
         })
     }
 
-    /// Every result in the log, in the order weed reported them.
+    /// Every result in the log, in the order weeder reported them.
     pub fn findings(&self) -> Vec<Finding> {
         let log = self.log();
         let results = log["runs"][0]["results"]
@@ -640,7 +644,7 @@ pub fn fixture(rule: &str, lang: &str, case: &str) -> Repo {
 /// implementation. Each stage is copied over the tree the stage before it
 /// committed, because a phase adds to a repository rather than replacing it.
 ///
-/// This is the history `weed bite` judges: three commits, the middle one
+/// This is the history `weeder bite` judges: three commits, the middle one
 /// carrying the tests alone, which is what a conductor that commits its test
 /// phase separately leaves behind.
 pub fn phased_fixture(rule: &str, lang: &str, case: &str) -> Repo {
@@ -689,12 +693,12 @@ pub fn fixture_file(rule: &str, lang: &str, case: &str, path: &str) -> String {
 }
 
 pub fn binary() -> PathBuf {
-    assert_cmd::cargo::cargo_bin("weed")
+    assert_cmd::cargo::cargo_bin("weeder")
 }
 
 /// A PATH with the built binary's own directory in front of it, so a fixture
-/// whose docs cite `weed` is citing the binary under test.
-pub fn path_with_weed() -> String {
+/// whose docs cite `weeder` is citing the binary under test.
+pub fn path_with_weeder() -> String {
     let directory = binary()
         .parent()
         .expect("the built binary should sit in a directory")
@@ -707,7 +711,7 @@ pub fn path_with_weed() -> String {
 }
 
 /// A script a test owns, written into a directory it owns and made runnable.
-/// A PATH built out of these is how a test sees which programs weed reached
+/// A PATH built out of these is how a test sees which programs weeder reached
 /// for: the program it would have run is right there, and it answers.
 pub fn install_script(directory: &Path, name: &str, body: &str) -> PathBuf {
     use std::os::unix::fs::PermissionsExt;
@@ -719,7 +723,7 @@ pub fn install_script(directory: &Path, name: &str, body: &str) -> PathBuf {
     path
 }
 
-/// git, where a test has taken everything else off PATH. weed asks git what the
+/// git, where a test has taken everything else off PATH. weeder asks git what the
 /// tree holds before any rule runs, so a PATH without it is a scan that never
 /// starts and proves nothing.
 pub fn link_git(directory: &Path) {
@@ -809,11 +813,11 @@ fn expand(contents: &str) -> String {
         });
     let text = PUBLISHED.iter().fold(text, |text, (name, _, _)| {
         text.replace(
-            &format!("{{{{weed:example-{name}}}}}"),
+            &format!("{{{{weeder:example-{name}}}}}"),
             &published_example(name),
         )
         .replace(
-            &format!("{{{{weed:altered-{name}}}}}"),
+            &format!("{{{{weeder:altered-{name}}}}}"),
             &altered_example(name),
         )
     });
@@ -822,7 +826,7 @@ fn expand(contents: &str) -> String {
 }
 
 /// The caller's git configuration, their hooks and their template directory stay
-/// out of a fixture, so a test proves weed rather than the machine it runs on.
+/// out of a fixture, so a test proves weeder rather than the machine it runs on.
 fn isolated(mut command: Command) -> Command {
     command
         .env("GIT_CONFIG_GLOBAL", "/dev/null")
@@ -838,7 +842,7 @@ fn isolated(mut command: Command) -> Command {
 }
 
 fn code(status: std::process::ExitStatus) -> i32 {
-    status.code().expect("weed should leave with a code")
+    status.code().expect("weeder should leave with a code")
 }
 
 fn string(value: &serde_json::Value) -> String {

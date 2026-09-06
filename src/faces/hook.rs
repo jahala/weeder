@@ -1,16 +1,16 @@
-//! `weed hook`, weed standing where the harness still has a choice.
+//! `weeder hook`, weeder standing where the harness still has a choice.
 //!
-//! A harness writes a hook event as JSON on this face's stdin and reads weed's
+//! A harness writes a hook event as JSON on this face's stdin and reads weeder's
 //! answer back off its stdout. Two events matter. At a tool call that runs
-//! `git commit`, weed judges the index and denies the call with the findings as
+//! `git commit`, weeder judges the index and denies the call with the findings as
 //! the reason; a commit that tells git to walk past its own hooks is denied
 //! without judging anything, because nothing was offered for judgement. At the
-//! end of a turn, weed judges the working tree and blocks the stop, so an agent
-//! cannot declare itself done over a tree weed refuses. Every other event is
+//! end of a turn, weeder judges the working tree and blocks the stop, so an agent
+//! cannot declare itself done over a tree weeder refuses. Every other event is
 //! passed through in silence.
 //!
 //! Judgements run `--strict`, so an allowance an agent wrote for itself is
-//! reported and not honoured, the same stance `weed guard` takes in git.
+//! reported and not honoured, the same stance `weeder guard` takes in git.
 //!
 //! A hook that could not judge refuses, at the block-level code, rather than
 //! leaving with the could-not-run code: a harness reads only a refusal or
@@ -28,7 +28,7 @@ use crate::seams::git;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Request {
-    /// Where weed was called from, for an event that names no directory of its own.
+    /// Where weeder was called from, for an event that names no directory of its own.
     pub cwd: PathBuf,
     pub harness: Harness,
     /// The event as the harness wrote it on stdin.
@@ -38,13 +38,13 @@ pub struct Request {
 
 pub fn run(request: &Request) -> Answer {
     let Ok(event) = serde_json::from_str::<Value>(&request.event) else {
-        // A harness that wrote something weed cannot read is a harness weed
+        // A harness that wrote something weeder cannot read is a harness weeder
         // cannot answer, and the refusal it does understand is the safe one.
         return refuse(
             request,
             Refusal::Turn,
             &hook::unjudged(
-                "weed could not read the event its harness wrote on stdin: it is not JSON.",
+                "weeder could not read the event its harness wrote on stdin: it is not JSON.",
             ),
         );
     };
@@ -91,7 +91,7 @@ fn judge(
     reason: fn(&str) -> String,
 ) -> Answer {
     // A turn can end anywhere, and a command can name a directory that is no
-    // repository. There is no diff to judge in either, and weed will not hold a
+    // repository. There is no diff to judge in either, and weeder will not hold a
     // turn hostage to a place it was never asked about.
     let Ok(root) = git::repository_root(directory) else {
         return allowed();

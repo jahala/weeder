@@ -8,7 +8,7 @@
 //! branch says today" reports a different miss list tomorrow over what is
 //! nominally one corpus.
 //!
-//! The garden five write no Go between them and weed judges Go, so
+//! The garden five write no Go between them and weeder judges Go, so
 //! `docs/calibration/corpus-go.toml` pins two Go projects the same way, read
 //! exactly as the five are. Any other corpus file is read with `--corpus`,
 //! which is how the suites measure a history they built themselves.
@@ -83,9 +83,9 @@ pub struct Working {
 /// Where the clones live between runs, so a second run costs a fetch of what
 /// the pin needs and nothing more.
 pub fn cache_root() -> PathBuf {
-    std::env::var("WEED_RECALL_CACHE")
+    std::env::var("WEEDER_RECALL_CACHE")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| std::env::temp_dir().join("weed-recall-corpus"))
+        .unwrap_or_else(|_| std::env::temp_dir().join("weeder-recall-corpus"))
 }
 
 /// Make the working clone, fetching only what the pin is missing.

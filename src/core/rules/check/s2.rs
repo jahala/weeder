@@ -14,7 +14,7 @@
 //! nothing in it is a failure going nowhere.
 //!
 //! A failure assigned to the name that means "throw this away". Every language
-//! weed reads spells that `_`.
+//! weeder reads spells that `_`.
 //!
 //! A fallible call turned into a value that cannot fail, with nothing asked
 //! about what went wrong.
@@ -27,7 +27,7 @@ use crate::core::rules::check::vocab::mentions_failure;
 use crate::core::rules::check::Judgement;
 use crate::core::syntax::{words, Mask, Word};
 
-/// The name every language weed reads gives a binding nobody will look at.
+/// The name every language weeder reads gives a binding nobody will look at.
 const DISCARD: &str = "_";
 
 /// How a language spells the moment a failure is handled.

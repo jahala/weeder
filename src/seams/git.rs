@@ -1,4 +1,4 @@
-//! The git seam: everything weed knows about a repository, one function per
+//! The git seam: everything weeder knows about a repository, one function per
 //! question. Every call is an argument array handed to `git`, never a shell
 //! string, so a path or a ref that looks like a flag or a pipe is data.
 
@@ -15,7 +15,7 @@ use crate::seams::fs;
 /// spells the state such a repository is diffed against.
 pub const EMPTY_TREE: &str = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
 
-/// The number of context lines weed asks for. Three is git's own default, and
+/// The number of context lines weeder asks for. Three is git's own default, and
 /// rules that read the lines around a change get the same view a reviewer does.
 const CONTEXT_LINES: &str = "--unified=3";
 
@@ -32,7 +32,7 @@ impl std::fmt::Display for GitError {
         match self {
             GitError::NotARepository { path } => write!(
                 f,
-                "{path} is not inside a git repository, so there is no diff to judge. run weed from a working tree."
+                "{path} is not inside a git repository, so there is no diff to judge. run weeder from a working tree."
             ),
             GitError::UnknownRef { reference } => write!(
                 f,
@@ -42,7 +42,7 @@ impl std::fmt::Display for GitError {
                 write!(f, "git {command} failed: {message}.")
             }
             GitError::Unavailable { message } => {
-                write!(f, "weed could not run git: {message}. install git, or put it on PATH.")
+                write!(f, "weeder could not run git: {message}. install git, or put it on PATH.")
             }
         }
     }
@@ -127,7 +127,7 @@ impl Blob {
         self.bytes.len() as u64
     }
 
-    /// git's own test for a blob that is not text: a NUL byte. weed judges
+    /// git's own test for a blob that is not text: a NUL byte. weeder judges
     /// lines, and these bytes carry none; G2 is the rule that reports one.
     #[must_use]
     pub fn is_binary(&self) -> bool {
@@ -178,7 +178,7 @@ pub fn files_at_ref(
 /// The same question of the index: what a commit would carry, for every path
 /// at once. A path the index holds unmerged is carried at three stages and at
 /// none of them is it what a commit would carry, so those are left out here as
-/// they are everywhere else weed reads the index.
+/// they are everywhere else weeder reads the index.
 pub fn files_in_index(root: &Path, paths: &[&str]) -> Result<Vec<Option<Blob>>, GitError> {
     if paths.is_empty() {
         return Ok(Vec::new());
@@ -220,7 +220,7 @@ fn index_objects(listing: &str) -> HashMap<&str, &str> {
 /// A listing is read as lossy text, and a repository may hold two paths whose
 /// names differ only in bytes that are not utf-8: read that way they are one
 /// path naming two files. Reading one file as another is the answer a judge
-/// must never give, so neither is read, which is the answer weed has always had
+/// must never give, so neither is read, which is the answer weeder has always had
 /// for a path it could not resolve.
 fn named<'a>(records: impl Iterator<Item = (&'a str, &'a str)>) -> HashMap<&'a str, &'a str> {
     let mut found: HashMap<&str, &str> = HashMap::new();
@@ -258,7 +258,7 @@ fn read_objects(
             false => Ok(None),
             true => read.next().ok_or_else(|| GitError::Refused {
                 command: "cat-file --batch".to_string(),
-                message: format!("git answered for fewer objects than weed asked about, and {path} was one of them"),
+                message: format!("git answered for fewer objects than weeder asked about, and {path} was one of them"),
             }),
         })
         .collect()
@@ -292,7 +292,7 @@ fn batch(root: &Path, objects: &[&str]) -> Result<Vec<Option<Blob>>, GitError> {
 fn answer<'a>(stream: &'a [u8], object: &str) -> Result<(Option<Blob>, &'a [u8]), GitError> {
     let unreadable = |what: &str| GitError::Refused {
         command: "cat-file --batch".to_string(),
-        message: format!("weed could not read git's answer for {object}: {what}"),
+        message: format!("weeder could not read git's answer for {object}: {what}"),
     };
     let end = stream
         .iter()
@@ -364,7 +364,7 @@ pub fn commit_messages(root: &Path, base: &str, tip: &str) -> Result<Vec<String>
         format!("{commit}..{tip}")
     };
     // A commit message is whatever its author typed, and a trailer written in a
-    // message with a byte weed cannot read still has to be honoured.
+    // message with a byte weeder cannot read still has to be honoured.
     let output = run_lossy(root, &["log", "--format=%B%x00", &range])?;
     Ok(output
         .split('\u{0}')
@@ -474,7 +474,7 @@ pub fn current_branch(root: &Path) -> Result<Option<String>, GitError> {
     }
 }
 
-/// This repository's own directory, where weed keeps what must never reach a
+/// This repository's own directory, where weeder keeps what must never reach a
 /// commit and never travel with a clone.
 pub fn git_dir(root: &Path) -> Result<PathBuf, GitError> {
     let path = run(root, &["rev-parse", "--absolute-git-dir"])?;
@@ -483,7 +483,7 @@ pub fn git_dir(root: &Path) -> Result<PathBuf, GitError> {
 
 /// A setting in this repository's own configuration, or `None` where it carries
 /// none. The repository's file alone is read: a setting a person keeps in their
-/// global configuration is theirs, and weed must not put it back as if it were
+/// global configuration is theirs, and weeder must not put it back as if it were
 /// this repository's.
 pub fn config_get(root: &Path, key: &str) -> Result<Option<String>, GitError> {
     let arguments = ["config", "--local", "--get", key];
@@ -511,17 +511,17 @@ pub fn config_unset(root: &Path, key: &str) -> Result<(), GitError> {
     }
 }
 
-/// The settings weed's own commits are made under. A machine with no identity
+/// The settings weeder's own commits are made under. A machine with no identity
 /// configured still has to be able to build the state a test runs in, and the
-/// author of a commit nobody will ever see is weed itself. Signing is off for
+/// author of a commit nobody will ever see is weeder itself. Signing is off for
 /// the same reason: a key that wants a passphrase would hold the run forever.
 const AUTHORING: [&str; 3] = [
-    "user.name=weed bite",
-    "user.email=bite@weed.invalid",
+    "user.name=weeder bite",
+    "user.email=bite@weeder.invalid",
     "commit.gpgsign=false",
 ];
 
-/// What happened to a commit weed tried to apply.
+/// What happened to a commit weeder tried to apply.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Applied {
     /// The change is in the worktree, as a commit of its own.
@@ -531,7 +531,7 @@ pub enum Applied {
 }
 
 /// A second working tree of this repository, checked out at a commit, at a path
-/// of weed's choosing. `bite` needs one: it runs a test command over states the
+/// of weeder's choosing. `bite` needs one: it runs a test command over states the
 /// caller's own checkout must never be made to hold.
 pub fn add_worktree(root: &Path, at: &Path, commit: &str) -> Result<(), GitError> {
     let arguments = [
@@ -578,8 +578,8 @@ pub fn remove_worktree(root: &Path, at: &Path) -> Result<(), GitError> {
 
 /// One commit's change, applied on top of whatever a worktree holds, as a
 /// commit of its own. The hooks are told to stay out of it: a repository whose
-/// hooks judge a commit must not get to judge the states weed builds to ask a
-/// question, and weed's own guard is one of those hooks.
+/// hooks judge a commit must not get to judge the states weeder builds to ask a
+/// question, and weeder's own guard is one of those hooks.
 pub fn apply_commit(worktree: &Path, commit: &str, message: &str) -> Result<Applied, GitError> {
     let picked = attempt(worktree, &["cherry-pick", "--no-commit", commit])?;
     if picked.code != 0 {
@@ -640,12 +640,12 @@ fn diff(root: &Path, revisions: &[&str]) -> Result<String, GitError> {
 
 /// One git invocation whose answer is read as text even where some of it is not
 /// utf-8. A diff carries the bytes of the files it is about, and a repository
-/// with one latin-1 source file in it would otherwise leave weed unable to judge
+/// with one latin-1 source file in it would otherwise leave weeder unable to judge
 /// anything else in the change. Nothing is lost that a rule reads: a rule
 /// matches ascii shapes, and utf-8 never spells an ascii character with a byte
 /// above 127, so a byte that gets replaced was never part of one. Every other
-/// question weed asks git has a sha, a ref or a setting for an answer, and those
-/// are still read strictly, bytes weed cannot read there are a refusal.
+/// question weeder asks git has a sha, a ref or a setting for an answer, and those
+/// are still read strictly, bytes weeder cannot read there are a refusal.
 fn run_lossy(directory: &Path, arguments: &[&str]) -> Result<String, GitError> {
     let attempt = attempt(directory, arguments)?;
     if attempt.code == 0 {
@@ -669,7 +669,7 @@ fn run(directory: &Path, arguments: &[&str]) -> Result<String, GitError> {
     }
 }
 
-/// What one git invocation left behind, exit code and all. Some questions weed
+/// What one git invocation left behind, exit code and all. Some questions weeder
 /// asks, is this an ancestor, is this setting there, git answers by leaving
 /// with a code, and those are answers rather than failures.
 struct Attempt {
@@ -680,7 +680,7 @@ struct Attempt {
 
 impl Attempt {
     /// git's answer as one line of text. Every question asked this way has a
-    /// sha, a ref or a setting for an answer; bytes weed cannot read as utf-8
+    /// sha, a ref or a setting for an answer; bytes weeder cannot read as utf-8
     /// are a refusal rather than a guess.
     fn text(&self, arguments: &[&str]) -> Result<String, GitError> {
         String::from_utf8(self.stdout.clone())
@@ -700,15 +700,15 @@ impl Attempt {
 }
 
 /// One git invocation. Its config comes from the repository alone: a global
-/// `quotepath` or an external diff driver must not change what weed judges.
+/// `quotepath` or an external diff driver must not change what weeder judges.
 fn attempt(directory: &Path, arguments: &[&str]) -> Result<Attempt, GitError> {
     let arguments: Vec<&OsStr> = arguments.iter().map(|word| OsStr::new(*word)).collect();
     attempt_os(directory, &[], &arguments)
 }
 
 /// One git invocation with a list written to it. A child that answers with more
-/// than a pipe holds would fill it and stop while weed was still writing, and
-/// weed would stop waiting for a reader that is itself waiting, so the writing
+/// than a pipe holds would fill it and stop while weeder was still writing, and
+/// weeder would stop waiting for a reader that is itself waiting, so the writing
 /// goes out on a thread of its own and the reading happens here.
 fn attempt_writing(
     directory: &Path,
@@ -750,8 +750,8 @@ fn attempt_writing(
     })
 }
 
-/// The same invocation, with settings of weed's own in front of it and
-/// arguments that are paths rather than words. A path this machine hands weed
+/// The same invocation, with settings of weeder's own in front of it and
+/// arguments that are paths rather than words. A path this machine hands weeder
 /// is not promised to be utf-8, and a worktree is named by one.
 fn attempt_os(
     directory: &Path,
@@ -770,7 +770,7 @@ fn attempt_os(
         })?;
 
     Ok(Attempt {
-        // A git killed by a signal leaves with no code of its own, and weed
+        // A git killed by a signal leaves with no code of its own, and weeder
         // must read that as a refusal rather than as any particular answer.
         code: output.status.code().unwrap_or(-1),
         stdout: output.stdout,

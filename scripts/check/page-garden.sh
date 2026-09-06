@@ -6,7 +6,7 @@
 # Nothing here is trusted from a copy. The garden footer is compared against the
 # reference implementation in the umbrella's `.brand/components.md`, fetched by
 # `scripts/umbrella-brand.sh` from the repository petalsrc.example names; the
-# mark is compared against `.brand/products/weed/assets/weed-mark.svg` shape by
+# mark is compared against `.brand/products/weeder/assets/weeder-mark.svg` shape by
 # shape; and every number the page states about the calibration is read out of
 # `docs/calibration-2026-09.md` first and looked for on the page second.
 set -euo pipefail
@@ -31,7 +31,7 @@ command -v python3 >/dev/null 2>&1 || {
 
 IFS=$'\t' read -r checkout sha version product < <(bash "$root/scripts/umbrella-brand.sh")
 components="$checkout/.brand/components.md"
-mark="$root/.brand/products/$product/assets/weed-mark.svg"
+mark="$root/.brand/products/$product/assets/weeder-mark.svg"
 [ -f "$components" ] || {
   echo "$components is missing from the umbrella at $sha: there is no reference footer to copy" >&2
   exit 3
@@ -263,9 +263,9 @@ if reference is not None and footer is not None:
                 )
     if len(current) != 1:
         complain("the garden row marks %d pills current; exactly one page is current" % len(current))
-    elif have_beds[current[0]]["name"] != "weed":
+    elif have_beds[current[0]]["name"] != "weeder":
         complain(
-            "the garden row marks %s current on weed's own page" % have_beds[current[0]]["name"]
+            "the garden row marks %s current on weeder's own page" % have_beds[current[0]]["name"]
         )
 
 
@@ -322,8 +322,8 @@ else:
                 break
         if wordmark is None:
             complain("no wordmark follows the mark in the header")
-        elif wordmark != "weed":
-            complain("the wordmark beside the mark reads %r rather than 'weed'" % wordmark)
+        elif wordmark != "weeder":
+            complain("the wordmark beside the mark reads %r rather than 'weeder'" % wordmark)
 
 
 # ── every number the page states about the calibration, read from the report ──
@@ -419,7 +419,7 @@ if complaints:
 
 print(
     "index.html: the garden footer matches the umbrella's reference implementation at %s, "
-    "the garden row lists all eight beds with weed current, the header carries the canonical "
+    "the garden row lists all eight beds with weeder current, the header carries the canonical "
     "shears, and every calibration number on it is the report's own" % version
 )
 PY

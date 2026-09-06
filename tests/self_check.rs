@@ -1,7 +1,7 @@
-//! weed, judged by weed.
+//! weeder, judged by weeder.
 //!
 //! `--base <root commit>` is the widest question this repository can be asked:
-//! the root commit carries one empty file, so every line weed has ever written
+//! the root commit carries one empty file, so every line weeder has ever written
 //! reads as added and every check rule runs over the whole tree at once. A gate
 //! its own author cannot pass is a gate nobody else will adopt, so nothing here
 //! may come back at block level.
@@ -9,7 +9,7 @@
 //! Two things earn that clean run, and both are written down rather than turned
 //! off. `[scope] specimens` excludes `fixtures/adversarial`, whose files are
 //! written to look dishonest on purpose; every path it covers is still reported,
-//! once, as a note. And `weed.toml` carries an allowance for C1 with its reason,
+//! once, as a note. And `weeder.toml` carries an allowance for C1 with its reason,
 //! because a guardrail arriving with the repository that has never had one is
 //! not a gate being loosened. The third test here holds that allowance to its
 //! word: an ordinary edit to the same file still blocks.
@@ -24,10 +24,10 @@ use std::path::{Path, PathBuf};
 
 use jsonschema::Validator;
 
-/// weed's own law, and the file the third test edits.
-const CONFIG: &str = "weed.toml";
+/// weeder's own law, and the file the third test edits.
+const CONFIG: &str = "weeder.toml";
 
-/// weed's own repository, the tree under judgement.
+/// weeder's own repository, the tree under judgement.
 fn repository() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf()
 }
@@ -49,11 +49,11 @@ fn root_commit() -> String {
         .to_string()
 }
 
-/// The run the check is about: weed judging its own tree against its first
+/// The run the check is about: weeder judging its own tree against its first
 /// commit, writing SARIF.
 fn self_check() -> common::Run {
     let base = root_commit();
-    common::weed_in(
+    common::weeder_in(
         &repository(),
         &["check", "--base", &base, "--format", "sarif"],
     )
@@ -67,7 +67,7 @@ fn validator() -> Validator {
 }
 
 #[test]
-fn weed_judging_its_own_tree_from_the_root_commit_reports_nothing_at_block_level() {
+fn weeder_judging_its_own_tree_from_the_root_commit_reports_nothing_at_block_level() {
     let run = self_check();
 
     let blocked: Vec<String> = run
@@ -86,7 +86,7 @@ fn weed_judging_its_own_tree_from_the_root_commit_reports_nothing_at_block_level
         .collect();
     assert!(
         blocked.is_empty(),
-        "weed blocks on its own tree:\n{}",
+        "weeder blocks on its own tree:\n{}",
         blocked.join("\n")
     );
     assert_eq!(
@@ -103,10 +103,13 @@ fn weed_judging_its_own_tree_from_the_root_commit_reports_nothing_at_block_level
 }
 
 #[test]
-fn the_log_weed_writes_about_itself_validates_against_the_vendored_schema() {
+fn the_log_weeder_writes_about_itself_validates_against_the_vendored_schema() {
     let run = self_check();
     let value: serde_json::Value = serde_json::from_str(&run.stdout).unwrap_or_else(|error| {
-        panic!("weed should write parseable json: {error}\n{}", run.stdout)
+        panic!(
+            "weeder should write parseable json: {error}\n{}",
+            run.stdout
+        )
     });
 
     let validator = validator();
@@ -116,7 +119,7 @@ fn the_log_weed_writes_about_itself_validates_against_the_vendored_schema() {
         .collect();
     assert!(
         complaints.is_empty(),
-        "the log weed wrote about itself does not validate:\n{}",
+        "the log weeder wrote about itself does not validate:\n{}",
         complaints.join("\n")
     );
 }
@@ -124,7 +127,7 @@ fn the_log_weed_writes_about_itself_validates_against_the_vendored_schema() {
 #[test]
 fn the_allowance_the_config_carries_does_not_disarm_c1_for_an_ordinary_edit() {
     let config =
-        fs::read_to_string(repository().join(CONFIG)).expect("weed.toml should be readable");
+        fs::read_to_string(repository().join(CONFIG)).expect("weeder.toml should be readable");
     assert!(
         config.contains("weed-allow C1"),
         "the clean run rests on this allowance, so the test that bounds it needs it there"
@@ -143,10 +146,10 @@ fn the_allowance_the_config_carries_does_not_disarm_c1_for_an_ordinary_edit() {
     repo.write(CONFIG, &edited);
     repo.stage_all();
 
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
     assert_eq!(
         run.code, 2,
-        "an ordinary edit to weed's own config is still a guardrail edit: {}",
+        "an ordinary edit to weeder's own config is still a guardrail edit: {}",
         run.stderr
     );
     let findings = run.findings();

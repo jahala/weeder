@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Evidence for tilth-core.tend2.html c2: weed reads code through the crate it
+# Evidence for tilth-core.tend2.html c2: weeder reads code through the crate it
 # pins, and through nothing else. The manifest names the git dependency and the
 # commit; the resolved graph agrees, which is what catches a patch or a path
 # override wherever it was written, a `[patch]` table, a `[replace]` entry, or
@@ -70,4 +70,4 @@ parsers="$(cargo metadata --format-version 1 --locked \
 cargo build || status=1
 
 [ "$status" -eq 0 ] || exit "$status"
-echo "tilth-core: pinned at $rev from $repo, no patch, and weed builds on it"
+echo "tilth-core: pinned at $rev from $repo, no patch, and weeder builds on it"
