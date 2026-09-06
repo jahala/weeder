@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>page · weed</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# page — weed's landing page
+**Goal.** One static `index.html` at the repository root, served by GitHub Pages at `jahala.github.io/weed/`, the way tilth, umbel, copeca and pollen publish theirs: no build step, no framework, fonts from the Google Fonts CDN, the umbrella's tokens inlined. It says what weed is in the garden's voice, shows real output, states the calibration numbers as the report states them on the day it is written, and carries the garden footer with every bed. The owner authorised it on 2026-09-06 through cape-town; the briefing is `docs/prompts/weed-page-briefing.md` in the umbrella bed and its essentials are below.
+
+## What to read before writing a line
+
+The umbrella page, live at plotplot.ai and `public/index.html` in the umbrella repository (the one `.brand/products/weed/petalsrc.example` names): the head, the `:root` token block and its `[data-theme="dark"]` twin, the header with mark, wordmark and theme toggle, the hero with kicker, h1, lede and two buttons beside a soil-night terminal pane, the band sections, the garden footer. pleach's product page, `index.html` at the root of github.com/jahala/pleach: the structure a bed page follows, hero · why · loop · gates · proof · fit · start, and one accent used with conviction. The umbrella's `.brand/components.md`, section "Footer — the garden footer": copy the reference implementation verbatim, change only the identity column, the `.is-current` pill and the repo links, and add the plotplot band above the columns. The umbrella's `.brand/DESIGN.md`, `colors.md` and `voice.md`, and weed's own layer at `.brand/products/weed/`.
+
+## Tokens, colour, the mark
+
+Inline the umbrella's `:root` block as the umbrella page has it, then `:root{--pp-weed:#8E3B5E;--pp-weed-word:#8E3B5E}` and `[data-theme="dark"]{--pp-weed-word:#B85C82}`, dark after root because the contrast resolver takes the last definition and validates dark. Bramble reads as a word on paper (6.57:1): kickers, labels and rule ids may be set in `--pp-weed`. On soil-night it is display-only (2.51:1): fills, dots, the mark, never text; a bramble word on dark uses `--pp-weed-word`. Never bramble-night text beside petal text on dark. Severity stays the umbrella's: block in error `#BC4126`, warn in caution `#B0741C`, clean in healthy `#46913C`; bramble marks weed, never severity; the thorns are never red. The canonical shears from `.brand/products/weed/assets/weed-mark.svg` inline in the header beside a lowercase `weed` wordmark in Fraunces, the night file under the dark theme, never below 20px; the footer's plotplot band keeps the umbrella's sprout.
+
+## What the page says
+
+Kicker `the judge`. The h1 is the tagline, `tests still mean what they meant.` A lede on what weed refuses and that no model is in the loop. The terminal pane shows real output: one `weed check` run with a block-level T1 result in the table format, and one `weed guard install`. Then, in pleach's order: why (the agent that deletes a test to get green, and why a model review cannot be the gate); what it judges (the catalogue, block against warn, only unambiguous shapes block); where it runs (guard at commit and push, the Stop hook, pleach's gate, the GitHub Action posting SARIF); the numbers, dated, exactly as `docs/calibration-2026-09.md` states them on the day of writing (635 pinned commits, the blocked count, the false-positive count and share, the old-class number named as the report names it, recall at or above 95 percent per rule per language, the blind re-grade's agreement); fit (weed alone, weed with tend2 and pleach, weed beside aislop and anti-slop, and the honest scope: it says nothing about whether the code is good); start (cargo, the npm wrapper, the release binary, then `weed guard install`).
+
+
+The traps the brand check catches, learned the hard way on the umbrella's page: no anchors that look like hex (`#bed` parses as a colour; use `#garden`). Spacing only through `--pp-space-*` on the 4px scale, radius from the scale, `@media` only at 880 and 520, shadows ink-tinted and never pure black in either theme. Motion is one idea, things unfold with `--pp-ease-petal`, `prefers-reduced-motion` honoured, reveal gated on a `.js` class so content shows without JS. Voice: sentence case, lowercase product names, no exclamation marks, none of the forbidden words, no em dashes in the copy, every number true to the report.
+
+## Tests
+- [ ] (code) `index.html` at the repository root passes the umbrella's `petals/scripts/check.sh` with 0 errors and 0 warnings, the umbrella's `.brand` and that script fetched beside weed's product layer by the evidence itself from the repository `petalsrc.example` names, so the gate is the umbrella's and not a copy · scripts/check/page.sh
+- [ ] (code) the page's garden footer is the reference implementation with only the identity column, the `.is-current` pill and the repo links changed, the plotplot band sits above the columns, and the garden row lists all eight beds (tilth, tend, petals, pleach, umbel, copeca, pollen, weed) each with its bloom dot and weed marked current; the header carries the shears mark inline beside the wordmark; the numbers on the page are the ones `docs/calibration-2026-09.md` states, read from the report by the evidence rather than trusted · scripts/check/page-garden.sh
+- [ ] (human) the owner approves the page as it renders at the repository root, on paper and on soil-night, and it goes live from the default branch through GitHub Pages
+
+## Needs #garden-fit
+
+## Tried
+- 2026-09-06 shaped from cape-town's briefing the day the owner authorised the page; the build brief had deferred it. GitHub Pages is not enabled and the repository is private, so going live is the owner's step after the page passes
+</script>
+<script src="loop.js"></script>
