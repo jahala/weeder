@@ -1,2 +1,2 @@
-{"type": "input", "case": "blocked:tend2:3adc642ce1", "sha256": "e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f"}
-{"type": "answer", "answer": "Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: false-positive\nReasoning: The reported test case was folded into a loop over sibling directories, reducing declared it() count without deleting the covered behavior or weakening coverage."}
+{"type": "input", "case": "blocked:tend2:3adc642ce1", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
+{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: false-positive\nReasoning: T1 counted fewer it() declarations, but the removed case became a loop over sibling directories, so coverage remained and no test behavior was actually lost."}

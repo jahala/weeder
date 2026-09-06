@@ -1,2 +1,2 @@
-{"type": "input", "case": "recall:D2:go:hcl:6a91a7547:gohcl/types.go:6", "sha256": "e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f"}
-{"type": "answer", "answer": "Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: miss\nReasoning: The report says the planted D2 shape made gohcl/types.go import hcldec at line 6 and was not reported there."}
+{"type": "input", "case": "recall:D2:go:hcl:6a91a7547:gohcl/types.go:6", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
+{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: miss\nReasoning: The report says the D2 shape was planted at gohcl/types.go:6 by making gohcl import hcldec, and it was listed among planted cases weed did not report."}

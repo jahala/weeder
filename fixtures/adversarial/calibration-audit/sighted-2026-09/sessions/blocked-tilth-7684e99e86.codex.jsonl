@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a075ed-d63e-7e01-ba68-6396da8dba01"}
+{"type":"thread.started","thread_id":"01a07648-76a5-7be0-ae3a-fd2e6a1918a7"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: acceptable\nReasoning: T2's assertion-count claim is true, but the removed check depended on a fork-only API while the remaining test still covers the regression-relevant output behavior."}}
-{"type":"turn.completed","usage":{"input_tokens":37295,"cached_input_tokens":20864,"output_tokens":311,"reasoning_output_tokens":222}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: acceptable\nReasoning: T2’s assertion-count drop is true, but the removed fork-only apply_with_info assertion was adapted away while the regression remained covered by checking that zero-budget output keeps x."}}
+{"type":"turn.completed","usage":{"input_tokens":37154,"cached_input_tokens":20864,"output_tokens":124,"reasoning_output_tokens":36}}

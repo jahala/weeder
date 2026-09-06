@@ -1,2 +1,0 @@
-{"type": "input", "case": "blocked:umbel:cc3cc0c37c", "sha256": "e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f"}
-{"type": "answer", "answer": "Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: true-positive\nReasoning: The TODOs were real production markers for unverified tool-call parsing, and shipping partial extraction weakened provider behavior rather than merely creating harmless review friction."}

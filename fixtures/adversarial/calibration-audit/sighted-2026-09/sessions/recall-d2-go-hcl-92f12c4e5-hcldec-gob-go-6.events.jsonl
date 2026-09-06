@@ -1,2 +1,0 @@
-{"type": "input", "case": "recall:D2:go:hcl:92f12c4e5:hcldec/gob.go:6", "sha256": "e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f"}
-{"type": "answer", "answer": "Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: miss\nReasoning: The report says D2 planted a forbidden import at hcldec/gob.go:6, making hcldec import hcled, and it was not reported there."}

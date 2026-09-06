@@ -1,2 +1,2 @@
-{"type": "input", "case": "recall:D2:go:hcl:9466647a1:hclwrite/ast_block.go:6", "sha256": "e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f"}
-{"type": "answer", "answer": "Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: miss\nReasoning: The report says hclwrite was planted to import integrationtest at that exact site and lists it under Every miss, so the D2 forbidden-boundary shape was present but unreported."}
+{"type": "input", "case": "recall:D2:go:hcl:9466647a1:hclwrite/ast_block.go:6", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
+{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: miss\nReasoning: The report says hclwrite was planted to import integrationtest at that site, matching D2's forbidden-boundary import shape, and it was not reported."}

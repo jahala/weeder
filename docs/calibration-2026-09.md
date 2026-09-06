@@ -1,8 +1,8 @@
 # calibration: weed over real history, 2026-09
 
-weed ships as a gate, pending the independent re-grade: over 635 commits of real history in 5 repositories it blocked 23, of which 7 were block-level false positives, 1.10 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level, and the classification under it untrusted until a re-grade agrees at the bar. The re-grade behind it is a sighted one: docs/calibration-audit-2026-09.md declares `Blind: no`, so its auditor could read the builder's class beside each case before judging. The blind re-grade in docs/calibration-audit-blind-2026-09.md is under the bar, so no blind agreement stands behind this number yet.
+weed ships as a gate: over 635 commits of real history in 5 repositories it blocked 23, of which 4 were block-level false positives, 0.63 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level. The re-grade behind it is blind: docs/calibration-audit-blind-2026-09.md declares `Blind: yes` and agrees at the bar, so its auditor judged the cases from a packet with the builder's class out of sight, and the sighted re-grade in docs/calibration-audit-2026-09.md is recorded beside it.
 
-The classification under that number is the builder's own, and the re-grade is under the 90 percent bar: blocked commits in docs/calibration-audit-blind-2026-09.md agrees on 60.0 percent of 20 cases. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing. The floor under that share is 1.10 percent, 7 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 1.10 percent, 7 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table.
+A second party re-graded the classification and docs/calibration-audit-2026-09.md and docs/calibration-audit-blind-2026-09.md records the agreement: blocked commits in docs/calibration-audit-blind-2026-09.md at 100.0 percent of 20 cases, recall cases in docs/calibration-audit-blind-2026-09.md at 95.0 percent of 20 cases. That is what took the qualification off this sentence. The floor under that share is 0.63 percent, 4 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 0.63 percent, 4 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table.
 
 ## How this was measured
 
@@ -51,16 +51,16 @@ The window ends at `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905`, fetched from `htt
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
-| `11aef933c9` feat(list): consolidate tilth_files into tilth_list with directory-tree rendering | T1 | false positive | T1 says src/mcp/tools/files.rs went with 8 cases and whatever it covered is now covered by nobody. The same commit adds src/mcp/tools/list.rs with 8 cases over the same ground, tool_files_empty_patterns_errors reappearing as tool_list_empty_patterns_errors and so on down the file. The count is right and the sentence under it is not. |
+| `11aef933c9` feat(list): consolidate tilth_files into tilth_list with directory-tree rendering | T1 | acceptable | T1 says src/mcp/tools/files.rs went with 8 cases and whatever it covered is now covered by nobody. The same commit adds src/mcp/tools/list.rs with 8 cases over the same ground, tool_files_empty_patterns_errors reappearing as tool_list_empty_patterns_errors and so on down the file. The count is right and the sentence under it is not. Under the ruling of 2026-09-06 the claim is the drop itself, which is true of this change, so this is claim-true; the sentence about what is held is the rule's own overclaim and is on rules-tests to fix. |
 | `10bec56a41` test(search): assert only is_ok in no_scope_no_root_defaults_to_cwd — the substring assertion flakes when search surfaces its own source text (resolve_scope behavior is pinned in mod.rs unit tests) | T2 | acceptable | T2 says src/mcp/tools/search.rs went from 3 assertions to 2, and it did. What went was a substring match on real search output, which the commit says flakes when search surfaces its own source text; resolve_scope's own unit tests still pin the refusal-versus-default behaviour, and the case still pins that tool_search propagates success. A test losing a check is worth a person's eye, and this one survives it. |
 | `96cd4b383b` fix(write): containment guard scope_root defaults to root; root-only writes succeed | T2 | acceptable | T2 says src/mcp/tools/search.rs went from 3 assertions to 2, and it did: the same change merged in beside the write containment fix, with the flaky substring match gone. The finding is about search.rs and not about the guard this commit repairs, and on search.rs the claim is true and the change was right. |
 | `7684e99e86` fix(budget): adapt regression test to upstream API surface | T2 | acceptable | T2 says src/budget.rs went from 10 assertions to 9, and it did: the cherry-picked case called apply_with_info, which exists only in the fork, and the assertion on where the cut landed went with the call. The regression it guards is still guarded, because a cut at zero leaves no x in the output and the case still demands one. |
 | `ab7f054b73` refactor(mcp): split tilth_read paths-only into its own PR | T1, T2 | true positive | T1 says a case left src/mcp/tools/definitions.rs, 3 down to 2, and T2 says 3 assertions went with it, 9 down to 6. Both are true, nothing in the change picks them up, and what they held was the paths-only tilth_read schema, which this commit reopens to a singular path. The schema is now pinned by nobody. |
-| `18eb6643ff` refactor(mcp): tighten module visibility and co-locate tests | T2 | false positive | T2 says 21 assertions went out of src/mcp/mod.rs, 29 down to 8, so the suite reports green over behaviour nobody is holding. The commit's own subject is co-locate tests, and every one of those assertions is in src/mcp/tools/mod.rs, files.rs and edit.rs in the same change. The count holds and the consequence does not. |
+| `18eb6643ff` refactor(mcp): tighten module visibility and co-locate tests | T2 | acceptable | T2 says 21 assertions went out of src/mcp/mod.rs, 29 down to 8, so the suite reports green over behaviour nobody is holding. The commit's own subject is co-locate tests, and every one of those assertions is in src/mcp/tools/mod.rs, files.rs and edit.rs in the same change. The count holds and the consequence does not. Under the ruling of 2026-09-06 the claim is the drop itself, which is true of this change, so this is claim-true; the sentence about what is held is the rule's own overclaim and is on rules-tests to fix. |
 | `3ff87caf55` refactor(bloom): adopt fastbloom for BloomFilter implementation | T1, T2 | acceptable | T1 and T2 say src/index/bloom.rs lost a case and 6 assertions, and it did. They exercised private fields of the hand-written BloomFilter this commit replaces with fastbloom, so there is nothing left for them to hold. A suite shrinking under a swapped implementation is exactly what a person should see. |
 | `59c87110ab` refactor(mcp): adopt percent-encoding crate for file:// URI decoding | T1, T2 | acceptable | T1 and T2 say src/mcp.rs lost a case and 4 assertions, 17 down to 16 and 31 down to 27, and it did. They pinned a hand-rolled percent decoder that this commit hands to the percent-encoding crate, so the behaviour they held is now the library's. |
 | `d422a325fc` refactor(install): fold entry style into ConfigFormat as JsonLocal variant | T2 | acceptable | T2 says src/install.rs went from 66 assertions to 65, and it did. The one that went checked the entry_style field this commit folds into ConfigFormat, and the JsonLocal match that replaces it is asserted in the same case. |
-| `5a4edbf5c5` search: extract bloom_walk, callee_query, scope from relational queries | T2 | false positive | T2 says 21 assertions went out of src/search/callers.rs, 33 down to 12, so the suite reports green over behaviour nobody is holding. The same commit creates bloom_walk.rs, callee_query.rs and scope.rs and puts 26 assertions in them. Nothing stopped being held. |
+| `5a4edbf5c5` search: extract bloom_walk, callee_query, scope from relational queries | T2 | acceptable | T2 says 21 assertions went out of src/search/callers.rs, 33 down to 12, so the suite reports green over behaviour nobody is holding. The same commit creates bloom_walk.rs, callee_query.rs and scope.rs and puts 26 assertions in them. Nothing stopped being held. Under the ruling of 2026-09-06 the claim is the drop itself, which is true of this change, so this is claim-true; the sentence about what is held is the rule's own overclaim and is on rules-tests to fix. |
 | `bd36a43637` index: drop inert SymbolIndex plumbing | T1 | acceptable | T1 says src/index/symbol.rs went with 6 cases, and it did. SymbolIndex was allocated and threaded through the searches and never consulted, and this commit deletes the type; the cases exercised the dead allocator, so what they covered stopped existing in the same breath. A file of tests leaving the tree is worth reading either way. |
 
 ## pleach, 152 commits judged, 1 blocked, 21 warned
@@ -107,14 +107,14 @@ The window ends at `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d`, fetched from `htt
 
 | Repo | Commits judged | Blocked | Warned | True positive | Acceptable | False positive | False-positive share |
 |---|---|---|---|---|---|---|---|
-| tilth | 200 | 11 | 79 | 1 | 7 | 3 | 1.50% |
+| tilth | 200 | 11 | 79 | 1 | 10 | 0 | 0.00% |
 | pleach | 152 | 1 | 21 | 0 | 0 | 1 | 0.66% |
 | tend2 | 200 | 6 | 22 | 0 | 4 | 2 | 1.00% |
 | copeca | 25 | 1 | 7 | 0 | 0 | 1 | 4.00% |
 | umbel | 58 | 4 | 13 | 2 | 2 | 0 | 0.00% |
-| **pooled** | **635** | **23** | **142** | **3** | **13** | **7** | **1.10%** |
+| **pooled** | **635** | **23** | **142** | **3** | **16** | **4** | **0.63%** |
 
-The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 1.10 percent of 635 commits, and 0 commits weed could not judge.
+The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 0.63 percent of 635 commits, and 0 commits weed could not judge.
 
 Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 182 of them at block level still, 78 at warn level, 1 at note level and 71 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files; 9 moved from T1 at block level to T5 at warn level, all of them on test files.
 
@@ -288,15 +288,9 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 
 Every block whose claim was not true of the change, under the rule that made it. This is the list the rule loops work from.
 
-**T1**, 2 blocks
+**T1**, one block
 
-- tilth `11aef933c9` feat(list): consolidate tilth_files into tilth_list with directory-tree rendering, T1 says src/mcp/tools/files.rs went with 8 cases and whatever it covered is now covered by nobody. The same commit adds src/mcp/tools/list.rs with 8 cases over the same ground, tool_files_empty_patterns_errors reappearing as tool_list_empty_patterns_errors and so on down the file. The count is right and the sentence under it is not.
 - tend2 `3adc642ce1` polish(root): no asset folder in the root — maps carry their own renderer, T1 says a case disappeared from test/renderer-fresh.test.ts, 2 declared down to 1, and that the behaviour it held is unwatched. The case was not deleted: it became a loop over the sibling directories, so the file runs one it() declaration over several inputs. The declaration count fell and the coverage did not.
-
-**T2**, 2 blocks
-
-- tilth `18eb6643ff` refactor(mcp): tighten module visibility and co-locate tests, T2 says 21 assertions went out of src/mcp/mod.rs, 29 down to 8, so the suite reports green over behaviour nobody is holding. The commit's own subject is co-locate tests, and every one of those assertions is in src/mcp/tools/mod.rs, files.rs and edit.rs in the same change. The count holds and the consequence does not.
-- tilth `5a4edbf5c5` search: extract bloom_walk, callee_query, scope from relational queries, T2 says 21 assertions went out of src/search/callers.rs, 33 down to 12, so the suite reports green over behaviour nobody is holding. The same commit creates bloom_walk.rs, callee_query.rs and scope.rs and puts 26 assertions in them. Nothing stopped being held.
 
 **X1**, 3 blocks
 
@@ -310,7 +304,7 @@ Precision is the share of blocks that were not false positives. The allowance ra
 
 | Repo | Block-level precision | True positives | Allowance rate |
 |---|---|---|---|
-| tilth | 72.7% | 1 | 0.0 per 100 commits (guard not installed) |
+| tilth | 100.0% | 1 | 0.0 per 100 commits (guard not installed) |
 | pleach | 0.0% | 0 | 0.0 per 100 commits (guard not installed) |
 | tend2 | 66.7% | 0 | 0.0 per 100 commits (guard not installed) |
 | copeca | 0.0% | 0 | 0.0 per 100 commits (guard not installed) |
@@ -325,8 +319,8 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 | Rule | Blocks | True positive | Acceptable | False positive | False-positive share of its blocks |
 |---|---|---|---|---|---|
 | S1 | 2 | 2 | 0 | 0 | 0.00% |
-| T1 | 9 | 1 | 6 | 2 | 22.22% |
-| T2 | 12 | 1 | 9 | 2 | 16.67% |
+| T1 | 9 | 1 | 7 | 1 | 11.11% |
+| T2 | 12 | 1 | 11 | 0 | 0.00% |
 | X1 | 3 | 0 | 0 | 3 | 100.00% |
 
 

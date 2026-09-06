@@ -28,12 +28,16 @@ only="${WEED_AUDIT_ONLY:-}"
 command -v codex >/dev/null 2>&1 || { echo "codex is not on PATH" >&2; exit 3; }
 command -v trash >/dev/null 2>&1 || { echo "trash is not on PATH; nothing here deletes with rm" >&2; exit 3; }
 
-[ -d "$cases" ] && trash "$cases"
-[ -d "$sessions" ] && trash "$sessions"
-mkdir -p "$cases" "$sessions"
-cargo xtask audit-packet --seed "$seed" --dir "$cases" >/dev/null
-count="$(ls "$cases"/*.md | wc -l | tr -d ' ')"
-echo "$count case packets for seed $seed"
+# WEED_AUDIT_ASSEMBLE_ONLY=1 rebuilds the audit file from the sessions already
+# kept, for a change in how agreement is read, without a single new session.
+if [ -z "${WEED_AUDIT_ASSEMBLE_ONLY:-}" ]; then
+  [ -d "$cases" ] && trash "$cases"
+  [ -d "$sessions" ] && trash "$sessions"
+  mkdir -p "$cases" "$sessions"
+  cargo xtask audit-packet --seed "$seed" --dir "$cases" >/dev/null
+  count="$(ls "$cases"/*.md | wc -l | tr -d ' ')"
+  echo "$count case packets for seed $seed"
+fi
 
 # One session. The prompt carries the packet's hash so the answer can name it;
 # the hash is machine-derived and says nothing about the case.
@@ -85,7 +89,9 @@ if [ -n "$only" ]; then
   one "$cases/$only.md"
   exit 0
 fi
-ls "$cases"/*.md | xargs -P "$jobs" -I{} bash -c 'one "$@"' _ {}
+if [ -z "${WEED_AUDIT_ASSEMBLE_ONLY:-}" ]; then
+  ls "$cases"/*.md | xargs -P "$jobs" -I{} bash -c 'one "$@"' _ {}
+fi
 
 # The audit file, from the answers and the report's own tables.
 python3 - "$seed" "$base" <<'PY'
@@ -113,7 +119,10 @@ for case_path in sorted((base / "cases").glob("*.md")):
     else:
         _, rule, lang, repo, sha, path = case.split(":", 5)
         recall.append((rule, lang, repo, sha, path, verdict, reason))
-b_agreed = sum(1 for row in blocked if row[2] == row[4])
+# Ruling of 2026-09-06: the audited question is binary, claim-true or
+# claim-false; "acceptable" is a human label the audit never counts.
+b_agreed = sum(1 for row in blocked if (row[2] == "false-positive") == (row[4] == "false-positive"))
+b_old = sum(1 for row in blocked if row[2] == row[4])
 r_agreed = sum(1 for row in recall if row[5] == "miss")
 def pct(a, n): return f"{(a * 100.0 / n) if n else 0.0:.1f}%"
 out = [
@@ -128,6 +137,7 @@ out = [
     "| Sample | Re-graded | Agreed | Agreement |", "|---|---:|---:|---:|",
     f"| blocked commits | {len(blocked)} | {b_agreed} | {pct(b_agreed, len(blocked))} |",
     f"| recall cases | {len(recall)} | {r_agreed} | {pct(r_agreed, len(recall))} |", "",
+    "Agreement on blocked commits is on the binary question the ruling of 2026-09-06 allows a blind reader: is the rule's claim true of the change. A false-positive verdict is claim-false; true-positive and acceptable are both claim-true, and which of the two a human attaches is never audited. For the record, under the old three classes the same responses agree on " + f"{b_old} of {len(blocked)}" + " blocked commits.", "",
     "## Blocked Commit Sample", "",
     "| Repo | Commit | Auditor verdict | Reasoning |", "|---|---|---|---|",
 ]

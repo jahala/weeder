@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a075ee-760b-7c72-af78-79207b0f1173"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: miss\nReasoning: The report says T6 was planted at that exact site by making an error assertion stop naming the error, and Every miss means weed did not report it there."}}
-{"type":"turn.completed","usage":{"input_tokens":37292,"cached_input_tokens":20864,"output_tokens":220,"reasoning_output_tokens":131}}

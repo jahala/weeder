@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07648-b585-7813-a584-c33a90705446"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: miss\nReasoning: The report says gohcl/decode.go was planted with a gohcl-to-hcldec import, a D2 forbidden-boundary crossing, and lists it as planted but not reported."}}
+{"type":"turn.completed","usage":{"input_tokens":37155,"cached_input_tokens":20864,"output_tokens":587,"reasoning_output_tokens":495}}

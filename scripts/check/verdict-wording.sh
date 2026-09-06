@@ -23,7 +23,7 @@ cd "$root"
 report="docs/calibration-2026-09.md"
 # Every audit record the repository carries, packet, response and transcript
 # files aside, colon-separated: the wording is written from all of them.
-audit="$(ls docs/calibration-audit*.md 2>/dev/null | grep -v '\.packet\.\|\.response\.\|transcript' | tr '\n' ':' | sed 's/:$//')"
+audit="$(grep -l '^Blind: yes' docs/calibration-audit*.md 2>/dev/null | grep -v '\.packet\.\|\.response\.\|transcript' | tr '\n' ':' | sed 's/:$//')"
 corpus="docs/calibration/corpus.toml"
 provisional="weed ships as a gate, pending the independent re-grade:"
 confirmed="weed ships as a gate:"

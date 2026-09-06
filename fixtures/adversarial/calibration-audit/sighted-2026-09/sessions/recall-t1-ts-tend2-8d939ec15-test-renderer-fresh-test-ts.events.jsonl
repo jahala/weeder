@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T1:ts:tend2:8d939ec15:test/renderer-fresh.test.ts", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
+{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: miss\nReasoning: The report lists this T1 recall case under planted-and-not-reported misses, and deleting an `it` test case is genuinely the T1 shape at that file."}

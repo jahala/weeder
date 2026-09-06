@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07648-3cb0-7cd3-a73e-c9253f46710f"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: acceptable\nReasoning: T2 correctly caught an assertion drop, but the removed substring check was flaky real-output coupling while the intended scope behavior remained covered elsewhere."}}
+{"type":"turn.completed","usage":{"input_tokens":37154,"cached_input_tokens":20864,"output_tokens":120,"reasoning_output_tokens":40}}

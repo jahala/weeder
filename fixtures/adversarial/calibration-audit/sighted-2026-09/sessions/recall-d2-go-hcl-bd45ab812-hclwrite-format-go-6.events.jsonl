@@ -1,2 +1,2 @@
-{"type": "input", "case": "recall:D2:go:hcl:bd45ab812:hclwrite/format.go:6", "sha256": "e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f"}
-{"type": "answer", "answer": "Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: miss\nReasoning: The report says hclwrite/format.go was mutated to import integrationtest, matching D2's forbidden-boundary shape, and it is listed under Every miss as planted and not reported."}
+{"type": "input", "case": "recall:D2:go:hcl:bd45ab812:hclwrite/format.go:6", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
+{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: miss\nReasoning: The report says D2 was planted by making hclwrite/format.go import integrationtest, a forbidden boundary import, and weed did not report it at that planted site."}

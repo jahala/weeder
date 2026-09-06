@@ -1,2 +1,2 @@
-{"type": "input", "case": "blocked:tilth:11aef933c9", "sha256": "e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f"}
-{"type": "answer", "answer": "Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: false-positive\nReasoning: The deleted files.rs tests were replaced by list.rs tests covering the same cases under renamed tilth_list behavior, so T1's uncovered-behavior claim is not true."}
+{"type": "input", "case": "blocked:tilth:11aef933c9", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
+{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: acceptable\nReasoning: T1 correctly saw tests deleted from files.rs, but equivalent list.rs tests replaced them in the same commit, so the block is review friction rather than a real coverage loss."}

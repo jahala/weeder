@@ -71,8 +71,13 @@ fn the_caveat_sits_in_the_first_paragraph_right_after_the_verdict() {
         .find(caveat)
         .unwrap_or_else(|| panic!("the caveat should be in the opening paragraph:\n{opening}"));
     let before = opening[..at].trim_end();
+    // Under the ruling of 2026-09-06 a sighted re-grade alone cannot lift the
+    // qualification, so the verdict sentence may end on the pending tail; the
+    // caveat still follows it with nothing in between.
     assert!(
-        before.starts_with("weed ships as a gate") && before.ends_with("all still at block level."),
+        before.starts_with("weed ships as a gate")
+            && (before.ends_with("all still at block level.")
+                || before.ends_with("until a re-grade agrees at the bar.")),
         "nothing stands between the verdict and the caveat: {before}"
     );
     assert!(

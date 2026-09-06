@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T1:go:cobra:3f3b81882:doc/man_examples_test.go", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
+{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: miss\nReasoning: The report says ExampleGenManTree was deleted from a Go test file and listed under planted-but-unreported misses, so the T1 shape was genuinely present there."}

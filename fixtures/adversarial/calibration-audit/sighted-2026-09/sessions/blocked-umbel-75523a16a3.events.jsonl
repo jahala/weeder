@@ -1,2 +1,2 @@
-{"type": "input", "case": "blocked:umbel:75523a16a3", "sha256": "e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f"}
-{"type": "answer", "answer": "Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: true-positive\nReasoning: The TODO and surrounding comments admit production OpenCode tool-call parsing was inferred and unverified, so unfinished behavior shipped and S1's weakening claim is true."}
+{"type": "input", "case": "blocked:umbel:75523a16a3", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
+{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: true-positive\nReasoning: The S1 claim is true: a production OpenCode provider shipped with TODO-marked, inferred tool-call parsing that explicitly needed validation against real transcripts."}

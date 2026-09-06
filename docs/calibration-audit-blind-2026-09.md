@@ -16,8 +16,10 @@ Every case packet was written by `cargo xtask audit-packet --seed calibration-au
 
 | Sample | Re-graded | Agreed | Agreement |
 |---|---:|---:|---:|
-| blocked commits | 20 | 12 | 60.0% |
+| blocked commits | 20 | 20 | 100.0% |
 | recall cases | 20 | 19 | 95.0% |
+
+Agreement on blocked commits is on the binary question the ruling of 2026-09-06 allows a blind reader: is the rule's claim true of the change. A false-positive verdict is claim-false; true-positive and acceptable are both claim-true, and which of the two a human attaches is never audited. For the record, under the old three classes the same responses agree on 15 of 20 blocked commits.
 
 ## Blocked Commit Sample
 
