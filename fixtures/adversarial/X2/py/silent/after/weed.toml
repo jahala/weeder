@@ -1,0 +1,3 @@
+# The change was shaped for the report and for nothing else.
+[scope]
+allow = ["src/report/**"]

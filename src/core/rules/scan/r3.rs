@@ -1,4 +1,4 @@
-//! R3, a TODO is older than the configured age.
+//! R3, a work marker is older than the configured age.
 //!
 //! A work marker is a promise with no date on it. Left alone it stops being a
 //! plan and becomes a description of the code, and by then nobody remembers who

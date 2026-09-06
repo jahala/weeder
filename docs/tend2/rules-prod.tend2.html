@@ -29,7 +29,7 @@
 - [x] (code) D2 fires at block level on a fixture where a layer imports from a layer `[deps]` forbids, per language, and on weed's own tree when a core file imports from seams; stays silent on allowed directions · tests/rule_d2.rs @17f4815 · by cli
 - [x] (code) X2 fires at block level on a file outside the given scope globs, names the callers of its changed definitions, and stays silent without `--scope` and on files inside the scope · tests/rule_x2.rs @74eb044 · by cli
 - [x] (code) C2 warns when an ignore file gains a pattern matching source or test paths and stays silent on build-output patterns · tests/rule_c2.rs @26b2f5b · by cli
-- [x] (code) G2 warns on an added file above 1 MiB and on an added binary, and stays silent on a small text file and on a tracked binary that only changes · tests/rule_g2.rs @451a2a1 · by cli
+- [x] (code) G2 warns on an added file above 1 MiB and on an added binary, and stays silent on a small text file and on a tracked binary that only changes · tests/rule_g2.rs @1ba7082 · by cli
 - [x] (code) `[scope] specimens` in `weed.toml` is a list of directories under `fixtures/adversarial/**` that `check` and `scan` skip for every rule, each skipped path reported once at note level so an exclusion is as visible as an allowance; an entry outside that root, a glob that reaches past it, or a rule name in the list is refused with exit 3 and a message naming it · tests/config_specimens.rs @5f54a1e · by cli
 
 ## Needs #rules-tests

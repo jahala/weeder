@@ -1,0 +1,3 @@
+# What the agent may run without asking.
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
