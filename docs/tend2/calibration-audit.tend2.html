@@ -15,8 +15,8 @@
 This loop's pleach node is cast to a provider other than the one that built calibration (`plans/cast.json`), so the party classifying differs from the builder in vendor as well as session. The work order is the sample and the definitions: true positive (the rule fired on the shape it names), acceptable (the shape is there and a maintainer would want to know, even if the commit was right to merge), false positive (the rule fired on something that is not its shape). `scripts/check/calibration-agreement.sh` draws the sample by a seeded shuffle recorded in the audit file, so the sample is reproducible, and computes agreement from the two files.
 
 ## Tests
-- [ ] (code) `docs/calibration-audit-2026-09.md` carries an independent re-classification of a seeded random sample of at least twenty blocked commits and at least twenty recall cases, each with the auditor's verdict and one line of reasoning, and names the provider that produced it · scripts/check/calibration-agreement.sh
-- [ ] (code) agreement between the audit and the original classification is at or above 90 percent on each sample, or the calibration file's first sentence says the classification is untrusted · scripts/check/calibration-agreement.sh
+- [x] (code) `docs/calibration-audit-2026-09.md` carries an independent re-classification of a seeded random sample of at least twenty blocked commits and at least twenty recall cases, each with the auditor's verdict and one line of reasoning, and names the provider that produced it · scripts/check/calibration-agreement.sh @068ee73 · by cli
+- [x] (code) agreement between the audit and the original classification is at or above 90 percent on each sample, or the calibration file's first sentence says the classification is untrusted · scripts/check/calibration-agreement.sh @a2425fb · by cli
 
 ## Needs #calibration #recall
 
