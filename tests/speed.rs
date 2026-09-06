@@ -77,6 +77,9 @@ const HUGE: usize = 20 * 1024 * 1024;
 
 /// How many times a case is timed. One run measures the machine's mood as much
 /// as the binary; the middle of five measures the binary.
+/// How many runs the warm-up may take before the timed samples are taken
+/// regardless: a machine that never settles is measured as it is.
+const WARM_UP_BOUND: usize = 8;
 const SAMPLES: usize = 5;
 
 /// The fixtures an ordinary change is measured on: one per language, each a
@@ -157,7 +160,30 @@ fn once(repo: &Repo, binary: &Path, arguments: &[&str]) -> Duration {
 /// The middle of `SAMPLES` timed runs, after one that is thrown away so the
 /// first read of the tree is not the one being measured.
 fn median(case: &str, repo: &Repo, binary: &Path, arguments: &[&str]) -> Duration {
-    let _ = once(repo, binary, arguments);
+    // The budget is the binary's cost at steady state, not the machine's first
+    // minute. A shared runner has shown three runs at twice the settled time
+    // before it settles, so the warm-up runs until three in a row agree within
+    // a tenth, up to a bound, and only then are the timed samples taken.
+    let mut warm: Vec<Duration> = Vec::new();
+    for _ in 0..WARM_UP_BOUND {
+        warm.push(once(repo, binary, arguments));
+        if let [a, b, c] = warm[warm.len().saturating_sub(3)..] {
+            let (low, high) = (
+                [a, b, c].iter().min().copied(),
+                [a, b, c].iter().max().copied(),
+            );
+            if let (Some(low), Some(high)) = (low, high) {
+                if warm.len() >= 3 && high.as_millis() * 10 <= low.as_millis() * 11 {
+                    break;
+                }
+            }
+        }
+    }
+    let warmed: Vec<String> = warm
+        .iter()
+        .map(|each| format!("{}ms", each.as_millis()))
+        .collect();
+    println!("{case} warm-up: {}", warmed.join(" "));
     let mut taken: Vec<Duration> = (0..SAMPLES)
         .map(|_| once(repo, binary, arguments))
         .collect();
