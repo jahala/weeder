@@ -17,6 +17,10 @@
 //! so the assertion is on the median of a handful of runs, and the numbers
 //! behind it are on screen when it fails.
 
+// In a debug build the budget tests are absent, so what serves them is unused
+// by design rather than by accident.
+#![cfg_attr(debug_assertions, allow(dead_code, unused_imports))]
+
 mod common;
 
 use std::path::{Path, PathBuf};
@@ -159,6 +163,10 @@ fn worst_case() -> Repo {
     repo
 }
 
+// The budget is measured where it counts, on the release profile, which CI runs
+// as its own job. A debug build times nothing: a wall-clock budget measured
+// twice on two shared runners is twice the noise for the same answer.
+#[cfg(not(debug_assertions))]
 #[test]
 fn an_ordinary_change_is_judged_in_under_two_hundred_milliseconds() {
     let binary = release_binary();
@@ -175,6 +183,10 @@ fn an_ordinary_change_is_judged_in_under_two_hundred_milliseconds() {
     }
 }
 
+// The budget is measured where it counts, on the release profile, which CI runs
+// as its own job. A debug build times nothing: a wall-clock budget measured
+// twice on two shared runners is twice the noise for the same answer.
+#[cfg(not(debug_assertions))]
 #[test]
 fn the_worst_change_anybody_stages_is_judged_in_under_two_seconds() {
     let binary = release_binary();
