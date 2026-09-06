@@ -1,6 +1,8 @@
 //! weed's own measurements, run from the workspace: `cargo xtask calibrate`
 //! judges real history and writes the calibration file, `cargo xtask
-//! suppressions` counts the allowances each repository wrote against its gate.
+//! suppressions` counts the allowances each repository wrote against its gate,
+//! and `cargo xtask mutate` plants one anti-pattern per case in that same
+//! history and writes the recall section of the same file.
 //!
 //! They are a workspace member rather than a script so they judge with the same
 //! core the binary ships. There is one diff walk in this repository, and it is
@@ -9,6 +11,7 @@
 mod calibrate;
 mod corpus;
 mod judgement;
+mod mutate;
 mod repo;
 mod report;
 mod suppressions;
@@ -37,6 +40,9 @@ enum Command {
     /// Count the `Weed-allow:` trailers each corpus repository wrote per hundred
     /// commits, from the day it installed guard.
     Suppressions(SuppressionsArgs),
+    /// Inject one anti-pattern per case into real commits of the corpus and
+    /// write down what weed caught.
+    Mutate(mutate::Request),
 }
 
 #[derive(Debug, Args)]
@@ -101,6 +107,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     match Cli::parse().command {
         Command::Calibrate(args) => run_calibrate(&args),
         Command::Suppressions(args) => run_suppressions(&args),
+        Command::Mutate(request) => Ok(mutate::run(&request)?),
     }
 }
 
@@ -128,11 +135,9 @@ fn run_calibrate(args: &CalibrateArgs) -> Result<(), Box<dyn Error>> {
         ledger: &ledger,
     };
     let outcome = report.outcome();
-    let out = args
-        .out
-        .clone()
-        .unwrap_or_else(|| root().join("docs/calibration-2026-09.md"));
-    write(&out, &report.render())?;
+    let canonical = root().join("docs/calibration-2026-09.md");
+    let out = args.out.clone().unwrap_or_else(|| canonical.clone());
+    write(&out, &with_recall(&report.render(), &canonical))?;
 
     if let Some(path) = &args.findings {
         write(path, &findings_json(&measurements))?;
@@ -207,6 +212,19 @@ fn root() -> PathBuf {
         .parent()
         .unwrap_or_else(|| Path::new("."))
         .to_path_buf()
+}
+
+/// The precision half with the recall half kept beneath it. `cargo xtask mutate`
+/// writes its section between markers in the calibration file and this
+/// measurement never reads a case of it; whatever section the file in the tree
+/// carries is carried again, so the two measurements share one file without
+/// either writing over the other.
+fn with_recall(rendered: &str, canonical: &Path) -> String {
+    let existing = std::fs::read_to_string(canonical).unwrap_or_default();
+    match mutate::recall_section(&existing) {
+        Some(section) => format!("{rendered}\n{section}\n"),
+        None => rendered.to_string(),
+    }
 }
 
 fn write(path: &Path, content: &str) -> Result<(), Box<dyn Error>> {
