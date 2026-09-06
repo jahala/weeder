@@ -1,9 +1,16 @@
-//! The repositories the measurements read, and where they are.
+//! The repositories the measurements read, and the commit each one is pinned at.
 //!
-//! A corpus is a list of checkouts on the machine running the measurement, so it
-//! is data rather than code: `docs/calibration/corpus.toml` names them, and
-//! `--repo <name>=<path>` on the command line overrides or adds one, which is
-//! what lets the suites run against a repository they built themselves.
+//! A corpus is data rather than code: `docs/calibration/corpus.toml` names each
+//! repository by something `git fetch` can read and by the full sha its window
+//! ends at, and `--corpus <path>` reads a different file instead, which is what
+//! lets the suites judge a history they built themselves without naming any
+//! repository this one ships.
+//!
+//! The pin is the whole point. A source keeps moving, and a report measured
+//! against "whatever the branch says today" is a different report every day; a
+//! report measured against a sha is the same report until somebody edits this
+//! file. Nothing here names a directory on the machine running the measurement,
+//! so the corpus is fetchable from anywhere the sources are.
 
 use std::path::{Path, PathBuf};
 
@@ -14,8 +21,21 @@ use serde::Deserialize;
 pub struct Repo {
     /// The name the report and the ledger key on.
     pub name: String,
-    /// The checkout the measurement reads. It is never written to.
-    pub path: PathBuf,
+    /// Where the history is fetched from: a url, or any other thing `git fetch`
+    /// takes. It is only ever read.
+    pub source: String,
+    /// The commit the window ends at, as a full forty-character sha.
+    pub tip: String,
+}
+
+impl Repo {
+    /// Where this source sits on the machine running the measurement, where it
+    /// sits on one at all. A url has no path, and a fetch from it cannot write
+    /// to anything; a path can be disturbed, so it is fingerprinted.
+    pub fn local(&self) -> Option<PathBuf> {
+        let path = PathBuf::from(&self.source);
+        (path.join(".git").exists() || path.join("HEAD").exists()).then_some(path)
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -26,7 +46,8 @@ struct RawCorpus {
 #[derive(Debug, Deserialize)]
 struct RawRepo {
     name: String,
-    path: String,
+    source: String,
+    tip: String,
 }
 
 /// What a corpus could not be read as.
@@ -34,8 +55,7 @@ struct RawRepo {
 pub enum CorpusError {
     Unreadable { path: PathBuf, message: String },
     Malformed { path: PathBuf, message: String },
-    Override(String),
-    Missing { name: String, path: PathBuf },
+    Tip { name: String, tip: String },
     Empty,
 }
 
@@ -49,17 +69,12 @@ impl std::fmt::Display for CorpusError {
             ),
             CorpusError::Malformed { path, message } => write!(
                 formatter,
-                "the corpus at {} is not valid: {message}. every entry is a [[repo]] with a name and a path.",
+                "the corpus at {} is not valid: {message}. every entry is a [[repo]] with a name, a source and a tip.",
                 path.display()
             ),
-            CorpusError::Override(given) => write!(
+            CorpusError::Tip { name, tip } => write!(
                 formatter,
-                "--repo takes <name>=<path>, and this one is `{given}`. name the repository and where it sits."
-            ),
-            CorpusError::Missing { name, path } => write!(
-                formatter,
-                "the corpus names {name} at {}, and there is no git repository there. point it at a checkout, or take the entry out.",
-                path.display()
+                "{name} is pinned at `{tip}`, which is not a full forty-character sha. an abbreviation can come to mean a second commit, so the pin is written out."
             ),
             CorpusError::Empty => write!(
                 formatter,
@@ -71,10 +86,10 @@ impl std::fmt::Display for CorpusError {
 
 impl std::error::Error for CorpusError {}
 
-/// Read the corpus file, apply the overrides, and refuse a repository that is
-/// not there: a calibration that quietly judged four repositories where five
-/// were named would read as a calibration of five.
-pub fn read(path: &Path, overrides: &[String]) -> Result<Vec<Repo>, CorpusError> {
+/// Read the corpus file. A pin that is not a full sha is refused here rather
+/// than at the fetch: the message is about the file the reader can fix, not
+/// about what git said afterwards.
+pub fn read(path: &Path) -> Result<Vec<Repo>, CorpusError> {
     let text = std::fs::read_to_string(path).map_err(|error| CorpusError::Unreadable {
         path: path.to_path_buf(),
         message: error.to_string(),
@@ -83,44 +98,32 @@ pub fn read(path: &Path, overrides: &[String]) -> Result<Vec<Repo>, CorpusError>
         path: path.to_path_buf(),
         message: error.message().to_string(),
     })?;
-    let mut repos: Vec<Repo> = raw
+    let repos: Vec<Repo> = raw
         .repo
         .into_iter()
         .map(|repo| Repo {
             name: repo.name,
-            path: PathBuf::from(repo.path),
+            source: repo.source,
+            tip: repo.tip,
         })
         .collect();
-
-    for given in overrides {
-        let (name, path) = given
-            .split_once('=')
-            .ok_or_else(|| CorpusError::Override(given.clone()))?;
-        if name.is_empty() || path.is_empty() {
-            return Err(CorpusError::Override(given.clone()));
-        }
-        let replacement = Repo {
-            name: name.to_string(),
-            path: PathBuf::from(path),
-        };
-        match repos.iter().position(|repo| repo.name == name) {
-            Some(at) => repos[at] = replacement,
-            None => repos.push(replacement),
-        }
-    }
 
     if repos.is_empty() {
         return Err(CorpusError::Empty);
     }
     for repo in &repos {
-        if !repo.path.join(".git").exists() && !repo.path.join("HEAD").exists() {
-            return Err(CorpusError::Missing {
+        if !is_full_sha(&repo.tip) {
+            return Err(CorpusError::Tip {
                 name: repo.name.clone(),
-                path: repo.path.clone(),
+                tip: repo.tip.clone(),
             });
         }
     }
     Ok(repos)
+}
+
+fn is_full_sha(tip: &str) -> bool {
+    tip.len() == 40 && tip.chars().all(|character| character.is_ascii_hexdigit())
 }
 
 /// The corpus a run reads when no other path is given.

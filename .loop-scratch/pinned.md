@@ -2,13 +2,13 @@
 
 weed ships as a gate, pending the independent re-grade: over 635 commits of real history in 5 repositories it blocked 25, of which 2 were block-level false positives, 0.31 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level.
 
-The classification under that number is the builder's own, and docs/calibration-audit-2026-09.md is not written yet, so nobody outside this run has read the classifications back. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing.
+The classification under that number is the builder's own, and /Users/jahala/conductor/repos/weed/.git/worktrees/bandung/pleach/worktrees/wt-wlZOzk/wt/docs/calibration-audit-2026-09.md is not written yet, so nobody outside this run has read the classifications back. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws, and this sentence is written from that file rather than typed into this one.
 
 ## How this was measured
 
 `cargo xtask calibrate` takes the last 200 commits ending at the commit `docs/calibration/corpus.toml` pins each repository at, and judges each one against its first parent with the same `check` face the binary runs: `weed check --base <parent> --strict`, read back as SARIF. A history with fewer commits contributes all of them, and a repository judged on fewer than 50 commits is reported rather than judged on its own share.
 
-The corpus names each repository by a source `git fetch` can read and by the full sha its window ends at. The pin is what a reader can hold this file to: a commit pushed to any of these repositories after the pin falls outside the window and cannot move a number here, and the same corpus judges the same history on a machine that has never seen any of these repositories. Moving a pin is an edit to that file, and the run that follows it is a new measurement.
+The corpus names each repository by a source `git fetch` can read and by the full sha its window ends at. The pin is what makes this file a measurement rather than a snapshot: a commit pushed to any of these repositories after the pin is not in the window and cannot move a number here, and the same corpus judges the same history on a machine that has never seen any of these repositories. Moving a pin is an edit to that file, and the run that follows it is a new measurement.
 
 A merge commit is left out of the window. It carries no change of its own, and the commits it brings are in the same window, so judging it as well would weigh one change twice. A root commit is left out too: this measurement judges commits against their parents, and a root has none.
 
@@ -71,7 +71,7 @@ The window ends at `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9`, fetched from `htt
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
-| `624529b3a9` feat(loop): the hygiene gate — empty-diff, secrets, deletion tripwire (§E) | X1 | acceptable | the hygiene gate lands its own secret patterns and the fixtures that exercise them, including AWS's documented AKIAIOSFODNN7EXAMPLE. A credential-shaped literal really was added and no scanner can tell a fixture from a live key, so the block is the rule working and the remedy is an allowance. The finding on hygiene.ts:27 is weaker: that line is the regular expression describing a private key block, not a key. |
+| `624529b3a9` feat(loop): the hygiene gate — empty-diff, secrets, deletion tripwire (§E) | X1 | acceptable | the hygiene gate lands its own secret patterns and the fixtures that exercise them, including AWS's documented <redacted-aws-key-id>. A credential-shaped literal really was added and no scanner can tell a fixture from a live key, so the block is the rule working and the remedy is an allowance. The finding on hygiene.ts:27 is weaker: that line is the regular expression describing a private key block, not a key. |
 
 ## tend2, 200 commits judged, 6 blocked, 22 warned
 
@@ -124,7 +124,7 @@ Too few commits to carry a share of their own, reported and not judged alone: co
 
 ## What the rules moved since the first run
 
-A rule that splits in two is supposed to take friction off the gate while keeping the finding. Until the same files are read twice that is a claim. Every file whose answer changed is here with the rule that refused it, the kind weed gives the file, and the loudest thing weed says about it now.
+A rule that splits in two is supposed to take friction off the gate without taking the finding away, which is a claim and not a fact until the same files are read twice. Every file whose answer changed is here with the rule that refused it, the kind weed gives the file, and the loudest thing weed says about it now.
 
 200 of the first run's block-level findings are refused by the same rule at the same level and are left out of this table; the 132 whose answer changed are all in it.
 

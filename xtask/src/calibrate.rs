@@ -5,6 +5,7 @@
 //! same SARIF a pull request would upload. Nothing here decides whether a block
 //! was right, that is the ledger's half; this half only counts.
 
+use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 use std::path::Path;
 
@@ -14,8 +15,8 @@ use weed::faces::{check, Format};
 use crate::corpus::Repo;
 use crate::repo::{fingerprint, Scratch};
 
-/// The window the loop names: up to the last two hundred commits of the default
-/// branch. A branch with fewer contributes all of them.
+/// The window the loop names: up to the last two hundred commits ending at the
+/// commit the corpus pins. A history with fewer contributes all of them.
 pub const WINDOW: usize = 200;
 
 /// Below this many commits judged, a repository is reported and not judged on
@@ -55,8 +56,10 @@ pub struct Refusal {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RepoMeasurement {
     pub name: String,
-    /// The ref the window was taken from: the default branch its upstream names.
-    pub reference: String,
+    /// Where the history was fetched from, as the corpus names it.
+    pub source: String,
+    /// The commit the window ends at, as the corpus pins it.
+    pub tip: String,
     /// How many commits the window held before the roots were set aside.
     pub window: usize,
     pub judged: usize,
@@ -69,6 +72,10 @@ pub struct RepoMeasurement {
     /// How many judged commits carried a `weed.toml` of their own. Where this is
     /// zero, every rule ran at its catalogue level.
     pub configured: usize,
+    /// Every finding on the commits an earlier run recorded, blocked or not, so
+    /// the two runs can be set against each other file by file instead of in
+    /// totals.
+    pub recorded: BTreeMap<String, Vec<Finding>>,
 }
 
 impl RepoMeasurement {
@@ -85,14 +92,20 @@ pub fn measure(
     repo: &Repo,
     scratch_parent: &Path,
     limit: usize,
+    recorded: &BTreeSet<String>,
 ) -> Result<RepoMeasurement, Box<dyn Error>> {
-    let before = fingerprint(&repo.path)?;
-    let measurement = walk(repo, scratch_parent, limit);
-    let after = fingerprint(&repo.path)?;
+    let Some(local) = repo.local() else {
+        // A url is read over upload-pack, which hands objects out and takes
+        // nothing in. There is nothing on this machine for the run to disturb.
+        return walk(repo, scratch_parent, limit, recorded);
+    };
+    let before = fingerprint(&local)?;
+    let measurement = walk(repo, scratch_parent, limit, recorded);
+    let after = fingerprint(&local)?;
     if before != after {
         return Err(format!(
             "{} changed while it was being read, so the measurement is not of the history it names. run the calibration on a checkout nothing else is working in.",
-            repo.path.display()
+            local.display()
         )
         .into());
     }
@@ -103,14 +116,15 @@ fn walk(
     repo: &Repo,
     scratch_parent: &Path,
     limit: usize,
+    recorded: &BTreeSet<String>,
 ) -> Result<RepoMeasurement, Box<dyn Error>> {
-    let scratch = Scratch::fetch(scratch_parent, &repo.name, &repo.path)?;
-    let reference = crate::repo::default_ref(&repo.path)?;
+    let scratch = Scratch::fetch(scratch_parent, &repo.name, &repo.source, &repo.tip)?;
     let window = scratch.window(limit)?;
 
     let mut measurement = RepoMeasurement {
         name: repo.name.clone(),
-        reference,
+        source: repo.source.clone(),
+        tip: repo.tip.clone(),
         window: window.len(),
         judged: 0,
         blocked: Vec::new(),
@@ -119,6 +133,7 @@ fn walk(
         roots: 0,
         refusals: Vec::new(),
         configured: 0,
+        recorded: BTreeMap::new(),
     };
 
     for sha in &window {
@@ -161,6 +176,10 @@ fn walk(
                 reason: answer.stderr.join(" "),
             });
             continue;
+        }
+
+        if recorded.contains(sha) {
+            measurement.recorded.insert(sha.clone(), findings.clone());
         }
 
         let mut rules: Vec<String> = findings
