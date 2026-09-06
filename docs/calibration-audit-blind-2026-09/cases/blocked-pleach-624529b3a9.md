@@ -30,11 +30,11 @@ index 0000000..8f0a5b0
 --- /dev/null
 +++ b/src/core/hygiene.ts
 @@ -0,0 +1,102 @@
-+// The hygiene gate (§E), pure scans over the staged diff, run after scoped
++// The hygiene gate (§E) — pure scans over the staged diff, run after scoped
 +// staging and before smoke. Three detectors, three real incident classes:
 +// "verified but did nothing" (empty-diff on agent work), "verified but
 +// leaking" (credentials in added lines), "verified but destructive" (a file
-+// mostly deleted without the worker saying so). High precision over recall , 
++// mostly deleted without the worker saying so). High precision over recall —
 +// a noisy gate gets disabled by its users, which is worse than a narrow one.
 +// All failures are retryable with evidence; run-node owns routing.
 +
@@ -52,7 +52,7 @@ index 0000000..8f0a5b0
 +}
 +
 +// ~12 high-signal patterns. Precision over recall: each of these is a
-+// near-certain credential, not a maybe. Scanned over ADDED lines only , 
++// near-certain credential, not a maybe. Scanned over ADDED lines only —
 +// removing a secret must never be punished.
 +const SECRET_PATTERNS: readonly [RegExp, string][] = [
 +  [/AKIA[0-9A-Z]{16}/, 'AWS access key id'],
@@ -73,21 +73,21 @@ index 0000000..8f0a5b0
 +];
 +
 +const DELETION_PCT = 0.5;
-+const DELETION_FLOOR = 100; // lines, both thresholds must trip
++const DELETION_FLOOR = 100; // lines — both thresholds must trip
 +
 +export function checkDiffHygiene(input: HygieneInput): HygieneFailure | null {
-+  // 1, empty-diff attribution: agent work that claims done on nothing.
++  // 1 — empty-diff attribution: agent work that claims done on nothing.
 +  // Command work may legitimately be effect-free (probes, verifications).
 +  if (input.workKind !== 'command' && input.stagedFiles.length === 0) {
 +    return {
 +      kind: 'empty-diff',
 +      evidence:
-+        'your attempt produced no changes, an agent node cannot claim done on nothing. ' +
++        'your attempt produced no changes — an agent node cannot claim done on nothing. ' +
 +        'If no change is needed, run the gate so its stamp lands in your diff.',
 +    };
 +  }
 +
-+  // 2, secrets in ADDED lines, attributed to their file via the diff headers.
++  // 2 — secrets in ADDED lines, attributed to their file via the diff headers.
 +  let currentFile = '?';
 +  for (const line of input.diff.split('\n')) {
 +    if (line.startsWith('+++ b/')) {
@@ -100,7 +100,7 @@ index 0000000..8f0a5b0
 +        return {
 +          kind: 'secret',
 +          evidence:
-+            `${label} detected in ${currentFile}, remove the credential and reference it ` +
++            `${label} detected in ${currentFile} — remove the credential and reference it ` +
 +            `via an environment variable or secret store instead; committed secrets are ` +
 +            `compromised the moment they land.`,
 +        };
@@ -108,7 +108,7 @@ index 0000000..8f0a5b0
 +    }
 +  }
 +
-+  // 3, the deletion tripwire: one file losing most of itself, in bulk,
++  // 3 — the deletion tripwire: one file losing most of itself, in bulk,
 +  // without the worker saying so. The escape is deterministic: re-state the
 +  // deletion in the final message (any mention of the file alongside a
 +  // deletion word) and the wire passes.
@@ -123,7 +123,7 @@ index 0000000..8f0a5b0
 +          kind: 'deletion',
 +          evidence:
 +            `${n.file} loses ${n.deleted} lines (${Math.round((n.deleted / total) * 100)}% of ` +
-+            `its diff), if intentional, re-state it in your final message naming the file ` +
++            `its diff) — if intentional, re-state it in your final message naming the file ` +
 +            `and the deletion; unexplained bulk deletion does not publish.`,
 +        };
 +      }
@@ -138,13 +138,13 @@ index 3149684..3810c0c 100644
 +++ b/src/loop/deps.ts
 @@ -44,6 +44,10 @@ export interface IsolateSeam {
    scanMarkers(cwd: string): Promise<string[]>;
-   // Scoped staging, only the given paths, never `git add -A` (ledger S1).
+   // Scoped staging — only the given paths, never `git add -A` (ledger S1).
    stage(cwd: string, files: readonly string[]): Promise<void>;
-+  // The staged diff's text and per-file numstat, the hygiene gate's raw
++  // The staged diff's text and per-file numstat — the hygiene gate's raw
 +  // material (§E). Read-only; called after scoped staging.
 +  stagedDiff(cwd: string): Promise<string>;
 +  stagedNumstat(cwd: string): Promise<{ file: string; added: number; deleted: number }[]>;
-   // Paths (relative) with uncommitted changes, tracked modifications plus
+   // Paths (relative) with uncommitted changes — tracked modifications plus
    // untracked-unignored files. The loop's staging fallback when the worker
    // manifest is unavailable; combined with never re-staging at commit time it
 diff --git a/src/loop/run-node.ts b/src/loop/run-node.ts
@@ -187,7 +187,7 @@ index 9263eba..50ced64 100644
 +          );
 +          if (settle) return handBack(settle);
 +          evidence = hygiene.evidence;
-+          continue; // retryable, SAME tree; the worker can fix its diff
++          continue; // retryable — SAME tree; the worker can fix its diff
 +        }
 +      }
 +
@@ -228,7 +228,7 @@ index 2642ecd..7465e16 100644
 +      if (parts.length < 3) continue;
 +      const added = Number(parts[0]);
 +      const deleted = Number(parts[1]);
-+      // Binary files report '-': skip, the text detectors have nothing to read.
++      // Binary files report '-': skip — the text detectors have nothing to read.
 +      if (!Number.isFinite(added) || !Number.isFinite(deleted)) continue;
 +      out.push({ file: parts.slice(2).join('\t'), added, deleted });
 +    }
@@ -277,7 +277,7 @@ index 3f246bc..c88ca34 100644
 +  stagedDiffByNode?: Record<string, string>;
 +  stagedNumstatByNode?: Record<string, { file: string; added: number; deleted: number }[]>;
    // Branches whose commitBranch refuses like real git's checked-out-branch
-   // guard (exit 128 'used by worktree'), the #12 quarantine-collision seam.
+   // guard (exit 128 'used by worktree') — the #12 quarantine-collision seam.
    commitBranchBusy?: (branch: string) => boolean;
 @@ -195,8 +201,18 @@ export function makeHarness(opts: HarnessOpts = {}): Harness {
        }
@@ -285,7 +285,7 @@ index 3f246bc..c88ca34 100644
        const conflictFiles = opts.conflicts?.[node.id] ?? [];
 -      if ((opts.changedByNode?.[node.id] ?? []).length > 0) {
 -        git.changed.set(cwd, [...(opts.changedByNode?.[node.id] ?? [])]);
-+      // Workers produce something by default (a realistic tree, the hygiene
++      // Workers produce something by default (a realistic tree — the hygiene
 +      // gate's empty-diff rule is doctrine now); pass an explicit [] to model
 +      // an agent that claims done on nothing.
 +      const produced = opts.changedByNode?.[node.id] ?? ['work.out'];
@@ -319,7 +319,7 @@ index 0000000..8c2424b
 --- /dev/null
 +++ b/test/loop/hygiene-gate.test.ts
 @@ -0,0 +1,68 @@
-+// §E in the ladder: hygiene runs after scoped staging, before smoke , 
++// §E in the ladder: hygiene runs after scoped staging, before smoke —
 +// retryable with evidence, terminal failure quarantines, command nodes exempt
 +// from empty-diff. In-memory seams; the harness exposes stagedDiff/numstat
 +// injection per node.
@@ -391,7 +391,7 @@ diff --git a/test/loop/quarantine.test.ts b/test/loop/quarantine.test.ts
 index 72f374e..7ea79e5 100644
 --- a/test/loop/quarantine.test.ts
 +++ b/test/loop/quarantine.test.ts
-@@ -47,6 +47,7 @@ describe('quarantine, failed work is preserved before dispose', () => {
+@@ -47,6 +47,7 @@ describe('quarantine — failed work is preserved before dispose', () => {
  
    test('a failed node with an unchanged tree quarantines nothing', async () => {
      const h = makeHarness({
@@ -405,7 +405,7 @@ index 0000000..57c91f1
 --- /dev/null
 +++ b/test/unit/hygiene.test.ts
 @@ -0,0 +1,121 @@
-+// Adoption ladder §E, the hygiene gate's pure detectors. Two real incident
++// Adoption ladder §E — the hygiene gate's pure detectors. Two real incident
 +// classes from Bernstein's archive ("verified but did nothing", "verified but
 +// destructive") plus the credential class every public repo fears. High
 +// precision over recall: a noisy gate gets disabled by its users, which is

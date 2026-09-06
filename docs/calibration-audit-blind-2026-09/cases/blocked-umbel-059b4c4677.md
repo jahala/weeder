@@ -32,7 +32,7 @@ index f482bd2..acf0845 100644
  ```
  
 -For Codex/Gemini, the provider also writes config files into the worker's `cwd` (`<cwd>/.codex/hooks.json`, `<cwd>/.gemini/settings.json`). Absolute paths are recorded in `meta.providerFiles` so `kill` can clean up.
-+For Gemini, the provider writes `<cwd>/.gemini/settings.json` into the worker's `cwd` (absolute path recorded in `meta.providerFiles` so `kill` cleans up). Codex instead uses a shared, rctrl-managed `$CODEX_HOME` (`$RCTRL_STATE/codex-home`), see Provider-specific surfaces, so nothing is written into the worker's cwd.
++For Gemini, the provider writes `<cwd>/.gemini/settings.json` into the worker's `cwd` (absolute path recorded in `meta.providerFiles` so `kill` cleans up). Codex instead uses a shared, rctrl-managed `$CODEX_HOME` (`$RCTRL_STATE/codex-home`) — see Provider-specific surfaces — so nothing is written into the worker's cwd.
  
  A session named `foo` lives in tmux as `rctrl-foo`. Anonymous sessions get `anon-XXXXXX`, killed on exit.
  
@@ -40,17 +40,17 @@ index f482bd2..acf0845 100644
  
  Liveness fallback: a worker can die mid-turn (crash / non-zero exit) without ever firing the hook, so `events/stop` would never advance. `waitFor` polls `tmux has-session` and, when the session vanishes with the condition still unmet, returns `reason: 'dead'` instead of blocking until the timeout (previously a 30-min hang). The real condition is always evaluated *before* the liveness probe, so a turn that fired stop and then exited still resolves as `stop`.
  
--Needs-input detection (the inverse keystone): a worker blocked on a prompt (a permission ask, or idle) is *alive* and has *not* fired stop, so it would hang to the timeout. A second global hook `notify.sh` (`NOTIFY_HOOK_SCRIPT`) touches `events/notification` on those events; `waitFor` watches it and settles `reason: 'input'` with the prompt message, so the caller can `send` an answer and `wait` again, the ping. Each provider registers its equivalent, all verified against the installed binary: Claude `Notification` (`permission_prompt` + `idle_prompt` in `buildSettingsJson`), Codex `PermissionRequest` (`.codex/hooks.json`), Gemini `Notification`/`ToolPermission` (`.gemini/settings.json`), OpenCode `permission.updated` (plugin event, `permission.asked` is v2-only). The opt-in pane-activity idle net (`waitFor`'s `idleTimeoutMs` → `reason: 'idle'`) is the universal backstop for a flaky or missing hook (none of the four exposes an *idle* event). `events/notification` is append-only JSONL (one line per hook fire); `core/notification.ts` classifies the latest line, so `rctrl_status` exposes `needsInput` + `needsInputReason` (permission/idle/question) + `pendingTool` (and `rctrl status --json` serves non-MCP watchers), disambiguating a worker blocked on a prompt from one that's merely done-and-idle. `waitFor` settles `reason: 'input'` only for awaiting types; informational pings (`auth_success`, elicitation completion) are ignored. A per-worker reliability primitive, orchestration stays with the caller.
-+Needs-input detection (the inverse keystone): a worker blocked on a prompt (a permission ask, or idle) is *alive* and has *not* fired stop, so it would hang to the timeout. A second global hook `notify.sh` (`NOTIFY_HOOK_SCRIPT`) touches `events/notification` on those events; `waitFor` watches it and settles `reason: 'input'` with the prompt message, so the caller can `send` an answer and `wait` again, the ping. Each provider registers its equivalent, all verified against the installed binary: Claude `Notification` (`permission_prompt` + `idle_prompt` in `buildSettingsJson`), Codex `PermissionRequest` (in the global `$CODEX_HOME/hooks.json`), Gemini `Notification`/`ToolPermission` (`.gemini/settings.json`), OpenCode `permission.updated` (plugin event, `permission.asked` is v2-only). The opt-in pane-activity idle net (`waitFor`'s `idleTimeoutMs` → `reason: 'idle'`) is the universal backstop for a flaky or missing hook (none of the four exposes an *idle* event). `events/notification` is append-only JSONL (one line per hook fire); `core/notification.ts` classifies the latest line, so `rctrl_status` exposes `needsInput` + `needsInputReason` (permission/idle/question) + `pendingTool` (and `rctrl status --json` serves non-MCP watchers), disambiguating a worker blocked on a prompt from one that's merely done-and-idle. `waitFor` settles `reason: 'input'` only for awaiting types; informational pings (`auth_success`, elicitation completion) are ignored. A per-worker reliability primitive, orchestration stays with the caller.
+-Needs-input detection (the inverse keystone): a worker blocked on a prompt (a permission ask, or idle) is *alive* and has *not* fired stop, so it would hang to the timeout. A second global hook `notify.sh` (`NOTIFY_HOOK_SCRIPT`) touches `events/notification` on those events; `waitFor` watches it and settles `reason: 'input'` with the prompt message, so the caller can `send` an answer and `wait` again — the ping. Each provider registers its equivalent, all verified against the installed binary: Claude `Notification` (`permission_prompt` + `idle_prompt` in `buildSettingsJson`), Codex `PermissionRequest` (`.codex/hooks.json`), Gemini `Notification`/`ToolPermission` (`.gemini/settings.json`), OpenCode `permission.updated` (plugin event — `permission.asked` is v2-only). The opt-in pane-activity idle net (`waitFor`'s `idleTimeoutMs` → `reason: 'idle'`) is the universal backstop for a flaky or missing hook (none of the four exposes an *idle* event). `events/notification` is append-only JSONL (one line per hook fire); `core/notification.ts` classifies the latest line, so `rctrl_status` exposes `needsInput` + `needsInputReason` (permission/idle/question) + `pendingTool` (and `rctrl status --json` serves non-MCP watchers) — disambiguating a worker blocked on a prompt from one that's merely done-and-idle. `waitFor` settles `reason: 'input'` only for awaiting types; informational pings (`auth_success`, elicitation completion) are ignored. A per-worker reliability primitive — orchestration stays with the caller.
++Needs-input detection (the inverse keystone): a worker blocked on a prompt (a permission ask, or idle) is *alive* and has *not* fired stop, so it would hang to the timeout. A second global hook `notify.sh` (`NOTIFY_HOOK_SCRIPT`) touches `events/notification` on those events; `waitFor` watches it and settles `reason: 'input'` with the prompt message, so the caller can `send` an answer and `wait` again — the ping. Each provider registers its equivalent, all verified against the installed binary: Claude `Notification` (`permission_prompt` + `idle_prompt` in `buildSettingsJson`), Codex `PermissionRequest` (in the global `$CODEX_HOME/hooks.json`), Gemini `Notification`/`ToolPermission` (`.gemini/settings.json`), OpenCode `permission.updated` (plugin event — `permission.asked` is v2-only). The opt-in pane-activity idle net (`waitFor`'s `idleTimeoutMs` → `reason: 'idle'`) is the universal backstop for a flaky or missing hook (none of the four exposes an *idle* event). `events/notification` is append-only JSONL (one line per hook fire); `core/notification.ts` classifies the latest line, so `rctrl_status` exposes `needsInput` + `needsInputReason` (permission/idle/question) + `pendingTool` (and `rctrl status --json` serves non-MCP watchers) — disambiguating a worker blocked on a prompt from one that's merely done-and-idle. `waitFor` settles `reason: 'input'` only for awaiting types; informational pings (`auth_success`, elicitation completion) are ignored. A per-worker reliability primitive — orchestration stays with the caller.
  
  ## Provider-specific surfaces
  
 @@ -95,9 +95,9 @@ Each provider lives in `src/core/providers/<name>.ts` and contributes a `buildLa
- - Custom endpoints (DeepSeek, OpenRouter, local) are reached by the worker's `env` (`ANTHROPIC_BASE_URL` + `ANTHROPIC_AUTH_TOKEN` + `ANTHROPIC_MODEL`), not a new provider, same binary, same hooks. Don't add per-endpoint providers; it's an env concern. Recipe in `docs/cli-reference.md`.
+ - Custom endpoints (DeepSeek, OpenRouter, local) are reached by the worker's `env` (`ANTHROPIC_BASE_URL` + `ANTHROPIC_AUTH_TOKEN` + `ANTHROPIC_MODEL`), not a new provider — same binary, same hooks. Don't add per-endpoint providers; it's an env concern. Recipe in `docs/cli-reference.md`.
  
  **Codex** (`codex`)
 -- Hook config delivered via `<cwd>/.codex/hooks.json` (no inline-flag equivalent yet).
-+- Hooks delivered via a global `$CODEX_HOME/hooks.json` in an rctrl-managed home (`$RCTRL_STATE/codex-home`), NOT `<cwd>/.codex/hooks.json`, codex silently ignores project hooks inside linked git worktrees (root cause + proof: `docs/codex-worktree-hooks.md`). The worker's `CODEX_HOME` is set to that home (reserved launch env, wins over `--env`); `auth.json` is symlinked from the user's real CODEX_HOME (no secret copy) and `config.toml` copied once (carries model/endpoint/MCP, isolated from the user's global trust). Shared across workers, set up idempotently, never written into the user's cwd or cleaned on kill.
++- Hooks delivered via a global `$CODEX_HOME/hooks.json` in an rctrl-managed home (`$RCTRL_STATE/codex-home`), NOT `<cwd>/.codex/hooks.json` — codex silently ignores project hooks inside linked git worktrees (root cause + proof: `docs/codex-worktree-hooks.md`). The worker's `CODEX_HOME` is set to that home (reserved launch env — wins over `--env`); `auth.json` is symlinked from the user's real CODEX_HOME (no secret copy) and `config.toml` copied once (carries model/endpoint/MCP, isolated from the user's global trust). Shared across workers, set up idempotently, never written into the user's cwd or cleaned on kill.
  - `stopEventName: 'Stop'`. Transcript may be `null` per Codex docs; rctrl falls back to dir-snapshot.
 -- Known hazard: rctrl overwrites any pre-existing `<cwd>/.codex/hooks.json`. v4 plan is `CODEX_HOME`-style out-of-cwd config.
 +- rctrl's startup dialogs trust the global hooks on first use (codex's "Hooks need review" → "Trust all and continue").
@@ -61,30 +61,30 @@ diff --git a/docs/architecture-v3.md b/docs/architecture-v3.md
 index ce15735..90dfd21 100644
 --- a/docs/architecture-v3.md
 +++ b/docs/architecture-v3.md
-@@ -120,8 +120,8 @@ The Stop hook script stays generic, it captures `transcript_path` from stdin
- - Custom endpoints: pointing `ANTHROPIC_BASE_URL`/`AUTH_TOKEN`/`MODEL` (via the env passthrough) at any Anthropic-compatible API (DeepSeek, OpenRouter, local) runs that model under Claude Code's harness, the **second** model-agnostic lane alongside OpenCode, API-billed not subscription. Not a new provider: same binary, hooks, transcript.
+@@ -120,8 +120,8 @@ The Stop hook script stays generic — it captures `transcript_path` from stdin
+ - Custom endpoints: pointing `ANTHROPIC_BASE_URL`/`AUTH_TOKEN`/`MODEL` (via the env passthrough) at any Anthropic-compatible API (DeepSeek, OpenRouter, local) runs that model under Claude Code's harness — the **second** model-agnostic lane alongside OpenCode, API-billed not subscription. Not a new provider: same binary, hooks, transcript.
  
  ### CodexProvider (`src/core/providers/codex.ts`)
 -- `buildLaunch` → writes `<cwd>/.codex/hooks.json` referencing our stop.sh
--- `files: [{ path: '.codex/hooks.json', content: hooksJsonStr }]`, operations layer cleans up on kill
+-- `files: [{ path: '.codex/hooks.json', content: hooksJsonStr }]` — operations layer cleans up on kill
 +- `buildLaunch` → declares a global `$CODEX_HOME/hooks.json` (referencing our stop.sh) in an rctrl-managed home (`$RCTRL_STATE/codex-home`); a project `<cwd>/.codex/hooks.json` is ignored inside linked git worktrees (see `docs/codex-worktree-hooks.md`)
-+- `files: [{ path: '<codexHome>/hooks.json', content, shared: true }, { symlinkTo auth.json }, { copyFrom config.toml }]`, `shared` infra, set up idempotently, NOT recorded in `providerFiles` or cleaned on kill
++- `files: [{ path: '<codexHome>/hooks.json', content, shared: true }, { symlinkTo auth.json }, { copyFrom config.toml }]` — `shared` infra, set up idempotently, NOT recorded in `providerFiles` or cleaned on kill
  - `stopEventName: 'Stop'`
  - `parseTranscript`: Codex JSONL envelope (`event_msg` items, last `agent_message` is the response)
- - No equivalent of `--session-id` for transcript filename, hook payload's `transcript_path` is the source of truth (may be `null` per Codex docs; rctrl falls back to dir-snapshot)
+ - No equivalent of `--session-id` for transcript filename — hook payload's `transcript_path` is the source of truth (may be `null` per Codex docs; rctrl falls back to dir-snapshot)
 diff --git a/docs/codex-worktree-hooks.md b/docs/codex-worktree-hooks.md
 new file mode 100644
 index 0000000..c38af9a
 --- /dev/null
 +++ b/docs/codex-worktree-hooks.md
 @@ -0,0 +1,93 @@
-+# Codex hooks do not fire in linked git worktrees, root cause & fix
++# Codex hooks do not fire in linked git worktrees — root cause & fix
 +
 +## Symptom
 +
 +A `codex` worker spawned in a **linked git worktree** (`git worktree add`) never
 +fires its `Stop` hook. `events/stop` never advances, so `rctrl wait` hangs to the
-+timeout (the original "stuck worker", `pl-c8f14ad8` in the pleach proof). Plain
++timeout (the original "stuck worker" — `pl-c8f14ad8` in the pleach proof). Plain
 +dirs and the main checkout are unaffected.
 +
 +## Root cause (empirically confirmed, codex 0.133.0)
@@ -95,7 +95,7 @@ index 0000000..c38af9a
 +root is `<main>`. Project-hook loading is then suppressed in a way that **no
 +launch-side configuration can override**.
 +
-+Verified by elimination, in a worktree, the `Stop` hook does **not** fire for any of:
++Verified by elimination — in a worktree, the `Stop` hook does **not** fire for any of:
 +
 +| hooks.json location | dir trust | `--dangerously-bypass-hook-trust` | clean `CODEX_HOME` | Stop fires? |
 +|---|---|---|---|---|
@@ -104,7 +104,7 @@ index 0000000..c38af9a
 +| `<main>/.codex/`     | trusted | **yes** | no  | ❌ |
 +| `<main>/.codex/`     | trusted | **yes** | **yes** | ❌ |
 +
-+The pane shows the turn completing (`• ready`) every time, the model runs, the
++The pane shows the turn completing (`• ready`) every time — the model runs, the
 +hook just never executes. A plain (non-worktree) dir with the *same* rctrl config
 +fires `Stop` and auto-persists `[hooks.state."<dir>/.codex/hooks.json:stop:0:0"]`.
 +
@@ -146,28 +146,28 @@ index 0000000..c38af9a
 +
 +## Implementation (as built)
 +
-+- **Spec** (`core/providers/types.ts`): `ProviderLaunchSpec.files[]` is a union , 
++- **Spec** (`core/providers/types.ts`): `ProviderLaunchSpec.files[]` is a union —
 +  `{content}` | `{symlinkTo}` | `{copyFrom, ifAbsent?}`, each with optional `shared`.
 +  `buildLaunch` stays pure (declares intent); spawn's `materializeFile` performs the
 +  write/symlink/copy at the I/O edge (symlink/copy are idempotent so the shared home
 +  is safely re-materialized by every worker).
 +- **Codex provider** (`core/providers/codex.ts`): `buildLaunch` emits
-+  `env.CODEX_HOME = <stateDir>/codex-home` plus three `shared` files there , 
++  `env.CODEX_HOME = <stateDir>/codex-home` plus three `shared` files there —
 +  `hooks.json` (content), `auth.json` (`symlinkTo` the user's CODEX_HOME), `config.toml`
 +  (`copyFrom` ifAbsent). No more `<cwd>/.codex/hooks.json`. spawn injects `stateDir`
 +  and `userCodexHome` (= `$CODEX_HOME ?? ~/.codex`).
 +- **Reserved env** (`operations/spawn.ts`): the worker's `CODEX_HOME` is applied as
 +  reserved provider launch env (after operational + `--env`), so rctrl always owns it
-+ , a stray `--env CODEX_HOME` can't silently re-break worktree hooks.
++  — a stray `--env CODEX_HOME` can't silently re-break worktree hooks.
 +- **Shared-infra semantics**: `shared` files are set up idempotently, NOT recorded in
 +  `meta.providerFiles`, NOT removed on kill (other live workers depend on them).
 +- **Tests**: codex unit (`buildLaunch` → codex-home shape), codex integration
 +  (symlink/copy/shared lifecycle against an isolated fake user-CODEX_HOME), the
 +  reserved-env precedence test, and the gated real-binary worktree + plain codex
-+  smokes, all green.
++  smokes — all green.
 +
 +## Decision log
-+- **2026-06-13**, Codex worktree project-hooks are unrunnable; rctrl delivers codex
++- **2026-06-13** — Codex worktree project-hooks are unrunnable; rctrl delivers codex
 +  hooks via a shared `$RCTRL_STATE/codex-home` (global `hooks.json` + symlinked
 +  `auth.json`). Supersedes the project-level `<cwd>/.codex/hooks.json` mechanism for
 +  codex. Auth is symlinked (not copied); trust handled by existing startup dialogs.
@@ -188,17 +188,17 @@ index 7a9441f..a2963a1 100644
 -    // filesystem: $CODEX_HOME/hooks.json or <cwd>/.codex/hooks.json. We write
 -    // to the project-level path to avoid mutating user globals. The operations
 -    // layer records the absolute path in meta.providerFiles and removes it on kill.
-+    // Hook delivery via a global $CODEX_HOME/hooks.json, NOT <cwd>/.codex/hooks.json,
++    // Hook delivery via a global $CODEX_HOME/hooks.json — NOT <cwd>/.codex/hooks.json,
 +    // which codex silently ignores inside linked git worktrees (verified against
 +    // 0.133.0; see docs/codex-worktree-hooks.md). rctrl points the worker at an
 +    // isolated, shared CODEX_HOME under the state dir: auth.json is symlinked from
 +    // the user's real CODEX_HOME (no secret copy; token refresh shared) and
 +    // config.toml is copied once (carries model/endpoint/MCP, kept isolated so
 +    // codex's trust writes don't touch the user's global config). These three files
-+    // are `shared`, set up idempotently, never recorded per-session or cleaned on
++    // are `shared` — set up idempotently, never recorded per-session or cleaned on
 +    // kill. rctrl's startup dialogs trust the hooks on first use.
      //
-     // Schema: codex-rs/config/src/hook_config.rs, HooksFile, MatcherGroup,
+     // Schema: codex-rs/config/src/hook_config.rs — HooksFile, MatcherGroup,
      // HookHandlerConfig. timeout is in seconds (not ms). matcher is optional.
 @@ -262,15 +268,24 @@ const codexProvider: AgentProvider = {
        args.push('--model', opts.model);
@@ -244,9 +244,9 @@ index 1ab5628..ec204d2 100644
 -  //   inline-config flags (Claude's --settings).
 +  // Files to materialize before launch. Exactly one of content/symlinkTo/copyFrom
 +  // per entry:
-+  //   • { content }  , write the bytes (provider config: .gemini/settings.json).
-+  //   • { symlinkTo }, symlink path → symlinkTo (share a credential, no copy).
-+  //   • { copyFrom } , copy copyFrom → path; ifAbsent skips if path already exists,
++  //   • { content }   — write the bytes (provider config: .gemini/settings.json).
++  //   • { symlinkTo } — symlink path → symlinkTo (share a credential, no copy).
++  //   • { copyFrom }  — copy copyFrom → path; ifAbsent skips if path already exists,
 +  //                     and the copy is skipped silently when copyFrom is missing.
 +  // `shared: true` marks rctrl-managed infra OUTSIDE the worker's cwd (e.g. a
 +  // per-provider CODEX_HOME): NOT recorded in meta.providerFiles and NOT removed on
@@ -268,7 +268,7 @@ index 1ab5628..ec204d2 100644
 +    // rctrl state root ($RCTRL_STATE). Providers needing an isolated config home
 +    // derive it from here (codex: <stateDir>/codex-home). Injected by spawn.
 +    stateDir?: string;
-+    // codex: the user's real CODEX_HOME, source for the auth.json symlink and
++    // codex: the user's real CODEX_HOME — source for the auth.json symlink and
 +    // config.toml copy. Injected by spawn; falls back to ~/.codex.
 +    userCodexHome?: string;
    }): ProviderLaunchSpec;
@@ -331,7 +331,7 @@ index a6d3b92..a988edb 100644
    // Create session directory
    await d.fs.ensureSessionDir(name, env);
  
-+  // codex needs an isolated CODEX_HOME, a project .codex/hooks.json is ignored
++  // codex needs an isolated CODEX_HOME — a project .codex/hooks.json is ignored
 +  // inside linked git worktrees, so the Stop hook is delivered via a global
 +  // <stateDir>/codex-home/hooks.json instead. Resolve the rctrl state root and
 +  // the user's real codex home (auth/config source) for the provider to declare
@@ -360,13 +360,13 @@ index a6d3b92..a988edb 100644
 -      providerFilePaths.push(f.path);
 +      await materializeFile(f);
 +      // Shared infra (a provider's CODEX_HOME) is set up idempotently and reused
-+      // across workers, never tracked for per-session cleanup.
++      // across workers — never tracked for per-session cleanup.
 +      if (f.shared !== true) providerFilePaths.push(f.path);
      }
    } catch (err) {
      for (const written of providerFilePaths) {
 @@ -186,30 +227,32 @@ export async function spawn(opts: SpawnOpts): Promise<SpawnResult> {
-   // so an exported proxy / API key / config-dir reaches it, MINUS the
+   // so an exported proxy / API key / config-dir reaches it — MINUS the
    // shell-init vars below: passing them makes the pane's login shell emit a
    // startup byte to stdin that races the first send-keys and gets consumed as
 -  // an empty prompt. Precedence (low→high): inherited < provider launch env <
@@ -375,7 +375,7 @@ index a6d3b92..a988edb 100644
 -  const stateRoot = d.fs.stateDir(env);
 +  // an empty prompt. Precedence (low→high): inherited < operational env <
 +  // explicit workerEnv override < provider launch env (RESERVED) <
-+  // RCTRL_STATE/RCTRL_SESSION_ID, the last two forced so the stop hook can
++  // RCTRL_STATE/RCTRL_SESSION_ID — the last two forced so the stop hook can
 +  // always locate the session dir.
    const SHELL_INIT_DENYLIST = new Set(['SHELL', 'PROMPT_COMMAND', 'BASH_ENV', 'ZDOTDIR', 'ENV']);
    const tmuxEnv: Record<string, string> = {};
@@ -398,7 +398,7 @@ index a6d3b92..a988edb 100644
        tmuxEnv[k] = v;
      }
    }
-+  // Provider launch env is RESERVED, rctrl controls it, so it wins even over an
++  // Provider launch env is RESERVED — rctrl controls it, so it wins even over an
 +  // explicit --env: codex's CODEX_HOME must point at rctrl's isolated home or the
 +  // Stop hook never fires. Every provider but codex declares an empty launch env.
 +  for (const [k, v] of Object.entries(launchSpec.env)) {
@@ -425,7 +425,7 @@ index 5543d51..01097ce 100644
  // ---------------------------------------------------------------------------
  // Test isolation
 +//
-+// codex delivers hooks via a global $CODEX_HOME/hooks.json, a project
++// codex delivers hooks via a global $CODEX_HOME/hooks.json — a project
 +// .codex/hooks.json is silently ignored inside linked git worktrees. rctrl
 +// points the worker at <stateDir>/codex-home and populates it from the user's
 +// real CODEX_HOME (auth.json symlink + config.toml copy). Both the state dir and
@@ -474,9 +474,9 @@ index 5543d51..01097ce 100644
 +// CODEX_HOME hook delivery (written at spawn time, isolated from user cwd)
  // ---------------------------------------------------------------------------
  
--describe('codex-provider, hooks.json lifecycle', () => {
+-describe('codex-provider — hooks.json lifecycle', () => {
 -  test('spawn writes <cwd>/.codex/hooks.json before launch', async () => {
-+describe('codex-provider, CODEX_HOME hook delivery', () => {
++describe('codex-provider — CODEX_HOME hook delivery', () => {
 +  test('spawn writes hooks.json into the codex-home, never the worker cwd', async () => {
      const env = await setup();
      const cwd = await mkdtemp(join(tmpdir(), 'rctrl-codex-cwd-'));
@@ -491,7 +491,7 @@ index 5543d51..01097ce 100644
      } finally {
        await rm(cwd, { recursive: true, force: true });
      }
-@@ -91,23 +106,50 @@ describe('codex-provider, hooks.json lifecycle', () => {
+@@ -91,23 +106,50 @@ describe('codex-provider — hooks.json lifecycle', () => {
        const { session } = await spawn(makeSpawnOpts(env, cwd));
        CREATED.push(session.name);
  
@@ -546,8 +546,8 @@ index 5543d51..01097ce 100644
 +// (fake-codex.sh fires the hook directly, so this is agnostic to CODEX_HOME)
  // ---------------------------------------------------------------------------
  
- describe('codex-provider, end-to-end turn', () => {
-@@ -159,47 +201,38 @@ describe('codex-provider, end-to-end turn', () => {
+ describe('codex-provider — end-to-end turn', () => {
+@@ -159,47 +201,38 @@ describe('codex-provider — end-to-end turn', () => {
  });
  
  // ---------------------------------------------------------------------------
@@ -555,16 +555,16 @@ index 5543d51..01097ce 100644
 +// The codex-home is SHARED infra: not per-session, survives kill
  // ---------------------------------------------------------------------------
  
--describe('codex-provider, kill cleans up hooks.json', () => {
+-describe('codex-provider — kill cleans up hooks.json', () => {
 -  test('kill removes <cwd>/.codex/hooks.json written at spawn', async () => {
-+describe('codex-provider, shared codex-home lifecycle', () => {
++describe('codex-provider — shared codex-home lifecycle', () => {
 +  test('meta.providerFiles excludes the shared codex-home files', async () => {
      const env = await setup();
      const cwd = await mkdtemp(join(tmpdir(), 'rctrl-codex-cwd-'));
 -    const name = sessionName('kill');
      try {
 -      const { session } = await spawn(makeSpawnOpts(env, cwd, { name }));
--      // Do NOT push to CREATED, kill under test handles cleanup
+-      // Do NOT push to CREATED — kill under test handles cleanup
 -
 -      const hooksPath = join(cwd, '.codex', 'hooks.json');
 -      expect(existsSync(hooksPath)).toBe(true);
@@ -574,7 +574,7 @@ index 5543d51..01097ce 100644
 -      expect(existsSync(hooksPath)).toBe(false);
 +      const { session } = await spawn(makeSpawnOpts(env, cwd));
 +      CREATED.push(session.name);
-+      // codex's hooks/auth/config are shared across workers, never tracked.
++      // codex's hooks/auth/config are shared across workers — never tracked.
 +      expect(session.providerFiles).toEqual([]);
      } finally {
        await rm(cwd, { recursive: true, force: true });
@@ -592,7 +592,7 @@ index 5543d51..01097ce 100644
 -      CREATED.push(session.name);
 -
 -      const hooksPath = join(cwd, '.codex', 'hooks.json');
-+      // Do NOT push to CREATED, kill under test handles the session.
++      // Do NOT push to CREATED — kill under test handles the session.
 +      const hooksPath = join(codexHome(), 'hooks.json');
        expect(existsSync(hooksPath)).toBe(true);
  
@@ -609,7 +609,7 @@ index 5543d51..01097ce 100644
      } finally {
        await rm(cwd, { recursive: true, force: true });
      }
-@@ -234,17 +267,4 @@ describe('codex-provider, session meta', () => {
+@@ -234,17 +267,4 @@ describe('codex-provider — session meta', () => {
        await rm(cwd, { recursive: true, force: true });
      }
    });
@@ -631,12 +631,12 @@ diff --git a/test/integration/spawn-env.test.ts b/test/integration/spawn-env.tes
 index f0a014f..359de6a 100644
 --- a/test/integration/spawn-env.test.ts
 +++ b/test/integration/spawn-env.test.ts
-@@ -216,3 +216,21 @@ describe('spawn, env-by-reference ({fromEnv})', () => {
+@@ -216,3 +216,21 @@ describe('spawn — env-by-reference ({fromEnv})', () => {
      await expect(captureWorkerEnv(opts)).rejects.toThrow(EnvRefUnresolvedError);
    });
  });
 +
-+describe('spawn, reserved provider launch env', () => {
++describe('spawn — reserved provider launch env', () => {
 +  // codex's CODEX_HOME is rctrl-controlled: a project .codex/hooks.json is ignored
 +  // in linked worktrees, so the Stop hook only fires in rctrl's isolated
 +  // <stateDir>/codex-home. The provider launch env must therefore win even over an
@@ -671,7 +671,7 @@ index 0000000..3306f5a
 +// Regression: codex inside a LINKED git worktree reads its .codex/ hook config
 +// from the MAIN repo (an anti-escalation redirect), NOT the worktree itself. So
 +// rctrl's worktree workers never fired Stop and `wait` hung to the timeout. The
-+// fix writes hooks to the main-repo .codex/ for worktree workers, proven here
++// fix writes hooks to the main-repo .codex/ for worktree workers — proven here
 +// against the real binary: a codex worker in a `git worktree add --detach` dir
 +// must complete (wait → exit 0), not time out (124).
 +// ---------------------------------------------------------------------------
@@ -722,7 +722,7 @@ index 32b08af..b8bad86 100644
 +// codex delivers hooks via a global <stateDir>/codex-home/hooks.json because a
 +// project .codex/hooks.json is silently ignored inside linked git worktrees
 +// (see docs/codex-worktree-hooks.md). spawn injects stateDir (rctrl state root)
-+// and userCodexHome (the user's real CODEX_HOME, auth/config source).
++// and userCodexHome (the user's real CODEX_HOME — auth/config source).
 +const STATE_DIR = '/state';
 +const USER_CODEX_HOME = '/home/user/.codex';
 +const CODEX_HOME = join(STATE_DIR, 'codex-home');

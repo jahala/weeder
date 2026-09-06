@@ -244,7 +244,7 @@ index 5b0773b..24059b0 100644
 +fastbloom = "0.17"
 +
  # MCP protocol (JSON-RPC over stdio)
- # (handled manually, no framework needed)
+ # (handled manually — no framework needed)
  
 diff --git a/src/index/bloom.rs b/src/index/bloom.rs
 index f81f06f..784e42c 100644

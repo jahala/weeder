@@ -23,7 +23,7 @@ node = nodes[0]
 node["needs"] = []
 doc["nodes"] = [node]
 doc["source"] = f"docs/tend2#{id}"
-old = ("- Probe/scratch files (toolchain checks, experiments) go in `.loop-scratch/` only, "
+old = ("- Probe/scratch files (toolchain checks, experiments) go in `.loop-scratch/` only — "
        "it is never collected; scratch files elsewhere pollute the delivery.")
 new = ("- Scratch (probes, experiments, packets, session logs) goes under `$TMPDIR`, written through "
        "the shell only, never with the Write or Edit tool, and never under `.loop-scratch/` or "
