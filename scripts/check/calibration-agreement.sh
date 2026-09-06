@@ -290,7 +290,10 @@ if packet:
 if response and blind["seed"] not in read(BLIND):
     complaints.append(f"{BLIND} does not name the seed of the response kept beside it")
 
-first_sentence = re.split(r"(?<=[.!?])\s+", report.strip(), maxsplit=1)[0]
+prose = "\n".join(
+    line for line in report.splitlines() if line.strip() and not line.lstrip().startswith("#")
+).strip()
+first_sentence = re.split(r"(?<=[.!?])\s+", prose, maxsplit=1)[0] if prose else ""
 all_rows = list(sighted_rows.values()) + list(blind_rows.values())
 if any(agreed * 100 < 90 * count for count, agreed in all_rows):
     if "untrusted" not in first_sentence.lower():

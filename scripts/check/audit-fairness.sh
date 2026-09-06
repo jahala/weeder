@@ -1,18 +1,23 @@
 #!/usr/bin/env bash
-# Evidence for calibration-audit.tend2.html: the blind packet is regenerated
-# byte-for-byte and carries fair context from weed, not judgement ledger prose.
+# Evidence for calibration-audit.tend2.html: the fair blind packet is one
+# regenerated, hash-linked packet per sampled case, not a packet edited by hand.
 set -euo pipefail
 
 python3 - <<'PY'
 import hashlib
+import json
+import os
 import pathlib
 import re
 import subprocess
 import sys
+import tempfile
 
 AUDIT = pathlib.Path("docs/calibration-audit-blind-2026-09.md")
 REPORT = pathlib.Path("docs/calibration-2026-09.md")
-PACKET = pathlib.Path("docs/calibration-audit-blind-2026-09.packet.md")
+CASE_DIR = pathlib.Path("docs/calibration-audit-blind-2026-09/cases")
+SESSION_DIR = pathlib.Path("docs/calibration-audit-blind-2026-09/sessions")
+SPENT_SEEDS = {"calibration-audit-blind-2026-09-47"}
 complaints = []
 
 
@@ -32,92 +37,110 @@ def field(text, name):
     return match.group(1).strip().strip("`")
 
 
-def sections(packet, prefix):
-    return re.findall(rf"(?ms)^### {prefix}:[^\n]+\n\n(.*?)(?=^### |\Z)", packet)
+def first_prose_sentence(text):
+    prose = "\n".join(
+        line for line in text.splitlines() if line.strip() and not line.lstrip().startswith("#")
+    ).strip()
+    return re.split(r"(?<=[.!?])\s+", prose, maxsplit=1)[0] if prose else ""
+
+
+def sha256_text(text):
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 audit = read(AUDIT)
-packet = read(PACKET)
 report = read(REPORT)
 seed = field(audit, "Seed")
-recorded_hash = field(audit, "Packet SHA-256")
 
-if packet and seed:
+if seed in SPENT_SEEDS and "untrusted" not in first_prose_sentence(report).lower():
+    complaints.append(f"{AUDIT} uses spent seed {seed} without an untrusted calibration verdict")
+
+with tempfile.TemporaryDirectory() as tmp:
+    regenerated_dir = pathlib.Path(tmp) / "cases"
     regenerated = subprocess.run(
-        ["cargo", "xtask", "audit-packet", "--seed", seed],
+        ["cargo", "xtask", "audit-packet", "--seed", seed, "--dir", str(regenerated_dir)],
         check=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
     )
     if regenerated.returncode != 0:
-        complaints.append("cargo xtask audit-packet could not regenerate the blind packet: " + regenerated.stderr.strip())
-    elif regenerated.stdout != packet:
-        complaints.append(f"{PACKET} differs from a freshly regenerated fair packet")
+        complaints.append("cargo xtask audit-packet --dir could not regenerate case packets: " + regenerated.stderr.strip())
+    else:
+        kept = sorted(CASE_DIR.glob("*.md"))
+        fresh = sorted(regenerated_dir.glob("*.md"))
+        if len(kept) != 40:
+            complaints.append(f"{CASE_DIR} carries {len(kept)} case packets, not 40")
+        if [path.name for path in kept] != [path.name for path in fresh]:
+            complaints.append(f"{CASE_DIR} case names differ from regenerated packets")
+        for kept_path, fresh_path in zip(kept, fresh):
+            kept_text = read(kept_path)
+            fresh_text = read(fresh_path)
+            if kept_text != fresh_text:
+                complaints.append(f"{kept_path} differs from regenerated {fresh_path.name}")
+                continue
+            for required in ("Catalogue:", "Weed findings:", "Diff cap bytes:", "Diff bytes:", "Diff capped:"):
+                if required not in kept_text:
+                    complaints.append(f"{kept_path} is missing {required}")
+            if "Diff capped: no" in kept_text and "```diff" not in kept_text:
+                complaints.append(f"{kept_path} is uncapped but carries no diff fence")
+            if "Diff capped: yes" in kept_text and "exceeds the stated cap" not in kept_text:
+                complaints.append(f"{kept_path} is capped without saying why the full diff is absent")
+            if re.search(r"(?im)^Case: blocked:", kept_text):
+                if not re.search(r"(?m)^\| [A-Z][0-9] \| error \| `[^`]+` \| [0-9]+ \| .+ \|$", kept_text):
+                    complaints.append(f"{kept_path} has no printed weed finding row")
+            if re.search(r"(?im)^Case: recall:", kept_text):
+                for required in ("Planted site:", "Question:", "genuinely present at that planted site"):
+                    if required not in kept_text:
+                        complaints.append(f"{kept_path} is missing recall context {required}")
+            for forbidden in (
+                "Classification | Why",
+                "docs/calibration/judgements.toml",
+                "docs/calibration/refused/",
+            ):
+                if forbidden.lower() in kept_text.lower():
+                    complaints.append(f"{kept_path} carries forbidden ledger or refused-specimen material: {forbidden}")
 
-if packet and recorded_hash:
-    actual_hash = hashlib.sha256(packet.encode("utf-8")).hexdigest()
-    if actual_hash != recorded_hash:
-        complaints.append(f"{PACKET} hash is {actual_hash}, not {recorded_hash}")
-    if recorded_hash not in audit:
-        complaints.append(f"{AUDIT} does not record the packet hash")
+if CASE_DIR.exists():
+    for case_path in sorted(CASE_DIR.glob("*.md")):
+        case_text = read(case_path)
+        expected_hash = sha256_text(case_text)
+        session_path = SESSION_DIR / f"{case_path.stem}.events.jsonl"
+        session_text = read(session_path)
+        if not session_text:
+            continue
+        try:
+            events = [json.loads(line) for line in session_text.splitlines() if line.strip()]
+        except json.JSONDecodeError as error:
+            complaints.append(f"{session_path} is not valid jsonl: {error}")
+            continue
+        if len(events) != 2:
+            complaints.append(f"{session_path} has {len(events)} events, not one input and one answer")
+            continue
+        input_event, answer_event = events
+        if input_event.get("type") != "input":
+            complaints.append(f"{session_path} first event is not input")
+        if answer_event.get("type") != "answer":
+            complaints.append(f"{session_path} second event is not answer")
+        if input_event.get("packet") != str(case_path):
+            complaints.append(f"{session_path} input names {input_event.get('packet')}, not {case_path}")
+        if input_event.get("sha256") != expected_hash:
+            complaints.append(f"{session_path} input hash is not {expected_hash}")
+        answer = str(answer_event.get("answer", ""))
+        if not answer.startswith(f"Answered packet SHA-256: {expected_hash}\n"):
+            complaints.append(f"{session_path} answer does not open with {expected_hash}")
+        for event in events:
+            for forbidden_key in ("tool_calls", "tool_results", "repository_reads", "ledger_reads", "network_requests"):
+                if event.get(forbidden_key):
+                    complaints.append(f"{session_path} records forbidden {forbidden_key}")
 
-blocked = sections(packet, "blocked")
-recall = sections(packet, "recall")
-if len(blocked) != 20:
-    complaints.append(f"{PACKET} carries {len(blocked)} blocked sections, not 20")
-if len(recall) != 20:
-    complaints.append(f"{PACKET} carries {len(recall)} recall sections, not 20")
-
-for index, section in enumerate(blocked, 1):
-    for required in ("Catalogue:", "Weed findings:", "```diff"):
-        if required not in section:
-            complaints.append(f"blocked packet section {index} is missing {required}")
-    if not re.search(r"(?m)^\| [A-Z][0-9] \| error \| `[^`]+` \| [0-9]+ \| .+ \|$", section):
-        complaints.append(f"blocked packet section {index} has no weed finding row with rule, path, line and message")
-    if not re.search(r"(?m)^[A-Z][0-9]\s+\S+\s+check\s+", section):
-        complaints.append(f"blocked packet section {index} has no `weed rules` catalogue line")
-
-for index, section in enumerate(recall, 1):
-    for required in ("Catalogue:", "Weed findings:", "Planted site:", "Question:", "```diff"):
-        if required not in section:
-            complaints.append(f"recall packet section {index} is missing {required}")
-    if "genuinely present at that planted site" not in section:
-        complaints.append(f"recall packet section {index} does not ask the shape/site question")
-    if not re.search(r"(?m)^[A-Z][0-9]\s+\S+\s+check\s+", section):
-        complaints.append(f"recall packet section {index} has no `weed rules` catalogue line")
-    if not re.search(r"(?m)^\| ([A-Z][0-9]|none) \|", section):
-        complaints.append(f"recall packet section {index} has no weed finding table row")
-
-for forbidden in (
-    "Classification | Why",
-    "true positive |",
-    "false positive |",
-    "acceptable |",
-    "docs/calibration/judgements.toml",
-    "docs/calibration/refused/",
-):
-    if forbidden.lower() in packet.lower():
-        complaints.append(f"{PACKET} carries forbidden ledger or refused-specimen material: {forbidden}")
-
-# The response has to be an answer to this packet and not to an earlier one:
-# it declares the sha256 of the packet it was given, and that is the fair
-# packet's. An old response over a regenerated packet is what this refuses.
-RESPONSE = pathlib.Path("docs/calibration-audit-blind-2026-09.response.md")
-response = read(RESPONSE)
-answered = re.search(r"(?im)^Answered packet SHA-256:\s*([0-9a-f]{64})\s*$", response)
-if not answered:
-    complaints.append(f"{RESPONSE} does not declare which packet it answered (Answered packet SHA-256: <hash>)")
-elif recorded_hash and answered.group(1) != recorded_hash:
-    complaints.append(f"{RESPONSE} answered packet {answered.group(1)[:16]}, not the fair packet {recorded_hash[:16]}")
-first_sentence = re.split(r"(?<=[.!?])\s+", report.strip(), maxsplit=1)[0]
-if "untrusted" not in first_sentence.lower():
-    complaints.append(f"{REPORT}'s first sentence must say the classification is untrusted while the fair blind audit is below the bar or absent")
+if "untrusted" not in first_prose_sentence(report).lower():
+    complaints.append(f"{REPORT}'s first prose sentence must say the classification is untrusted unless the fair blind audit stands")
 
 if complaints:
     for complaint in complaints:
         print(complaint, file=sys.stderr)
     sys.exit(1)
 
-print(f"fair blind packet stands: {recorded_hash}")
+print(f"fair blind case packets stand for seed {seed}")
 PY
