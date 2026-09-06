@@ -1,9 +1,10 @@
 //! `docs/calibration-2026-09.md`, written from the measurement and the ledger.
 //!
 //! The verdict is the first sentence, because a reader who stops after one line
-//! must still have the answer. Then the method, then the levels every rule ran
-//! at, then one table per repository, then the totals, then precision beside the
-//! allowance rate, then the rule-level view. The file carries no date and no
+//! must still have the answer, and the sentence after it says whether the
+//! re-grade that number rests on was taken sighted or blind. Then the method,
+//! then the levels every rule ran at, then one table per repository, then the
+//! totals, then precision beside the allowance rate, then the rule-level view. The file carries no date and no
 //! duration: two runs over the same history write the same bytes, so a diff of
 //! this file is a change in weed's judgement and never in the weather.
 
@@ -160,10 +161,13 @@ impl<'a> Report<'a> {
         out
     }
 
-    /// The first sentence. Ship or kill, with the number that decided it, and
-    /// the qualification the independent re-grade has or has not lifted. The
-    /// wording is written from the audit file rather than typed, so a verdict
-    /// cannot be promoted by editing this report.
+    /// The first paragraph. The verdict first, ship or kill, with the number
+    /// that decided it and the qualification the independent re-grade has or has
+    /// not lifted; then, in the same breath, whether the re-grade the number
+    /// rests on was taken sighted or blind. Both are written from the audit
+    /// files rather than typed, so a verdict cannot be promoted, and an
+    /// agreement cannot be made to look blinder than it was, by editing this
+    /// report.
     fn verdict(&self, outcome: &Outcome) -> String {
         let share = share(outcome.tally.against_the_bar(), outcome.judged);
         let repos = self.repos.len();
@@ -171,7 +175,7 @@ impl<'a> Report<'a> {
         if outcome.ships {
             let _ = write!(
                 verdict,
-                "weed ships as a gate{}: over {} commits of real history in {repos} repositories it blocked {}, of which {} were block-level false positives, {share:.2} percent of the commits judged and under the two percent bar, with {} all still at block level{}.\n\n",
+                "weed ships as a gate{}: over {} commits of real history in {repos} repositories it blocked {}, of which {} were block-level false positives, {share:.2} percent of the commits judged and under the two percent bar, with {} all still at block level{}. {}\n\n",
                 if self.audit.confirms() {
                     String::new()
                 } else {
@@ -188,6 +192,7 @@ impl<'a> Report<'a> {
                 } else {
                     ", and the classification under it untrusted until a re-grade agrees at the bar"
                 },
+                self.audit.sight(),
             );
             match (self.audit.pending(), &self.audit.samples) {
                 (Some(pending), _) => {
@@ -211,7 +216,7 @@ impl<'a> Report<'a> {
                         .collect();
                     let _ = write!(
                         verdict,
-                        "A second party re-graded the classification and {} records the agreement: {}. That is what took the qualification off this sentence. The auditor drew its sample from this file's own tables, where the builder's class sits beside each commit, so it could read the class before judging: the agreement is a sighted one until a blind re-grade is recorded.\n\n",
+                        "A second party re-graded the classification and {} records the agreement: {}. That is what took the qualification off this sentence.\n\n",
                         self.audit.label,
                         read.join(", "),
                     );
@@ -221,7 +226,7 @@ impl<'a> Report<'a> {
         } else {
             let _ = write!(
                 verdict,
-                "weed does not ship as a gate: over {} commits of real history in {repos} repositories it blocked {}, of which {} were block-level false positives, {share:.2} percent of the commits judged against a two percent bar{}.\n\n",
+                "weed does not ship as a gate: over {} commits of real history in {repos} repositories it blocked {}, of which {} were block-level false positives, {share:.2} percent of the commits judged against a two percent bar{}. {}\n\n",
                 outcome.judged,
                 outcome.blocked,
                 outcome.tally.against_the_bar(),
@@ -230,6 +235,7 @@ impl<'a> Report<'a> {
                 } else {
                     String::new()
                 },
+                self.audit.sight(),
             );
         }
         if !self.load_bearing_intact() {
