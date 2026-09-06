@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a07605-12dd-7fe2-82c3-27b7b2bfa531"}
+{"type":"thread.started","thread_id":"01a0762b-34db-78a2-a1de-84a131047e93"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 36b4f91dec69e9621715d811934fb4f3a480f6451d65bd5ad966f70d1c95c3e7\nVerdict: acceptable\nReasoning: One assertion was removed, but the same opencode local-format behavior is still checked through the new JsonLocal enum match and entry-shape tests."}}
-{"type":"turn.completed","usage":{"input_tokens":27629,"cached_input_tokens":20864,"output_tokens":300,"reasoning_output_tokens":210}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 36b4f91dec69e9621715d811934fb4f3a480f6451d65bd5ad966f70d1c95c3e7\nVerdict: acceptable\nReasoning: One assertion macro was removed, but its claim moved into the JsonLocal match arm, so coverage was effectively preserved while the rule’s assertion-count claim is true."}}
+{"type":"turn.completed","usage":{"input_tokens":26187,"cached_input_tokens":19840,"output_tokens":321,"reasoning_output_tokens":228}}
