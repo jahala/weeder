@@ -3,7 +3,8 @@
 # tend2 on PATH as the verifier (out of tree, LAW 1), scripts/check/run.sh as
 # the evidence runner, casts and audits from plans/. Then patch the one thing
 # tend2 emit-plan gets wrong today: the audit command omits the --runner
-# template the smoke carries (docs/questions-tend2-pleach-2026-09-05.md, 8b).
+# template the smoke carries (recorded with the other questions for tend2, in
+# the notes this repository keeps out of tree).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 runner='bash scripts/check/run.sh {evidence}'

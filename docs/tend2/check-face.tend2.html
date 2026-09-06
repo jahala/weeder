@@ -43,7 +43,7 @@ Not a git repository, an unreadable ref, a config error, or a reader failure und
 ## Needs #core #sarif
 
 ## Tried
-- 2026-09-05 default mode chosen from pleach's own gate: `accept.smoke` runs in the node worktree after scoped staging, exit-code gated, no arguments passed (`~/conductor/workspaces/pleach-v1/cayenne/src/loop/run-node.ts`, the smoke block)
+- 2026-09-05 default mode chosen from pleach's own gate: `accept.smoke` runs in the node worktree after scoped staging, exit-code gated, no arguments passed (pleach 0.0.1's `src/loop/run-node.ts`, the smoke block)
 - 2026-09-05 G1 lands here, not in rules-block, so the pipeline is proven end to end by the simplest rule before the catalogue is built on it
 - 2026-09-05 the CLI is `clap` with derive; subcommands for scan, guard, bite and hook are added by their own loops, each in its own file under `src/faces/`
 - 2026-09-05 the fixture harness moved here from core's Tried: core delivered no `tests/common/mod.rs`, and this is the first loop that needs one

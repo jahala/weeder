@@ -13,7 +13,13 @@ target/
 /.brand/products/*
 !/.brand/products/weed/
 .DS_Store
-# Browser captures and emitted work orders never belong in the tree; the cast
-# and audit tables the emitter reads stay.
 .playwright-mcp/
-plans/weed*.plan.json
+
+# The dogfood notes and the questions are letters to the maintainers of tend2,
+# pleach and umbel: their defect lists, their unreleased file paths, their
+# version numbers, and this machine's layout. They keep being written here, at
+# the paths AGENTS.md names; they are not weed's record to publish.
+/docs/dogfood.md
+/docs/dogfood/
+/docs/dogfood-report-*.md
+/docs/questions-tend2-pleach-*.md

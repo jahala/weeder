@@ -1,0 +1,80 @@
+{
+  "goal": "A static Rust binary that reads what an agent produced and refuses the growth that should not be there, deleted or weakened tests, skips, stubs, swallowed errors, secrets, guardrail edits, dependency-direction violations, in milliseconds, with zero tokens, every finding as SARIF 2.1.0. `weed check` judges a diff and may block; `weed scan` judges the tree and never blocks; `weed guard` is the law in git through hooks; `weed bite` proves a test fails without its change. For maintainers drowning in agent-authored pull requests who need a deterministic gate before they read, for teams running agents on several harnesses who want one law, and for the garden's own fleets through pleach.",
+  "source": "docs/tend2#rules-prod",
+  "nodes": [
+    {
+      "id": "rules-prod",
+      "work": {
+        "prompt": "You are a worker in a build loop. Make the checks below pass, honestly.\nNobody reviews your prose, only the verifier's verdict counts, so put all effort into the work itself.\n\n## The goal\nThe rest of the check catalogue: swallowed errors, debug leftovers, dependency manifest changes, dependency-direction violations, out-of-scope files, a broadened ignore, and a large or binary file. D2 and X2 block when configured; the rest warn. Each lands as a failing fixture first in TypeScript/JavaScript, Python, Rust and Go, with a silent neighbour.\n\n## Your environment\n- You are at the repository root of an isolated git worktree. Work here directly.\n- Leave your changes in the working tree; do not create branches, commit, or push.\n- The loop file (docs/tend2/rules-prod.tend2.html) is your full context, read it, including its narrative. It is READ-ONLY for you.\n\n## Checks to close\n- (code) `[scope] specimens` in `weed.toml` is a list of directories under `fixtures/adversarial/**` that `check` and `scan` skip for every rule, each skipped path reported once at note level so an exclusion is as visible as an allowance; an entry outside that root, a glob that reaches past it, or a rule name in the list is refused with exit 3 and a message naming it · evidence expected at: tests/config_specimens.rs\n\n## Definition of done, verify yourself before finishing\nYou are done when this exact command exits 0 (it is the gate the conductor will run):\n\n    tend2 verify docs/tend2/rules-prod.tend2.html --repo-root . --force --expect-payload e7abb0eaece0 --runner 'bash scripts/check/run.sh {evidence}'\n\nRun it yourself. If it does not exit 0, you are not done. Do not declare success in prose that a command disagrees with.\n\n## Already tried (do not repeat)\n- 2026-09-05 the catalogue is complete after this loop: eighteen check rules with G1 on check-face; `docs/rules.md` is written here and `weed rules` reads from the same table, so the two cannot drift\n- 2026-09-05 S2's Go shape is deliberately narrow (`return nil` after a nil check with nothing else in the block) because Go's idiom makes wider shapes noisy; calibration decides whether it stays a warning\n- 2026-09-06 built by pleach node `rules-prod` (claude/opus, codex audit) in one attempt, 65 minutes; the land gate refused the composition with scan (both landings added a `comments` view to the mask, and scan still read the tree as text where rules-prod now reads a blob), resolved by hand. Every detector is a pure function of one `Judgement` the face gathers once: changes, config, scope, tracked paths, callers. D1 warns and blocks when a scope excludes the manifest, and the registry keeps a level a detector chose above its default; D2 resolves a module name by matching its segments against the repository's own paths and refuses to guess between two layers; X2 names the blast radius through the reader's callers; C2 turns an ignore pattern into globs and reports what it hides; G2 reads size and binariness off the same bytes; S3 reads `[entrypoints] cli`; the vendor name the brief listed became the shape `dump`. weed.toml now states weed's own layers, so D2 holds weed to its doctrine\n- 2026-09-06 the catalogue is complete: eighteen check rules and four scan rules, `docs/rules.md` written from the same table and pinned to it by `tests/docs_rules.rs`, so every SARIF helpUri lands somewhere\n- 2026-09-06 left for calibration: D2 reads every import of a changed file, so touching a file that already reaches the wrong way blocks the change that touched it. Right for a clean tree, wrong for a repository adopting the rule with a mess; whether existing arrows need an allowance is calibration's call. S2's Go shape is narrow on purpose, and calibration decides if it is still too wide\n- 2026-09-06 cape-town's specimen ruling (calibration's Tried) lands here as a check rather than in calibration: it is a config surface, and the calibration worker rightly refused to move the numbers it was measuring by changing a detector's input mid-run\n\n## Rules\n- Write the failing test first where it does not exist; then make it pass.\n- You must not edit the loop file, check states belong to the verifier.\n- You must not weaken, skip, or mock the unit under test to force a green; mocked-unit evidence is detected and refused.\n- Solve the CLASS of problem the claim names, not the test's example inputs. Hardcoding fixture strings, phrases, or patterns from the check or its tests into source (lookup tables, regex lists, phrase maps) is refused work even when the test goes green, it is an answer key, not a product.\n- If the claim cannot be met generically with what you have, that is a real finding: write BLOCKED.md naming the missing capability (a model, a library, a redesign, a split of the check into honest tiers) instead of faking generality.\n- Production quality only: no stubs, no TODOs, no placeholder implementations; match the style of the surrounding code.\n- Probe/scratch files (toolchain checks, experiments) go in `.loop-scratch/` only, it is never collected; scratch files elsewhere pollute the delivery.\n- If you are genuinely blocked, write BLOCKED.md at the repo root, what you tried, what stopped you, what a fix needs. An honest BLOCKED.md is a good outcome; a faked green is the worst possible one."
+      },
+      "accept": {
+        "smoke": "tend2 verify docs/tend2/rules-prod.tend2.html --repo-root . --force --expect-payload e7abb0eaece0 --runner 'bash scripts/check/run.sh {evidence}'",
+        "audit": {
+          "command": "tend2 verify docs/tend2/rules-prod.tend2.html --repo-root . --force --expect-payload e7abb0eaece0 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
+          "provider": "codex",
+          "selfIntegrity": true
+        }
+      },
+      "policy": {
+        "timeoutMs": 5400000
+      },
+      "worker": {
+        "provider": "claude",
+        "model": "opus"
+      },
+      "needs": []
+    }
+  ],
+  "warnings": [
+    {
+      "loopId": "calibration",
+      "code": "unwired-modules",
+      "message": "7 checks cite 4 src modules (docs/calibration-2026-09.md, garden.json, scripts/check/calibration-bar.sh, docs/calibration/corpus.toml), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "core",
+      "code": "unwired-modules",
+      "message": "5 checks cite 5 src modules (Cargo.toml, weed.toml, AGENTS.md, CLAUDE.md, src/core/), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "garden-fit",
+      "code": "unwired-modules",
+      "message": "7 checks cite 13 src modules (Cargo.toml, schemas/garden.schema.json, .brand/products/weed/identity.md, .github/workflows/ci.yml, .github/workflows/release.yml, npm/package.json, npm/, garden.json, scripts/check/calibration-bar.sh, SKILL.md, .brand/products/weed/, examples/ci/github.yml, README.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "hardening",
+      "code": "unwired-modules",
+      "message": "5 checks cite 6 src modules (tests/determinism.rs, fixtures/adversarial/, tests/sarif_order.rs, src/core/, tests/core_hostile.rs, tests/check_hostile.rs), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "hooks",
+      "code": "unwired-modules",
+      "message": "4 checks cite 3 src modules (docs/proof-2026-09.md, scripts/proof/claude-stop.sh, scripts/proof/gemini-stop.sh), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "rules-block",
+      "code": "unwired-modules",
+      "message": "10 checks cite 5 src modules (weed.toml, AGENTS.md, CLAUDE.md, .github/workflows/, docs/rules.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "rules-prod",
+      "code": "unwired-modules",
+      "message": "8 checks cite 3 src modules (Cargo.toml, .gitignore, weed.toml), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "sarif",
+      "code": "unwired-modules",
+      "message": "4 checks cite 2 src modules (schemas/sarif-schema-2.1.0.json, docs/sarif.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "scan",
+      "code": "unwired-modules",
+      "message": "8 checks cite 5 src modules (CLAUDE.md, AGENTS.md, README.md, /, Cargo.toml), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "tilth-core",
+      "code": "unwired-modules",
+      "message": "4 checks cite 5 src modules (.context/tilth-core, src/seams/reader.rs, Cargo.toml, src/, src/core/), but no single check's evidence spans 2+ of them"
+    }
+  ]
+}
