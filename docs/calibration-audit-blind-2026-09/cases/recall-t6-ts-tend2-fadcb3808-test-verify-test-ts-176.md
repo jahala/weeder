@@ -36,7 +36,7 @@ index 1cee077a..fd105742 100644
 @@ -173,7 +173,7 @@ describe('human checks', () => {
  describe('shape + judge', () => {
    it('descriptions refuse verification', () => {
-     const file = writeLoop('persona', '# p — persona\n**Who.** someone\n\n## Jobs\n- When x, I want y, so I can z.\n');
+     const file = writeLoop('persona', '# p, persona\n**Who.** someone\n\n## Jobs\n- When x, I want y, so I can z.\n');
 -    expect(() => runVerify(file, { repoRoot: repo, runner: RUNNER })).toThrow(/description/);
 +    expect(() => runVerify(file, { repoRoot: repo, runner: RUNNER })).toThrow();
    });

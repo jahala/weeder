@@ -56,7 +56,7 @@ index 92a80a2..db5a225 100644
 +++ b/Cargo.toml
 @@ -65,6 +65,9 @@ toml = "0.8"
  # MCP protocol (JSON-RPC over stdio)
- # (handled manually — no framework needed)
+ # (handled manually, no framework needed)
  
 +# URI percent-decoding (file:// roots from MCP host)
 +percent-encoding = "2.3"

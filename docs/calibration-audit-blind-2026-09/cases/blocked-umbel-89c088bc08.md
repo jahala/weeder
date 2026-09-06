@@ -40,10 +40,10 @@ index 747179e..4f93e04 100644
  });
  
  // ---------------------------------------------------------------------------
--// Line 93: listSessions catch path — no server running
+-// Line 93: listSessions catch path, no server running
 -// This test runs last; it kills the server and tests that listSessions returns [].
 -// It then starts a new server so subsequent tests in other files are not affected.
-+// listSessions catch path — no server running
++// listSessions catch path, no server running
 +//
 +// This used to run `tmux kill-server`, which is not scoped to anything: it
 +// destroys every session on the default socket, so a test run would reap live
@@ -54,8 +54,8 @@ index 747179e..4f93e04 100644
 +// ever run, which reaches the identical catch path with no blast radius.
  // ---------------------------------------------------------------------------
  
--describe('listSessions — no server (line 93 catch path)', () => {
-+describe('listSessions — no server (catch path)', () => {
+-describe('listSessions, no server (line 93 catch path)', () => {
++describe('listSessions, no server (catch path)', () => {
    test('returns [] when tmux server is not running', async () => {
 -    // Clean up all test sessions first
      await Promise.all(CREATED.splice(0).map(safeKill));

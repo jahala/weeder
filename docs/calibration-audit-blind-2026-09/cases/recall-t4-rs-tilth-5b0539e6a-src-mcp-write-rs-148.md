@@ -39,7 +39,7 @@ index 93a36dc..d12c216 100644
  //! silent clobber. Pass `overwrite = true` to replace an existing file. The
 -//! rewrite refuses to follow symlinks (live or dangling): on Unix the open
 -//! passes `O_NOFOLLOW`, so the kernel returns `ELOOP` rather than resolving
--//! the link and writing the target — closing the scope-escape at the syscall
+-//! the link and writing the target, closing the scope-escape at the syscall
 -//! layer. `ELOOP` is remapped to `ErrorKind::InvalidInput`. On non-Unix the
 -//! rewrite falls back to `fs::write` (Windows symlink semantics differ; no
 -//! analogous escape).
@@ -51,7 +51,7 @@ index 93a36dc..d12c216 100644
 +//!
 +//! The rewrite refuses to follow symlinks (live or dangling): on Unix an
 +//! `O_NOFOLLOW` open probes the target first, so the kernel returns `ELOOP`
-+//! rather than resolving the link — closing the scope-escape at the syscall
++//! rather than resolving the link, closing the scope-escape at the syscall
 +//! layer. `ELOOP` is remapped to `ErrorKind::InvalidInput`. That probe is a
 +//! separate syscall from the rename, so a symlink swapped into the path
 +//! afterwards is *replaced* rather than refused; containment still holds
@@ -72,7 +72,7 @@ index 93a36dc..d12c216 100644
 +}
 +
 +/// Refuse when `path`'s final component is a symlink. The open neither
-+/// truncates nor writes — it exists only to make the kernel resolve
++/// truncates nor writes, it exists only to make the kernel resolve
 +/// `O_NOFOLLOW` for us.
 +#[cfg(unix)]
 +fn refuse_symlink_target(path: &Path) -> std::io::Result<()> {
@@ -163,13 +163,13 @@ index 93a36dc..d12c216 100644
 +        // test pass without ever running the race.
 +        assert!(
 +            String::from_utf8_lossy(&out.stdout).contains("1 passed"),
-+            "the child ran no test — the name filter matched nothing"
++            "the child ran no test, the name filter matched nothing"
 +        );
 +    }
 +
 +    /// A concurrent reader must never observe a half-written file. The
 +    /// in-place `O_TRUNC` rewrite this replaced exposed a zero-length window
-+    /// on every overwrite — the same window that faults an mmap reader.
++    /// on every overwrite, the same window that faults an mmap reader.
 +    /// Setup writes go through the atomic primitive so any partial read the
 +    /// assertion catches can only come from `write_overwrite` itself.
 +    #[test]

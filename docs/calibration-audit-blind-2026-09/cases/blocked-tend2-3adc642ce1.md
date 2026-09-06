@@ -28,11 +28,11 @@ index 16f25c2..b79d3b7 100644
 --- a/README.md
 +++ b/README.md
 @@ -86,7 +86,7 @@ node dist/cli.js verify greet.loop.html --repo-root .
- Open the page. It renders offline — the check now shows a **proven** badge with its `@sha`, the block bar is full, the state pill reads *Done*:
+ Open the page. It renders offline, the check now shows a **proven** badge with its `@sha`, the block bar is full, the state pill reads *Done*:
  
  ```bash
--cp renderer/loop.css renderer/loop.js .   # the renderer's two assets — renderer/ is 100% generated from src/render (CI-enforced), committed so pages render with zero build; see docs/tend2-ARCHITECTURE.md §6
-+cp dist/loop.css dist/loop.js .   # the renderer's two assets, built from src/render — maps carry their own copies (CI-enforced fresh); see docs/tend2-ARCHITECTURE.md §6
+-cp renderer/loop.css renderer/loop.js .   # the renderer's two assets, renderer/ is 100% generated from src/render (CI-enforced), committed so pages render with zero build; see docs/tend2-ARCHITECTURE.md §6
++cp dist/loop.css dist/loop.js .   # the renderer's two assets, built from src/render, maps carry their own copies (CI-enforced fresh); see docs/tend2-ARCHITECTURE.md §6
  open greet.loop.html
  ```
  
@@ -42,11 +42,11 @@ index c3cf40c..6f18630 100644
 +++ b/docs/forge-surface-decision.md
 @@ -9,7 +9,7 @@ This gates going public.
  
- **A. GitHub Pages from the repo root + a README front-door link — CHOSEN.**
+ **A. GitHub Pages from the repo root + a README front-door link, CHOSEN.**
  The `.loop.html` polyglots are real, self-rendering HTML: each carries its payload and
 -references `../../renderer/loop.css` + `loop.js` relative to the repo root. Served
 +references its map's own sibling `./loop.css` + `./loop.js` copies (CI-kept fresh). Served
- statically from the root, they render as designed — **proven live today**: the map
+ statically from the root, they render as designed, **proven live today**: the map
  rendered pixel-correct under a plain `http.server` at the repo root, which is byte-for-byte
  the Pages-from-root serve shape. The stranger's path: README (GitHub renders it) → one
 diff --git a/docs/tend2/casting.loop.html b/docs/tend2/casting.loop.html
@@ -60,11 +60,11 @@ index 14d3396..3273cb9 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -21,4 +21,4 @@
- - 2026-08-18 shaped from task #26; decided 2026-08-17: NO contract changes (journals carry telemetry — thin waist), no live cost meters, no budget enforcement, no $ conversion
- - 2026-08-18 design settled ON CHANNEL: pleach accepted additive `provider` + `model` on verdict events (worker-resolved, post-escalation, riding their G1 session-id family) — the ledger reads the JOURNAL ONLY, no plan-file join. BUILD WAITS on their G-batch landing: the fields must exist in real journals before the ledger has honest seed data. Whoever picks this up: check pleach's docs/journal.md for the fields first
+ - 2026-08-18 shaped from task #26; decided 2026-08-17: NO contract changes (journals carry telemetry, thin waist), no live cost meters, no budget enforcement, no $ conversion
+ - 2026-08-18 design settled ON CHANNEL: pleach accepted additive `provider` + `model` on verdict events (worker-resolved, post-escalation, riding their G1 session-id family), the ledger reads the JOURNAL ONLY, no plan-file join. BUILD WAITS on their G-batch landing: the fields must exist in real journals before the ledger has honest seed data. Whoever picks this up: check pleach's docs/journal.md for the fields first
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -79,10 +79,10 @@ index d8875f3..4f23058 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -30,4 +30,4 @@ This loop exists because the self-host dogfood caught a real hole: every command
- - 2026-07-02 surfaced by dogfooding: CLI had no dedicated suite — written the same day, test-first
+ - 2026-07-02 surfaced by dogfooding: CLI had no dedicated suite, written the same day, test-first
  - 2026-07-02 the entry executes only when invoked directly (import-safe), so the same module serves tests and the shell
  </script>
 -<script src="../../renderer/loop.js"></script>
@@ -98,11 +98,11 @@ index 7acb889..7f836a7 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
-@@ -35,4 +35,4 @@ Checked 2026-07-02: pleach v1 is healthy — 225 tests green locally, a closed e
- - 2026-08-18 reviewing pleach's landing-gate design exposed our own hole: emitted smokes lacked --force, and staleness is evidence-content-keyed — a sibling node changing source under an unchanged test file leaves stamps fresh, so a composed gate would have skip-freshed (vacuous) for our lane. Smokes now force; the audit lane always did. Canary fixture re-pinned; pleach's vendored copy pinged on merge.
- - 2026-08-18 the SHA-persistence check was mis-anchored at test/sha.test.ts (exists, passes, proves nothing about the claim) and the sweep false-stamped it — re-anchored at the intended test/sha-persistence.test.ts so it stays honestly open until built. The migrate lesson (#97, anchor at the runnable test FOR the claim) applies to hand-authored checks too.
+@@ -35,4 +35,4 @@ Checked 2026-07-02: pleach v1 is healthy, 225 tests green locally, a closed e
+ - 2026-08-18 reviewing pleach's landing-gate design exposed our own hole: emitted smokes lacked --force, and staleness is evidence-content-keyed, a sibling node changing source under an unchanged test file leaves stamps fresh, so a composed gate would have skip-freshed (vacuous) for our lane. Smokes now force; the audit lane always did. Canary fixture re-pinned; pleach's vendored copy pinged on merge.
+ - 2026-08-18 the SHA-persistence check was mis-anchored at test/sha.test.ts (exists, passes, proves nothing about the claim) and the sweep false-stamped it, re-anchored at the intended test/sha-persistence.test.ts so it stays honestly open until built. The migrate lesson (#97, anchor at the runnable test FOR the claim) applies to hand-authored checks too.
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -117,7 +117,7 @@ index 3563c84..222be80 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -23,4 +23,4 @@ The failure compounds quietly: the cost is never one visible disaster, it's a pe
  
@@ -136,11 +136,11 @@ index 7c1699d..f7601d5 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -26,4 +26,4 @@ Transcript-first: the ideal terminal session logs are AUTHORED BEFORE any code c
- - 2026-08-18 shaped from task #81 (green-lit 2026-08-17); deliberately NOT built same-session as the other riders — the owner's depth ask ("really think about the ux") earns a fresh-context design pass, and the transcript-first method above is the binding approach
- - 2026-08-17 decided: day zero has no pleach (tier 1 before tier 2); the plugin path serves the non-developer — the agent is the interface, never the CLI
+ - 2026-08-18 shaped from task #81 (green-lit 2026-08-17); deliberately NOT built same-session as the other riders, the owner's depth ask ("really think about the ux") earns a fresh-context design pass, and the transcript-first method above is the binding approach
+ - 2026-08-17 decided: day zero has no pleach (tier 1 before tier 2); the plugin path serves the non-developer, the agent is the interface, never the CLI
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -155,7 +155,7 @@ index aaa2c4a..05940bd 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -23,4 +23,4 @@ The evidence is autobiographical: this map lost its own personas as a silent sid
  
@@ -174,11 +174,11 @@ index db583a0..f684c4e 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -22,4 +22,4 @@
  - 2026-08-18 shaped from tasks #77+#80 as ONE capability (the data half and the human half share the seam); gate.outputTail now rides pleach's journal (their #13 fix) so the tail needs no contract field
- - 2026-08-17 decided: the SHA-persistence amendment (optional verified-at commit) designs jointly with pleach ON CHANNEL before any format text — rides this loop's build
+ - 2026-08-17 decided: the SHA-persistence amendment (optional verified-at commit) designs jointly with pleach ON CHANNEL before any format text, rides this loop's build
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -193,7 +193,7 @@ index 2af617b..2385518 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -23,4 +23,4 @@ The record on this very program: a worker could once rewrite its own verifier in
  
@@ -212,11 +212,11 @@ index 3cae899..6434143 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -21,4 +21,4 @@
- - 2026-08-18 shaped from task #84; found in the seven-item dialogue (our #8 catch — it gates pleach's OSS story too); decision doc precedes code per the working-together decision-record spec
- - 2026-08-18 DECIDED (docs/forge-surface-decision.md): GitHub Pages from the repo root + a README front-door link beats the emit-site lean — the polyglots ARE the site (proven rendering under a root static server today), so no artifact is derived and parallel truth is impossible by construction; emit-site stays the named fallback behind an explicit kill criterion (MIME/CSP/prefix breakage, checkable in the flip's first five minutes). c1 reshaped accordingly: the surface's real fitness is path integrity, not artifact regeneration. Flip runbook (owner steps) in the decision doc.
+ - 2026-08-18 shaped from task #84; found in the seven-item dialogue (our #8 catch, it gates pleach's OSS story too); decision doc precedes code per the working-together decision-record spec
+ - 2026-08-18 DECIDED (docs/forge-surface-decision.md): GitHub Pages from the repo root + a README front-door link beats the emit-site lean, the polyglots ARE the site (proven rendering under a root static server today), so no artifact is derived and parallel truth is impossible by construction; emit-site stays the named fallback behind an explicit kill criterion (MIME/CSP/prefix breakage, checkable in the flip's first five minutes). c1 reshaped accordingly: the surface's real fitness is path integrity, not artifact regeneration. Flip runbook (owner steps) in the decision doc.
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -231,11 +231,11 @@ index fb1a533..d298fa4 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -36,4 +36,4 @@ The grammar is written down once (`loop/FORMAT.md`) and the goldens are not synt
  - 2026-07-02 audit fix: the dek no longer swallows a heading when the author omits the blank line
- - 2026-08-18 the narrative-truth check was mis-anchored at test/lint.test.ts (exists, passes, proves nothing about the unbuilt lint dimension) and a sweep false-stamped it — re-anchored at the intended test/narrative-truth.test.ts, honestly open until #91 builds. Third sighting of the anchor-at-the-claim's-own-test lesson
+ - 2026-08-18 the narrative-truth check was mis-anchored at test/lint.test.ts (exists, passes, proves nothing about the unbuilt lint dimension) and a sweep false-stamped it, re-anchored at the intended test/narrative-truth.test.ts, honestly open until #91 builds. Third sighting of the anchor-at-the-claim's-own-test lesson
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -258,11 +258,11 @@ index 933c60a..1c138b6 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -28,4 +28,4 @@
  - 2026-07-03 #16 shaped from the normal-agent acceptance test (docs/skill-acceptance-test-findings.md): the tool surface failed a stranger three ways on its first command; contract = docs/tend2-build-contract.md; bin shim + .mcp.json registration ride the same wave
- - 2026-07-02 audit fix: the write invariant pairs sha WITH claim — moving a legitimate stamp onto a different claim is refused at the gate, not just exposed on read
+ - 2026-07-02 audit fix: the write invariant pairs sha WITH claim, moving a legitimate stamp onto a different claim is refused at the gate, not just exposed on read
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -277,11 +277,11 @@ index 0e42ecb..dc28b41 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -24,4 +24,4 @@
- - 2026-08-18 hardening landed: test re-anchor scans verdict prose → recipe → description for the first test-shaped token (code checks only); For validates against the migrated set, solves inverts into ## Solved by, the hub emits ## Children from the migrated loop set (nested `parent` binding stays out of scope, still a named drop); ref sections emit only when populated (F2); alt promotes to caption when none exists, else preserved as a named drop — including for unmigratable media kinds, F4's silent-loss case
- - 2026-08-18 pleach's stranger round 2 (their garden re-migrated fully green, 10 stamps re-earned): R2-1 the opportunity pages' OWN ## For never emitted (only the feature lane was wired — one resolver now serves both); R2-2 stale 'add by hand' report wording contradicted the new emission, breaking F2's one-behavior-said-once rule inside its own fix; emitted refs normalized onto the heading line to match the hand-authored exemplars
+ - 2026-08-18 hardening landed: test re-anchor scans verdict prose → recipe → description for the first test-shaped token (code checks only); For validates against the migrated set, solves inverts into ## Solved by, the hub emits ## Children from the migrated loop set (nested `parent` binding stays out of scope, still a named drop); ref sections emit only when populated (F2); alt promotes to caption when none exists, else preserved as a named drop, including for unmigratable media kinds, F4's silent-loss case
+ - 2026-08-18 pleach's stranger round 2 (their garden re-migrated fully green, 10 stamps re-earned): R2-1 the opportunity pages' OWN ## For never emitted (only the feature lane was wired, one resolver now serves both); R2-2 stale 'add by hand' report wording contradicted the new emission, breaking F2's one-behavior-said-once rule inside its own fix; emitted refs normalized onto the heading line to match the hand-authored exemplars
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -296,11 +296,11 @@ index 7ec3e3b..b1c716e 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -21,4 +21,4 @@
  - 2026-08-18 shaped from task #82; decided 2026-08-17: no batched web surface at v1 (post-release loop view per the #16 decision), no cross-repo aggregation, no digests
- - 2026-08-18 coherence pass (the owner's catch): `next` is now human-readable by default — the needsMe union prints as sentences with waiting-since annotations, oldest-ignored first, and lists EVERY open human ask (an early sign-off is still a sign-off); `--json` carries the machine shape; zero-arg `tend2 next` finds docs/tend2
+ - 2026-08-18 coherence pass (the owner's catch): `next` is now human-readable by default, the needsMe union prints as sentences with waiting-since annotations, oldest-ignored first, and lists EVERY open human ask (an early sign-off is still a sign-off); `--json` carries the machine shape; zero-arg `tend2 next` finds docs/tend2
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -315,28 +315,28 @@ index 33a7a4a..5f01253 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
- # renderer — the beauty floor, generated from the kernel
--**Goal.** One shared renderer paints every loop page rich: the editorial masthead, the proof card with its block bar, method chips, the PROVEN/claimed badges, TOC, rail, light and dark. `src/render/` (boot, markdown, failure, and the authored `loop.css`) is the one source of truth; `renderer/` is its 100% generated, committed serve surface — required because the map must render with zero build (fresh-clone `file://`, GitHub Pages, npm assets), and kept honest by a CI freshness guard that byte-compares it against the build.
-+**Goal.** One shared renderer paints every loop page rich: the editorial masthead, the proof card with its block bar, method chips, the PROVEN/claimed badges, TOC, rail, light and dark. `src/render/` (boot, markdown, failure, and the authored `loop.css`) is the one source of truth; the build ships the assets in `dist/` like every other output, and each map carries its own committed SIBLING copies (`docs/tend2/loop.{css,js}`, examples) — the zero-build serve surface (fresh-clone `file://`, GitHub Pages), kept honest by a CI freshness guard that byte-compares every copy against the build. No root asset folder exists.
+ # renderer, the beauty floor, generated from the kernel
+-**Goal.** One shared renderer paints every loop page rich: the editorial masthead, the proof card with its block bar, method chips, the PROVEN/claimed badges, TOC, rail, light and dark. `src/render/` (boot, markdown, failure, and the authored `loop.css`) is the one source of truth; `renderer/` is its 100% generated, committed serve surface, required because the map must render with zero build (fresh-clone `file://`, GitHub Pages, npm assets), and kept honest by a CI freshness guard that byte-compares it against the build.
++**Goal.** One shared renderer paints every loop page rich: the editorial masthead, the proof card with its block bar, method chips, the PROVEN/claimed badges, TOC, rail, light and dark. `src/render/` (boot, markdown, failure, and the authored `loop.css`) is the one source of truth; the build ships the assets in `dist/` like every other output, and each map carries its own committed SIBLING copies (`docs/tend2/loop.{css,js}`, examples), the zero-build serve surface (fresh-clone `file://`, GitHub Pages), kept honest by a CI freshness guard that byte-compares every copy against the build. No root asset folder exists.
  
  ## Why generation is the load-bearing choice
  
 @@ -19,7 +19,7 @@ The renderer imports the same `parse` and `deriveState` the verifier and CLI use
- No data invention: every pixel derives from the payload. No state styling that parsing didn't produce. No network requests. And no second parser — if display ever disagreed with verification, one of them would be lying; generation makes that disagreement unrepresentable.
+ No data invention: every pixel derives from the payload. No state styling that parsing didn't produce. No network requests. And no second parser, if display ever disagreed with verification, one of them would be lying; generation makes that disagreement unrepresentable.
  
  ## Tests
 -- [x] (code) the renderer bundle regenerates cleanly from the kernel sources · tsup.config.ts @436017e
 +- [x] (code) the renderer bundle regenerates cleanly from the kernel sources · tsup.config.ts @13183bb
- - [~] (human) the rendered pages meet the design bar, light and dark — the approved slice screenshots are the reference
+ - [~] (human) the rendered pages meet the design bar, light and dark, the approved slice screenshots are the reference
  
  ## Needs #kernel
 @@ -27,5 +27,6 @@ No data invention: every pixel derives from the payload. No state styling that p
  ## Tried
  - 2026-07-02 the browser renderer was ported from the approved hand-written prototype to kernel-generated TypeScript; pixel-fidelity confirmed by screenshot before the swap
- - 2026-08-18 provenance cleanup (owner's catch, the slice/-fossil sibling): loop.css moved to src/render with the rest of the source; renderer/ is now 100% generated (both files carry GENERATED headers) with a CI freshness guard (test/renderer-fresh.test.ts) that byte-compares the committed copy against the build — mixed authored/built provenance in one folder was the smell, and a committed artifact without a guard was the drift class
-+- 2026-08-18 same evening, the owner pushed further — WHY at root at all? Right again: after the sibling-copy convention landed for init/migrate/examples/pleach, our own map was the last consumer of a root asset folder. renderer/ DELETED; assets ship in dist/ (like every build output, packed by npm files), each map carries its own committed ./loop.{css,js} copies, and the freshness guard now byte-compares every copy. The root directory listing is now: source, build output, docs, examples — nothing else
+ - 2026-08-18 provenance cleanup (owner's catch, the slice/-fossil sibling): loop.css moved to src/render with the rest of the source; renderer/ is now 100% generated (both files carry GENERATED headers) with a CI freshness guard (test/renderer-fresh.test.ts) that byte-compares the committed copy against the build, mixed authored/built provenance in one folder was the smell, and a committed artifact without a guard was the drift class
++- 2026-08-18 same evening, the owner pushed further, WHY at root at all? Right again: after the sibling-copy convention landed for init/migrate/examples/pleach, our own map was the last consumer of a root asset folder. renderer/ DELETED; assets ship in dist/ (like every build output, packed by npm files), each map carries its own committed ./loop.{css,js} copies, and the freshness guard now byte-compares every copy. The root directory listing is now: source, build output, docs, examples, nothing else
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -351,11 +351,11 @@ index d5b1748..25b9d6a 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -29,4 +29,4 @@ If nothing flips for K consecutive iterations the loop stops and says so in Trie
- - 2026-07-02 audit fix: removed the half-baked in-process 'host' executor — `tend2 next` IS the host/conductor seam
- - 2026-07-02 scope-out: worker prompts forbid editing the loop file — check states belong to the verifier
+ - 2026-07-02 audit fix: removed the half-baked in-process 'host' executor, `tend2 next` IS the host/conductor seam
+ - 2026-07-02 scope-out: worker prompts forbid editing the loop file, check states belong to the verifier
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -370,10 +370,10 @@ index 4c1fa02..406b2e6 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
-@@ -26,4 +26,4 @@ The wireframe travels in the worker's own reading register — agents write boxe
- - 2026-08-18 shaped onto the map AFTER the pilot — the owner caught the miss ("or you forgot to dogfeed tend2"): the capability ran as session work before it had a page. The lesson is this page
+@@ -26,4 +26,4 @@ The wireframe travels in the worker's own reading register, agents write boxe
+ - 2026-08-18 shaped onto the map AFTER the pilot, the owner caught the miss ("or you forgot to dogfeed tend2"): the capability ran as session work before it had a page. The lesson is this page
  - 2026-08-17 decided in owner dialogue: ASCII over SVG-as-data (agents' native register; smallest change; upgrade path reserved), citation rule is medium-independent, judge = comparison never appraisal
  </script>
 -<script src="../../renderer/loop.js"></script>
@@ -389,11 +389,11 @@ index 272d6c9..baf085b 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -21,4 +21,4 @@
  - 2026-08-18 shaped from task #86 as a separate `tend2 season` command (sweep + digest); pleach's v1-format garden joins after their own migration settles; no scoring, no single readiness number (the two-progress-numbers lesson)
- - 2026-08-18 the owner's catch, same day it shipped: next / watch / season were three aspects of ONE command — the season command was REMOVED and its decay report folded into `tend2 next` (the git-status precedent: one "where am I?"). The write half died on doctrine: only the verifier writes, so the "sweep" is now the printed re-earn commands, not an execution. `watch` survives as the live stream only
+ - 2026-08-18 the owner's catch, same day it shipped: next / watch / season were three aspects of ONE command, the season command was REMOVED and its decay report folded into `tend2 next` (the git-status precedent: one "where am I?"). The write half died on doctrine: only the verifier writes, so the "sweep" is now the printed re-earn commands, not an execution. `watch` survives as the live stream only
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -408,11 +408,11 @@ index cbbb416..0df178a 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
-@@ -79,4 +79,4 @@ The kernel and the verifier below were hand-built test-first — a tool cannot v
+@@ -79,4 +79,4 @@ The kernel and the verifier below were hand-built test-first, a tool cannot v
  - 2026-07-02 scope-out: the browser renderer's visual quality stays a human judgment on the slice pages, not a check here
- - 2026-07-02 map completed to cover ALL functionality areas: added cli, renderer, conductor — the dogfood surfaced that the CLI had no suite of its own, now closed
+ - 2026-07-02 map completed to cover ALL functionality areas: added cli, renderer, conductor, the dogfood surfaced that the CLI had no suite of its own, now closed
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -427,11 +427,11 @@ index 94a2795..f64e0a6 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -20,4 +20,4 @@ It wakes. The context holds a task name and a repository path. Somewhere in that
  - When a decision constrains me, I want its why and its revisit-condition, so I re-open it only when the world actually changed.
- - When I finish, I want to hand off as informed as I arrived — stamps for what I proved, a dated Tried line for what I learned — so my successor starts where I stopped.
+ - When I finish, I want to hand off as informed as I arrived, stamps for what I proved, a dated Tried line for what I learned, so my successor starts where I stopped.
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -446,7 +446,7 @@ index ad80a18..394de0e 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -22,4 +22,4 @@ Their voice, verbatim from months of sessions: *"so is it complete, ready for th
  - When a run goes long, I want to see what is running and whether it needs me, so unattended never means unwatched.
@@ -465,7 +465,7 @@ index 451a9a0..4397132 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -19,4 +19,4 @@ Monday, 09:10. Fourteen branches landed over the weekend from a fleet she didn't
  - When a check changed on the way to green, I want the change and its reason on the record, so a watered-down bar is visible, never silent.
@@ -484,11 +484,11 @@ index 686394b..7518365 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -30,4 +30,4 @@ The machine pen runs code checks. The judge pen (`--judge N --verdict`) closes a
  ## Tried
- - 2026-07-02 ported from v1 with the port verdicts recorded in loop/README.md — the moat was ~640 lines plus its test suites, not "the engine"
+ - 2026-07-02 ported from v1 with the port verdicts recorded in loop/README.md, the moat was ~640 lines plus its test suites, not "the engine"
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -503,11 +503,11 @@ index e0dc350..edd6e6a 100644
 -<link rel="stylesheet" href="../../renderer/loop.css">
 +<link rel="stylesheet" href="./loop.css">
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
 @@ -21,4 +21,4 @@
  ## Tried
- - 2026-08-18 shaped onto the map from task #79 (owner: pay the dogfood debt); decided in the seven-item dialogue 2026-08-17 — no web dashboard, no timelines, no historical browsing; pleach's docs/journal.md is the stable read surface (additive-only)
+ - 2026-08-18 shaped onto the map from task #79 (owner: pay the dogfood debt); decided in the seven-item dialogue 2026-08-17, no web dashboard, no timelines, no historical browsing; pleach's docs/journal.md is the stable read surface (additive-only)
  </script>
 -<script src="../../renderer/loop.js"></script>
 +<script src="./loop.js"></script>
@@ -519,7 +519,7 @@ index 932b1ac..f6ca949 100644
  {
    "name": "@plotplot/tend2",
    "version": "1.0.0",
--  "description": "Loops and evals, for agents. Impeccable self-briefing pages, for humans. A pass that only a verifier can write — for trust that survives handing the file to a stranger.",
+-  "description": "Loops and evals, for agents. Impeccable self-briefing pages, for humans. A pass that only a verifier can write, for trust that survives handing the file to a stranger.",
 +  "description": "Loops and evals, for agents. Impeccable self-briefing pages, for humans. A pass that only a verifier can write \u2014 for trust that survives handing the file to a stranger.",
    "type": "module",
    "author": "Jan Hallvard Larsen",
@@ -546,8 +546,8 @@ index 73becda..135539b 100644
 -    const assets = findSliceDir();
 +    const assets = findAssetsDir();
      if (assets === null) {
--      console.error('renderer assets not found (renderer/loop.css + renderer/loop.js) — broken install?');
-+      console.error('renderer assets not found (dist/loop.css + dist/loop.js) — broken install? run npm run build');
+-      console.error('renderer assets not found (renderer/loop.css + renderer/loop.js), broken install?');
++      console.error('renderer assets not found (dist/loop.css + dist/loop.js), broken install? run npm run build');
        return 1;
      }
      copyFileSync(join(assets, 'loop.css'), join(outDirAbs, 'loop.css'));
@@ -556,12 +556,12 @@ index 73becda..135539b 100644
  
  /**
 - * Locate the packaged renderer assets (renderer/loop.css + renderer/loop.js) by
-- * walking up from this module — the module sits at dist/ (built) or
+- * walking up from this module, the module sits at dist/ (built) or
 - * loop/src/cli/ (tests), so the package root is a short, bounded walk away.
 + * Locate the packaged renderer assets (dist/loop.css + dist/loop.js). Built or
 + * installed, they sit NEXT TO this module (dist/cli.js); under vitest the
 + * module runs from src/cli/, so a short bounded walk finds the repo's dist/.
-+ * There is no committed asset folder — maps carry their own sibling copies.
++ * There is no committed asset folder, maps carry their own sibling copies.
   */
 -function findSliceDir(): string | null {
 -  let dir = dirname(fileURLToPath(import.meta.url));
@@ -579,15 +579,15 @@ index 73becda..135539b 100644
    }
    return null;
 @@ -788,15 +792,15 @@ function runInitCommand(args: string[]): number {
-     console.error(`${dir}: already holds a map — init never overwrites. Route with: tend2 next ${dir}`);
+     console.error(`${dir}: already holds a map, init never overwrites. Route with: tend2 next ${dir}`);
      return 1;
    }
 -  const slice = findSliceDir();
 -  if (slice === null) {
--    console.error('renderer assets not found (renderer/loop.css + renderer/loop.js) — broken install?');
+-    console.error('renderer assets not found (renderer/loop.css + renderer/loop.js), broken install?');
 +  const assets = findAssetsDir();
 +  if (assets === null) {
-+    console.error('renderer assets not found (dist/loop.css + dist/loop.js) — broken install? run npm run build');
++    console.error('renderer assets not found (dist/loop.css + dist/loop.js), broken install? run npm run build');
      return 1;
    }
    const project = basename(resolve('.')).replace(/[^A-Za-z0-9_-]/g, '-') || 'project';
@@ -605,7 +605,7 @@ index df279a4..4ccdf17 100644
 +++ b/test/renderer-fresh.test.ts
 @@ -1,10 +1,10 @@
  /**
-- * renderer/ is a COMMITTED build output — required because the map must
+- * renderer/ is a COMMITTED build output, required because the map must
 - * render with zero build (fresh-clone file://, GitHub Pages serves committed
 - * files only, npm ships the assets). A committed artifact is only honest
 - * with a freshness guard: these tests byte-compare it against the build
@@ -613,7 +613,7 @@ index df279a4..4ccdf17 100644
 - * Source of truth: src/render (boot.ts, markdown.ts, failure.ts, loop.css).
 + * There is NO root asset folder: the renderer ships in dist/ like every other
 + * build output, and each map carries its own committed SIBLING copies
-+ * (docs/tend2, examples) — the zero-build serve surface (fresh-clone file://,
++ * (docs/tend2, examples), the zero-build serve surface (fresh-clone file://,
 + * GitHub Pages serves committed files only). A committed copy is only honest
 + * with a freshness guard: CI builds before testing, and these byte-compares
 + * refuse a hand-edit or a stale commit. Source of truth: src/render.
@@ -623,7 +623,7 @@ index df279a4..4ccdf17 100644
 @@ -16,15 +16,21 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
  const read = (p: string): string => readFileSync(join(root, p), 'utf8');
  
- const CSS_HEADER = '/* GENERATED from src/render/loop.css — do not hand-edit. */\n';
+ const CSS_HEADER = '/* GENERATED from src/render/loop.css, do not hand-edit. */\n';
 +const SIBLING_DIRS = ['docs/tend2', 'examples/pdf-unifier'];
  
 -describe('renderer/ is byte-fresh against the build', () => {
@@ -656,18 +656,18 @@ index 00a0322..7a504fa 100644
 +++ b/tsup.config.ts
 @@ -18,9 +18,13 @@ export default defineConfig([
      banner: {
-       js: '/* GENERATED by `npm run build` from src/render — do not hand-edit; changes go in src/render. */',
+       js: '/* GENERATED by `npm run build` from src/render, do not hand-edit; changes go in src/render. */',
      },
--    // renderer/ is 100% generated — the committed, zero-build serve surface
+-    // renderer/ is 100% generated, the committed, zero-build serve surface
 -    // (fresh-clone file://, GitHub Pages, npm files). Source lives in
 -    // src/render; test/renderer-fresh.test.ts refuses drift in CI.
--    onSuccess: 'cp dist/loop.global.js renderer/loop.js && { echo "/* GENERATED from src/render/loop.css — do not hand-edit. */"; cat src/render/loop.css; } > renderer/loop.css',
+-    onSuccess: 'cp dist/loop.global.js renderer/loop.js && { echo "/* GENERATED from src/render/loop.css, do not hand-edit. */"; cat src/render/loop.css; } > renderer/loop.css',
 +    // The renderer assets ship in dist/ like every other build output, and the
 +    // build refreshes the maps' committed SIBLING copies (docs/tend2, examples)
-+    // — the zero-build serve surface (fresh-clone file://, GitHub Pages). No
++    //, the zero-build serve surface (fresh-clone file://, GitHub Pages). No
 +    // root asset folder exists; test/renderer-fresh.test.ts refuses drift.
 +    onSuccess: 'cp dist/loop.global.js dist/loop.js'
-+      + ' && { echo "/* GENERATED from src/render/loop.css — do not hand-edit. */"; cat src/render/loop.css; } > dist/loop.css'
++      + ' && { echo "/* GENERATED from src/render/loop.css, do not hand-edit. */"; cat src/render/loop.css; } > dist/loop.css'
 +      + ' && cp dist/loop.css dist/loop.js docs/tend2/'
 +      + ' && cp dist/loop.css dist/loop.js examples/pdf-unifier/',
    },
