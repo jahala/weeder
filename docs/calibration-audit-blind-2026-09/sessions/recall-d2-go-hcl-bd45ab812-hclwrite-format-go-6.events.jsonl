@@ -1,0 +1,2 @@
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-d2-go-hcl-bd45ab812-hclwrite-format-go-6.md", "sha256": "bf438c879adfb747dee644c845c486f87c8d813079eeda81cac6063682ba7413"}
+{"type": "answer", "answer": "Answered packet SHA-256: bf438c879adfb747dee644c845c486f87c8d813079eeda81cac6063682ba7413\nVerdict: miss\nReasoning: The diff adds an hclwrite import of integrationtest at the planted site, but weed only reported an unrelated workflow C3 finding."}

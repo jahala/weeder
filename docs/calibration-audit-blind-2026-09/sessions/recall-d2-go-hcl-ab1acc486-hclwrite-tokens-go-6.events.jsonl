@@ -1,0 +1,2 @@
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-d2-go-hcl-ab1acc486-hclwrite-tokens-go-6.md", "sha256": "876318df0bffa9d8c6959ed0021b31728fc4f09f5904efdad131aa6bb2a6efb3"}
+{"type": "answer", "answer": "Answered packet SHA-256: 876318df0bffa9d8c6959ed0021b31728fc4f09f5904efdad131aa6bb2a6efb3\nVerdict: miss\nReasoning: The diff genuinely adds an integrationtest import inside hclwrite/tokens.go, crossing the forbidden boundary, and weed reported no finding there."}

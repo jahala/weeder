@@ -1,0 +1,2 @@
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-t6-ts-tend2-e2adbab97-test-verify-test-ts-176.md", "sha256": "f2f68de583da19ef203a5b978ba03f318b7518eee148349177d6a545fce0c344"}
+{"type": "answer", "answer": "Answered packet SHA-256: f2f68de583da19ef203a5b978ba03f318b7518eee148349177d6a545fce0c344\nVerdict: miss\nReasoning: The assertion changed from toThrow(/description/) to bare toThrow(), weakening the error-name/content check at the planted site, and weed reported no finding."}

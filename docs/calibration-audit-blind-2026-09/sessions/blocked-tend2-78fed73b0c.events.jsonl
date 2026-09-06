@@ -1,2 +1,0 @@
-{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-tend2-78fed73b0c.md","sha256":"7f1243042de2cfc22727b64075cef73060518ac0dd06fc9d51bf9dcfa2fb1226"}
-{"type":"answer","answer":"Answered packet SHA-256: 7f1243042de2cfc22727b64075cef73060518ac0dd06fc9d51bf9dcfa2fb1226\nVerdict: true-positive\nReasoning: Deletes the already-encoded spike test file and its filesystem-reading coverage."}

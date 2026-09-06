@@ -1,0 +1,2 @@
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-t6-ts-tend2-51035a5c8-test-verify-test-ts-176.md", "sha256": "7986fd96d79609d31653391a72fb4715ba6a6c22ff1c2082a3f704a540ba897d"}
+{"type": "answer", "answer": "Answered packet SHA-256: 7986fd96d79609d31653391a72fb4715ba6a6c22ff1c2082a3f704a540ba897d\nVerdict: miss\nReasoning: The diff weakens toThrow from matching /description/ to any thrown error at the planted line, and weed reported no finding."}

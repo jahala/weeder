@@ -1,2 +1,2 @@
-{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/recall-d1-py-tilth-8825050ec-benchmark-fixtures-setup-py.md","sha256":"757b38883c33c98366f982f01ebd812564a8f06e6cc060510bc7f60a19606417"}
-{"type":"answer","answer":"Answered packet SHA-256: 757b38883c33c98366f982f01ebd812564a8f06e6cc060510bc7f60a19606417\nVerdict: caught\nReasoning: Only changes a version string; no D1 shape is visible."}
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-d1-py-tilth-8825050ec-benchmark-fixtures-setup-py.md", "sha256": "dc1539f100c82c523aeb099b7871c52bf4cd0ea4dad41103b11a8e19a9e6149a"}
+{"type": "answer", "answer": "Answered packet SHA-256: dc1539f100c82c523aeb099b7871c52bf4cd0ea4dad41103b11a8e19a9e6149a\nVerdict: not-a-case\nReasoning: The setup.py diff only changes a reported application version string from 1.0.0 to 1.0.1, not a dependency manifest entry or pinned dependency."}

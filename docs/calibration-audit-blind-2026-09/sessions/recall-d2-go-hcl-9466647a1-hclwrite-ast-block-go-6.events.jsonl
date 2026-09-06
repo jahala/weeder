@@ -1,0 +1,2 @@
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-d2-go-hcl-9466647a1-hclwrite-ast-block-go-6.md", "sha256": "f24fdb5f2cebf548980190988c8e5e621ed1fe031359d44c3df3540edb48245b"}
+{"type": "answer", "answer": "Answered packet SHA-256: f24fdb5f2cebf548980190988c8e5e621ed1fe031359d44c3df3540edb48245b\nVerdict: miss\nReasoning: The diff adds an hclwrite import of integrationtest at the planted site, matching D2, but weed reported only an unrelated workflow warning."}

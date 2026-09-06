@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07591-e6fe-70c1-9454-65c3fce86854"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 35da22f605a660db6b83e1926263b65bc126be7e024bcd8e23a6609693c310e1\nVerdict: acceptable\nReasoning: The changed test did drop an assertion, but the removed substring check was brittle against real search output while the remaining assertion still covers the intended success path."}}
+{"type":"turn.completed","usage":{"input_tokens":22354,"cached_input_tokens":20864,"output_tokens":443,"reasoning_output_tokens":355}}

@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07592-e7c9-7c22-97bd-8037baccab0c"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 7dd761548644d4cc2e31086e466d82ad6c9d5b2ccc0f5bc522ccb1dd3db0e33d\nVerdict: miss\nReasoning: The diff weakens toThrow from matching /description/ to any thrown error at the planted line, and weed reported no finding there."}}
+{"type":"turn.completed","usage":{"input_tokens":22155,"cached_input_tokens":20864,"output_tokens":86,"reasoning_output_tokens":0}}

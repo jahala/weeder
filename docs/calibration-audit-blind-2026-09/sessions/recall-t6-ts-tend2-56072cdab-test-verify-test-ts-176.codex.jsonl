@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07592-f2cd-7eb2-8475-c8f86daf6f5a"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 6b92f1ddee7d31585b6aa0019a76e1fb632a965626c01b7f96240afa3ec2a084\nVerdict: miss\nReasoning: The planted test assertion changed from toThrow(/description/) to bare toThrow(), weakening the named error check, and weed did not report T6 at test/verify.test.ts:176."}}
+{"type":"turn.completed","usage":{"input_tokens":22704,"cached_input_tokens":20864,"output_tokens":96,"reasoning_output_tokens":0}}

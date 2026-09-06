@@ -1,2 +1,2 @@
-{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-tilth-96cd4b383b.md","sha256":"67b11d3cb4479dd46de0a9bddaacd2a89841df84c77526d5396a6a490301e41a"}
-{"type":"answer","answer":"Answered packet SHA-256: 67b11d3cb4479dd46de0a9bddaacd2a89841df84c77526d5396a6a490301e41a\nVerdict: acceptable\nReasoning: Same brittle body assertion is removed while the required success behavior remains checked."}
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/blocked-tilth-96cd4b383b.md", "sha256": "82cc95bf87e00e1e3ef75706652961a528e6882051c9823cb56b682d9f52f302"}
+{"type": "answer", "answer": "Answered packet SHA-256: 82cc95bf87e00e1e3ef75706652961a528e6882051c9823cb56b682d9f52f302\nVerdict: acceptable\nReasoning: The search test did drop one assertion, but the removed body substring check was intentionally flaky and replaced by narrower is_ok coverage while related behavior is tested elsewhere."}

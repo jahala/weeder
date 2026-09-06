@@ -1,0 +1,2 @@
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-t6-ts-tend2-56072cdab-test-verify-test-ts-176.md", "sha256": "6b92f1ddee7d31585b6aa0019a76e1fb632a965626c01b7f96240afa3ec2a084"}
+{"type": "answer", "answer": "Answered packet SHA-256: 6b92f1ddee7d31585b6aa0019a76e1fb632a965626c01b7f96240afa3ec2a084\nVerdict: miss\nReasoning: The planted test assertion changed from toThrow(/description/) to bare toThrow(), weakening the named error check, and weed did not report T6 at test/verify.test.ts:176."}

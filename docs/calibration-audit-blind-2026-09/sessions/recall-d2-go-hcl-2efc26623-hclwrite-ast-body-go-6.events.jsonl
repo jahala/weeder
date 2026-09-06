@@ -1,2 +1,0 @@
-{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/recall-d2-go-hcl-2efc26623-hclwrite-ast-body-go-6.md","sha256":"384fdca6e62ea892b67c0a2ea723f12144e11e764a0d716004586ffc637f951e"}
-{"type":"answer","answer":"Answered packet SHA-256: 384fdca6e62ea892b67c0a2ea723f12144e11e764a0d716004586ffc637f951e\nVerdict: miss\nReasoning: Adds an inward package import from hclwrite code to another HCL package."}

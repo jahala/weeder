@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07592-6876-79c3-b789-cf56265ddc14"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: e4d8a5ce085e37d7674b041d0911ab32bec0aa0b07345acc2073655de19a2d37\nVerdict: not-a-case\nReasoning: The planted site changes only an application version string in setup.py, not a dependency manifest or dependency pin."}}
+{"type":"turn.completed","usage":{"input_tokens":22486,"cached_input_tokens":20864,"output_tokens":79,"reasoning_output_tokens":0}}

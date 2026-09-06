@@ -1,2 +1,0 @@
-{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/recall-t6-ts-tend2-ad070a0d4-test-verify-test-ts-176.md","sha256":"c0bb70811b3d5a37e5f88c59f6af0b0f750279bca0133a68afb7ba451d36bc77"}
-{"type":"answer","answer":"Answered packet SHA-256: c0bb70811b3d5a37e5f88c59f6af0b0f750279bca0133a68afb7ba451d36bc77\nVerdict: miss\nReasoning: Weakens toThrow(/description/) to any thrown error."}

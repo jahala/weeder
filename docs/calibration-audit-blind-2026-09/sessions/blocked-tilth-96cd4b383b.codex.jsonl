@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07592-2363-7fb1-8d15-345dd0f3ed1f"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 82cc95bf87e00e1e3ef75706652961a528e6882051c9823cb56b682d9f52f302\nVerdict: acceptable\nReasoning: The search test did drop one assertion, but the removed body substring check was intentionally flaky and replaced by narrower is_ok coverage while related behavior is tested elsewhere."}}
+{"type":"turn.completed","usage":{"input_tokens":23560,"cached_input_tokens":20864,"output_tokens":86,"reasoning_output_tokens":0}}

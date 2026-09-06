@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07592-8fec-7863-a0a4-df915e95bd99"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 5d72ac2efca6c49769ef099d644986a980693a85003bfabfb43c012bc7779279\nVerdict: not-a-case\nReasoning: The planted diff only changes an application health-check version string in setup.py, not a dependency manifest or dependency pin."}}
+{"type":"turn.completed","usage":{"input_tokens":22096,"cached_input_tokens":20864,"output_tokens":134,"reasoning_output_tokens":55}}

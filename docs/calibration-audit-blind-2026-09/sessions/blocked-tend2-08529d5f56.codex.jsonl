@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07591-b078-79f0-b84f-373f32d0ddb9"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: e3720a2384e7b33f601dca2d07947105296ee703c6e00b57f09d42b61a3b49c6\nVerdict: true-positive\nReasoning: The findings report wholesale deletion of many test files and thousands of cases, so the rule claim is true and coverage was materially weakened."}}
+{"type":"turn.completed","usage":{"input_tokens":28583,"cached_input_tokens":2432,"output_tokens":348,"reasoning_output_tokens":260}}

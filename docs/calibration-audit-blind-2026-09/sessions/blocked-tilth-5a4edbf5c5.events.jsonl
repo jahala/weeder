@@ -1,0 +1,2 @@
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/blocked-tilth-5a4edbf5c5.md", "sha256": "5b667ec66f35c8d293fc48febd90aff5ca4c524f3ad63acbf2b85925268ecef1"}
+{"type": "answer", "answer": "Answered packet SHA-256: 5b667ec66f35c8d293fc48febd90aff5ca4c524f3ad63acbf2b85925268ecef1\nVerdict: false-positive\nReasoning: The removed tests and assertions were moved into new module files, preserving coverage rather than deleting cases or leaving behavior unwatched."}
