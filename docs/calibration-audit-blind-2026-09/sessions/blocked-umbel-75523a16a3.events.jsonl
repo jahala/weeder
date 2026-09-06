@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-umbel-75523a16a3.md","sha256":"bf4dcbccd7da4152da68e3211041095d9398e0355ffc0f99b92f62facb8c4c6a"}
+{"type":"answer","answer":"Answered packet SHA-256: bf4dcbccd7da4152da68e3211041095d9398e0355ffc0f99b92f62facb8c4c6a\nVerdict: true-positive\nReasoning: Adds a provider with TODO-marked, inferred tool transcript parsing."}

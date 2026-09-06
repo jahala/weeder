@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-tend2-3adc642ce1.md","sha256":"b6a7105b1994d243c097b916f0e6702f0060099efc78da014758e119d3734903"}
+{"type":"answer","answer":"Answered packet SHA-256: b6a7105b1994d243c097b916f0e6702f0060099efc78da014758e119d3734903\nVerdict: false-positive\nReasoning: Replaces stale renderer-copy checks with freshness checks for the actual dist and sibling assets."}

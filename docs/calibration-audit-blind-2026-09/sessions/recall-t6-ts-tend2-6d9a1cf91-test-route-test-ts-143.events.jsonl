@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/recall-t6-ts-tend2-6d9a1cf91-test-route-test-ts-143.md","sha256":"16f2d382210ac234b45466102cfaf3bd10b578fb189b4f0ed4c3f4dacf82e03c"}
+{"type":"answer","answer":"Answered packet SHA-256: 16f2d382210ac234b45466102cfaf3bd10b578fb189b4f0ed4c3f4dacf82e03c\nVerdict: miss\nReasoning: Weakens toThrow(/sample/) to any thrown error."}

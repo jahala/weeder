@@ -8,6 +8,7 @@
 
 use std::collections::BTreeMap;
 use std::error::Error;
+use std::fs;
 use std::path::{Path, PathBuf};
 
 use clap::Args;
@@ -20,6 +21,7 @@ use crate::mutate;
 use crate::repo::{self, Scratch};
 
 const SAMPLE_SIZE: usize = 20;
+const DIFF_CAP_BYTES: usize = 75_000;
 const DEFAULT_REPORT: &str = "docs/calibration-2026-09.md";
 const DEFAULT_GO_CORPUS: &str = "docs/calibration/corpus-go.toml";
 
@@ -37,6 +39,9 @@ pub struct Request {
     /// Read recall's Go repositories from here.
     #[arg(long = "go-corpus", value_name = "path")]
     pub go_corpus: Option<PathBuf>,
+    /// Write one packet file per sampled case into this directory.
+    #[arg(long, value_name = "dir")]
+    pub dir: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -56,20 +61,163 @@ struct RecallCase {
 }
 
 pub fn run(request: &Request, root: &Path) -> Result<(), Box<dyn Error>> {
-    print!(
-        "{}",
-        packet(
-            request,
-            root,
-            &std::fs::read_to_string(
-                request
-                    .report
-                    .clone()
-                    .unwrap_or_else(|| root.join(DEFAULT_REPORT))
-            )?,
-        )?
-    );
+    let report = std::fs::read_to_string(
+        request
+            .report
+            .clone()
+            .unwrap_or_else(|| root.join(DEFAULT_REPORT)),
+    )?;
+    if let Some(dir) = &request.dir {
+        let written = write_case_packets(request, root, &report, dir)?;
+        println!(
+            "wrote {} blind audit case packets to {}",
+            written,
+            dir.display()
+        );
+    } else {
+        print!("{}", packet(request, root, &report)?);
+    }
     Ok(())
+}
+
+fn write_case_packets(
+    request: &Request,
+    root: &Path,
+    report: &str,
+    dir: &Path,
+) -> Result<usize, Box<dyn Error>> {
+    fs::create_dir_all(dir)?;
+    let material = material(request, root, report)?;
+    let rules_table = rules::run(rules::Format::Table).stdout;
+    let mut written = 0;
+
+    for case in material.blocked {
+        let scratch = material
+            .fetched
+            .get(&case.repo)
+            .ok_or_else(|| format!("{} is not named by the corpus files", case.repo))?;
+        let sha = full_sha(scratch.path(), &case.sha)?;
+        let parent = parent(scratch.path(), &sha)?;
+        scratch.checkout(&sha)?;
+        let findings = blocked_findings(scratch.path(), &parent, &case.rules)?;
+        let diff = diff(scratch.path(), &parent, &sha, &[])?;
+        let body = case_packet(
+            &request.seed,
+            &format!("blocked:{}:{}", case.repo, case.sha),
+            &format!("Rules: {}", case.rules.join(", ")),
+            &catalogue_lines(&rules_table, &case.rules),
+            &findings_table(&findings),
+            None,
+            &diff,
+        );
+        fs::write(
+            dir.join(format!(
+                "{}.md",
+                case_id(&format!("blocked:{}:{}", case.repo, case.sha))
+            )),
+            body,
+        )?;
+        written += 1;
+    }
+
+    for case in material.recall {
+        let repo = material
+            .repo_defs
+            .get(&case.repo)
+            .ok_or_else(|| format!("{} is not named by the corpus files", case.repo))?;
+        let replay = mutate::replay_case(repo, &case.sha, &case.rule, &case.lang)?;
+        let extra = format!(
+            "Planted site: {}\n\nPlanted shape: {}\n\nQuestion: is rule {}'s shape genuinely present at that planted site, and did weed report it there?",
+            planted_site(&replay.target, replay.lines),
+            replay.shape,
+            case.rule
+        );
+        let body = case_packet(
+            &request.seed,
+            &format!(
+                "recall:{}:{}:{}:{}:{}",
+                case.rule, case.lang, case.repo, case.sha, case.path
+            ),
+            &format!("Rule: {}", case.rule),
+            &catalogue_lines(&rules_table, std::slice::from_ref(&case.rule)),
+            &findings_table(&replay.findings),
+            Some(&extra),
+            &replay.diff,
+        );
+        fs::write(
+            dir.join(format!(
+                "{}.md",
+                case_id(&format!(
+                    "recall:{}:{}:{}:{}:{}",
+                    case.rule, case.lang, case.repo, case.sha, case.path
+                ))
+            )),
+            body,
+        )?;
+        written += 1;
+    }
+
+    Ok(written)
+}
+
+struct PacketMaterial {
+    blocked: Vec<BlockedCase>,
+    recall: Vec<RecallCase>,
+    repo_defs: BTreeMap<String, corpus::Repo>,
+    fetched: BTreeMap<String, Scratch>,
+    _scratch: tempfile::TempDir,
+}
+
+fn material(
+    request: &Request,
+    root: &Path,
+    report: &str,
+) -> Result<PacketMaterial, Box<dyn Error>> {
+    let blocked = seeded_sample(parse_blocked(report), &request.seed, "blocked");
+    let recall = seeded_sample(parse_recall(report), &request.seed, "recall");
+    if blocked.len() < SAMPLE_SIZE || recall.len() < SAMPLE_SIZE {
+        return Err(format!(
+            "the report yielded {} blocked cases and {} recall cases; each blind audit sample needs {SAMPLE_SIZE}",
+            blocked.len(),
+            recall.len()
+        )
+        .into());
+    }
+
+    let mut repos = corpus::read(
+        &request
+            .corpus
+            .clone()
+            .unwrap_or_else(|| root.join(corpus::DEFAULT_PATH)),
+    )?;
+    repos.extend(corpus::read(
+        &request
+            .go_corpus
+            .clone()
+            .unwrap_or_else(|| root.join(DEFAULT_GO_CORPUS)),
+    )?);
+
+    let scratch = tempfile::tempdir()?;
+    let mut repo_defs: BTreeMap<String, corpus::Repo> = BTreeMap::new();
+    let mut fetched: BTreeMap<String, Scratch> = BTreeMap::new();
+    for repo in repos {
+        if fetched.contains_key(&repo.name) {
+            continue;
+        }
+        repo_defs.insert(repo.name.clone(), repo.clone());
+        fetched.insert(
+            repo.name.clone(),
+            Scratch::fetch(scratch.path(), &repo.name, &repo.source, &repo.tip)?,
+        );
+    }
+
+    Ok(PacketMaterial {
+        blocked,
+        recall,
+        repo_defs,
+        fetched,
+        _scratch: scratch,
+    })
 }
 
 fn packet(request: &Request, root: &Path, report: &str) -> Result<String, Box<dyn Error>> {
@@ -275,6 +423,65 @@ fn findings_table(findings: &[calibrate::Finding]) -> String {
     }
     out.push('\n');
     out
+}
+
+fn case_packet(
+    seed: &str,
+    case: &str,
+    summary: &str,
+    catalogue: &str,
+    findings: &str,
+    extra: Option<&str>,
+    diff: &str,
+) -> String {
+    let mut out = String::new();
+    out.push_str("# calibration audit blind case packet, 2026-09\n\n");
+    out.push_str("Generated by `cargo xtask audit-packet --dir` from the pinned corpus. This file is the auditor session's only input for this case. It contains machine-derived case identity, rule catalogue text, weed findings and verbatim git diff bytes when the diff fits the stated cap.\n\n");
+    out.push_str(&format!("Seed: {seed}\n"));
+    out.push_str(&format!("Case: {case}\n"));
+    out.push_str(&format!("Diff cap bytes: {DIFF_CAP_BYTES}\n"));
+    out.push_str(&format!("Diff bytes: {}\n", diff.len()));
+    out.push_str(&format!(
+        "Diff capped: {}\n\n",
+        if diff.len() > DIFF_CAP_BYTES {
+            "yes"
+        } else {
+            "no"
+        }
+    ));
+    out.push_str(summary);
+    out.push_str("\n\n");
+    out.push_str(catalogue);
+    out.push_str(findings);
+    if let Some(extra) = extra {
+        out.push_str(extra);
+        out.push_str("\n\n");
+    }
+    if diff.len() > DIFF_CAP_BYTES {
+        out.push_str("```text\n");
+        out.push_str("The full git diff for this case exceeds the stated cap, so the generator omitted it instead of cutting it silently.\n");
+        out.push_str("```\n");
+    } else {
+        out.push_str("```diff\n");
+        out.push_str(diff);
+        if !diff.ends_with('\n') {
+            out.push('\n');
+        }
+        out.push_str("```\n");
+    }
+    out
+}
+
+fn case_id(case: &str) -> String {
+    case.chars()
+        .map(|character| {
+            if character.is_ascii_alphanumeric() {
+                character.to_ascii_lowercase()
+            } else {
+                '-'
+            }
+        })
+        .collect()
 }
 
 fn planted_site(target: &[String], lines: Option<(u32, u32)>) -> String {

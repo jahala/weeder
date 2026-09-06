@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/recall-t4-ts-pleach-3a1306011-test-loop-run-work-test-ts-10.md","sha256":"9cdc1569a930ca532313dc16f84a2ec3d983c0bad3eb6c7af64c4d8b372f7488"}
+{"type":"answer","answer":"Answered packet SHA-256: 9cdc1569a930ca532313dc16f84a2ec3d983c0bad3eb6c7af64c4d8b372f7488\nVerdict: miss\nReasoning: Changes an expected value so the test asserts the wrong behavior."}

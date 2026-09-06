@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-tilth-76d5d02d34.md","sha256":"cb9784661d50683af112d3e3a306d4007557a401760fb3cde9b0c2b215217648"}
+{"type":"answer","answer":"Answered packet SHA-256: cb9784661d50683af112d3e3a306d4007557a401760fb3cde9b0c2b215217648\nVerdict: true-positive\nReasoning: Deletes the entire MCP module and broad behavioral test coverage."}
