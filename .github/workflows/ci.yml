@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      # The self-check judges the whole repository against its root commit, so
+      # the runner needs the history, not the one commit a shallow clone holds.
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # ratchet:dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # ratchet:Swatinem/rust-cache@v2
+      # The adversarial matrix runs each language's own test runner: `weed bite`
+      # judges what a suite did, so the suite has to be a real one. node, go and
+      # the interpreter are pinned here rather than taken as whatever the image
+      # happens to ship, so a cell that fails fails for weed's reasons.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # ratchet:actions/setup-node@v7
+        with:
+          node-version: "24"
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # ratchet:actions/setup-go@v7
+        with:
+          go-version: "1.24"
+          cache: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # ratchet:actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      # Ubuntu 24.04 restricts unprivileged user namespaces, and the offline
+      # proof in tests/scan_offline.rs needs one to take the network away from
+      # the process it starts. Lifting the restriction keeps that proof real
+      # here rather than skipped.
+      - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - run: cargo fmt --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace
+
+  # The latency budget is measured on the release binary, so the suite runs a
+  # second time on the release profile. A rule that starts reading a file it did
+  # not need, or a seam that stops being lazy, shows up here as a failing test
+  # rather than as a slow gate somebody notices months later. Same invocation as
+  # the debug run: whatever the budget covers has to be inside what CI runs.
+  latency:
+    runs-on: ubuntu-latest
+    steps:
+      # The self-check judges the whole repository against its root commit, so
+      # the runner needs the history, not the one commit a shallow clone holds.
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # ratchet:dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # ratchet:Swatinem/rust-cache@v2
+        with:
+          key: release
+      # The adversarial matrix runs each language's own test runner: `weed bite`
+      # judges what a suite did, so the suite has to be a real one. node, go and
+      # the interpreter are pinned here rather than taken as whatever the image
+      # happens to ship, so a cell that fails fails for weed's reasons.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # ratchet:actions/setup-node@v7
+        with:
+          node-version: "24"
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # ratchet:actions/setup-go@v7
+        with:
+          go-version: "1.24"
+          cache: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # ratchet:actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      # Ubuntu 24.04 restricts unprivileged user namespaces, and the offline
+      # proof in tests/scan_offline.rs needs one to take the network away from
+      # the process it starts. Lifting the restriction keeps that proof real
+      # here rather than skipped.
+      - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - run: cargo test --workspace --release

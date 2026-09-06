@@ -1,0 +1,42 @@
+[workspace]
+# The binary, and the measurements that judge it. xtask is a workspace member
+# rather than a script so calibration runs the same core weed ships.
+members = ["xtask"]
+
+[package]
+name = "weed"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "weed"
+path = "src/main.rs"
+
+[dependencies]
+# The parsing substrate, pinned by rev: weed reads code through tilth-core and
+# parses nothing itself. Upgrades move this one line.
+tilth-core = { git = "https://github.com/jahala/tilth", rev = "7f38db58696e16c2df2be71da985f47097f34920" }
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+
+[dev-dependencies]
+assert_cmd = "2"
+tempfile = "3"
+# No default features: the vendored schema is self-contained, so the validator
+# never resolves a reference over the network or off the filesystem.
+jsonschema = { version = "0.53", default-features = false }
+# A real pseudo-terminal, so the format tests ask the binary what it does with a
+# terminal on stdout instead of asking it to believe there is one.
+libc = "0.2"
+# The hostile-input tests: core is handed inputs nobody wrote on purpose, and
+# has to answer or refuse rather than fall over.
+proptest = "1.11.0"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = true
+panic = "abort"

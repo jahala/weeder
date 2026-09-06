@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:S2:py:copeca:387932ad5:tests/e2e/fake_agent.py:61", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
+{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: miss\nReasoning: The report says an S2 shape was planted there: a handler catches an error and does nothing, and weed did not report it at that site."}

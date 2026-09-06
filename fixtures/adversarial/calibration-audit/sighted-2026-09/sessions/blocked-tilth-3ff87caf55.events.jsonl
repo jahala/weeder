@@ -1,0 +1,2 @@
+{"type": "input", "case": "blocked:tilth:3ff87caf55", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
+{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: acceptable\nReasoning: T1/T2 accurately flagged lost bloom tests and assertions, but they targeted private internals removed by replacing the implementation with fastbloom, so the block was review friction rather than a real weakening."}

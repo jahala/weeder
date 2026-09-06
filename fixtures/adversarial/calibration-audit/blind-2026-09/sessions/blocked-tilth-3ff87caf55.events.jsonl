@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/blocked-tilth-3ff87caf55.md", "sha256": "27f38a7fe871d838de3bea6e74c325ac5e805aaf63dfd47a347506000381ab5a"}
+{"type": "answer", "answer": "Answered packet SHA-256: 27f38a7fe871d838de3bea6e74c325ac5e805aaf63dfd47a347506000381ab5a\nVerdict: acceptable\nReasoning: Assertions were removed with an implementation-specific sizing test after replacing the local BloomFilter with fastbloom, while behavioral membership and false-positive coverage remained."}

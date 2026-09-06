@@ -1,0 +1,22 @@
+# The Go history the recall campaign adds to the corpus calibration judges.
+#
+# `docs/calibration/corpus.toml` names the five garden repositories, and between
+# them they write no Go. weed judges Go, so a recall figure for Go has to be
+# taken on Go somebody else wrote: two projects with long merged histories,
+# pinned by full sha and read exactly the way the five are, and named in the
+# report as what they are. Precision is not measured here — calibration judges
+# the garden's own commits, and a false block on somebody else's repository is a
+# judgement about their conventions rather than about weed.
+#
+# The pins move the same way the others do: a deliberate edit, and the run after
+# it is a new measurement.
+
+[[repo]]
+name = "cobra"
+source = "https://github.com/spf13/cobra.git"
+tip = "adbc8813901bba65827259daa8e22ff94ec1f30e"
+
+[[repo]]
+name = "hcl"
+source = "https://github.com/hashicorp/hcl.git"
+tip = "6abbb088cdb82416d1b3d9fcbaab29534133567a"

@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/blocked-tilth-10bec56a41.md", "sha256": "4b6d94532e00866c72f4f06879638ae0ffe8df5fff10dbf277d07f6d1b711d44"}
+{"type": "answer", "answer": "Answered packet SHA-256: 4b6d94532e00866c72f4f06879638ae0ffe8df5fff10dbf277d07f6d1b711d44\nVerdict: acceptable\nReasoning: The assertion count really decreased, but the removed body substring check was intentionally unreliable and redundant with more direct scope tests, while this test still asserts success propagation."}

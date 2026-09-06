@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/blocked-umbel-cc3cc0c37c.md", "sha256": "f8fc73242485277bd471e2f4e9c52d732026268a029329e4ea93d18edcf3efed"}
+{"type": "answer", "answer": "Answered packet SHA-256: f8fc73242485277bd471e2f4e9c52d732026268a029329e4ea93d18edcf3efed\nVerdict: acceptable\nReasoning: The TODO markers are genuinely added under src production providers, but they document intentionally defensive, partial extraction rather than a stubbed or regressed behavior."}

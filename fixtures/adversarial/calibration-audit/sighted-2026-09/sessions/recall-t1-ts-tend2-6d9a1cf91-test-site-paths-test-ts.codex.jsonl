@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07675-95a9-7993-87d2-290b31bed486"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: miss\nReasoning: The report says the T1 shape was planted by deleting the `${dir} (${pages.length} pages)` test case in that file and weed did not report it there."}}
+{"type":"turn.completed","usage":{"input_tokens":36894,"cached_input_tokens":20864,"output_tokens":267,"reasoning_output_tokens":176}}

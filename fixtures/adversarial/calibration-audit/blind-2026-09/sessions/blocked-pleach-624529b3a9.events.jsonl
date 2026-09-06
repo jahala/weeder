@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/blocked-pleach-624529b3a9.md", "sha256": "b42f91b23c7fd457df2c269ddf51799cff6c81c13b0b4e006365760fadf38189"}
+{"type": "answer", "answer": "Answered packet SHA-256: b42f91b23c7fd457df2c269ddf51799cff6c81c13b0b4e006365760fadf38189\nVerdict: acceptable\nReasoning: The added strings intentionally include private-key-looking markers in detector code and tests, so the claim is true, but they are fixtures/patterns rather than live credentials."}

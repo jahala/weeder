@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:D2:go:hcl:ab1acc486:hclwrite/tokens.go:6", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
+{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: miss\nReasoning: The report says hclwrite/tokens.go was made to import integrationtest, which is a forbidden boundary crossing for D2, and it was planted but not reported."}

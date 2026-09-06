@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="weed">
+  <!-- weed mark: shears open on a weed's stem, at the height where the cut is made -->
+  <path d="M13.2 28.4 C12.8 22.4, 13.2 13.4, 13.8 6.2" fill="none" stroke="#84C56A" stroke-width="1.9" stroke-linecap="round"/>
+  <path d="M13 25.6 L11.5 24.9" fill="none" stroke="#84C56A" stroke-width="1.1" stroke-linecap="round"/>
+  <path d="M13.4 13 L15.1 12.3" fill="none" stroke="#84C56A" stroke-width="1.1" stroke-linecap="round"/>
+  <path d="M13.6 9.8 L12.1 9.2" fill="none" stroke="#84C56A" stroke-width="1.1" stroke-linecap="round"/>
+  <ellipse cx="9.6" cy="24.2" rx="2.8" ry="1.2" transform="rotate(30 9.6 24.2)" fill="#84C56A"/>
+  <ellipse cx="17.5" cy="11.2" rx="2.8" ry="1.2" transform="rotate(-30 17.5 11.2)" fill="#84C56A"/>
+  <ellipse cx="10.2" cy="8.6" rx="2.8" ry="1.2" transform="rotate(30 10.2 8.6)" fill="#84C56A"/>
+  <path d="M11.2 16.1 L24.5 22.75" fill="none" stroke="#8E3B5E" stroke-width="1.9" stroke-linecap="round"/>
+  <path d="M11.2 21.9 L24.5 15.25" fill="none" stroke="#8E3B5E" stroke-width="1.9" stroke-linecap="round"/>
+  <circle cx="26.5" cy="23.75" r="2.2" fill="none" stroke="#8E3B5E" stroke-width="1.6"/>
+  <circle cx="26.5" cy="14.25" r="2.2" fill="none" stroke="#8E3B5E" stroke-width="1.6"/>
+</svg>

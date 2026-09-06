@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>check-face · weed</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# check-face — the diff judged, from the command line
+**Goal.** `weed check` is the primary face: it judges the index plus the working tree against HEAD by default (what pleach's smoke gate sees after it stages a worker's files), `--staged` judges the index alone (the pre-commit face), `--base <ref>` judges the tree against a ref (CI). It prints SARIF when stdout is not a terminal and a table when it is, `--format` overrides, and it exits 0, 2 or 3 as the contract says. `weed rules` prints the catalogue. The git seam lives here, and the first rule runs end to end: G1, conflict markers.
+
+## Flags
+
+```
+weed check [--base <ref>] [--staged] [--scope <glob>...] [--strict] [--format sarif|table] [--config <path>] [--message-file <path>]
+weed rules [--format table|json]
+```
+
+`--scope` names the paths a change may touch. Every file is still judged; a file outside the scope is X2's finding (rules-prod), never a file weed looks away from. `--message-file` hands weed the message of the commit being prepared, for its `Weed-allow:` trailers; a hook passes it, since at pre-commit time no commit exists and git's own `COMMIT_EDITMSG` still holds the previous one. Trailers otherwise count only on the commits of a `--base` range. `--strict` makes suppressions visible but not honoured, and turns a file a rule could not evaluate into a failure to run (exit 3) rather than a skip. `--config` points at a `weed.toml` elsewhere than the repo root.
+
+## The git seam
+
+`src/seams/git.rs` answers: the repository root for a path; the diff for each mode (index and tree against HEAD, index against HEAD, tree against a ref) as unified text with renames detected; a file's content at a ref and in the tree; whether a ref resolves; the commit message for trailers when a range is judged. It shells out to `git` with argument arrays, never a shell string, and every failure is a typed error the face turns into exit 3 with the reason on stderr.
+
+## The fixture harness
+
+`tests/common/mod.rs` is the one way every rule test builds its world: given `fixtures/adversarial/<RULE>/<lang>/<fire|silent>/`, it creates a temp git repository, copies `before/` in and commits it as HEAD (with a fixed author and date so runs are reproducible), replaces the tree with `after/` (files absent from `after/` are deleted; `after/.weed-commit` becomes the pending commit message and is never copied), stages everything, runs the built `weed` binary with `--format sarif` in that repository, and parses the log into results. Every rule loop after this one calls it; none re-implements it. The G1 check below is its first user.
+
+## Fail closed
+
+Not a git repository, an unreadable ref, a config error, or a reader failure under `--strict` is exit 3, one line on stderr saying what could not be done and what to try, and a SARIF log on stdout with `executionSuccessful: false`. A gate that cannot run must never look like a gate that passed.
+
+## Tests
+- [x] (code) with no flags weed judges index plus working tree against HEAD, `--staged` judges the index only, and `--base <ref>` judges the tree against that ref, proven on a temp repo carrying a distinct change in each zone · tests/check_scopes.rs @273ac91 · by cli
+- [x] (code) exit 0 on a clean diff and on warnings only, 2 with at least one block-level result, 3 outside a git repository, on an unknown ref, and on a malformed `weed.toml`, each with one stderr line naming the cause · tests/check_exit.rs @e7b7bab · by cli
+- [x] (code) SARIF on stdout when it is not a terminal, a table when it is, and `--format` overrides both · tests/check_format.rs @338ecef · by cli
+- [x] (code) G1 fires at block level on conflict markers at line start (`<<<<<<<`, `=======`, `>>>>>>>`) in each of ts, py, rs and go through the real binary, and stays silent on a neighbour that carries `=======` inside a string and a markdown table rule · tests/rule_g1.rs @1cebbf3 · by cli
+- [x] (code) `weed rules` prints every rule with id, default level, face and one-line finding, and the levels match `Config::default()` · tests/rules_catalogue.rs @c1af98a · by cli
+- [x] (code) `--strict` reports a suppressed block finding at its original level and exits 2, while without `--strict` the same diff exits 0 with the finding as a note · tests/check_strict.rs @604145f · by cli
+- [x] (code) `examples/pleach/plan.json` declares `"accept": { "smoke": "weed check --strict" }` and passes `pleach validate`; `docs/pleach.md` explains that weed sees the staged files plus the tree against HEAD, so no base argument is needed · scripts/check/pleach-example.sh @156ff30 · by cli
+
+## Needs #core #sarif
+
+## Tried
+- 2026-09-05 default mode chosen from pleach's own gate: `accept.smoke` runs in the node worktree after scoped staging, exit-code gated, no arguments passed (`~/conductor/workspaces/pleach-v1/cayenne/src/loop/run-node.ts`, the smoke block)
+- 2026-09-05 G1 lands here, not in rules-block, so the pipeline is proven end to end by the simplest rule before the catalogue is built on it
+- 2026-09-05 the CLI is `clap` with derive; subcommands for scan, guard, bite and hook are added by their own loops, each in its own file under `src/faces/`
+- 2026-09-05 the fixture harness moved here from core's Tried: core delivered no `tests/common/mod.rs`, and this is the first loop that needs one
+- 2026-09-05 built by pleach node `check-face` (claude/opus, codex audit) in two attempts, 27 minutes; the first attempt was refused by pleach's own marker gate because the G1 fixtures carried real conflict markers, so the worker invented `{{weed:ours}}` placeholders the harness expands on the way into the temp repo. Landed by `pleach land` as a merge commit 6537357
+- 2026-09-05 conductor review, fixed inline and re-verified: `--scope` had become a filter that dropped out-of-scope files from the judgement, which would have made X2 impossible; my own loop wording ("restricts the judged paths") caused it. Every file is judged now and the scope is carried for X2. And trailers were read from git's `COMMIT_EDITMSG`, which at pre-commit time holds the previous commit's message and lingers after it, so a `Weed-allow` could silence an unrelated later change; the pending message now arrives only through `--message-file`, and a test pins that the old message never counts
+- 2026-09-05 refined with the umbrella's reading of `--strict`: a suppressed finding keeps its `suppressions` entry in the SARIF and gets its rule's level back, reported, not honoured, instead of being dropped from the log; the renderer no longer forces `note` on a suppressed finding, the face decides
+- 2026-09-05 the second half of `--strict` (a file a rule cannot evaluate fails closed) has nothing to act on until the reader seam lands; the loop that lands it owns that clause
+</script>
+<script src="loop.js"></script>

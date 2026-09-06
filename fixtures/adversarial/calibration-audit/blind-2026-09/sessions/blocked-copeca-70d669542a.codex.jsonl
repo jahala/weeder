@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07671-058e-7821-b964-e5a84e7574cf"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 633362be3bbbbafb780c8cf5a1923776af70263c52a9e1db949f1b116239ffd3\nVerdict: false-positive\nReasoning: The added `key` assignment stores a loaded key object from PEM input, not a hardcoded secret-looking string or committed credential."}}
+{"type":"turn.completed","usage":{"input_tokens":28149,"cached_input_tokens":20864,"output_tokens":145,"reasoning_output_tokens":63}}

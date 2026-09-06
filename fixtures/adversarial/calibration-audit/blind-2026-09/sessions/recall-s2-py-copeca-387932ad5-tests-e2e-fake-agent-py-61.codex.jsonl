@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07671-e3ce-7162-9401-448cb6c60062"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: b121e5f59bc13952e9723fefd26ebd58283d808101faefe1f05d0fcd55f0db07\nVerdict: miss\nReasoning: The added handler catches Exception and only passes, swallowing the error at the planted site, while weed reported no finding."}}
+{"type":"turn.completed","usage":{"input_tokens":22190,"cached_input_tokens":20864,"output_tokens":136,"reasoning_output_tokens":56}}

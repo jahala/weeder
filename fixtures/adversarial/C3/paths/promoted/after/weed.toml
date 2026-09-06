@@ -1,0 +1,4 @@
+# This repository publishes from a workflow, so the workflow that publishes is
+# held where the constitution is: a change to it stops the commit.
+[guardrails]
+paths = [".github/workflows/release.yml"]

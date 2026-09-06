@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07671-87c0-7173-8a29-aa63abf56816"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: d83592e1a200a48cd9b0e606d1e61d4f4b4bc5875f7763168f94996888f1fa03\nVerdict: true-positive\nReasoning: The deleted source file contained a cfg(test) module with six test cases, and no replacement tests appear in the diff."}}
+{"type":"turn.completed","usage":{"input_tokens":28148,"cached_input_tokens":20864,"output_tokens":262,"reasoning_output_tokens":176}}

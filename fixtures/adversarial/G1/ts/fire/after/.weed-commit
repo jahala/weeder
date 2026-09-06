@@ -1,0 +1,3 @@
+Split on semicolons
+
+The importer receives semicolon-separated rows from the new supplier.

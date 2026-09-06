@@ -1,0 +1,28 @@
+[package]
+name = "xtask"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "xtask"
+path = "src/main.rs"
+
+[dependencies]
+# The calibration judges with the same code the binary judges with: one core,
+# one diff walk, one set of rules. xtask drives it, and reads back the SARIF
+# every other consumer reads.
+weed = { path = ".." }
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+toml = "0.8"
+# The scratch repositories the walk checks out in, removed when the run ends.
+tempfile = "3"
+
+[dev-dependencies]
+# The suites drive the built binary against real git repositories in temp dirs,
+# the way every other suite in this repository does.
+assert_cmd = "2"
+tempfile = "3"

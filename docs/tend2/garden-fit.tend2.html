@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>garden-fit · weed</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# garden-fit — what makes weed a bed of the garden
+**Goal.** The umbrella verifies every bed against a fit contract, F1 to F6. This loop ships what those checks read: `garden.json` at the root; a `SKILL.md` with a one-sentence description; the brand layer at `.brand/products/weed/` with the name and accent marked flagged; a `LICENSE` (MIT, flagged until the owner confirms); a `README.md`; the release pipeline copied from tilth's (CI, multi-platform binaries, crates.io, an npm wrapper); and the GitHub Action example that is weed's first distribution, `examples/ci/github.yml`.
+
+## garden.json
+
+Name `weed`; kind `["gate", "hook"]`; version equal to `Cargo.toml`; install per platform (the npm wrapper, `cargo install weed`, and the release binaries by target triple); faces (`check`, `scan`, `guard`, `bite`, `hook`, `rules`); check command `weed check --format sarif`; metric command `bash scripts/check/calibration-bar.sh`; declared context cost `0`. The manifest schema belongs to the contracts repository, which does not exist yet; until it does, `schemas/garden.schema.json` here is the vendored proposal and is flagged as such.
+
+## The brand layer
+
+`.brand/products/weed/identity.md`, `colors.md`, `voice.md`, `petalsrc.example` and `assets/` in the shape of the umbrella's `.brand/products/pollen/`. Six accents are taken and pollen has claimed a seventh (see the umbrella's `.brand/colors.md`, Product Accents). Propose three candidates measured with the method in the umbrella's `scripts/palette_contrast.py` (WCAG ratios against paper, band, ink and soil-night), record the numbers in `colors.md`, and mark the accent and the name `[flagged]` for the owner. The voice delta carries weed's terminology: finding, block, warn, note, gate, honest, growth; never violation, error (for a finding), failure (for a block).
+
+## Release pipeline
+
+`.github/workflows/ci.yml` runs `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test` on push and pull request. `.github/workflows/release.yml` mirrors tilth's: a version check across `Cargo.toml` and `npm/package.json`, a build matrix (x86_64 and aarch64 for linux-musl, macos, windows), crates.io publish, npm publish of the wrapper. `npm/` holds `package.json`, `install.js` and `run.js` in tilth's shape. Nothing here is run against GitHub; `actionlint` proves the workflows parse.
+
+## Tests
+- [x] (code) `garden.json` validates against `schemas/garden.schema.json`, its version equals `Cargo.toml`'s, its check command runs and emits valid SARIF, its metric command names `scripts/check/calibration-bar.sh` (calibration proves it runs), and its declared context cost is 0 · tests/garden_manifest.rs @de73c9d · by cli
+- [x] (code) `SKILL.md` has a one-sentence description and its body names every subcommand and flag `weed --help` and each `weed <face> --help` print · tests/skill_md.rs @b5812b1 · by cli
+- [x] (code) `.brand/products/weed/` holds identity, colours, voice, a petalsrc example and the mark in paper and soil-night in the pollen shape, the accent bramble `#8E3B5E` is one value across the identity table, the colour delta and both marks, and every recorded contrast ratio is recomputed · scripts/check/brand.sh @d986298 · by cli
+- [x] (code) both workflows pass `actionlint`, `ci.yml` runs the latency test on a release build so a regression fails the build, `release.yml` carries the version check and the platform matrix, and `npm/package.json` names the same version as `Cargo.toml` · scripts/check/release.sh @3fb5c7d · by cli
+- [x] (code) `examples/ci/github.yml` runs `weed check --base origin/${{ github.base_ref }} --strict --format sarif` into `weed.sarif` and uploads it with `github/codeql-action/upload-sarif`, and passes `actionlint` · scripts/check/ci-example.sh @cc2dbeb · by cli
+- [x] (code) `LICENSE` is MIT naming the owner, `README.md` opens with what weed is and marks the manifest schema as the one flagged claim, and `README.md` cites only commands and paths that exist · scripts/check/readme.sh @2901b7a · by cli
+- [x] (code) a fresh clone of this repository into a temp dir builds with `cargo build --release` and `weed --version` runs, on this machine (F3 as far as it can be proven before the tilth-core branch is pushed) · scripts/check/clean-install.sh @0e93654 · by cli
+
+## Needs #check-face #guard #hooks
+
+## Tried
+- 2026-09-05 the fit runner `scripts/fit/weed.sh` and `garden.lock` on the umbrella do not exist yet; this loop ships what they will read and the umbrella loop stays open until they do
+- 2026-09-05 a landing page is a later loop; the garden footer with the plotplot band goes on the README until a page exists
+- 2026-09-05 re-pointed to need guard and hooks instead of calibration: `SKILL.md` must name every subcommand the binary prints, so it is written after the faces exist; the metric's run is calibration's check, this loop only wires its name into the manifest. This worktree merges the guard and hooks branches, which both add a subcommand to `src/main.rs`; keep both arms
+- 2026-09-05 built by pleach node `garden-fit` (claude/opus, codex audit) in one attempt, 31 minutes, landed through `pleach land` as 4d3e973. The mark was drawn twice: the worker found the owner's direction (shears cutting a weed) in the project memory Claude Code shares across sessions of one repository, and redrew it as open shears around a stem, rendered and read at 16, 20, 28 and 48 px. `garden.json` declares the four faces the binary answers today; `tests/garden_manifest.rs` holds the manifest equal to `weed --help`, so scan and bite must add themselves when they land. Contrast numbers in `colors.md` are recomputed by `scripts/check/brand.sh`, never trusted as written. Conductor review found nothing to fix; the layout block in AGENTS.md was the conductor's to update and is
+- 2026-09-05 the accent decision is the owner's: bramble `#8E3B5E` proposed, woad `#3D4E8C` and nettle `#6F8F1F` measured beside it; the name and MIT stay flagged with it
+- 2026-09-05 decided by the owner through cape-town, the same evening: the accent is bramble `#8E3B5E` (a word on paper at 6.57:1; a fill only on soil-night, where a bramble word lifts to `#B85C82`), the name is weed, and the licence is MIT. The umbrella authored a brand layer (tagline "tests still mean what they meant.", voice signature "pulled before it takes root.", a bramble-cane mark) and named this repository its canonical home; adopted whole except the mark, which stays the shears the owner asked for directly, in bramble. The evidence script no longer asks for three candidates or a flag; it asks that the accent be one value everywhere and that the numbers still add up
+- 2026-09-05 open-source prep at the owner's request: FUNDING.yml, dependabot.yml (cargo, npm, github-actions), CONTRIBUTING.md, SECURITY.md and CODE_OF_CONDUCT.md in tilth's shape; a Support block and a License line on the README; the repository's description and topics set. The npm name `weed` has been an empty placeholder since 2015 under another maintainer, so the wrapper publishes as `@plotplot/weed` under the garden's scope with public access; the crate and the binary stay plain `weed`, which crates.io has free
+</script>
+<script src="loop.js"></script>

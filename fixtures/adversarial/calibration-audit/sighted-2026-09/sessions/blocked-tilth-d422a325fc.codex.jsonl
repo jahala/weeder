@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07675-24af-7a11-8b35-726f8455b16a"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: acceptable\nReasoning: T2 correctly identified one dropped assertion, but it covered a removed entry_style field now represented and asserted through ConfigFormat::JsonLocal in the same test."}}
+{"type":"turn.completed","usage":{"input_tokens":36893,"cached_input_tokens":20864,"output_tokens":168,"reasoning_output_tokens":80}}

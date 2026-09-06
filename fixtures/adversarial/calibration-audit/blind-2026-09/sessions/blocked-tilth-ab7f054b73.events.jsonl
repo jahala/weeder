@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/blocked-tilth-ab7f054b73.md", "sha256": "61b99a1fd81f2ec041a65589f58a09662a741d75185f5963c696904bbb92a733"}
+{"type": "answer", "answer": "Answered packet SHA-256: 61b99a1fd81f2ec041a65589f58a09662a741d75185f5963c696904bbb92a733\nVerdict: true-positive\nReasoning: The diff deletes tilth_read_schema_is_paths_only, including three assertions enforcing paths-only schema behavior, while reintroducing singular path support."}

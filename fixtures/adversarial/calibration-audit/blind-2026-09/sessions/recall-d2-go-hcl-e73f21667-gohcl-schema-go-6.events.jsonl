@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-d2-go-hcl-e73f21667-gohcl-schema-go-6.md", "sha256": "e26217df2078c3e9c5d9dfcf6d5bcf7c5273a4283c0b763de992443ef19a0c27"}
+{"type": "answer", "answer": "Answered packet SHA-256: e26217df2078c3e9c5d9dfcf6d5bcf7c5273a4283c0b763de992443ef19a0c27\nVerdict: miss\nReasoning: The diff adds a forbidden gohcl import of hcldec at the planted site, while weed only reports an unrelated workflow warning."}
