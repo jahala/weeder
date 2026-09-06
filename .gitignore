@@ -1,5 +1,6 @@
 target/
-.loop-scratch/
+# .loop-scratch/ is not ignored while pleach stages an ignored scratch file as
+# a fatal error (dogfood P8); a landing strips whatever a worker left there.
 .context/
 
 # The umbrella's own brand files arrive with a petals fetch and belong to the
