@@ -1,2 +1,2 @@
-{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-tilth-d422a325fc.md","sha256":"a4342d39ebc25e1d1f5ff994d75eff90cbfae7454c924d5e870e8e3710e0d398"}
-{"type":"answer","answer":"Answered packet SHA-256: a4342d39ebc25e1d1f5ff994d75eff90cbfae7454c924d5e870e8e3710e0d398\nVerdict: acceptable\nReasoning: Refactors host entry shaping while preserving the relevant install behavior."}
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/blocked-tilth-d422a325fc.md", "sha256": "25074ae405e0992812864aaa41900be157213b43d6b477e5dfe59a350fc33564"}
+{"type": "answer", "answer": "Answered packet SHA-256: 25074ae405e0992812864aaa41900be157213b43d6b477e5dfe59a350fc33564\nVerdict: acceptable\nReasoning: One assertion was removed, but it checked the deleted entry_style field and was replaced by the JsonLocal format match, so the behavioral coverage remains equivalent."}

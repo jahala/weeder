@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07592-93b4-7582-83c2-4cd44a0ab7ca"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: f24fdb5f2cebf548980190988c8e5e621ed1fe031359d44c3df3540edb48245b\nVerdict: miss\nReasoning: The diff adds an hclwrite import of integrationtest at the planted site, matching D2, but weed reported only an unrelated workflow warning."}}
+{"type":"turn.completed","usage":{"input_tokens":22126,"cached_input_tokens":20864,"output_tokens":134,"reasoning_output_tokens":48}}

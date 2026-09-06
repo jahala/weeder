@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07592-b187-7173-a9cf-0c43ec7c4deb"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: d193b6d2281afd62e1b08fa9c519eeefb06660dfd37b49466cf60f0959666ed0\nVerdict: miss\nReasoning: The diff deletes the `it(dir, () => { ... })` test case at the planted file, while weed only reported T2 there, not T1."}}
+{"type":"turn.completed","usage":{"input_tokens":22186,"cached_input_tokens":20864,"output_tokens":122,"reasoning_output_tokens":32}}

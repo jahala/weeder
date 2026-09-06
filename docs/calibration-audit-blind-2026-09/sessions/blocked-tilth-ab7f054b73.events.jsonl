@@ -1,2 +1,2 @@
-{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-tilth-ab7f054b73.md","sha256":"00b7b5fe45cfdc498de42e8cc28d73d7f28a701da92ccc627ab91ded95ce1a1d"}
-{"type":"answer","answer":"Answered packet SHA-256: 00b7b5fe45cfdc498de42e8cc28d73d7f28a701da92ccc627ab91ded95ce1a1d\nVerdict: true-positive\nReasoning: Reintroduces singular path and removes the paths-only schema guard test."}
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/blocked-tilth-ab7f054b73.md", "sha256": "7df6434dd0b52bde1967e4bf3edbf2e486d3d28f3b2f6e7b261c086a2ddf81c8"}
+{"type": "answer", "answer": "Answered packet SHA-256: 7df6434dd0b52bde1967e4bf3edbf2e486d3d28f3b2f6e7b261c086a2ddf81c8\nVerdict: true-positive\nReasoning: The deleted test and its assertions specifically enforced the paths-only tilth_read schema, and this diff reintroduces singular path support, leaving that behavior unwatched."}

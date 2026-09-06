@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07592-013a-7f42-9c99-39dae01f38ef"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 8e93905b257697ff7f25a37ff7d06f16ee312c44ab50dec85c7d2b381e46fed2\nVerdict: false-positive\nReasoning: The removed tests and assertions from src/mcp/mod.rs were moved into the relevant tools submodules, so the checked behavior was not actually deleted or weakened."}}
+{"type":"turn.completed","usage":{"input_tokens":28008,"cached_input_tokens":20864,"output_tokens":233,"reasoning_output_tokens":142}}

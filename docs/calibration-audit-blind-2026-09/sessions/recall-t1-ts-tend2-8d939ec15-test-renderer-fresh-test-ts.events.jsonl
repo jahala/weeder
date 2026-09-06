@@ -1,0 +1,2 @@
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-t1-ts-tend2-8d939ec15-test-renderer-fresh-test-ts.md", "sha256": "d193b6d2281afd62e1b08fa9c519eeefb06660dfd37b49466cf60f0959666ed0"}
+{"type": "answer", "answer": "Answered packet SHA-256: d193b6d2281afd62e1b08fa9c519eeefb06660dfd37b49466cf60f0959666ed0\nVerdict: miss\nReasoning: The diff deletes the `it(dir, () => { ... })` test case at the planted file, while weed only reported T2 there, not T1."}

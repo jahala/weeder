@@ -1,2 +1,0 @@
-{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/recall-t6-py-copeca-70d669542-tests-config-test-scenario-loader-py-38.md","sha256":"7e2594aec5ed995b9dc150dee65ac44a168bb29b82889588a64b42e50881104c"}
-{"type":"answer","answer":"Answered packet SHA-256: 7e2594aec5ed995b9dc150dee65ac44a168bb29b82889588a64b42e50881104c\nVerdict: miss\nReasoning: Corrupts the pytest test signature by adding Exception as an argument."}

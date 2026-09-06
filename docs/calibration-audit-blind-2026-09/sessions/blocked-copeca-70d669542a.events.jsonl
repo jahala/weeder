@@ -1,0 +1,2 @@
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/blocked-copeca-70d669542a.md", "sha256": "7dfe1ae3004abe17b003abf3f1e273aa3fabb3a0bfae9858465677722e0d4389"}
+{"type": "answer", "answer": "Answered packet SHA-256: 7dfe1ae3004abe17b003abf3f1e273aa3fabb3a0bfae9858465677722e0d4389\nVerdict: false-positive\nReasoning: The packet omits the diff entirely, so there is no visible added assignment or secret-looking value to substantiate the rule\u2019s claim."}

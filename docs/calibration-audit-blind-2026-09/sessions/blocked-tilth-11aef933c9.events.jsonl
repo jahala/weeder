@@ -1,2 +1,2 @@
-{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-tilth-11aef933c9.md","sha256":"39c00d0668d01299058742bfad608b17e6cef5fc6321f518fd7663a1720588e8"}
-{"type":"answer","answer":"Answered packet SHA-256: 39c00d0668d01299058742bfad608b17e6cef5fc6321f518fd7663a1720588e8\nVerdict: true-positive\nReasoning: Deletes the files tool and all its scope/pattern tests."}
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/blocked-tilth-11aef933c9.md", "sha256": "f9cdae95997e9db64728f7a0d0ddc1c493e481df28fbf2e2061604a9929735c8"}
+{"type": "answer", "answer": "Answered packet SHA-256: f9cdae95997e9db64728f7a0d0ddc1c493e481df28fbf2e2061604a9929735c8\nVerdict: false-positive\nReasoning: The deleted test file\u2019s cases were replaced by new tests for tilth_list and tree behavior, so the claim that its coverage is now covered by nobody is not true."}

@@ -1,2 +1,2 @@
-{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/recall-t6-ts-tend2-2a0e93933-test-verify-test-ts-176.md","sha256":"9e131f5c54ee48f13a2cecaf59dcbc15bde43351197b8461d14837a8f42cf21b"}
-{"type":"answer","answer":"Answered packet SHA-256: 9e131f5c54ee48f13a2cecaf59dcbc15bde43351197b8461d14837a8f42cf21b\nVerdict: miss\nReasoning: Weakens toThrow(/description/) to any thrown error."}
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-t6-ts-tend2-2a0e93933-test-verify-test-ts-176.md", "sha256": "7dd761548644d4cc2e31086e466d82ad6c9d5b2ccc0f5bc522ccb1dd3db0e33d"}
+{"type": "answer", "answer": "Answered packet SHA-256: 7dd761548644d4cc2e31086e466d82ad6c9d5b2ccc0f5bc522ccb1dd3db0e33d\nVerdict: miss\nReasoning: The diff weakens toThrow from matching /description/ to any thrown error at the planted line, and weed reported no finding there."}

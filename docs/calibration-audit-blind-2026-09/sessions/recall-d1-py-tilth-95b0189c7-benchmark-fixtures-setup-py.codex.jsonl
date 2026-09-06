@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07592-80a0-7be3-9fcc-31c03e711bba"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 9213e25351bdf0c4836316c22c35a9b8721e6be8428e7998c4979dc7a0e6d20d\nVerdict: not-a-case\nReasoning: The diff only changes a returned version string from 1.0.0 to 1.0.1, not a dependency manifest or dependency pin."}}
+{"type":"turn.completed","usage":{"input_tokens":22118,"cached_input_tokens":20864,"output_tokens":180,"reasoning_output_tokens":84}}

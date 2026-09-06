@@ -7,15 +7,15 @@ set -euo pipefail
 python3 - <<'PY'
 import hashlib
 import os
+import pathlib
 import re
 import subprocess
+import tempfile
 import sys
 
 REPORT = "docs/calibration-2026-09.md"
 SIGHTED = "docs/calibration-audit-2026-09.md"
 BLIND = "docs/calibration-audit-blind-2026-09.md"
-PACKET = "docs/calibration-audit-blind-2026-09.packet.md"
-RESPONSE = "docs/calibration-audit-blind-2026-09.response.md"
 
 CLASSIFICATIONS = {
     "true positive": "true-positive",
@@ -266,29 +266,40 @@ if blind["blind"] != "yes":
 sighted_rows = check_audit(sighted, blocked, recall)
 blind_rows = check_audit(blind, blocked, recall)
 
-packet = read(PACKET)
-response = read(RESPONSE)
-if packet:
-    expected = subprocess.run(
-        ["cargo", "xtask", "audit-packet", "--seed", blind["seed"]],
-        check=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-    if expected.returncode != 0:
-        complaints.append(
-            "cargo xtask audit-packet could not regenerate the blind packet: "
-            + expected.stderr.strip()
+# The blind audit is one packet per sampled case, written by code from the
+# pinned corpus. Every case file in the tree has to be what the generator writes
+# for the audit's seed today, byte for byte, and none may carry the ledger.
+case_dir = pathlib.Path("docs/calibration-audit-blind-2026-09/cases")
+kept_cases = sorted(case_dir.glob("*.md")) if case_dir.is_dir() else []
+if not kept_cases:
+    complaints.append(f"{case_dir} carries no case packets")
+else:
+    with tempfile.TemporaryDirectory() as tmp:
+        fresh_dir = pathlib.Path(tmp) / "cases"
+        expected = subprocess.run(
+            ["cargo", "xtask", "audit-packet", "--seed", blind["seed"], "--dir", str(fresh_dir)],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
         )
-    elif expected.stdout != packet:
-        complaints.append(f"{PACKET} differs from a freshly regenerated packet")
-    if "builder's classification" in packet.lower():
-        complaints.append(f"{PACKET} names the builder's classification")
-    if "## blocked commit sample" in packet.lower() or "## recall case sample" in packet.lower():
-        complaints.append(f"{PACKET} appears to contain the auditor response")
-if response and blind["seed"] not in read(BLIND):
-    complaints.append(f"{BLIND} does not name the seed of the response kept beside it")
+        if expected.returncode != 0:
+            complaints.append(
+                "cargo xtask audit-packet --dir could not regenerate the case packets: "
+                + expected.stderr.strip()
+            )
+        else:
+            fresh_cases = sorted(fresh_dir.glob("*.md"))
+            if [path.name for path in kept_cases] != [path.name for path in fresh_cases]:
+                complaints.append(f"{case_dir} names differ from the packets regenerated for seed {blind['seed']}")
+            for kept_path, fresh_path in zip(kept_cases, fresh_cases):
+                kept_text = kept_path.read_text(encoding="utf-8")
+                if kept_text != fresh_path.read_text(encoding="utf-8"):
+                    complaints.append(f"{kept_path} differs from a freshly regenerated packet")
+                if "builder's classification" in kept_text.lower():
+                    complaints.append(f"{kept_path} names the builder's classification")
+                if "## blocked commit sample" in kept_text.lower() or "## recall case sample" in kept_text.lower():
+                    complaints.append(f"{kept_path} appears to contain an auditor response")
 
 prose = "\n".join(
     line for line in report.splitlines() if line.strip() and not line.lstrip().startswith("#")

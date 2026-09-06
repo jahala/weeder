@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07592-3a39-7702-b7c3-89274b1ed9b0"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 25074ae405e0992812864aaa41900be157213b43d6b477e5dfe59a350fc33564\nVerdict: acceptable\nReasoning: One assertion was removed, but it checked the deleted entry_style field and was replaced by the JsonLocal format match, so the behavioral coverage remains equivalent."}}
+{"type":"turn.completed","usage":{"input_tokens":27545,"cached_input_tokens":20864,"output_tokens":243,"reasoning_output_tokens":160}}

@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07592-b3e4-7c21-8c41-bfc12a176012"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 876318df0bffa9d8c6959ed0021b31728fc4f09f5904efdad131aa6bb2a6efb3\nVerdict: miss\nReasoning: The diff genuinely adds an integrationtest import inside hclwrite/tokens.go, crossing the forbidden boundary, and weed reported no finding there."}}
+{"type":"turn.completed","usage":{"input_tokens":22102,"cached_input_tokens":20864,"output_tokens":125,"reasoning_output_tokens":38}}

@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07592-d155-7152-a38b-947b15f2dc33"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 6b45f3f579c09d9728fb9969eebd716b999aca3b4304d2db5da46cc893fd0da2\nVerdict: not-a-case\nReasoning: The pytest.raises assertion still names InvokeError and matches arg_map; only the test method parameter changed from self to Exception."}}
+{"type":"turn.completed","usage":{"input_tokens":22118,"cached_input_tokens":20864,"output_tokens":150,"reasoning_output_tokens":64}}

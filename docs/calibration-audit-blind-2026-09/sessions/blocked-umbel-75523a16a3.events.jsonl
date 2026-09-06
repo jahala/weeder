@@ -1,2 +1,2 @@
-{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-umbel-75523a16a3.md","sha256":"bf4dcbccd7da4152da68e3211041095d9398e0355ffc0f99b92f62facb8c4c6a"}
-{"type":"answer","answer":"Answered packet SHA-256: bf4dcbccd7da4152da68e3211041095d9398e0355ffc0f99b92f62facb8c4c6a\nVerdict: true-positive\nReasoning: Adds a provider with TODO-marked, inferred tool transcript parsing."}
+{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/blocked-umbel-75523a16a3.md", "sha256": "bdc02f8f242aaba70c396a0d9577abc530a5abbb7f0bb5f0c7b76138401e6ca6"}
+{"type": "answer", "answer": "Answered packet SHA-256: bdc02f8f242aaba70c396a0d9577abc530a5abbb7f0bb5f0c7b76138401e6ca6\nVerdict: true-positive\nReasoning: The finding reports a TODO marker in production provider code, matching S1\u2019s claim that unfinished work reached production."}
