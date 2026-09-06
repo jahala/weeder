@@ -25,7 +25,7 @@ Gemini CLI: `BeforeTool` with the same command test, answered with Gemini's deci
 - [x] (code) `weed hook gemini` handles `BeforeTool` and `AfterAgent` the same way in Gemini's JSON shapes · tests/hook_gemini.rs @aae14ef · by cli
 - [x] (code) `weed hook codex` implements the events Codex can deny and prints a one-line note for the ones it cannot; the note matches the section in `docs/proof-2026-09.md` · tests/hook_codex.rs @b142228 · by cli
 - [x] (code) a real Claude Code run with the Stop hook refuses a premature done with weed's findings as the reason and allows it once the tree is clean, captured into `docs/proof-2026-09.md` · scripts/proof/claude-stop.sh @e63bbd5 · by cli
-- [ ] (human) the owner signs in to Gemini CLI on this machine and runs `scripts/proof/gemini-stop.sh`, which captures a real AfterAgent run refusing a premature done and allowing a clean one into `docs/proof-2026-09.md` · scripts/proof/gemini-stop.sh
+- [!] (human) the owner signs in to Gemini CLI on this machine and runs `scripts/proof/gemini-stop.sh`, which captures a real AfterAgent run refusing a premature done and allowing a clean one into `docs/proof-2026-09.md` · scripts/proof/gemini-stop.sh
 
 ## Needs #check-face
 
@@ -42,5 +42,6 @@ Gemini CLI: `BeforeTool` with the same command test, answered with Gemini's deci
 - 2026-09-05 decided by the worker and kept: `weed hook` refuses at exit 2 when it could not judge, never 3, because Claude Code reads a hook's exit 3 as a non-blocking error and would let the commit through; the reason goes on both stdout (the harness's JSON) and stderr. The 0/2/3 contract stays whole for `check`; the hook face is a different caller with a different protocol, and docs/proof-2026-09.md says so
 - 2026-09-05 superseded: the Tried line above about `--message-file` being how a trailer counts before the commit exists. The hooks judge with `--strict`, under which a trailer changes nothing, so the hook lifts no message off the command line; plumbing whose effect no test can observe was left out on purpose
 - 2026-09-06 agent-drafted from the run journal: failed after 0 attempts
+- 2026-09-06 the owner refuted the Gemini live proof: Google retired the personal sign-in Gemini CLI 0.46.0 uses (`IneligibleTierError`, migrate to Antigravity, which is an IDE agent with a language server and no hook surface), so the proof cannot start on this machine, and the owner's call is that the Claude Code live proof and the Codex note are enough for now. `tests/hook_gemini.rs` still proves the JSON shapes. A Gemini API key in the environment would let `scripts/proof/gemini-stop.sh` run the day it is wanted
 </script>
 <script src="loop.js"></script>
