@@ -6,11 +6,11 @@ Blind: yes
 
 Seed: calibration-audit-blind-2026-09-fair-1
 
-Cases: docs/calibration-audit-blind-2026-09/cases
+Cases: fixtures/adversarial/calibration-audit/blind-2026-09/cases
 
-Sessions: docs/calibration-audit-blind-2026-09/sessions
+Sessions: fixtures/adversarial/calibration-audit/blind-2026-09/sessions
 
-Every case packet was written by `cargo xtask audit-packet --seed calibration-audit-blind-2026-09-fair-1 --dir docs/calibration-audit-blind-2026-09/cases` from the pinned corpus, and `scripts/audit/blind-run.sh` handed each one to a fresh `codex exec` session in an empty directory, with the user's configuration and rules ignored and the sandbox read-only, as the session's only input. The raw event stream of each session is kept beside its case, and each answer opens with the SHA-256 of the packet it was given. Nothing from the ledger reached a session; the agreement below is recomputed by `scripts/check/calibration-agreement.sh` from these tables and the report's own.
+Every case packet was written by `cargo xtask audit-packet --seed calibration-audit-blind-2026-09-fair-1 --dir fixtures/adversarial/calibration-audit/blind-2026-09/cases` from the pinned corpus, and `scripts/audit/blind-run.sh` handed each one to a fresh `codex exec` session in an empty directory, with the user's configuration and rules ignored and the sandbox read-only, as the session's only input. The raw event stream of each session is kept beside its case, and each answer opens with the SHA-256 of the packet it was given. Nothing from the ledger reached a session; the agreement below is recomputed by `scripts/check/calibration-agreement.sh` from these tables and the report's own.
 
 ## Agreement
 

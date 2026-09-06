@@ -10,8 +10,8 @@ import pathlib
 import re
 import sys
 
-CASE_DIR = pathlib.Path("docs/calibration-audit-blind-2026-09/cases")
-SESSION_DIR = pathlib.Path("docs/calibration-audit-blind-2026-09/sessions")
+CASE_DIR = pathlib.Path("fixtures/adversarial/calibration-audit/blind-2026-09/cases")
+SESSION_DIR = pathlib.Path("fixtures/adversarial/calibration-audit/blind-2026-09/sessions")
 complaints = []
 
 

@@ -115,7 +115,7 @@ fn write_case_packets(
                 "{}.md",
                 case_id(&format!("blocked:{}:{}", case.repo, case.sha))
             )),
-            body,
+            masked(&body),
         )?;
         written += 1;
     }
@@ -152,7 +152,7 @@ fn write_case_packets(
                     case.rule, case.lang, case.repo, case.sha, case.path
                 ))
             )),
-            body,
+            masked(&body),
         )?;
         written += 1;
     }
@@ -673,4 +673,20 @@ fn take_backtick(text: &str) -> Option<(String, &str)> {
 
 fn is_sha(value: &str) -> bool {
     (9..=40).contains(&value.len()) && value.chars().all(|character| character.is_ascii_hexdigit())
+}
+
+/// A published example credential in a hunk, written as a marker that names it.
+/// The corpus quotes what vendors print in their manuals, X1 reports those at
+/// note level, and a packet that carried one whole would be the one file in
+/// this repository a scanner stops on. The marker is machine-derived and says
+/// nothing an auditor could not read off the stamp.
+fn masked(text: &str) -> String {
+    weed::core::rules::check::x1::published_examples()
+        .iter()
+        .fold(text.to_string(), |text, (whole, stamp)| {
+            text.replace(
+                whole,
+                &format!("<published example credential, stamp {stamp}>"),
+            )
+        })
 }

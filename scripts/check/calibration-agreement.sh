@@ -269,7 +269,7 @@ blind_rows = check_audit(blind, blocked, recall)
 # The blind audit is one packet per sampled case, written by code from the
 # pinned corpus. Every case file in the tree has to be what the generator writes
 # for the audit's seed today, byte for byte, and none may carry the ledger.
-case_dir = pathlib.Path("docs/calibration-audit-blind-2026-09/cases")
+case_dir = pathlib.Path("fixtures/adversarial/calibration-audit/blind-2026-09/cases")
 kept_cases = sorted(case_dir.glob("*.md")) if case_dir.is_dir() else []
 if not kept_cases:
     complaints.append(f"{case_dir} carries no case packets")
