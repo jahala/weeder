@@ -96,7 +96,7 @@ reasoning = "SymbolIndex and its six tests were dropped together as inert plumbi
 repo = "pleach"
 sha = "624529b3a972db597b3a8843c7723c667cfe2da5"
 classification = "acceptable"
-reasoning = "the hygiene gate lands its own secret patterns and the fixtures that exercise them, including AWS's documented AKIAIOSFODNN7EXAMPLE. A credential-shaped literal really was added and no scanner can tell a fixture from a live key, so the block is the rule working and the remedy is an allowance. The finding on hygiene.ts:27 is weaker: that line is the regular expression describing a private key block, not a key."
+reasoning = "the hygiene gate lands its own secret patterns and the fixtures that exercise them, including the access key id AWS prints in its own documentation. A credential-shaped literal really was added and no scanner can tell a fixture from a live key, so the block is the rule working and the remedy is an allowance; X1 has since learned that one string as a published example and reports it as a note. The finding on hygiene.ts:27 is weaker: that line is the regular expression describing a private key block, not a key."
 
 [[commit]]
 repo = "pleach"

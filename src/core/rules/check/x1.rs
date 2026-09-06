@@ -21,6 +21,17 @@
 //! `detail-meta__key`, an attribute, a sentence with a colon in the middle of
 //! it. So the prefix path reads every file weed is handed and the name path
 //! reads source alone, which is the only place a name means what it says.
+//!
+//! One list of exact strings stands beside the two shapes: the credentials a
+//! vendor prints in its own documentation so a reader can follow the page.
+//! Those travel into samples and tests and READMEs, no issuer honours one, and
+//! a commit carrying one has nothing to rotate. weed names it a published
+//! example and stands aside, because a gate that stops a manual is a gate an
+//! agent learns to walk past. The allowance is the string and not a vendor, so
+//! one character away from it is a credential like any other, and the note is
+//! what is left when nothing else on the line is one: weed reports a finding a
+//! line, and a note reached first would make the line that quotes a manual the
+//! place to hide a key.
 
 use crate::core::change::Change;
 use crate::core::classify::Lang;
@@ -76,6 +87,21 @@ const KEY_WORDS: &[&str] = &[
     "credentials",
 ];
 
+/// The credentials vendors publish in their own documentation, each written as
+/// the stamp an issuer puts on the front and the tail behind it. Joined, they
+/// are the strings weed refuses to carry, so this file carries neither whole and
+/// compares against the halves.
+///
+/// An entry earns its place by being printed in a vendor's own manual, where
+/// every scanner already has it and every issuer already refuses it. Nothing is
+/// inferred from it: a token that merely looks like an example is a credential.
+const PUBLISHED: &[(&str, &str)] = &[
+    ("AKIA", "IOSFODNN7EXAMPLE"),
+    ("wJalrXUtnFEMI", "/K7MDENG/bPxRfiCYEXAMPLEKEY"),
+    ("ghp_", "16C7e42F292c6912E7710c838347Ae178B4a"),
+    ("sk_test_", "4eC39HqLyjWDarjtT1zdp7dc"),
+];
+
 /// How long a value has to be before disorder means anything, and how disordered
 /// it has to be. Four bits a character is above English prose and below the
 /// base64 of random bytes.
@@ -99,11 +125,17 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
                 findings.push(finding(path, line, &shape));
                 continue;
             }
-            if !source {
-                continue;
+            if source {
+                if let Some(name) = named_and_disordered(text) {
+                    findings.push(finding(path, line, &Shape::named(&name)));
+                    continue;
+                }
             }
-            if let Some(name) = named_and_disordered(text) {
-                findings.push(finding(path, line, &Shape::named(&name)));
+            // Last, and only where the two paths above found nothing. weed
+            // reports one finding a line, so a note reached before them would
+            // be a place to hide a credential: on the line that quotes a manual.
+            if quotes_an_example(text) {
+                findings.push(finding(path, line, &Shape::published()));
             }
         }
     }
@@ -127,6 +159,11 @@ fn issued(line: &str) -> Option<Shape> {
         return Some(Shape::key_block());
     }
     for token in tokens(line) {
+        // Before the stamp, because a published example wears one, and the
+        // line may carry something else that is not an example at all.
+        if is_published(token) {
+            continue;
+        }
         if let Some(prefix) = PREFIXES.iter().find(|prefix| is_issued(token, prefix)) {
             return Some(Shape::prefixed(prefix));
         }
@@ -135,6 +172,21 @@ fn issued(line: &str) -> Option<Shape> {
         }
     }
     None
+}
+
+/// Whether a token is one of the examples a vendor published, exactly. The
+/// comparison joins nothing: the token is measured against the stamp and then
+/// against the tail, so a value one character from an example fails it and is
+/// judged as the credential it looks like.
+fn is_published(token: &str) -> bool {
+    PUBLISHED
+        .iter()
+        .any(|(stamp, tail)| token.strip_prefix(stamp) == Some(*tail))
+}
+
+/// Whether a line quotes one of those examples anywhere in it.
+fn quotes_an_example(line: &str) -> bool {
+    tokens(line).into_iter().any(is_published)
 }
 
 /// The name a line assigns a secret-looking value to, where it does.
@@ -147,6 +199,11 @@ fn named_and_disordered(line: &str) -> Option<String> {
             continue;
         }
         if value.contains(SLOT_CHARACTERS) {
+            continue;
+        }
+        // An example under a name that says `secret` is still an example; the
+        // line is left to the note the caller falls through to.
+        if is_published(value) {
             continue;
         }
         if entropy(value) <= ENTROPY_BITS {
@@ -330,36 +387,59 @@ fn entropy(value: &str) -> f64 {
         .sum::<f64>()
 }
 
-/// A credential shape, named without its value ever being repeated.
+/// A credential shape, named without its value ever being repeated, and the
+/// level weed reports that shape at.
 struct Shape {
-    what: String,
+    level: Level,
+    message: Message,
 }
 
 impl Shape {
     fn prefixed(prefix: &str) -> Shape {
-        Shape {
-            what: format!(
-                "a credential was added: a token stamped `{prefix}` and a long opaque tail."
-            ),
-        }
+        Shape::credential(format!(
+            "a credential was added: a token stamped `{prefix}` and a long opaque tail."
+        ))
     }
 
     fn key_block() -> Shape {
-        Shape {
-            what: "a private key block was added.".to_string(),
-        }
+        Shape::credential("a private key block was added.".to_string())
     }
 
     fn signed_token() -> Shape {
-        Shape {
-            what: "a signed token was added: three base64 parts with a signature on the end."
-                .to_string(),
-        }
+        Shape::credential(
+            "a signed token was added: three base64 parts with a signature on the end.".to_string(),
+        )
     }
 
     fn named(name: &str) -> Shape {
+        Shape::credential(format!(
+            "a secret-looking value was added, assigned to `{name}`."
+        ))
+    }
+
+    /// A credential, whatever gave it away: it blocks, and the reader is told
+    /// to take it out and rotate it.
+    fn credential(what: String) -> Shape {
         Shape {
-            what: format!("a secret-looking value was added, assigned to `{name}`."),
+            level: Level::Block,
+            message: Message {
+                what,
+                why: "a credential in a commit is a credential published, and deleting the line later leaves it in the history.".to_string(),
+                next: "take the value out, rotate it, and read the credential from the environment at run time.".to_string(),
+            },
+        }
+    }
+
+    /// An example a vendor printed in its own documentation. It is said out
+    /// loud and it stops nothing.
+    fn published() -> Shape {
+        Shape {
+            level: Level::Note,
+            message: Message {
+                what: "a published example credential was added: the string a vendor prints in its own documentation.".to_string(),
+                why: "an example is a quotation rather than a key, so there is nothing to rotate and nothing to block, and weed names it here so a reader is not left wondering whether it was read.".to_string(),
+                next: "leave it where the documentation is being quoted; anywhere else, take it out, since a value no issuer honours will not work either.".to_string(),
+            },
         }
     }
 }
@@ -367,17 +447,13 @@ impl Shape {
 fn finding(path: &str, line: u32, shape: &Shape) -> Finding {
     Finding {
         rule: "X1".to_string(),
-        level: Level::Block,
+        level: shape.level,
         path: path.to_string(),
         region: Some(Region {
             start_line: line,
             end_line: line,
         }),
-        message: Message {
-            what: shape.what.clone(),
-            why: "a credential in a commit is a credential published, and deleting the line later leaves it in the history.".to_string(),
-            next: "take the value out, rotate it, and read the credential from the environment at run time.".to_string(),
-        },
+        message: shape.message.clone(),
         fix: None,
         suppressed: None,
     }

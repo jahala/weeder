@@ -71,7 +71,7 @@ The window ends at `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9`, fetched from `htt
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
-| `624529b3a9` feat(loop): the hygiene gate — empty-diff, secrets, deletion tripwire (§E) | X1 | acceptable | the hygiene gate lands its own secret patterns and the fixtures that exercise them, including AWS's documented AKIAIOSFODNN7EXAMPLE. A credential-shaped literal really was added and no scanner can tell a fixture from a live key, so the block is the rule working and the remedy is an allowance. The finding on hygiene.ts:27 is weaker: that line is the regular expression describing a private key block, not a key. |
+| `624529b3a9` feat(loop): the hygiene gate — empty-diff, secrets, deletion tripwire (§E) | X1 | acceptable | the hygiene gate lands its own secret patterns and the fixtures that exercise them, including the access key id AWS prints in its own documentation. A credential-shaped literal really was added and no scanner can tell a fixture from a live key, so the block is the rule working and the remedy is an allowance; X1 has since learned that one string as a published example and reports it as a note. The finding on hygiene.ts:27 is weaker: that line is the regular expression describing a private key block, not a key. |
 
 ## tend2, 200 commits judged, 6 blocked, 22 warned
 

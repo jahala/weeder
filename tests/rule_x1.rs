@@ -14,6 +14,13 @@
 //! file. Reading a name and a value apart takes a language weed knows the
 //! grammar of, and outside one, `name = value` is a css class, an attribute or
 //! a sentence with a colon in it, so the second path reads source alone.
+//!
+//! Both paths make one exception, and it is a list of exact strings rather than
+//! a shape: the credentials vendors print in their own documentation. Those are
+//! quotations, no issuer honours one, and the fixtures at the foot of this file
+//! hold weed to reporting each as a note, to blocking the same string with one
+//! character changed, and to blocking a line that quotes an example with a real
+//! credential behind it.
 
 mod common;
 
@@ -312,4 +319,239 @@ fn entropy(value: &str) -> f64 {
             share * share.log2()
         })
         .sum::<f64>()
+}
+
+// ---------------------------------------------------------------------------
+// The examples a vendor published
+// ---------------------------------------------------------------------------
+
+/// Every vendor prints a credential in its own documentation so a reader can
+/// follow the page, and those strings travel: into a sample, a test, a README.
+/// They are quotations. No issuer honours one, so a commit carrying one has
+/// nothing to rotate, and blocking it teaches an agent that the gate is noise.
+/// weed says what it found and stands aside.
+///
+/// The allowance is exact, which is why each example gets a fixture of its own:
+/// the published string is a note, and the same string with one character
+/// changed is a credential nobody published and blocks like any other.
+///
+/// The file each example lands in is a different language, because the
+/// allowance is the string rather than the grammar around it.
+const EXAMPLES: [(&str, &str); 4] = [
+    ("cloud-id", "src/config.ts"),
+    ("cloud-secret", "src/config.py"),
+    ("forge-token", "config.go"),
+    ("payment-key", "src/config.rs"),
+];
+
+/// The words a finding about a published example has to carry, or a reader is
+/// left with a note and no reason for it.
+const NAMED: [&str; 2] = ["published", "example"];
+
+#[test]
+fn a_credential_a_vendor_published_is_reported_at_note_level_and_never_blocks() {
+    assert_eq!(
+        common::examples(),
+        EXAMPLES.map(|(name, _)| name).to_vec(),
+        "every example the harness can plant has a fixture here"
+    );
+
+    for (name, path) in EXAMPLES {
+        let repo = fixture("X1", &format!("example-{name}"), "published");
+        let run = repo.weed(&["check"]);
+
+        let value = common::published_example(name);
+        let planted = planted(name, "published", path, &value);
+        let findings: Vec<Finding> = run
+            .findings()
+            .into_iter()
+            .filter(|finding| finding.rule == "X1")
+            .collect();
+        assert_eq!(
+            findings.len(),
+            1,
+            "{name}: the published example is reported once: {findings:#?}"
+        );
+        let finding = &findings[0];
+        assert_eq!(finding.path, path, "{name}: the file is named");
+        assert_eq!(finding.line, Some(planted), "{name}: the planted line");
+        assert_eq!(
+            finding.level, "note",
+            "{name}: a string a vendor printed in its own manual is not a secret"
+        );
+        for word in NAMED {
+            assert!(
+                finding.message.contains(word),
+                "{name}: the note says it found a {word}: {}",
+                finding.message
+            );
+        }
+        assert!(
+            !finding.message.contains(&value),
+            "{name}: a finding never repeats the value it found: {}",
+            finding.message
+        );
+        assert_eq!(
+            run.code, 0,
+            "{name}: a published example blocks nothing\n{}",
+            run.stderr
+        );
+    }
+}
+
+#[test]
+fn the_same_example_with_one_character_changed_blocks() {
+    for (name, path) in EXAMPLES {
+        let published = common::published_example(name);
+        let altered = common::altered_example(name);
+        assert_eq!(
+            altered.chars().count(),
+            published.chars().count(),
+            "{name}: the altered value is the same string with one character changed"
+        );
+        assert_eq!(
+            altered
+                .chars()
+                .zip(published.chars())
+                .filter(|(changed, printed)| changed != printed)
+                .count(),
+            1,
+            "{name}: exactly one character apart, or this proves something easier"
+        );
+
+        let repo = fixture("X1", &format!("example-{name}"), "altered");
+        let run = repo.weed(&["check"]);
+
+        let planted = planted(name, "altered", path, &altered);
+        let findings: Vec<Finding> = run
+            .findings()
+            .into_iter()
+            .filter(|finding| finding.rule == "X1")
+            .collect();
+        assert_eq!(
+            findings.len(),
+            1,
+            "{name}: the altered value is reported once: {findings:#?}"
+        );
+        let finding = &findings[0];
+        assert_eq!(finding.path, path, "{name}: the file is named");
+        assert_eq!(finding.line, Some(planted), "{name}: the planted line");
+        assert_eq!(
+            finding.level, "error",
+            "{name}: the allowance is the exact string and nothing near it"
+        );
+        assert!(
+            !finding.message.contains(&altered),
+            "{name}: a finding never repeats the value it found: {}",
+            finding.message
+        );
+        assert_eq!(run.code, 2, "{name}: a credential blocks\n{}", run.stderr);
+    }
+}
+
+#[test]
+fn no_file_in_this_repository_spells_a_published_example_whole() {
+    let mut read = 0;
+    let mut stack = vec![repository_root()];
+    while let Some(directory) = stack.pop() {
+        let entries =
+            std::fs::read_dir(&directory).expect("a repository directory should be readable");
+        for entry in entries {
+            let path = entry.expect("a repository entry should be readable").path();
+            if path.is_dir() {
+                if !SKIPPED.contains(&file_name(&path).as_str()) {
+                    stack.push(path);
+                }
+                continue;
+            }
+            // A file weed's own tree holds that is not text holds no string
+            // either, and there is nothing here to read in it.
+            let Ok(contents) = std::fs::read_to_string(&path) else {
+                continue;
+            };
+            read += 1;
+            for name in common::examples() {
+                assert!(
+                    !contents.contains(&common::published_example(name)),
+                    "{} spells the {name} example whole. weed does not carry what it reports, \
+                     so an example belongs in the harness, written as its stamp and its tail \
+                     apart, and a fixture writes {{{{weed:example-{name}}}}} for it",
+                    path.display()
+                );
+            }
+        }
+    }
+    assert!(
+        read > 100,
+        "only {read} files were read, so this walk proves nothing"
+    );
+}
+
+/// What the walk above does not read: git's own store, and the build directory,
+/// neither of which this repository writes.
+const SKIPPED: [&str; 2] = [".git", "target"];
+
+fn repository_root() -> std::path::PathBuf {
+    std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+}
+
+fn file_name(path: &std::path::Path) -> String {
+    path.file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or_default()
+        .to_string()
+}
+
+/// The line one of these fixtures planted a value on, counted from one and read
+/// off the fixture as the harness will write it.
+fn planted(name: &str, case: &str, path: &str, value: &str) -> u64 {
+    fixture_file(
+        "X1",
+        &format!("example-{name}"),
+        &format!("{case}/after"),
+        path,
+    )
+    .lines()
+    .position(|line| line.contains(value))
+    .map(|index| index as u64 + 1)
+    .unwrap_or_else(|| panic!("{name}: the {case} fixture plants its value"))
+}
+
+/// The example the crowded fixture quotes, and the credential it hides behind
+/// it. Both land on one line, and weed reports one finding a line.
+const CROWDED: (&str, &str) = ("cloud-id", "src/config.ts");
+
+#[test]
+fn a_line_that_quotes_an_example_and_carries_a_credential_still_blocks() {
+    let (name, path) = CROWDED;
+    let repo = fixture("X1", &format!("example-{name}"), "crowded");
+    let run = repo.weed(&["check"]);
+
+    let findings: Vec<Finding> = run
+        .findings()
+        .into_iter()
+        .filter(|finding| finding.rule == "X1")
+        .collect();
+    assert_eq!(
+        findings.len(),
+        1,
+        "one finding a line, and this line has one of each: {findings:#?}"
+    );
+    let finding = &findings[0];
+    assert_eq!(finding.path, path, "the file is named");
+    assert_eq!(
+        finding.line,
+        Some(planted(
+            name,
+            "crowded",
+            path,
+            &common::published_example(name)
+        )),
+        "the crowded line"
+    );
+    assert_eq!(
+        finding.level, "error",
+        "the credential decides the line, or a manual is somewhere to hide one"
+    );
+    assert_eq!(run.code, 2, "a credential blocks\n{}", run.stderr);
 }
