@@ -18,10 +18,11 @@
 //! line with a conflict marker or holds a string shaped like a credential. Rust
 //! tests build their markers with [`marker`] and its three shorthands; fixture
 //! files spell theirs with the placeholders in `PLACEHOLDERS`, and spell a
-//! credential with one from `CREDENTIALS`, whose stamp and tail are written
-//! apart here and joined on the way into the temp repository. The binary under
-//! test therefore reads exactly what git writes into a file it could not merge,
-//! and exactly what an issuer stamps.
+//! credential with one from `CREDENTIALS`, or one a vendor published from
+//! `PUBLISHED`, whose stamp and tail are written apart here and joined on the
+//! way into the temp repository. The binary under test therefore reads exactly
+//! what git writes into a file it could not merge, and exactly what an issuer
+//! stamps.
 
 #![allow(dead_code)]
 
@@ -63,7 +64,7 @@ const PLACEHOLDERS: &[(&str, char)] = &[
 /// an issuer puts on the front, and the opaque tail behind it. Neither half is a
 /// credential on its own, so this repository carries none.
 const CREDENTIALS: &[(&str, &str, &str)] = &[
-    ("{{weed:cloud-id}}", "AKIA", "IOSFODNN7EXAMPLE"),
+    ("{{weed:cloud-id}}", "AKIA", "3XAMPL3QRSTUVWXY"),
     (
         "{{weed:forge-token}}",
         "ghp_",
@@ -106,6 +107,76 @@ const CREDENTIALS: &[(&str, &str, &str)] = &[
         "9f3Kx2Qv7LmT4pR8sN1bY6cZ0dHwJ5eA",
     ),
 ];
+
+/// The credentials vendors print in their own documentation, so a reader can
+/// follow the page without one of their own: the name a fixture calls each by,
+/// the stamp and the tail. These are quotations rather than keys, no issuer will
+/// honour one, and weed says so about them, which is what the fixtures here
+/// prove. Written whole they would be the strings this repository refuses to
+/// carry, so they are written apart and joined on the way into the temp
+/// repository, the way every other credential is.
+///
+/// A fixture writes `{{weed:example-<name>}}` for the example as its vendor
+/// prints it, and `{{weed:altered-<name>}}` for the same string with one
+/// character changed, which is a credential again and nothing anyone published.
+const PUBLISHED: &[(&str, &str, &str)] = &[
+    ("cloud-id", "AKIA", "IOSFODNN7EXAMPLE"),
+    (
+        "cloud-secret",
+        "wJalrXUtnFEMI",
+        "/K7MDENG/bPxRfiCYEXAMPLEKEY",
+    ),
+    (
+        "forge-token",
+        "ghp_",
+        "16C7e42F292c6912E7710c838347Ae178B4a",
+    ),
+    ("payment-key", "sk_test_", "4eC39HqLyjWDarjtT1zdp7dc"),
+];
+
+/// The names the fixtures write, in the order this harness holds them.
+pub fn examples() -> Vec<&'static str> {
+    PUBLISHED.iter().map(|(name, _, _)| *name).collect()
+}
+
+/// A published example, joined as its vendor prints it.
+pub fn published_example(name: &str) -> String {
+    let (_, stamp, tail) = example(name);
+    format!("{stamp}{tail}")
+}
+
+/// The same example with one character changed: the same length, the same
+/// shape, and not a string any vendor put in a manual.
+pub fn altered_example(name: &str) -> String {
+    let (_, stamp, tail) = example(name);
+    let mut characters: Vec<char> = tail.chars().collect();
+    let last = characters
+        .last_mut()
+        .expect("a published example has a tail");
+    *last = stepped(*last);
+    let tail: String = characters.into_iter().collect();
+    format!("{stamp}{tail}")
+}
+
+fn example(name: &str) -> &'static (&'static str, &'static str, &'static str) {
+    PUBLISHED
+        .iter()
+        .find(|(known, _, _)| *known == name)
+        .unwrap_or_else(|| panic!("there is no published example called {name}"))
+}
+
+/// The next character of the alphabet the one handed over is written in, so a
+/// value changed by one character is still a value of the same kind.
+fn stepped(character: char) -> char {
+    match character {
+        '9' => '0',
+        'z' => 'a',
+        'Z' => 'A',
+        digit if digit.is_ascii_digit() => (digit as u8 + 1) as char,
+        letter if letter.is_ascii_alphabetic() => (letter as u8 + 1) as char,
+        other => panic!("a published example ends in a letter or a digit, not {other:?}"),
+    }
+}
 
 /// The placeholder a fixture writes where a private key block belongs.
 const KEY_BLOCK: &str = "{{weed:key-block}}";
@@ -675,6 +746,16 @@ fn expand(contents: &str) -> String {
         .fold(text, |text, (placeholder, stamp, tail)| {
             text.replace(placeholder, &format!("{stamp}{tail}"))
         });
+    let text = PUBLISHED.iter().fold(text, |text, (name, _, _)| {
+        text.replace(
+            &format!("{{{{weed:example-{name}}}}}"),
+            &published_example(name),
+        )
+        .replace(
+            &format!("{{{{weed:altered-{name}}}}}"),
+            &altered_example(name),
+        )
+    });
     text.replace(KEY_BLOCK, &key_block())
 }
 

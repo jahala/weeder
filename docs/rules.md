@@ -137,7 +137,7 @@ A changed file imports across a direction that `[deps] allow` does not permit, b
 
 `check` · blocks by default
 
-An added line carries a known credential prefix, or a high-entropy literal assigned to a name that reads like a key.
+An added line carries a known credential prefix, or a high-entropy literal assigned to a name that reads like a key. A credential a vendor published in its own documentation is named as an example and reported as a note.
 
 <a id="X2"></a>
 ## X2: A file outside the scope was touched

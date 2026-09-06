@@ -60,3 +60,24 @@ dishonest change, reported as one. That is the rule being right about data it sh
 pointed at, and fixing it needs a way to say "these paths are specimens", a per-path rule exclusion
 that `weed.toml` does not have yet. Left for calibration; it is not something this loop can close by
 editing a fixture, because a fixture that stops carrying a skip stops being a fixture.
+
+## The published-example pass
+
+**The harness was already quoting the manual.** X1's ordinary fire fixtures assigned the access key
+id AWS prints in its own documentation. Landing the allowance would have turned the fixture that
+proves X1 blocks into one that proves it does not, so the first edit of this pass was to give
+`{{weed:cloud-id}}` a tail nobody published. A fixture built from a real example changes meaning the
+day the rule learns something, and the same trap waits in every fixture that borrows a value from a
+vendor's page.
+
+**The allowance is exact, and being exact is what makes it safe.** `PUBLISHED` in the rule holds
+each example as a stamp and a tail, compared with `strip_prefix`, never joined. So the binary
+carries no credential, the repository carries none outside the harness, and a value one character
+from an example fails the comparison and blocks like any other. `tests/rule_x1.rs` walks the whole
+tree to hold that last part up: any file that ever spells one of these whole fails the suite.
+
+**A published example is now reported wherever it lands.** The check happens on the token, which is
+the path that reads every file rather than source alone, so quoting AWS's example secret in a
+markdown page produces a note where it used to produce nothing. That is the trade the note was for:
+weed says what it read and stops nothing, rather than staying quiet and leaving a reader to wonder
+whether the scanner looked.
