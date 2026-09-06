@@ -57,3 +57,61 @@ percent if X1 alone were fixed.
 The friction the gate creates is almost all C1: 42 of 71 blocks are a GitHub
 workflow edit, every one of them real. Whether that friction is wanted is a
 product decision this loop can only put a number on.
+
+## The recalibration, 2026-09-06
+
+The corpus is pinned now: each repository is a url and a full sha, and the run
+fetches that commit and walks the window ending at it. Three things fell out of
+doing it.
+
+The five garden repositories all have a GitHub remote whose default branch was
+exactly what the local checkouts held, so pinning changed no number: 635 commits
+judged before and after. That will not be true next time, and it is the point —
+the pins are now the thing that has to be edited for the report to move.
+
+Fetching a bare sha works from GitHub and from a path on this machine alike, so
+the scratch is one `git fetch <source> <sha>` and one `update-ref`. No clone of
+a branch, no guessing at which branch a checkout is on, and `default_ref` went
+away with the guessing.
+
+Measuring the C1 split needed the first run's findings, and a report's tables do
+not carry the file a rule fired on. The pre-split code is still in git history,
+so the record was made by running it: `git archive a999e23`, `cargo xtask
+calibrate --findings`, and its precision half came out byte for byte identical
+to the report in the tree, which is what makes `docs/calibration/first-run.toml`
+the first run's own record rather than a reconstruction. 332 findings, 69 of them
+C1 on workflow files, and all 69 are C3 warnings today.
+
+The rule fixes rules-prod and rules-block landed show up plainly: 71 blocks down
+to 25, nine block-level false positives down to two, and 58 of the first run's
+findings are reported by nobody now. Pooled share 0.31 percent.
+
+What is still not reproducible is the recall campaign. `cargo xtask mutate`
+picks its own branch per repository — tilth at `origin/main`, tend2 at
+`origin/landing-rewrite` — and reads whatever those say today, so the miss list
+can move between two runs over what is nominally the same corpus. Pointing it at
+the pinned corpus would change which commits it walks and so the recall figures
+themselves, which is the recall loop's measurement to re-take, not this one's to
+quietly alter.
+
+A second run of this node was refused at the delivery gate rather than by a
+check: the secret scan found an AWS access key id in the worker's scratch
+journal and stopped the whole run. The key was the one AWS prints in its own
+documentation, and it reached the journal because the journal quotes the commit
+message of a corpus commit that X1 blocked. Quoting it again here would fail
+this delivery the same way, which is the point. A calibration worker's notes
+will always carry
+credential-shaped strings, because credential-shaped strings are what the rule
+it is calibrating finds; the scan cannot tell a quoted finding from a live key,
+and neither can weed, which is why the judgement beside that commit reads
+acceptable. Nothing here needs a scanner that is cleverer. What it needs is for
+the journal to redact what it quotes.
+
+The same run left 836 MB under `.loop-scratch/` — a whole second copy of the
+repository, taken so the first run's tree could be read — and the collector
+staged all of it, because this repository stopped ignoring that directory after
+P8. `weed check --base HEAD --strict` on the delivery exited 3 on that copy: it
+carries weed's own X1 prefix table and an allowance with no reason written on
+it, both of them fine where they live and both of them findings once they are
+pasted into a diff. A scratch directory that is collected is not scratch.
+Either the collector skips it or the loop stops calling it disposable.

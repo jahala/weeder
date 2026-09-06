@@ -8,7 +8,7 @@
 
 mod common;
 
-use common::{workspace, xtask, xtask_under, Repo};
+use common::{workspace, xtask, Bench, Repo};
 
 use serde_json::Value;
 
@@ -17,15 +17,8 @@ use serde_json::Value;
 const MARKER: &str = "# weed-guard-binary:";
 
 fn rates(repo: &Repo) -> Value {
-    let run = xtask(&[
-        "suppressions",
-        "--repo",
-        &format!("probe={}", repo.root().display()),
-        "--only",
-        "probe",
-        "--format",
-        "json",
-    ]);
+    let bench = Bench::new();
+    let run = bench.suppressions("probe", repo, &repo.tip(), &["--format", "json"]);
     run.succeeded();
     serde_json::from_str::<Value>(&run.stdout)
         .expect("the measurement writes json")
@@ -129,13 +122,8 @@ fn the_repository_being_read_is_left_exactly_as_it_was() {
 #[test]
 fn the_table_says_the_same_as_the_json() {
     let repo = probe();
-    let run = xtask(&[
-        "suppressions",
-        "--repo",
-        &format!("probe={}", repo.root().display()),
-        "--only",
-        "probe",
-    ]);
+    let bench = Bench::new();
+    let run = bench.suppressions("probe", &repo, &repo.tip(), &[]);
     run.succeeded();
 
     let row = run
@@ -153,15 +141,15 @@ fn the_table_says_the_same_as_the_json() {
 #[test]
 fn the_scratch_a_run_fetches_into_is_removed_when_it_ends() {
     let repo = probe();
+    let bench = Bench::new();
     let scratch = workspace();
 
-    xtask_under(
+    bench.write_corpus("probe", repo.root(), &repo.tip());
+    common::xtask_under(
         &[
             "suppressions",
-            "--repo",
-            &format!("probe={}", repo.root().display()),
-            "--only",
-            "probe",
+            "--corpus",
+            &bench.corpus().display().to_string(),
         ],
         scratch.path(),
     )
@@ -179,21 +167,38 @@ fn the_scratch_a_run_fetches_into_is_removed_when_it_ends() {
 }
 
 #[test]
-fn a_workspace_the_measurement_never_saw_is_refused() {
-    let run = workspace();
-    let missing = run.path().join("no-such-checkout");
+fn a_source_the_measurement_never_saw_is_refused() {
+    let bench = Bench::new();
+    let missing = bench.path().join("no-such-checkout");
+    bench.write_corpus(
+        "probe",
+        &missing,
+        "0123456789012345678901234567890123456789",
+    );
 
     let refused = xtask(&[
         "suppressions",
-        "--repo",
-        &format!("probe={}", missing.display()),
-        "--only",
-        "probe",
+        "--corpus",
+        &bench.corpus().display().to_string(),
     ]);
     refused.failed();
     assert!(
-        refused.stderr.contains("there is no git repository there"),
+        refused.stderr.contains("`git fetch"),
         "a rate over a repository that is not there is not a rate: {}",
+        refused.stderr
+    );
+}
+
+#[test]
+fn a_pin_that_is_not_a_full_sha_is_refused() {
+    let repo = probe();
+    let bench = Bench::new();
+
+    let refused = bench.suppressions("probe", &repo, &repo.tip()[..8], &[]);
+    refused.failed();
+    assert!(
+        refused.stderr.contains("not a full forty-character sha"),
+        "an abbreviation can come to mean a second commit: {}",
         refused.stderr
     );
 }

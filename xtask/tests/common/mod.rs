@@ -67,6 +67,11 @@ impl Repo {
         self.git(&["rev-parse", "HEAD"]).trim().to_string()
     }
 
+    /// The commit the default branch is on, which is what a corpus pins.
+    pub fn tip(&self) -> String {
+        self.git(&["rev-parse", "main"]).trim().to_string()
+    }
+
     /// Everything a run could disturb, read the way the measurements read it.
     pub fn fingerprint(&self) -> String {
         format!(
@@ -162,6 +167,160 @@ impl Run {
             self.stdout
         );
         self
+    }
+}
+
+/// Everything a measurement reads besides the history: the corpus it takes the
+/// repositories from, the ledger it takes classifications from, the earlier run
+/// it compares itself with, and the re-grade that decides how the verdict is
+/// worded. A suite owns all four, so nothing a run says depends on what the
+/// machine it runs on happens to hold.
+pub struct Bench {
+    directory: TempDir,
+}
+
+impl Default for Bench {
+    fn default() -> Bench {
+        Bench::new()
+    }
+}
+
+impl Bench {
+    pub fn new() -> Bench {
+        let bench = Bench {
+            directory: workspace(),
+        };
+        std::fs::write(bench.judgements(), "").expect("the ledger should be writable");
+        std::fs::write(bench.first_run(), "").expect("the record should be writable");
+        bench
+    }
+
+    pub fn path(&self) -> &Path {
+        self.directory.path()
+    }
+
+    pub fn out(&self) -> PathBuf {
+        self.path().join("calibration.md")
+    }
+
+    pub fn corpus(&self) -> PathBuf {
+        self.path().join("corpus.toml")
+    }
+
+    pub fn judgements(&self) -> PathBuf {
+        self.path().join("judgements.toml")
+    }
+
+    pub fn first_run(&self) -> PathBuf {
+        self.path().join("first-run.toml")
+    }
+
+    /// The re-grade. It is not written unless a suite writes one, which is the
+    /// state the provisional wording is for.
+    pub fn audit(&self) -> PathBuf {
+        self.path().join("audit.md")
+    }
+
+    /// Write the re-grade, one row per sample.
+    pub fn write_audit(&self, samples: &[(&str, usize, usize)]) {
+        let mut text =
+            String::from("# the re-grade\n\n| Sample | Re-graded | Agreed |\n|---|---|---|\n");
+        for (name, regraded, agreed) in samples {
+            text.push_str(&format!("| {name} | {regraded} | {agreed} |\n"));
+        }
+        std::fs::write(self.audit(), text).expect("the audit should be writable");
+    }
+
+    /// Write the record of an earlier run's block-level findings.
+    pub fn write_first_run(&self, blocks: &[(&str, &str, &str, &str)]) {
+        let mut text = String::new();
+        for (repo, commit, rule, path) in blocks {
+            text.push_str(&format!(
+                "[[block]]\nrepo = \"{repo}\"\ncommit = \"{commit}\"\nrule = \"{rule}\"\npath = \"{path}\"\n\n"
+            ));
+        }
+        std::fs::write(self.first_run(), text).expect("the record should be writable");
+    }
+
+    /// Name one repository, at one commit, as the whole corpus. A suite hands
+    /// xtask its own corpus rather than narrowing the shipped one, so it judges
+    /// the same history on a machine that has none of the garden checkouts.
+    pub fn write_corpus(&self, name: &str, source: &Path, tip: &str) {
+        std::fs::write(
+            self.corpus(),
+            format!(
+                "[[repo]]\nname = \"{name}\"\nsource = \"{}\"\ntip = \"{tip}\"\n",
+                source.display()
+            ),
+        )
+        .expect("the corpus should be writable");
+    }
+
+    fn arguments(&self, command: &str, extra: &[&str]) -> Vec<String> {
+        let mut arguments = vec![
+            command.to_string(),
+            "--corpus".to_string(),
+            self.corpus().display().to_string(),
+        ];
+        if command == "calibrate" {
+            arguments.extend([
+                "--out".to_string(),
+                self.out().display().to_string(),
+                "--judgements".to_string(),
+                self.judgements().display().to_string(),
+                "--first-run".to_string(),
+                self.first_run().display().to_string(),
+                "--audit".to_string(),
+                self.audit().display().to_string(),
+            ]);
+        }
+        arguments.extend(extra.iter().map(|argument| (*argument).to_string()));
+        arguments
+    }
+
+    /// Judge one repository's history at the commit it is on.
+    pub fn calibrate(&self, name: &str, repo: &Repo, extra: &[&str]) -> Run {
+        self.calibrate_at(name, repo, &repo.tip(), extra)
+    }
+
+    /// Judge one repository's history at a commit the caller picks, which is how
+    /// a suite asks what a pin behind the branch tip does.
+    pub fn calibrate_at(&self, name: &str, repo: &Repo, tip: &str, extra: &[&str]) -> Run {
+        self.write_corpus(name, repo.root(), tip);
+        let arguments = self.arguments("calibrate", extra);
+        xtask(&arguments.iter().map(String::as_str).collect::<Vec<&str>>())
+    }
+
+    /// The same, with the directory the run may put scratch repositories in
+    /// named by the caller.
+    pub fn calibrate_under(&self, name: &str, repo: &Repo, scratch: &Path) -> Run {
+        self.write_corpus(name, repo.root(), &repo.tip());
+        let arguments = self.arguments("calibrate", &[]);
+        xtask_under(
+            &arguments.iter().map(String::as_str).collect::<Vec<&str>>(),
+            scratch,
+        )
+    }
+
+    /// Count one repository's allowances at the commit it is pinned to.
+    pub fn suppressions(&self, name: &str, repo: &Repo, tip: &str, extra: &[&str]) -> Run {
+        self.write_corpus(name, repo.root(), tip);
+        let arguments = self.arguments("suppressions", extra);
+        xtask(&arguments.iter().map(String::as_str).collect::<Vec<&str>>())
+    }
+
+    pub fn report(&self) -> String {
+        std::fs::read_to_string(self.out()).expect("the report should be written")
+    }
+
+    /// The report's first sentence, which is the verdict.
+    pub fn verdict(&self) -> String {
+        self.report()
+            .lines()
+            .skip(1)
+            .find(|line| !line.trim().is_empty())
+            .unwrap_or_default()
+            .to_string()
     }
 }
 

@@ -15,8 +15,10 @@ use weed::core::config::Config;
 use weed::core::finding::Level;
 use weed::core::rules::configured_level;
 
+use crate::audit::Audit;
 use crate::calibrate::{RepoMeasurement, REPORTED_ONLY, WINDOW};
 use crate::judgement::{Classification, Ledger};
+use crate::split::{self, Split};
 use crate::suppressions::RepoRate;
 
 /// The share of judged commits that block-level false positives may take before
@@ -66,6 +68,10 @@ pub struct Report<'a> {
     pub repos: &'a [RepoMeasurement],
     pub rates: &'a [RepoRate],
     pub ledger: &'a Ledger,
+    /// What the rules moved since the run whose blocks were written down.
+    pub split: &'a Split,
+    /// The independent re-grade, which decides how the verdict is worded.
+    pub audit: &'a Audit,
 }
 
 /// The numbers a caller wants back without reading the markdown: what the run
@@ -147,13 +153,17 @@ impl<'a> Report<'a> {
             out.push_str(&self.repo_section(repo));
         }
         out.push_str(&self.totals(&outcome));
+        out.push_str(&self.moved());
         out.push_str(&self.wrong());
         out.push_str(&self.precision());
         out.push_str(&self.rule_view());
         out
     }
 
-    /// The first sentence. Ship or kill, with the number that decided it.
+    /// The first sentence. Ship or kill, with the number that decided it, and
+    /// the qualification the independent re-grade has or has not lifted. The
+    /// wording is written from the audit file rather than typed, so a verdict
+    /// cannot be promoted by editing this report.
     fn verdict(&self, outcome: &Outcome) -> String {
         let share = share(outcome.tally.against_the_bar(), outcome.judged);
         let repos = self.repos.len();
@@ -161,12 +171,46 @@ impl<'a> Report<'a> {
         if outcome.ships {
             let _ = write!(
                 verdict,
-                "weed ships as a gate: over {} commits of real history in {repos} repositories it blocked {}, of which {} were block-level false positives, {share:.2} percent of the commits judged and under the two percent bar, with {} all still at block level.\n\n",
+                "weed ships as a gate{}: over {} commits of real history in {repos} repositories it blocked {}, of which {} were block-level false positives, {share:.2} percent of the commits judged and under the two percent bar, with {} all still at block level.\n\n",
+                if self.audit.confirms() {
+                    String::new()
+                } else {
+                    ", pending the independent re-grade".to_string()
+                },
                 outcome.judged,
                 outcome.blocked,
                 outcome.tally.against_the_bar(),
                 spell(&LOAD_BEARING),
             );
+            match (self.audit.pending(), &self.audit.samples) {
+                (Some(pending), _) => {
+                    let _ = write!(
+                        verdict,
+                        "The classification under that number is the builder's own, and {pending}. The verdict stands as provisional until an agreement of {:.0} percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing.\n\n",
+                        crate::audit::AGREEMENT_BAR,
+                    );
+                }
+                (None, Some(samples)) => {
+                    let read: Vec<String> = samples
+                        .iter()
+                        .map(|sample| {
+                            format!(
+                                "{} at {:.1} percent of {} cases",
+                                sample.name,
+                                sample.agreement(),
+                                sample.regraded
+                            )
+                        })
+                        .collect();
+                    let _ = write!(
+                        verdict,
+                        "A second party re-graded the classification blind and {} records the agreement: {}. That is what took the qualification off this sentence.\n\n",
+                        self.audit.label,
+                        read.join(", "),
+                    );
+                }
+                (None, None) => {}
+            }
         } else {
             let _ = write!(
                 verdict,
@@ -194,10 +238,11 @@ impl<'a> Report<'a> {
     fn method(&self) -> String {
         let mut out = String::from("## How this was measured\n\n");
         out.push_str(&format!(
-            "`cargo xtask calibrate` takes the last {WINDOW} commits of each repository's default branch, the branch its upstream names, and judges each one against its first parent with the same `check` face the binary runs: `weed check --base <parent> --strict`, read back as SARIF. A branch with fewer commits contributes all of them, and a repository judged on fewer than {REPORTED_ONLY} commits is reported rather than judged on its own share.\n\n",
+            "`cargo xtask calibrate` takes the last {WINDOW} commits ending at the commit `docs/calibration/corpus.toml` pins each repository at, and judges each one against its first parent with the same `check` face the binary runs: `weed check --base <parent> --strict`, read back as SARIF. A history with fewer commits contributes all of them, and a repository judged on fewer than {REPORTED_ONLY} commits is reported rather than judged on its own share.\n\n",
         ));
+        out.push_str("The corpus names each repository by a source `git fetch` can read and by the full sha its window ends at. The pin is what a reader can hold this file to: a commit pushed to any of these repositories after the pin falls outside the window and cannot move a number here, and the same corpus judges the same history on a machine that has never seen any of these repositories. Moving a pin is an edit to that file, and the run that follows it is a new measurement.\n\n");
         out.push_str("A merge commit is left out of the window. It carries no change of its own, and the commits it brings are in the same window, so judging it as well would weigh one change twice. A root commit is left out too: this measurement judges commits against their parents, and a root has none.\n\n");
-        out.push_str("Nothing is written to the repositories being read. Each one's default branch is fetched into a scratch repository under the system's temp directory, every checkout and every judgement happens there, and the scratch is removed at the end. Each repository's refs, HEAD and working tree are fingerprinted before the run and again after it, and a difference stops the run.\n\n");
+        out.push_str("Nothing is written to the repositories being read. Each pinned commit and everything it reaches is fetched into a scratch repository under the system's temp directory, every checkout and every judgement happens there, and the scratch is removed at the end. A fetch runs `upload-pack` at the source, which hands objects out and takes none in. Where a source is a directory on the machine running the measurement, its refs, HEAD and working tree are fingerprinted before the run and again after it, and a difference stops the run.\n\n");
         out.push_str("A block is classified by whoever ran the calibration, in `docs/calibration/judgements.toml`, one line of reasoning per commit. The line between the three classes is what the finding claims, not how welcome it was: **true positive**, the claim is true and the change really did weaken something; **acceptable**, the claim is true and the change was fine anyway, so the block is friction the rule was designed to create; **false positive**, the claim is not true of this change. A blocked commit nobody has classified counts as a false positive everywhere a number is drawn, so the bar can only be reached by reading the diffs. `scripts/check/calibration-bar.sh` checks the arithmetic and the bar, never the judgement.\n\n");
         out
     }
@@ -253,8 +298,9 @@ impl<'a> Report<'a> {
         );
         let _ = writeln!(
             out,
-            "The window is `{}`: the last {} commits of it that are not merges, {} of which have a parent to be judged against.{}\n",
-            repo.reference,
+            "The window ends at `{}`, fetched from `{}`: the last {} commits reaching it that are not merges, {} of which have a parent to be judged against.{}\n",
+            repo.tip,
+            repo.source,
             repo.window,
             repo.judged,
             if repo.judged_alone() {
@@ -342,6 +388,7 @@ impl<'a> Report<'a> {
             outcome.judged,
             outcome.refusals,
         );
+        out.push_str(&self.split_summary());
         let over: Vec<String> = self
             .repos
             .iter()
@@ -381,6 +428,102 @@ impl<'a> Report<'a> {
                 "Too few commits to carry a share of their own, reported and not judged alone: {}. Their commits and their false positives are both in the pooled total.\n",
                 small.join(", ")
             );
+        }
+        out
+    }
+
+    /// What the rules moved since the first run, in one paragraph beside the
+    /// pooled share. Every count here is a row of the section below it, so a
+    /// reader who does not believe the sentence can add the table up.
+    fn split_summary(&self) -> String {
+        let split = self.split;
+        if split.rows.is_empty() && split.unjudged.is_empty() {
+            return "No earlier run's blocks are recorded against this corpus, so there is nothing here to compare this one with.\n\n".to_string();
+        }
+        let mut out = String::new();
+        let _ = write!(
+            out,
+            "Beside that share, what the rules moved. The first run refused {} findings at block level on these commits, recorded in `{}`. This run reports {} of them at block level still, {} at warn level, {} at note level and {} not at all.",
+            split.blocked_then(),
+            split.record,
+            split.at(split::Level::Block),
+            split.at(split::Level::Warn),
+            split.at(split::Level::Note),
+            split.at(split::Level::Silent),
+        );
+        let moved = split.moves(split::Level::Warn);
+        if moved.is_empty() {
+            out.push_str(" Nothing dropped from block level to warn level.");
+        } else {
+            let spelled: Vec<String> = moved
+                .iter()
+                .map(|moved| {
+                    format!(
+                        "{} moved from {} at block level to {} at warn level, {}",
+                        moved.count,
+                        moved.then,
+                        moved.now,
+                        spell_kinds(&moved.kinds),
+                    )
+                })
+                .collect();
+            let _ = write!(out, " Rule by rule: {}.", spelled.join("; "));
+        }
+        if !split.unjudged.is_empty() {
+            let _ = write!(
+                out,
+                " {} of the first run's block-level findings sit on commits outside this window and are not compared.",
+                split.unjudged.len()
+            );
+        }
+        out.push_str("\n\n");
+        out
+    }
+
+    /// One row per finding the first run refused, and what this run says about
+    /// the same file in the same commit. The paragraph above is this table added
+    /// up, and the evidence script adds it up again.
+    fn moved(&self) -> String {
+        let split = self.split;
+        if split.rows.is_empty() && split.unjudged.is_empty() {
+            return String::new();
+        }
+        let mut out = String::from("## What the rules moved since the first run\n\n");
+        out.push_str("A rule that splits in two is supposed to take friction off the gate while keeping the finding. Until the same files are read twice that is a claim. Every file whose answer changed is here with the rule that refused it, the kind weed gives the file, and the loudest thing weed says about it now.\n\n");
+        let _ = writeln!(
+            out,
+            "{} of the first run's block-level findings are refused by the same rule at the same level and are left out of this table; the {} whose answer changed are all in it.\n",
+            split.unchanged(),
+            split.changed().count(),
+        );
+        out.push_str("| Repo | Commit | File | Kind | Blocked then by | Says now | At |\n|---|---|---|---|---|---|---|\n");
+        for row in split.changed() {
+            let _ = writeln!(
+                out,
+                "| {} | `{}` | `{}` | {} | {} | {} | {} |",
+                row.repo,
+                short(&row.commit),
+                cell(&row.path),
+                row.kind,
+                row.then,
+                row.now.as_deref().unwrap_or("nothing"),
+                row.level.spelled(),
+            );
+        }
+        out.push('\n');
+        if !split.unjudged.is_empty() {
+            out.push_str("And these findings of the first run sit on commits this window does not reach, so this run says nothing about them:\n\n");
+            for block in &split.unjudged {
+                let _ = writeln!(
+                    out,
+                    "- {} `{}` `{}`, {}",
+                    block.repo,
+                    short(&block.commit),
+                    cell(&block.path),
+                    block.rule,
+                );
+            }
+            out.push('\n');
         }
         out
     }
@@ -561,6 +704,21 @@ fn spell_level(level: Option<Level>) -> &'static str {
         Some(Level::Warn) => "warn",
         Some(Level::Note) => "note",
         None => "not run",
+    }
+}
+
+/// The kinds of file a group of findings sits on, counted.
+fn spell_kinds(kinds: &[(String, usize)]) -> String {
+    match kinds {
+        [] => "on no file weed could classify".to_string(),
+        [(kind, _)] => format!("all of them on {kind} files"),
+        _ => {
+            let spelled: Vec<String> = kinds
+                .iter()
+                .map(|(kind, count)| format!("{count} on {kind} files"))
+                .collect();
+            spelled.join(" and ")
+        }
     }
 }
 

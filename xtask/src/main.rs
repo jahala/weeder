@@ -8,12 +8,15 @@
 //! core the binary ships. There is one diff walk in this repository, and it is
 //! the one in `src/`.
 
+mod audit;
 mod calibrate;
 mod corpus;
+mod first_run;
 mod judgement;
 mod mutate;
 mod repo;
 mod report;
+mod split;
 mod suppressions;
 
 use std::error::Error;
@@ -24,6 +27,7 @@ use clap::{Args, Parser, Subcommand, ValueEnum};
 
 use crate::judgement::Ledger;
 use crate::report::Report;
+use crate::split::Split;
 
 #[derive(Debug, Parser)]
 #[command(name = "xtask", about = "weed's own measurements")]
@@ -50,9 +54,6 @@ struct CorpusArgs {
     /// Read the corpus from here instead of docs/calibration/corpus.toml.
     #[arg(long, value_name = "path")]
     corpus: Option<PathBuf>,
-    /// Override or add one repository, as <name>=<path>. Repeat it for more.
-    #[arg(long, value_name = "name=path")]
-    repo: Vec<String>,
     /// Measure only these repositories, by name. Repeat it for more.
     #[arg(long, value_name = "name")]
     only: Vec<String>,
@@ -69,6 +70,14 @@ struct CalibrateArgs {
     /// docs/calibration/judgements.toml.
     #[arg(long, value_name = "path")]
     judgements: Option<PathBuf>,
+    /// Read the first run's block-level findings from here instead of
+    /// docs/calibration/first-run.toml.
+    #[arg(long, value_name = "path")]
+    first_run: Option<PathBuf>,
+    /// Read the independent re-grade from here instead of
+    /// docs/calibration-audit-2026-09.md.
+    #[arg(long, value_name = "path")]
+    audit: Option<PathBuf>,
     /// Write the report here instead of docs/calibration-2026-09.md.
     #[arg(long, value_name = "path")]
     out: Option<PathBuf>,
@@ -119,20 +128,38 @@ fn run_calibrate(args: &CalibrateArgs) -> Result<(), Box<dyn Error>> {
             .clone()
             .unwrap_or_else(|| root().join("docs/calibration/judgements.toml")),
     )?;
+    let first_path = args
+        .first_run
+        .clone()
+        .unwrap_or_else(|| root().join(first_run::DEFAULT_PATH));
+    let first = first_run::read(&first_path, &labelled(&first_path))?;
+    let audit_path = args
+        .audit
+        .clone()
+        .unwrap_or_else(|| root().join(audit::DEFAULT_PATH));
+    let audit = audit::read(&audit_path, &labelled(&audit_path));
     let scratch = tempfile::tempdir()?;
 
     let mut measurements = Vec::new();
     let mut rates = Vec::new();
     for repo in &repos {
         eprintln!("judging {} …", repo.name);
-        measurements.push(calibrate::measure(repo, scratch.path(), args.limit)?);
+        measurements.push(calibrate::measure(
+            repo,
+            scratch.path(),
+            args.limit,
+            &first.commits_of(&repo.name),
+        )?);
         rates.push(suppressions::measure(repo, scratch.path())?);
     }
 
+    let split = Split::measure(&first, &measurements);
     let report = Report {
         repos: &measurements,
         rates: &rates,
         ledger: &ledger,
+        split: &split,
+        audit: &audit,
     };
     let outcome = report.outcome();
     let canonical = root().join("docs/calibration-2026-09.md");
@@ -201,7 +228,16 @@ fn corpus(args: &CorpusArgs) -> Result<Vec<corpus::Repo>, Box<dyn Error>> {
         .corpus
         .clone()
         .unwrap_or_else(|| root().join(corpus::DEFAULT_PATH));
-    Ok(corpus::select(corpus::read(&path, &args.repo)?, &args.only))
+    Ok(corpus::select(corpus::read(&path)?, &args.only))
+}
+
+/// A path as the report names it: relative to the workspace root where it sits
+/// under it, so the file the run wrote reads the same on any machine.
+fn labelled(path: &Path) -> String {
+    path.strip_prefix(root())
+        .unwrap_or(path)
+        .display()
+        .to_string()
 }
 
 /// The workspace root, found from where this crate sits rather than from the
@@ -243,7 +279,8 @@ fn findings_json(measurements: &[calibrate::RepoMeasurement]) -> String {
         .map(|measurement| {
             serde_json::json!({
                 "repo": measurement.name,
-                "reference": measurement.reference,
+                "source": measurement.source,
+                "tip": measurement.tip,
                 "judged": measurement.judged,
                 "warned": measurement.warned,
                 "clean": measurement.clean,
@@ -275,7 +312,7 @@ fn rates_json(rates: &[suppressions::RepoRate]) -> String {
         .map(|rate| {
             serde_json::json!({
                 "repo": rate.name,
-                "reference": rate.reference,
+                "tip": rate.tip,
                 "commits": rate.commits,
                 "installed": rate.installed.as_ref().map(|installed| serde_json::json!({
                     "sha": installed.sha,

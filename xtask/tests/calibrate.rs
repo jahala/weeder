@@ -8,7 +8,7 @@
 
 mod common;
 
-use common::{suite, workspace, xtask, Repo};
+use common::{suite, xtask, Bench, Repo};
 
 /// A repository with a root commit, a clean commit, a commit that deletes a test
 /// case, and a commit that edits the harness settings, which is a guardrail.
@@ -41,37 +41,13 @@ fn probe() -> Repo {
     repo
 }
 
-fn calibrate(
-    repo: &Repo,
-    out: &std::path::Path,
-    judgements: &std::path::Path,
-    extra: &[&str],
-) -> common::Run {
-    let mut arguments = vec![
-        "calibrate".to_string(),
-        "--repo".to_string(),
-        format!("probe={}", repo.root().display()),
-        "--only".to_string(),
-        "probe".to_string(),
-        "--out".to_string(),
-        out.display().to_string(),
-        "--judgements".to_string(),
-        judgements.display().to_string(),
-    ];
-    arguments.extend(extra.iter().map(|argument| (*argument).to_string()));
-    let arguments: Vec<&str> = arguments.iter().map(String::as_str).collect();
-    xtask(&arguments)
-}
-
 #[test]
 fn judges_every_commit_that_has_a_parent_and_writes_the_verdict_first() {
     let repo = probe();
-    let run = workspace();
-    let out = run.path().join("calibration.md");
-    let judgements = run.path().join("judgements.toml");
+    let bench = Bench::new();
 
-    calibrate(&repo, &out, &judgements, &[]).succeeded();
-    let report = std::fs::read_to_string(&out).expect("the report should be written");
+    bench.calibrate("probe", &repo, &[]).succeeded();
+    let report = bench.report();
 
     let mut lines = report.lines();
     assert_eq!(
@@ -95,12 +71,10 @@ fn judges_every_commit_that_has_a_parent_and_writes_the_verdict_first() {
 #[test]
 fn an_unclassified_block_counts_as_a_false_positive() {
     let repo = probe();
-    let run = workspace();
-    let out = run.path().join("calibration.md");
-    let judgements = run.path().join("judgements.toml");
+    let bench = Bench::new();
 
-    calibrate(&repo, &out, &judgements, &[]).succeeded();
-    let report = std::fs::read_to_string(&out).expect("the report should be written");
+    bench.calibrate("probe", &repo, &[]).succeeded();
+    let report = bench.report();
 
     assert!(
         report.contains("| probe | 3 | 2 | 0 | 0 | 0 | 2 | 66.67% |"),
@@ -120,11 +94,9 @@ fn a_classified_block_takes_the_class_the_ledger_gives_it() {
         .split_whitespace()
         .map(str::to_string)
         .collect();
-    let run = workspace();
-    let out = run.path().join("calibration.md");
-    let judgements = run.path().join("judgements.toml");
+    let bench = Bench::new();
     std::fs::write(
-        &judgements,
+        bench.judgements(),
         format!(
             "[[commit]]\nrepo = \"probe\"\nsha = \"{}\"\nclassification = \"true-positive\"\nreasoning = \"a case really did go\"\n\n\
              [[commit]]\nrepo = \"probe\"\nsha = \"{}\"\nclassification = \"acceptable\"\nreasoning = \"a harness settings edit is what C1 watches\"\n",
@@ -133,19 +105,18 @@ fn a_classified_block_takes_the_class_the_ledger_gives_it() {
     )
     .expect("the ledger should be writable");
 
-    calibrate(&repo, &out, &judgements, &[]).succeeded();
-    let report = std::fs::read_to_string(&out).expect("the report should be written");
+    bench.calibrate("probe", &repo, &[]).succeeded();
+    let report = bench.report();
 
     assert!(
         report.contains("| probe | 3 | 2 | 0 | 1 | 1 | 0 | 0.00% |"),
         "one true positive, one acceptable, no false positives:\n{report}"
     );
     assert!(
-        report
-            .lines()
-            .nth(2)
-            .is_some_and(|line| line.starts_with("weed ships as a gate:")),
-        "with nothing false left, the verdict is ship:\n{report}"
+        bench
+            .verdict()
+            .starts_with("weed ships as a gate, pending the independent re-grade:"),
+        "with nothing false left the verdict is ship, and no re-grade has read it back:\n{report}"
     );
     assert!(
         report.contains("a case really did go"),
@@ -160,34 +131,32 @@ fn a_classified_block_takes_the_class_the_ledger_gives_it() {
 #[test]
 fn a_judgement_without_a_reason_is_refused() {
     let repo = probe();
-    let run = workspace();
-    let out = run.path().join("calibration.md");
-    let judgements = run.path().join("judgements.toml");
+    let bench = Bench::new();
     std::fs::write(
-        &judgements,
+        bench.judgements(),
         "[[commit]]\nrepo = \"probe\"\nsha = \"whatever\"\nclassification = \"acceptable\"\nreasoning = \"   \"\n",
     )
     .expect("the ledger should be writable");
 
-    let refused = calibrate(&repo, &out, &judgements, &[]);
+    let refused = bench.calibrate("probe", &repo, &[]);
     refused.failed();
     assert!(
         refused.stderr.contains("carries no reasoning"),
         "a classification nobody can review is not accepted: {}",
         refused.stderr
     );
-    assert!(!out.exists(), "a refused run writes no report");
+    assert!(!bench.out().exists(), "a refused run writes no report");
 }
 
 #[test]
 fn the_window_is_the_last_commits_and_nothing_older() {
     let repo = probe();
-    let run = workspace();
-    let out = run.path().join("calibration.md");
-    let judgements = run.path().join("judgements.toml");
+    let bench = Bench::new();
 
-    calibrate(&repo, &out, &judgements, &["--limit", "2"]).succeeded();
-    let report = std::fs::read_to_string(&out).expect("the report should be written");
+    bench
+        .calibrate("probe", &repo, &["--limit", "2"])
+        .succeeded();
+    let report = bench.report();
 
     assert!(
         report.contains("## probe, 2 commits judged"),
@@ -207,11 +176,9 @@ fn the_window_is_the_last_commits_and_nothing_older() {
 fn the_repository_being_read_is_left_exactly_as_it_was() {
     let repo = probe();
     let before = repo.fingerprint();
-    let run = workspace();
-    let out = run.path().join("calibration.md");
-    let judgements = run.path().join("judgements.toml");
+    let bench = Bench::new();
 
-    calibrate(&repo, &out, &judgements, &[]).succeeded();
+    bench.calibrate("probe", &repo, &[]).succeeded();
 
     assert_eq!(
         before,
@@ -227,14 +194,12 @@ fn the_repository_being_read_is_left_exactly_as_it_was() {
 #[test]
 fn two_runs_over_one_history_write_the_same_bytes() {
     let repo = probe();
-    let run = workspace();
-    let out = run.path().join("calibration.md");
-    let judgements = run.path().join("judgements.toml");
+    let bench = Bench::new();
 
-    calibrate(&repo, &out, &judgements, &[]).succeeded();
-    let first = std::fs::read_to_string(&out).expect("the report should be written");
-    calibrate(&repo, &out, &judgements, &[]).succeeded();
-    let second = std::fs::read_to_string(&out).expect("the report should be written");
+    bench.calibrate("probe", &repo, &[]).succeeded();
+    let first = bench.report();
+    bench.calibrate("probe", &repo, &[]).succeeded();
+    let second = bench.report();
 
     assert_eq!(
         first, second,
@@ -243,27 +208,45 @@ fn two_runs_over_one_history_write_the_same_bytes() {
 }
 
 #[test]
-fn a_corpus_naming_a_repository_that_is_not_there_is_refused() {
-    let run = workspace();
-    let out = run.path().join("calibration.md");
-    let judgements = run.path().join("judgements.toml");
-    let missing = run.path().join("no-such-checkout");
+fn a_corpus_naming_a_source_that_is_not_there_is_refused() {
+    let bench = Bench::new();
+    let missing = bench.path().join("no-such-checkout");
+    bench.write_corpus(
+        "probe",
+        &missing,
+        "0123456789012345678901234567890123456789",
+    );
 
     let refused = xtask(&[
         "calibrate",
-        "--repo",
-        &format!("probe={}", missing.display()),
-        "--only",
-        "probe",
+        "--corpus",
+        &bench.corpus().display().to_string(),
         "--out",
-        &out.display().to_string(),
+        &bench.out().display().to_string(),
         "--judgements",
-        &judgements.display().to_string(),
+        &bench.judgements().display().to_string(),
+        "--first-run",
+        &bench.first_run().display().to_string(),
     ]);
     refused.failed();
     assert!(
-        refused.stderr.contains("there is no git repository there"),
+        refused.stderr.contains("`git fetch"),
         "a calibration of four repositories where five were named would read as five: {}",
+        refused.stderr
+    );
+    assert!(!bench.out().exists(), "a refused run writes no report");
+}
+
+#[test]
+fn a_pin_that_is_not_a_full_sha_is_refused() {
+    let repo = probe();
+    let bench = Bench::new();
+
+    let refused = bench.calibrate_at("probe", &repo, &repo.tip()[..8], &[]);
+    refused.failed();
+    assert!(
+        refused.stderr.contains("not a full forty-character sha"),
+        "an abbreviation can come to mean a second commit: {}",
         refused.stderr
     );
 }

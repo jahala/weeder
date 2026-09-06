@@ -1,0 +1,2002 @@
+# What the first calibration run refused, one entry per block-level finding.
+#
+# The run was `cargo xtask calibrate` at commit a999e23, over the same five
+# repositories at the same pinned commits `corpus.toml` names, with the rules as
+# they stood before C1 was split. Its report is the one this file sits beside in
+# git history: 635 commits judged, 71 blocked.
+#
+# This is history and is not regenerated. A later run reads it back and says
+# what it makes of the same files, which is how a rule change is measured
+# instead of asserted.
+
+[[block]]
+repo = "copeca"
+commit = "1abdc130dff2147cffb4d2687968a616b6306f16"
+rule = "X1"
+path = ".claude/skills/tend-brainstorm/SKILL.md"
+
+[[block]]
+repo = "copeca"
+commit = "70d669542aa6b6a59837fc5cb536363dbd02a445"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "copeca"
+commit = "70d669542aa6b6a59837fc5cb536363dbd02a445"
+rule = "C1"
+path = ".github/workflows/dependency-review.yml"
+
+[[block]]
+repo = "copeca"
+commit = "70d669542aa6b6a59837fc5cb536363dbd02a445"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "copeca"
+commit = "70d669542aa6b6a59837fc5cb536363dbd02a445"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "copeca"
+commit = "70d669542aa6b6a59837fc5cb536363dbd02a445"
+rule = "X1"
+path = "src/copeca/results/signing.py"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/accuracy-blind-claims.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/contamination-erodes-trust.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/copeca-analysis-reporting.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/copeca-artifact-integrity.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/copeca-cost-model.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/copeca-docs-and-init.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/copeca-mode-mechanism.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/copeca-scenario-matrix.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/copeca-single-run.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/copeca-task-corpus.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/copeca-validate-tasks.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/integration-only-mcp.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/no-shared-yardstick.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/no-verifiable-results.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/platform-builder.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/pricing-drift-unchecked.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/skeptical-evaluator.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/features/tool-builder.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+rule = "X1"
+path = "docs/tend/overview.html"
+
+[[block]]
+repo = "copeca"
+commit = "eb9ed62b2ddd42d916d68883393f66e1efb1a5ce"
+rule = "X1"
+path = "docs/tend/features/run-isolation.tend.html"
+
+[[block]]
+repo = "copeca"
+commit = "f6198d4b2082e4de44a794cba950032ff83c6136"
+rule = "S1"
+path = "src/copeca/runners/parsers/base.py"
+
+[[block]]
+repo = "pleach"
+commit = "46f9c71acfac14186100af93c951faae78f26e23"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "pleach"
+commit = "624529b3a972db597b3a8843c7723c667cfe2da5"
+rule = "X1"
+path = "src/core/hygiene.ts"
+
+[[block]]
+repo = "pleach"
+commit = "624529b3a972db597b3a8843c7723c667cfe2da5"
+rule = "X1"
+path = "test/loop/hygiene-gate.test.ts"
+
+[[block]]
+repo = "pleach"
+commit = "624529b3a972db597b3a8843c7723c667cfe2da5"
+rule = "X1"
+path = "test/unit/hygiene.test.ts"
+
+[[block]]
+repo = "pleach"
+commit = "84bcce7b3155ea29e891178ed73d824a7718b1fd"
+rule = "C1"
+path = ".github/workflows/canary.yml"
+
+[[block]]
+repo = "pleach"
+commit = "84bcce7b3155ea29e891178ed73d824a7718b1fd"
+rule = "C1"
+path = ".github/workflows/pages.yml"
+
+[[block]]
+repo = "pleach"
+commit = "b6aadbf3cb82b892988f48b2e48f590b2ac4dada"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = ".claude/skills/tend-brainstorm/SKILL.md"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/features/agent-output-as-truth.tend.html"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/features/audit-egress.tend.html"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/features/cli-run.tend.html"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/features/cli-validate.tend.html"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/features/conductor-loop.tend.html"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/features/developer.tend.html"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/features/isolate-seam.tend.html"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/features/lock-journal.tend.html"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/features/logic-io-entanglement.tend.html"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/features/operator.tend.html"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/features/poison-propagation.tend.html"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/features/rctrl-seam.tend.html"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/features/silent-contract-drift.tend.html"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/features/status-artifact-split.tend.html"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/features/tend-seam.tend.html"
+
+[[block]]
+repo = "pleach"
+commit = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+rule = "X1"
+path = "docs/tend/overview.html"
+
+[[block]]
+repo = "pleach"
+commit = "c42ed6d92a671627a29bd0c64107cd19482514db"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "pleach"
+commit = "df42a0bffe093b45dc75cc2643bd72465d10add3"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "tend2"
+commit = "067730ddd0c737150fd26df604d06b10fb0deeb4"
+rule = "T2"
+path = "test/renderer-fresh.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "07931a6742c2d5ed48777d9988f3c8239469ddad"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/adapters/claude-tasks/generator.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/adapters/claude-tasks/status-sync.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/adapters/github-issues/generator.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/adapters/makefile/generator.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/adapters/markdown/generator.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/adapters/render-verification.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/adapters/umbel/cross-repo.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/adapters/umbel/generator.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/bin/tend.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/cli/audit.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/cli/doctor.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/cli/execute.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/cli/init.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/cli/negctrl.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/cli/next.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/cli/preview.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/cli/rename-feature.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/cli/rename.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/cli/render.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/cli/sync.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/adapters.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/audit-result.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/bridge/audit-compute.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/bridge/emit.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/bridge/ingester.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/bridge/plan.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/catalog-resolve.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/constraints.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/coverage.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/diagram/diagram.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/execute.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/feature-merge.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/files.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/graph.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/judgment-warnings.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/layering.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/mock-detection.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/narrative-cites.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/narrative-media-orphans.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/next-action.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/progress.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/project-health.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/reason-codes.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/schema.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/side-effects.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/source-dirs.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/staleness.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/step-traces.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/svg-preview.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/tolerant-read.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/ui-html.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/core/write-queue.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/mcp/server.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/mcp/tools/aggregate.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/mcp/tools/next-action.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/mcp/tools/output-execution-plan.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/mcp/tools/tools.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/mcp/tools/validation.integration.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/mcp/tools/validation.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/ui/components/CopyButton.test.tsx"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/ui/components/DetailPanel.test.tsx"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/ui/components/FeatureEdge.test.tsx"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/ui/components/FeatureNode.test.tsx"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/ui/components/JourneySwimlane.test.tsx"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/ui/hooks/useFeatures.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/ui/hooks/useKeyboardNavigation.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/ui/lib/graph-builder.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "src/ui/lib/narrative-markdown.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/bash/builtins.sh"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/bash/custom-verb-fallback.sh"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/bash/fixtures/builtins-fixture.tend.html"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/bash/fixtures/fallback-fixture.tend.html"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/bash/fixtures/run-fixture.tend.html"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/bash/fixtures/whitespace-marker-fixture.tend.html"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/bash/run-verb.sh"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/bash/whitespace-marker.sh"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/e2e/dogfood-render.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/e2e/mcp-stdio.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/e2e/oo-render.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/e2e/traceability.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/fixtures/audit-emit/non-discriminating/docs/tend/features/__fixture__.tend.html"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/fixtures/audit-emit/non-discriminating/unit.mjs"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/fixtures/audit-emit/non-discriminating/unit.test.mjs"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/fixtures/audit-emit/passing/docs/tend/features/__fixture__.tend.html"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/fixtures/audit-emit/passing/unit.mjs"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/fixtures/audit-emit/passing/unit.test.mjs"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/fixtures/audit-emit/trivial-recipe/docs/tend/features/__fixture__.tend.html"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/scripts/assembly.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/scripts/lib-color-tokens.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/scripts/narrative-links.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/scripts/oo-style-tokens.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/scripts/shell-core.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/skills/skill-conductor.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+rule = "T1"
+path = "tests/skills/skill-vocabulary.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "1e39b91c5f4e4b57b26dafa0a419d457968e9a10"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "tend2"
+commit = "3adc642ce1dff47cd24b397f2988a05749d716de"
+rule = "T1"
+path = "test/renderer-fresh.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "40875df2c4458b466c83464a13eede3cd86c8711"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "tend2"
+commit = "52b97e43ced4160b09f1e85be25f82b87a0595ae"
+rule = "X1"
+path = "skein-experiment/shared/oo-render.js"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/already-encoded.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/analyst-wiring.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/analyst.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/briefing-banners.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/briefing-cards.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/briefing-noise.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/briefing-v3.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/budget.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/chain-triviality.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/chains.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/citations.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/cluster-fixture.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/concept-precision.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/convergence.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/dedupe.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/digest.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/diversity.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/domain-generality.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/emit-assets.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/emit-prune.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/emit.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/episodes-negctrl.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/episodes.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/extract-v2.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/extract.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/facet-cache.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/facet-checkpoint.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/facet-chunking.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/facet-negctrl.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/facet-prompt.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/facet-proposals.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/facet-quotes.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/facet-refusal-reasons.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/facet-schema.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/facet-theme-fixtures.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/facet-wiring.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/fitness-falsifiability.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/fixture-leak.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/fixtures.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/form-decision.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/helpers.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/lanes.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/negctrl.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/normalize.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/novelty.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/origin-hygiene.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/paraphrase.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/pipeline.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/polling-origin.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/polling-sameness.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/polling.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/price-basis.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/price-join.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/privacy.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/proto.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/queue-dedup.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/reach.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/recall.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/refusal-hygiene.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/repair.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/report.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/resume-dedup.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/rules-version.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/score.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/session-excludes.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/session-floor.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/stable-keys.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/store-migration.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/suppress.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/synthesis-fixtures.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/synthesis-person.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/synthesis.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/tier-floors.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/toil-rank.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/toil.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/triage-chunking.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/triage.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/typology.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+rule = "T1"
+path = "spikes/loop-hole/tests/watermark.spec.ts"
+
+[[block]]
+repo = "tend2"
+commit = "bf2754689c6bf7615b3e99570ca3b585ec8f94d7"
+rule = "T1"
+path = "test/season.test.ts"
+
+[[block]]
+repo = "tend2"
+commit = "e6f974bd1cb3e40347c6710dcd84132d2992ffaa"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "tend2"
+commit = "f0a0adf343bd3455cb848b11a9b41c8614dfb852"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "tilth"
+commit = "088f58ca227c71abc1be5b20ae6267e6abb2d4fa"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "tilth"
+commit = "088f58ca227c71abc1be5b20ae6267e6abb2d4fa"
+rule = "C1"
+path = ".github/workflows/dependency-review.yml"
+
+[[block]]
+repo = "tilth"
+commit = "088f58ca227c71abc1be5b20ae6267e6abb2d4fa"
+rule = "C1"
+path = ".github/workflows/fuzz.yml"
+
+[[block]]
+repo = "tilth"
+commit = "088f58ca227c71abc1be5b20ae6267e6abb2d4fa"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "tilth"
+commit = "088f58ca227c71abc1be5b20ae6267e6abb2d4fa"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "tilth"
+commit = "08ae11a377a4b3d9b754aa75274fffd15730336b"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "tilth"
+commit = "0c1132c2ccf57ffa93d1b06d6e1c5947ba55e28b"
+rule = "C1"
+path = ".github/workflows/dependency-review.yml"
+
+[[block]]
+repo = "tilth"
+commit = "10bec56a41d9440f159340f99aca01a9dd2d5d85"
+rule = "T2"
+path = "src/mcp/tools/search.rs"
+
+[[block]]
+repo = "tilth"
+commit = "11aef933c92ce44b878356619d918a8893e72444"
+rule = "T1"
+path = "src/mcp/tools/files.rs"
+
+[[block]]
+repo = "tilth"
+commit = "1248c0e594fea22abc80b8f828b9dc5d0b264b64"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "tilth"
+commit = "1248c0e594fea22abc80b8f828b9dc5d0b264b64"
+rule = "C1"
+path = ".github/workflows/dependency-review.yml"
+
+[[block]]
+repo = "tilth"
+commit = "1248c0e594fea22abc80b8f828b9dc5d0b264b64"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "tilth"
+commit = "1248c0e594fea22abc80b8f828b9dc5d0b264b64"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "tilth"
+commit = "136e246d8eec94b4e7d3ae83bb3bfd2c3a516fe3"
+rule = "T1"
+path = "src/mcp/tools/edit.rs"
+
+[[block]]
+repo = "tilth"
+commit = "18eb6643ff9d8eee2b7e9572c7881a6c00a6e30e"
+rule = "T1"
+path = "src/mcp/mod.rs"
+
+[[block]]
+repo = "tilth"
+commit = "18eb6643ff9d8eee2b7e9572c7881a6c00a6e30e"
+rule = "T2"
+path = "src/mcp/mod.rs"
+
+[[block]]
+repo = "tilth"
+commit = "1dfc5d26baabc6a89e143a494421af54a42fde1e"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "tilth"
+commit = "1dfc5d26baabc6a89e143a494421af54a42fde1e"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "tilth"
+commit = "2dbcbc6eb42971545d0ed7e43fd578da0a3ee055"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "tilth"
+commit = "2ed93282a102850b822255c38cf7b0cb003f98b4"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "tilth"
+commit = "3ff87caf55335a6e7bc937884f80105e7c55508c"
+rule = "T1"
+path = "src/index/bloom.rs"
+
+[[block]]
+repo = "tilth"
+commit = "3ff87caf55335a6e7bc937884f80105e7c55508c"
+rule = "T2"
+path = "src/index/bloom.rs"
+
+[[block]]
+repo = "tilth"
+commit = "4f05f0093d8586f2fddc2e3df37f91eb9f7ae765"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "tilth"
+commit = "53909f34234a9a2aa87df7ca96e9a5066f90a193"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "tilth"
+commit = "552bc2a0fe342a958de0b1cae0197bafc1cc47cc"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "tilth"
+commit = "552bc2a0fe342a958de0b1cae0197bafc1cc47cc"
+rule = "C1"
+path = ".github/workflows/dependency-review.yml"
+
+[[block]]
+repo = "tilth"
+commit = "552bc2a0fe342a958de0b1cae0197bafc1cc47cc"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "tilth"
+commit = "552bc2a0fe342a958de0b1cae0197bafc1cc47cc"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "tilth"
+commit = "59c87110abe9880e63d22fddfd5e515ce35a976d"
+rule = "T1"
+path = "src/mcp.rs"
+
+[[block]]
+repo = "tilth"
+commit = "59c87110abe9880e63d22fddfd5e515ce35a976d"
+rule = "T2"
+path = "src/mcp.rs"
+
+[[block]]
+repo = "tilth"
+commit = "5a4edbf5c508832e9770ae315e1625a81aae1e1f"
+rule = "T1"
+path = "src/search/callees.rs"
+
+[[block]]
+repo = "tilth"
+commit = "5a4edbf5c508832e9770ae315e1625a81aae1e1f"
+rule = "T1"
+path = "src/search/callers.rs"
+
+[[block]]
+repo = "tilth"
+commit = "5a4edbf5c508832e9770ae315e1625a81aae1e1f"
+rule = "T2"
+path = "src/search/callers.rs"
+
+[[block]]
+repo = "tilth"
+commit = "6c75ff025fe7e5bb39c23a9b6809a91f00de8910"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "tilth"
+commit = "7684e99e86c744747d9868009700617c4e079487"
+rule = "T2"
+path = "src/budget.rs"
+
+[[block]]
+repo = "tilth"
+commit = "76d5d02d3432ff7cd3e984f60801f20402e0fb3d"
+rule = "T1"
+path = "src/mcp.rs"
+
+[[block]]
+repo = "tilth"
+commit = "8da08f6e38f6824b0a686505b8bd3a846d150f50"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "tilth"
+commit = "8da08f6e38f6824b0a686505b8bd3a846d150f50"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "tilth"
+commit = "91d213abdc82cae11df8532c859ad3cee6b9a092"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "tilth"
+commit = "96cd4b383b114cb2807b68a6dcf75d64320c42a5"
+rule = "T2"
+path = "src/mcp/tools/search.rs"
+
+[[block]]
+repo = "tilth"
+commit = "ab7f054b737958b4fc98401ad411c6861c39a03f"
+rule = "T1"
+path = "src/mcp/tools/definitions.rs"
+
+[[block]]
+repo = "tilth"
+commit = "ab7f054b737958b4fc98401ad411c6861c39a03f"
+rule = "T2"
+path = "src/mcp/tools/definitions.rs"
+
+[[block]]
+repo = "tilth"
+commit = "b0f3ebe707bdf88e26f49f825f11c94c2acd450f"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "tilth"
+commit = "bd36a436379f864ff3ff21268053d898ff5a0bf2"
+rule = "T1"
+path = "src/index/symbol.rs"
+
+[[block]]
+repo = "tilth"
+commit = "be3f6fbf34cee915413a6ec7293a4461969667e4"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "tilth"
+commit = "c7c0ec78d426920f596fe655ba029ffe1de88807"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "tilth"
+commit = "d322306ab078625658fbb5c675af4ab12358be2d"
+rule = "C1"
+path = ".github/workflows/fuzz.yml"
+
+[[block]]
+repo = "tilth"
+commit = "d422a325fc69ce56bc2aaac6c973015ea0463097"
+rule = "T2"
+path = "src/install.rs"
+
+[[block]]
+repo = "tilth"
+commit = "e05749fd218d709cf411429033bc309ba74949d0"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "tilth"
+commit = "e9155c19150bc923e9e133351c5b211b047d35a8"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "tilth"
+commit = "f2e64e5759fe770823b6b5df3321b30dbd6fd9e8"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "tilth"
+commit = "f761368c94b414de0d2ee529b421b48697762426"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "tilth"
+commit = "f761368c94b414de0d2ee529b421b48697762426"
+rule = "C1"
+path = ".github/workflows/dependency-review.yml"
+
+[[block]]
+repo = "tilth"
+commit = "f761368c94b414de0d2ee529b421b48697762426"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "tilth"
+commit = "f761368c94b414de0d2ee529b421b48697762426"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "tilth"
+commit = "f8f701ab5726a89fd20ed46672feeb8cb4e0f501"
+rule = "C1"
+path = ".github/workflows/fuzz.yml"
+
+[[block]]
+repo = "tilth"
+commit = "fc36a2fbed1c96d14387db7dd2f5baf486cc3e6b"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "umbel"
+commit = "059b4c46770a07b03116df2e70fb3d3f9788c332"
+rule = "T2"
+path = "test/unit/providers/codex.test.ts"
+
+[[block]]
+repo = "umbel"
+commit = "4167b8547783f0abb16576213d1e20dfcc03cf18"
+rule = "X1"
+path = ".claude/skills/tend-brainstorm/SKILL.md"
+
+[[block]]
+repo = "umbel"
+commit = "4167b8547783f0abb16576213d1e20dfcc03cf18"
+rule = "X1"
+path = "docs/tend/features/cli-face.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "4167b8547783f0abb16576213d1e20dfcc03cf18"
+rule = "X1"
+path = "docs/tend/features/completion-detection.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "4167b8547783f0abb16576213d1e20dfcc03cf18"
+rule = "X1"
+path = "docs/tend/features/context-bloat.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "4167b8547783f0abb16576213d1e20dfcc03cf18"
+rule = "X1"
+path = "docs/tend/features/cross-provider-gap.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "4167b8547783f0abb16576213d1e20dfcc03cf18"
+rule = "X1"
+path = "docs/tend/features/dispatch-and-read.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "4167b8547783f0abb16576213d1e20dfcc03cf18"
+rule = "X1"
+path = "docs/tend/features/host-agent.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "4167b8547783f0abb16576213d1e20dfcc03cf18"
+rule = "X1"
+path = "docs/tend/features/mcp-face.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "4167b8547783f0abb16576213d1e20dfcc03cf18"
+rule = "X1"
+path = "docs/tend/features/provider-abstraction.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "4167b8547783f0abb16576213d1e20dfcc03cf18"
+rule = "X1"
+path = "docs/tend/features/silent-workers.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "4167b8547783f0abb16576213d1e20dfcc03cf18"
+rule = "X1"
+path = "docs/tend/features/supervisor-dev.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "4167b8547783f0abb16576213d1e20dfcc03cf18"
+rule = "X1"
+path = "docs/tend/features/worker-lifecycle.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "4167b8547783f0abb16576213d1e20dfcc03cf18"
+rule = "X1"
+path = "docs/tend/features/workflow-runner.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "4167b8547783f0abb16576213d1e20dfcc03cf18"
+rule = "X1"
+path = "docs/tend/overview.html"
+
+[[block]]
+repo = "umbel"
+commit = "68ceb8f53734eff7e210eeeb2c1f863e482b3ea9"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "umbel"
+commit = "7109a41bd9df27c67eb600ccd7a357f7cb7b80fd"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "umbel"
+commit = "75523a16a3f241de2064b623d3d3035398715e9b"
+rule = "S1"
+path = "src/core/providers/opencode.ts"
+
+[[block]]
+repo = "umbel"
+commit = "89c088bc0881ee5de3e77adfb1720d95cd8f4c4e"
+rule = "T2"
+path = "test/integration/tmux.test.ts"
+
+[[block]]
+repo = "umbel"
+commit = "8f75fcb0935ae2b8c973ad80e5a6ba5d551c2310"
+rule = "X1"
+path = "docs/tend/features/context-bloat.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "8f75fcb0935ae2b8c973ad80e5a6ba5d551c2310"
+rule = "X1"
+path = "docs/tend/features/cross-provider-gap.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "8f75fcb0935ae2b8c973ad80e5a6ba5d551c2310"
+rule = "X1"
+path = "docs/tend/features/host-agent.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "8f75fcb0935ae2b8c973ad80e5a6ba5d551c2310"
+rule = "X1"
+path = "docs/tend/features/silent-workers.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "8f75fcb0935ae2b8c973ad80e5a6ba5d551c2310"
+rule = "X1"
+path = "docs/tend/features/supervisor-dev.tend.html"
+
+[[block]]
+repo = "umbel"
+commit = "a145ebe3d1af86ed2f389fe9cdb1ce22ce321f7d"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "umbel"
+commit = "a145ebe3d1af86ed2f389fe9cdb1ce22ce321f7d"
+rule = "C1"
+path = ".github/workflows/dependency-review.yml"
+
+[[block]]
+repo = "umbel"
+commit = "a145ebe3d1af86ed2f389fe9cdb1ce22ce321f7d"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "umbel"
+commit = "a145ebe3d1af86ed2f389fe9cdb1ce22ce321f7d"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "umbel"
+commit = "cc3cc0c37ca221f101ae39ebea2f2b5fc1cb031c"
+rule = "S1"
+path = "src/core/providers/codex.ts"
+
+[[block]]
+repo = "umbel"
+commit = "cc3cc0c37ca221f101ae39ebea2f2b5fc1cb031c"
+rule = "S1"
+path = "src/core/providers/gemini.ts"
+
+[[block]]
+repo = "umbel"
+commit = "d305518136f876823c48c569567ab5e80da40ab6"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "umbel"
+commit = "e39da470b7afa3fa26efe474a94361af236b7bb7"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "umbel"
+commit = "e39da470b7afa3fa26efe474a94361af236b7bb7"
+rule = "C1"
+path = ".github/workflows/dependency-review.yml"
+
+[[block]]
+repo = "umbel"
+commit = "e39da470b7afa3fa26efe474a94361af236b7bb7"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "umbel"
+commit = "e39da470b7afa3fa26efe474a94361af236b7bb7"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
+
+[[block]]
+repo = "umbel"
+commit = "e4483b814ca5006eb4287db584f16f0f43b3308d"
+rule = "C1"
+path = ".github/workflows/ci.yml"
+
+[[block]]
+repo = "umbel"
+commit = "e4483b814ca5006eb4287db584f16f0f43b3308d"
+rule = "C1"
+path = ".github/workflows/release.yml"
+
+[[block]]
+repo = "umbel"
+commit = "e4483b814ca5006eb4287db584f16f0f43b3308d"
+rule = "C1"
+path = ".github/workflows/scorecard.yml"
