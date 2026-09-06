@@ -8,6 +8,12 @@
 //! The neighbour is the three ways a line looks like this and is not: a short
 //! value under a key name, a placeholder waiting to be filled in, and the
 //! digests a lockfile is made of.
+//!
+//! The two paths reach different files. A stamped token is a credential
+//! wherever it lands, a note, a page, a log, so the prefix path reads every
+//! file. Reading a name and a value apart takes a language weed knows the
+//! grammar of, and outside one, `name = value` is a css class, an attribute or
+//! a sentence with a colon in it, so the second path reads source alone.
 
 mod common;
 
@@ -142,4 +148,168 @@ fn quoted(line: &str) -> Option<&str> {
     let opened = line.find('"')? + 1;
     let closed = line[opened..].find('"')?;
     Some(&line[opened..opened + closed])
+}
+
+/// The prose fixture's languages folder: the files weed has no grammar for.
+const PROSE: &str = "prose";
+
+/// What the prose fire fixture plants, one stamped token per file, in the order
+/// weed reports them.
+const PLANTED: [(&str, &str); 3] = [
+    ("deploy/notes.txt", "sk-"),
+    ("docs/incident.md", "ghp_"),
+    ("web/index.html", "AKIA"),
+];
+
+/// The files the prose neighbour writes a name-and-value shape into.
+const NEIGHBOURS: [&str; 2] = ["docs/rotating.md", "web/index.html"];
+
+/// The disordered value the language fixtures assign to a key-like name: the
+/// one shape that is a credential by its name and its disorder alone.
+const DISORDERED: &str = "9f3Kx2Qv";
+
+#[test]
+fn x1_fires_on_a_stamped_token_in_a_file_weed_has_no_grammar_for() {
+    let repo = fixture("X1", PROSE, "fire");
+    let run = repo.weed(&["check"]);
+
+    assert_eq!(
+        run.code, 2,
+        "a credential blocks wherever it lands\n{}",
+        run.stderr
+    );
+    let findings: Vec<Finding> = run
+        .findings()
+        .into_iter()
+        .filter(|finding| finding.rule == "X1")
+        .collect();
+    assert_eq!(
+        findings.len(),
+        PLANTED.len(),
+        "one finding per planted token: {findings:#?}"
+    );
+    for ((path, stamp), finding) in PLANTED.iter().zip(&findings) {
+        assert_eq!(finding.path, *path, "the file is named");
+        assert_eq!(finding.level, "error", "{path}: X1 blocks");
+        let planted = fixture_file("X1", PROSE, "fire/after", path)
+            .lines()
+            .position(|line| line.contains(stamp))
+            .map(|index| index as u64 + 1)
+            .unwrap_or_else(|| panic!("{path} plants a token"));
+        assert_eq!(finding.line, Some(planted), "{path}: the planted line");
+    }
+}
+
+#[test]
+fn x1_stays_silent_on_a_markup_attribute_and_on_prose_about_credentials() {
+    let repo = fixture("X1", PROSE, "silent");
+
+    let changed = repo.git(&["diff", "HEAD", "--name-only"]);
+    for path in NEIGHBOURS {
+        assert!(
+            changed.lines().any(|line| line == path),
+            "{path} must be in the diff, or the silence proves nothing"
+        );
+        let after = fixture_file("X1", PROSE, "silent/after", path);
+        assert!(
+            after.lines().any(looks_assigned),
+            "{path} has to carry a name-and-value shape a key-like name answers for, or it is not a neighbour"
+        );
+    }
+
+    let run = repo.weed(&["check"]);
+    assert_eq!(
+        run.findings(),
+        Vec::new(),
+        "a class attribute and a sentence with a colon in it are not assignments"
+    );
+    assert_eq!(run.code, 0, "nothing found, nothing blocked");
+}
+
+#[test]
+fn the_name_and_disorder_path_still_reads_source_in_every_language() {
+    for (name, path) in LANGUAGES {
+        let repo = fixture("X1", name, "fire");
+        let planted = fixture_file("X1", name, "fire/after", path)
+            .lines()
+            .position(|line| line.contains(DISORDERED))
+            .map(|index| index as u64 + 1)
+            .unwrap_or_else(|| panic!("{name}: the fixture assigns a disordered value"));
+
+        let run = repo.weed(&["check"]);
+        let finding = run
+            .findings()
+            .into_iter()
+            .find(|finding| finding.rule == "X1" && finding.line == Some(planted))
+            .unwrap_or_else(|| {
+                panic!("{name}: the disordered value on line {planted} is reported")
+            });
+        assert_eq!(finding.level, "error", "{name}: X1 blocks");
+        assert!(
+            !finding.message.contains(DISORDERED),
+            "{name}: a finding never repeats the value it found: {}",
+            finding.message
+        );
+    }
+}
+
+/// Whether a line writes a name, an assignment and a value long and disordered
+/// enough to read as a credential. This is the shape a neighbour has to carry
+/// for its silence to mean anything, worked out here rather than asked of the
+/// rule under test.
+fn looks_assigned(line: &str) -> bool {
+    line.match_indices(['=', ':']).any(|(at, _)| {
+        let named = line[..at]
+            .split(|character: char| {
+                !(character.is_alphanumeric() || character == '_' || character == '-')
+            })
+            .any(holds_key_word);
+        let Some(value) = quoted_by_any(&line[at + 1..]) else {
+            return false;
+        };
+        named && value.chars().count() >= 20 && entropy(value) > 4.0
+    })
+}
+
+/// What a value is written between, whichever quotation the format uses.
+fn quoted_by_any(tail: &str) -> Option<&str> {
+    let trimmed = tail.trim_start();
+    let opener = trimmed.chars().next()?;
+    if !matches!(opener, '"' | '\'' | '`') {
+        return None;
+    }
+    let opened = opener.len_utf8();
+    let end = trimmed[opened..].find(opener)?;
+    Some(&trimmed[opened..opened + end])
+}
+
+/// Whether a name is written from a word that names a credential.
+fn holds_key_word(name: &str) -> bool {
+    let lowered = name.to_ascii_lowercase();
+    ["key", "secret", "token", "password", "credential"]
+        .iter()
+        .any(|word| lowered.contains(word))
+}
+
+/// How many bits of surprise each character of a value carries.
+fn entropy(value: &str) -> f64 {
+    let characters: Vec<char> = value.chars().collect();
+    let total = characters.len() as f64;
+    if total == 0.0 {
+        return 0.0;
+    }
+    let mut counts: Vec<(char, usize)> = Vec::new();
+    for character in characters {
+        match counts.iter_mut().find(|(seen, _)| *seen == character) {
+            Some((_, count)) => *count += 1,
+            None => counts.push((character, 1)),
+        }
+    }
+    -counts
+        .iter()
+        .map(|(_, count)| {
+            let share = *count as f64 / total;
+            share * share.log2()
+        })
+        .sum::<f64>()
 }

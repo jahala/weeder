@@ -1,0 +1,1 @@
+The runner reads everything it needs from the environment.

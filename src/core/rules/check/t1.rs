@@ -6,9 +6,16 @@
 //! the change, never from the diff text: a case moved down the file, renamed in
 //! place, or rewritten around still counts as one case, and only a case that
 //! stopped existing changes the number.
+//!
+//! The count is of the cases a file runs, not of the ones it writes out. A
+//! suite that moves its cases into a table runs every one of them still, so
+//! where a declaration is driven by a table the entries are what counts; see
+//! [`generated`]. A table that leaves a case behind is a case gone like any
+//! other.
 
 use crate::core::change::Change;
 use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::rules::check::generated;
 use crate::core::rules::check::Judgement;
 
 pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
@@ -22,11 +29,11 @@ fn deletion(change: &Change) -> Option<Finding> {
     if !change.before.holds_tests() {
         return None;
     }
-    let before = change.before.case_count();
+    let before = generated::case_count(&change.before);
     if change.is_deletion() {
         return Some(file_gone(path, before));
     }
-    let after = change.after.case_count();
+    let after = generated::case_count(&change.after);
     if after >= before {
         return None;
     }

@@ -15,3 +15,8 @@ def drain():
 
 def flush():
     ...
+
+
+class Buffer:
+    def flush(self):
+        ...

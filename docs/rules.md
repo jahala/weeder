@@ -24,6 +24,7 @@ the person at the pull request, not an instruction to the agent that wrote it.
 | `[thresholds] todo_age_days` | how old a work marker may get | R3 |
 | `[thresholds] dependency_lag` | how far behind a pin may fall | R4 |
 | `[guard] protected` | the branches the git hooks refuse to rewrite | `weed guard` |
+| `[guardrails] paths` | the path globs this repository holds at the constitution tier | C3 |
 
 `weed check --scope <glob>` names the scope for one run and takes precedence
 over `[scope] allow`. A run given neither allows every path, so X2 has nothing
@@ -139,7 +140,7 @@ A changed file matches no scope glob the run allows, and the finding names what 
 
 `check` · blocks by default
 
-A change touched a workflow, a harness settings file, a git hook, `weed.toml`, or the hard-limits section of `AGENTS.md` or `CLAUDE.md`.
+A change touched a harness settings file, a git hook, `weed.toml`, or the hard-limits section of `AGENTS.md` or `CLAUDE.md`.
 
 <a id="C2"></a>
 ## C2: An ignore file was broadened over source or tests
@@ -147,6 +148,13 @@ A change touched a workflow, a harness settings file, a git hook, `weed.toml`, o
 `check` · warns by default
 
 An added ignore pattern matches source or test paths of the repository's languages, hiding them from review and from tooling.
+
+<a id="C3"></a>
+## C3: A workflow was changed
+
+`check` · warns by default
+
+A file under `.github/workflows/` was added, edited or taken away; the change blocks where `[guardrails] paths` names the path.
 
 <a id="G1"></a>
 ## G1: A conflict marker was committed

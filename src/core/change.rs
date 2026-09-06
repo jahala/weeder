@@ -76,7 +76,10 @@ impl Side {
         Mask::of(self.lang(), self.text())
     }
 
-    fn lang(&self) -> Lang {
+    /// The language this side's file is written in, or `Lang::Other` where the
+    /// side has no file or weed reads none.
+    #[must_use]
+    pub fn lang(&self) -> Lang {
         self.classification
             .as_ref()
             .map_or(Lang::Other, |classification| classification.lang)
