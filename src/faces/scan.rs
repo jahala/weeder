@@ -22,6 +22,7 @@ use crate::core::read::Outline;
 use crate::core::registry::{self, parse_snapshot, Registry, Snapshot, SNAPSHOT_PATH};
 use crate::core::rules;
 use crate::core::sarif::{self, Context, EXIT_CLEAN, EXIT_COULD_NOT_RUN, RULES_DOC};
+use crate::core::specimen;
 use crate::core::tree::{CommandListing, Tree, TreeFile};
 use crate::faces::{read_config, Answer, Format};
 use crate::seams::{exec, fs, git, reader};
@@ -76,7 +77,7 @@ fn judge(request: &Request) -> Result<Answer, String> {
         unreachable = refresh(&root, &request.version)?;
     }
 
-    let mut tree = gather(&root, &config)?;
+    let (mut tree, excluded) = gather(&root, &config)?;
     // R3 dates a line through git, and only the files carrying a work marker
     // are worth asking about. The rule names them; the face is what leaves the
     // process to find out.
@@ -87,7 +88,8 @@ fn judge(request: &Request) -> Result<Answer, String> {
         }
     }
 
-    let findings = rules::scan::evaluate(&tree, &config, &wanted);
+    let mut findings = rules::scan::evaluate(&tree, &config, &wanted);
+    findings.extend(excluded.iter().map(|path| specimen::notice(path)));
     Ok(Answer {
         // A scan never blocks. It reports the state a repository is in, and no
         // reading of that state is a reason to stop a change from landing.
@@ -135,10 +137,17 @@ fn runs(id: &str, config: &Config, wanted: &[String]) -> bool {
         .is_some()
 }
 
-/// The repository as it sits, with everything a rule needs already read. This is
-/// the one place a scan touches a disk, a clock or another process.
-fn gather(root: &Path, config: &Config) -> Result<Tree, String> {
-    let paths = git::tree_files(root).map_err(|error| error.to_string())?;
+/// The repository as it sits, with everything a rule needs already read, and the
+/// paths `[scope] specimens` kept out of it. This is the one place a scan
+/// touches a disk, a clock or another process.
+///
+/// A specimen never enters the tree, so no scan rule can read it: not as the
+/// file it judges, and not as the evidence it judges another file by.
+fn gather(root: &Path, config: &Config) -> Result<(Tree, Vec<String>), String> {
+    let (paths, excluded): (Vec<String>, Vec<String>) = git::tree_files(root)
+        .map_err(|error| error.to_string())?
+        .into_iter()
+        .partition(|path| !specimen::skipped(&config.specimens, path));
     let files = paths
         .into_iter()
         .map(|path| read_file(root, path))
@@ -147,13 +156,16 @@ fn gather(root: &Path, config: &Config) -> Result<Tree, String> {
     let snapshot = read_snapshot(root)?;
     let commands = listings(root, &config.doc_commands)?;
 
-    Ok(Tree {
-        files,
-        blame: std::collections::BTreeMap::new(),
-        now: now(),
-        commands,
-        snapshot,
-    })
+    Ok((
+        Tree {
+            files,
+            blame: std::collections::BTreeMap::new(),
+            now: now(),
+            commands,
+            snapshot,
+        },
+        excluded,
+    ))
 }
 
 fn read_file(root: &Path, path: String) -> Result<TreeFile, String> {

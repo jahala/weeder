@@ -22,6 +22,7 @@ use crate::core::glob;
 use crate::core::read::{CallerSite, TestShape};
 use crate::core::rules;
 use crate::core::sarif::{self, Context, EXIT_BLOCKED, EXIT_CLEAN, EXIT_COULD_NOT_RUN, RULES_DOC};
+use crate::core::specimen;
 use crate::core::suppress::{
     apply_suppressions, parse_commit_suppressions, parse_inline_suppressions,
     InlineSuppressionError, Suppression,
@@ -70,19 +71,31 @@ fn judge(request: &Request) -> Result<Answer, String> {
     let judged: Vec<FileDiff> = parse_diff(&diff).map_err(|error| {
         format!("weed could not read the diff git produced: {error}. report it with the change that caused it.")
     })?;
+    // The specimens leave here, before anything reads them: a file no rule
+    // judges has no suppression to honour and no malformed one to complain
+    // about either. What it has is a note, so the exclusion is in the log.
+    let (judged, excluded) = set_aside(judged, &config.specimens);
     let (inline, malformed) = parse_inline_suppressions(&judged);
 
     let changes = gather(&root, &range, judged)?;
     let scope = scope(request, &config);
-    let paths = git::tracked_paths(&root).map_err(|error| error.to_string())?;
+    // The specimens leave the repository's paths too: a rule that reads what the
+    // tree holds, to resolve an import or to work out what a pattern hides,
+    // reads the same repository every other rule was handed.
+    let paths: Vec<String> = git::tracked_paths(&root)
+        .map_err(|error| error.to_string())?
+        .into_iter()
+        .filter(|path| !specimen::skipped(&config.specimens, path))
+        .collect();
     let callers = callers(&root, &changes, &scope)?;
-    let findings = rules::check::evaluate(&rules::check::Judgement {
+    let mut findings = rules::check::evaluate(&rules::check::Judgement {
         changes: &changes,
         config: &config,
         scope: &scope,
         paths: &paths,
         callers: &callers,
     });
+    findings.extend(excluded.iter().map(|path| specimen::notice(path)));
     if request.strict {
         if let Some(unreadable) = malformed.first() {
             return Err(refusal(unreadable));
@@ -247,6 +260,24 @@ fn side(root: &Path, source: &Source, path: Option<&str>) -> Result<Side, String
         size,
         binary,
     })
+}
+
+/// The changed files weed judges, and the paths it was told to leave alone.
+/// A specimen is skipped by every rule at once: the file never reaches a
+/// detector, so no rule can be the one that read it anyway.
+fn set_aside(judged: Vec<FileDiff>, specimens: &[String]) -> (Vec<FileDiff>, Vec<String>) {
+    let mut kept = Vec::new();
+    let mut excluded = Vec::new();
+    for file in judged {
+        match file
+            .path()
+            .filter(|path| specimen::skipped(specimens, path))
+        {
+            Some(path) => excluded.push(path.to_string()),
+            None => kept.push(file),
+        }
+    }
+    (kept, excluded)
 }
 
 /// The paths this run allows the change to touch. `--scope` is what the caller
