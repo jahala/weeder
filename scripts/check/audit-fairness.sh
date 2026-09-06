@@ -134,8 +134,13 @@ if CASE_DIR.exists():
                 if event.get(forbidden_key):
                     complaints.append(f"{session_path} records forbidden {forbidden_key}")
 
-if "untrusted" not in first_prose_sentence(report).lower():
-    complaints.append(f"{REPORT}'s first prose sentence must say the classification is untrusted unless the fair blind audit stands")
+# The audit stands when every sample in its own agreement table is at the bar
+# on at least twenty cases; the agreement script recomputes those rows, and
+# this one reads them. While it does not stand, the report has to say so.
+rows = re.findall(r"^\| ([a-z ]+) \| (\d+) \| (\d+) \| [0-9.]+% \|$", audit, re.M)
+stands = bool(rows) and all(int(n) >= 20 and int(a) * 100 >= 90 * int(n) for _, n, a in rows)
+if not stands and "untrusted" not in first_prose_sentence(report).lower():
+    complaints.append(f"{REPORT}'s first prose sentence must say the classification is untrusted while the fair blind audit is under the bar")
 
 if complaints:
     for complaint in complaints:

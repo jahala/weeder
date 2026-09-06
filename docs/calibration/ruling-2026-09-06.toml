@@ -1,0 +1,31 @@
+# The day the audited question changed, and the numbers on both sides of it.
+#
+# Until 2026-09-06 a blocked commit was classified in three classes and the
+# audit compared classes. cape-town ruled that a blind reader can judge one thing,
+# whether the rule's claim is true of the change, so the audited question became
+# binary, claim-true or claim-false, and `acceptable` a human label the audit
+# never counts. Under that definition three ledger calls that were claim-false
+# (assertions that really dropped from a file and moved to siblings in the same
+# diff) are claim-true, and the false-positive count moved with them.
+#
+# The report prints both numbers, permanently, with this date: a reader who sees
+# only the later one has been shown a moved goalpost, and a reader who sees both
+# has been shown a corrected question.
+
+date = "2026-09-06"
+blocked = 23
+commits_judged = 635
+
+[before]
+classes = "true-positive, acceptable, false-positive; the audit compared classes"
+false_positives = 7
+share_percent = 1.10
+
+[after]
+classes = "claim-true or claim-false; acceptable is a human label the audit never counts"
+false_positives = 4
+share_percent = 0.63
+
+[moved]
+commits = ["11aef933c9", "18eb6643ff", "5a4edbf5c5"]
+reason = "assertions really dropped from the named file and moved to sibling modules in the same diff: claim-true under the ruling, and the message's sentence about what is held is the rule's overclaim, shaped on rules-tests"
