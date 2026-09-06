@@ -11,6 +11,13 @@
 //! line. Nothing is covered less afterwards, so weed counts the entries and
 //! says nothing; a table that leaves a case behind is still a case gone.
 //!
+//! A fourth pair reads the move a suite makes between files. Splitting one file
+//! into two, or folding two into one, takes cases out of one file and puts them
+//! into another in the same diff, some under their own name and some renamed on
+//! the way, and nothing is covered less afterwards. A case that went nowhere is
+//! a case gone like any other, and the finding that reports it counts only what
+//! left and names the files the rest moved into.
+//!
 //! Every number here is counted off the fixture by this file's own reading of
 //! what a case looks like, so the expectation is written independently of the
 //! detector that has to meet it.
@@ -88,6 +95,11 @@ fn t1_fires_at_block_level_on_a_deleted_test_file_and_a_thinned_one() {
         assert!(
             gone.message.contains(&held.to_string()),
             "{name}: the finding says how many cases went with the file: {}",
+            gone.message
+        );
+        assert!(
+            gone.message.contains(COVERED_BY_NOBODY),
+            "{name}: nothing in this diff took the cases over, so the finding may say so: {}",
             gone.message
         );
 
@@ -306,3 +318,210 @@ fn entries(lang: &str, case: &str, path: &str) -> usize {
         })
         .count()
 }
+
+/// One case a fixture writes down: the name it carries and the lines of its
+/// body. The body is the lines between this declaration and the next, without
+/// the blank ones and without the punctuation that closes a block, so a case
+/// that moved under another name still compares equal.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Declaration {
+    name: String,
+    body: Vec<String>,
+}
+
+/// The cases a fixture's test file writes, in the order it writes them, read
+/// the way each language declares one. This is how the moved fixtures state
+/// what they hold without a number being copied into the test.
+fn declarations(lang: &str, case: &str, path: &str) -> Vec<Declaration> {
+    let source = fixture_file("T1", lang, case, path);
+    let lines: Vec<String> = source.lines().map(|line| line.trim().to_string()).collect();
+    let declared: Vec<(String, usize)> = (0..lines.len())
+        .filter_map(|index| declared(lang, &lines, index))
+        .collect();
+    declared
+        .iter()
+        .enumerate()
+        .map(|(order, (name, opens))| {
+            let ends = declared
+                .get(order + 1)
+                .map_or(lines.len(), |(_, next)| next.saturating_sub(1));
+            Declaration {
+                name: name.clone(),
+                body: lines[*opens..ends.max(*opens)]
+                    .iter()
+                    .filter(|line| line.chars().any(char::is_alphanumeric))
+                    .cloned()
+                    .collect(),
+            }
+        })
+        .collect()
+}
+
+/// The name the line at an index declares a case with, and the line its body
+/// opens on. A language that marks a case with an attribute names it on the
+/// line under that mark, so the body opens one line further down.
+fn declared(lang: &str, lines: &[String], index: usize) -> Option<(String, usize)> {
+    let line = lines.get(index)?;
+    match lang {
+        "ts" if line.starts_with("it(") => Some((quoted(line), index + 1)),
+        "py" if line.starts_with("def test") => Some((between(line, "def ", "("), index + 1)),
+        "rs" if line == "#[test]" => Some((between(lines.get(index + 1)?, "fn ", "("), index + 2)),
+        "go" if line.starts_with("func Test") => Some((between(line, "func ", "("), index + 1)),
+        "ts" | "py" | "rs" | "go" => None,
+        other => panic!("no case shape is written down for {other}"),
+    }
+}
+
+/// The text between the first pair of quotes on a line.
+fn quoted(line: &str) -> String {
+    let mut quotes = line.split('"');
+    quotes.next();
+    quotes
+        .next()
+        .unwrap_or_else(|| panic!("a case declared as a call carries a title: {line}"))
+        .to_string()
+}
+
+/// The text a line writes between two markers.
+fn between(line: &str, after: &str, before: &str) -> String {
+    let rest = line
+        .split_once(after)
+        .unwrap_or_else(|| panic!("`{after}` should open the declaration: {line}"))
+        .1;
+    rest.split_once(before)
+        .map_or(rest, |(name, _)| name)
+        .to_string()
+}
+
+/// Whether a case that left one file is the same case as one that arrived in
+/// another: the name it is collected under, or the body it holds where the move
+/// renamed it.
+fn same_case(left: &Declaration, arrived: &Declaration) -> bool {
+    left.name == arrived.name || left.body == arrived.body
+}
+
+#[test]
+fn t1_stays_silent_when_every_case_moved_into_another_file_in_the_diff() {
+    for language in LANGUAGES {
+        let name = language.name;
+        let left = declarations(name, "moved/before", language.deleted);
+        let held = declarations(name, "moved/before", language.thinned);
+        let arrived = declarations(name, "moved/after", language.thinned);
+
+        assert!(
+            left.iter()
+                .all(|case| !held.iter().any(|had| same_case(case, had))),
+            "{name}: the file the cases land in must not have held them already"
+        );
+        let by_name: Vec<&Declaration> = left
+            .iter()
+            .filter(|case| arrived.iter().any(|now| now.name == case.name))
+            .collect();
+        let renamed: Vec<&Declaration> = left
+            .iter()
+            .filter(|case| !arrived.iter().any(|now| now.name == case.name))
+            .collect();
+        assert!(
+            !by_name.is_empty(),
+            "{name}: some cases have to move under their own name, or the fixture proves half the claim"
+        );
+        assert_eq!(
+            renamed.len(),
+            1,
+            "{name}: exactly one case moves under another name: {renamed:#?}"
+        );
+        assert!(
+            arrived
+                .iter()
+                .any(|now| now.body == renamed[0].body && now.name != renamed[0].name),
+            "{name}: the renamed case has to be there under its new name, body for body: {arrived:#?}"
+        );
+
+        let repo = fixture("T1", name, "moved");
+        let changed = repo.git(&["diff", "HEAD", "--name-only"]);
+        assert!(
+            changed.lines().any(|path| path == language.deleted),
+            "{name}: the file the cases left must be in the diff, or the silence proves nothing"
+        );
+
+        let run = repo.weed(&["check"]);
+        assert_eq!(
+            run.findings(),
+            Vec::new(),
+            "{name}: a case that moved to another file in the same diff is a case that is there"
+        );
+        assert_eq!(run.code, 0, "{name}: nothing found, nothing blocked");
+    }
+}
+
+#[test]
+fn t1_counts_the_cases_that_left_the_diff_and_names_where_the_others_went() {
+    for language in LANGUAGES {
+        let name = language.name;
+        let left = declarations(name, "moved-partly/before", language.deleted);
+        let arrived = declarations(name, "moved-partly/after", language.thinned);
+        let moved: Vec<&Declaration> = left
+            .iter()
+            .filter(|case| arrived.iter().any(|now| same_case(case, now)))
+            .collect();
+        let gone: Vec<&Declaration> = left
+            .iter()
+            .filter(|case| !arrived.iter().any(|now| same_case(case, now)))
+            .collect();
+        assert!(
+            !moved.is_empty(),
+            "{name}: some of the file's cases have to move, or the finding has nowhere to name"
+        );
+        assert_eq!(
+            gone.len(),
+            1,
+            "{name}: one case has to leave the diff altogether: {gone:#?}"
+        );
+
+        let repo = fixture("T1", name, "moved-partly");
+        let run = repo.weed(&["check"]);
+        let reported: Vec<common::Finding> = run
+            .findings()
+            .into_iter()
+            .filter(|finding| finding.rule == "T1")
+            .collect();
+        assert_eq!(
+            reported.len(),
+            1,
+            "{name}: one finding, on the file the cases left: {reported:#?}"
+        );
+        assert_eq!(
+            reported[0].path, language.deleted,
+            "{name}: the file is named"
+        );
+        assert_eq!(reported[0].level, "error", "{name}: T1 blocks");
+        assert_eq!(run.code, 2, "{name}: a case nobody took over blocks");
+        assert!(
+            reported[0]
+                .message
+                .contains(&format!("{} test case", gone.len())),
+            "{name}: the finding counts the cases that left and not the ones that moved: {}",
+            reported[0].message
+        );
+        assert!(
+            reported[0]
+                .message
+                .contains(&format!("{} test cases", moved.len())),
+            "{name}: the finding says how many moved: {}",
+            reported[0].message
+        );
+        assert!(
+            reported[0].message.contains(language.thinned),
+            "{name}: the finding names the file they moved into: {}",
+            reported[0].message
+        );
+        assert!(
+            !reported[0].message.contains(COVERED_BY_NOBODY),
+            "{name}: a case another file in the diff took over is covered by somebody: {}",
+            reported[0].message
+        );
+    }
+}
+
+/// The sentence T1 may only write when nothing in the diff took the cases over.
+const COVERED_BY_NOBODY: &str = "covered by nobody";
