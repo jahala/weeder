@@ -9,7 +9,7 @@ use std::process::ExitCode;
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use weed::core::hook::Harness;
 use weed::core::sarif::EXIT_COULD_NOT_RUN;
-use weed::faces::{check, format_for, guard, hook, rules, scan, Answer, Format};
+use weed::faces::{bite, check, format_for, guard, hook, rules, scan, Answer, Format};
 
 #[derive(Debug, Parser)]
 #[command(name = "weed", version, about = "the judge of the diff")]
@@ -33,6 +33,44 @@ enum Command {
     Hook(HarnessArgs),
     /// Print the rule catalogue and the level each rule carries.
     Rules(RulesArgs),
+    /// Prove a test fails without the change it covers: run the command over
+    /// the test commit alone on the base, then over the implementation.
+    ///
+    /// weed does not offer this face, and `docs/bite-2026-09.md` holds the
+    /// measurement that decided it. A phased node lands one commit, its tests
+    /// and its implementation together, so the test commit bite has to apply on
+    /// its own is one no conductor here produces. The code and its proofs stay
+    /// in the tree so the measurement can be run again; the day a conductor
+    /// commits its phases apart, this line loses its `hide` and weed offers the
+    /// face.
+    #[command(hide = true)]
+    Bite(BiteArgs),
+}
+
+#[derive(Debug, Args)]
+struct BiteArgs {
+    /// The command that runs the tests.
+    #[arg(long, value_name = "command")]
+    test: String,
+    /// Apply the test commit to this ref, rather than to the commit two below
+    /// the implementation.
+    #[arg(long, value_name = "ref")]
+    base: Option<String>,
+    /// The commit carrying the tests, rather than the one below the implementation.
+    #[arg(long, value_name = "ref")]
+    test_commit: Option<String>,
+    /// The commit carrying the change the tests cover, rather than HEAD.
+    #[arg(long, value_name = "ref")]
+    impl_commit: Option<String>,
+    /// How long the test command may take, in seconds.
+    #[arg(long, value_name = "secs")]
+    timeout: Option<u64>,
+    /// Write SARIF or a table, rather than choosing by what stdout is.
+    #[arg(long, value_enum, value_name = "format")]
+    format: Option<CheckFormat>,
+    /// Read weed.toml from here instead of the repository root.
+    #[arg(long, value_name = "path")]
+    config: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]
@@ -170,6 +208,7 @@ fn main() -> ExitCode {
         Command::Scan(args) => run_scan(args),
         Command::Guard(args) => run_guard(args),
         Command::Hook(args) => run_hook(args),
+        Command::Bite(args) => run_bite(args),
         Command::Rules(args) => rules::run(match args.format {
             RulesFormat::Table => rules::Format::Table,
             RulesFormat::Json => rules::Format::Json,
@@ -235,6 +274,37 @@ fn run_scan(args: ScanArgs) -> Answer {
         format,
         config: args.config,
         refresh_snapshot: args.refresh_snapshot,
+        version: env!("CARGO_PKG_VERSION").to_string(),
+    })
+}
+
+fn run_bite(args: BiteArgs) -> Answer {
+    let format = format_for(
+        args.format.map(|format| match format {
+            CheckFormat::Sarif => Format::Sarif,
+            CheckFormat::Table => Format::Table,
+        }),
+        std::io::stdout().is_terminal(),
+    );
+
+    let cwd = match std::env::current_dir() {
+        Ok(cwd) => cwd,
+        Err(error) => {
+            return could_not_run(format!(
+                "weed could not read the directory it was called from: {error}. run it from a directory that exists."
+            ))
+        }
+    };
+
+    bite::run(&bite::Request {
+        cwd,
+        test: args.test,
+        base: args.base,
+        test_commit: args.test_commit,
+        impl_commit: args.impl_commit,
+        timeout: args.timeout,
+        format,
+        config: args.config,
         version: env!("CARGO_PKG_VERSION").to_string(),
     })
 }

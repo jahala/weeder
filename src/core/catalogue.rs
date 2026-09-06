@@ -1,10 +1,12 @@
 use crate::core::finding::Level;
 
-/// The face a rule belongs to: `check` judges a diff, `scan` judges the tree.
+/// The face a rule belongs to: `check` judges a diff, `scan` judges the tree,
+/// `bite` runs a test command over two states of one and judges what it did.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Face {
     Check,
     Scan,
+    Bite,
 }
 
 /// What a rule may reach over a network, and under which flag. weed is a judge:
@@ -208,6 +210,14 @@ const CATALOGUE: &[Rule] = &[
         default_level: Level::Warn,
         short_description: "A large or a binary file was added",
         full_description: "An added file is larger than one mebibyte, or holds binary content, and was not tracked before.",
+        network: Network::None,
+    },
+    Rule {
+        id: "B1",
+        face: Face::Bite,
+        default_level: Level::Block,
+        short_description: "A test passed without the change it covers",
+        full_description: "The test command passed with the test commit alone applied to the base, so the cases that commit added were green before the implementation existed.",
         network: Network::None,
     },
     Rule {

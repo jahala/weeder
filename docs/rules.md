@@ -6,9 +6,16 @@ rows from the same table in the binary, so this page and the judgement cannot
 come apart. Every SARIF result weed writes links back here by rule id.
 
 `check` judges a diff and may stop a change. `scan` judges the tree and never
-does. A check rule is `block`, `warn` or `off`; a scan rule is `on` or `off`. A
-rule blocks only where what it found admits one reading. The warnings are for
-the person at the pull request, not an instruction to the agent that wrote it.
+does. `bite` runs a test command over two states of a repository, which makes it
+the one judgement weed reaches by running something rather than by reading. A
+check rule and a bite rule are `block`, `warn` or `off`; a scan rule is `on` or
+`off`. A rule blocks only where what it found admits one reading. The warnings
+are for the person at the pull request, not an instruction to the agent that
+wrote it.
+
+weed does not offer the `bite` face today, so the one rule under it reports
+nothing: `docs/bite-2026-09.md` holds the measurement that left the face
+unshipped, and what would turn it back on.
 
 ## What a repository states
 
@@ -180,6 +187,15 @@ An added line is a merge conflict marker, so the file carries both sides of a me
 `check` · warns by default
 
 An added file is larger than one mebibyte, or holds binary content, and was not tracked before.
+
+<a id="B1"></a>
+## B1: A test passed without the change it covers
+
+`bite` · blocks by default
+
+The test command passed with the test commit alone applied to the base, so the cases that commit added were green before the implementation existed.
+
+The cases are named from the test shape of each side of the test commit, so what a finding points at is the case that commit added, at the line it was written on. A file whose language weed reads no tests in is reported by the file instead.
 
 <a id="R1"></a>
 ## R1: The docs cite something that no longer exists

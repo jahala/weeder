@@ -67,6 +67,7 @@ fn face_word(face: Face) -> &'static str {
     match face {
         Face::Check => "check",
         Face::Scan => "scan",
+        Face::Bite => "bite",
     }
 }
 
