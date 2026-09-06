@@ -115,6 +115,53 @@ impl Audit {
 /// The audit a run reads when no other path is given.
 pub const DEFAULT_PATH: &str = "docs/calibration-audit-2026-09.md";
 
+/// Whether a file under docs/ is an audit's own record rather than the packet,
+/// response or transcript kept beside it.
+fn is_audit_record(name: &str) -> bool {
+    name.starts_with("calibration-audit")
+        && name.ends_with(".md")
+        && !name.contains(".packet.")
+        && !name.contains(".response.")
+        && !name.contains("transcript")
+}
+
+/// Every re-grade the repository carries, read as one: the verdict drops its
+/// qualification only when every audit file agrees at the bar on every sample,
+/// so a blind re-grade under the bar keeps the verdict pending however well a
+/// sighted one did. Each sample is named by the file it came from.
+pub fn read_all(root: &Path) -> Audit {
+    let docs = root.join("docs");
+    let mut names: Vec<String> = std::fs::read_dir(&docs)
+        .map(|entries| {
+            entries
+                .filter_map(Result::ok)
+                .filter_map(|entry| entry.file_name().into_string().ok())
+                .filter(|name| is_audit_record(name))
+                .collect()
+        })
+        .unwrap_or_default();
+    names.sort();
+    if names.is_empty() {
+        return Audit {
+            label: DEFAULT_PATH.to_string(),
+            samples: None,
+        };
+    }
+    let mut all = Vec::new();
+    for name in &names {
+        let text = std::fs::read_to_string(docs.join(name)).unwrap_or_default();
+        for mut sample in samples(&text) {
+            sample.name = format!("{} in docs/{name}", sample.name);
+            all.push(sample);
+        }
+    }
+    let labels: Vec<String> = names.iter().map(|name| format!("docs/{name}")).collect();
+    Audit {
+        label: labels.join(" and "),
+        samples: Some(all),
+    }
+}
+
 /// Read the re-grade. A file that is not there is not an error: the re-grade is
 /// work that happens after the calibration, and its absence is exactly what the
 /// provisional wording is for.

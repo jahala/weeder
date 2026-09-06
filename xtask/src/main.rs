@@ -9,6 +9,7 @@
 //! the one in `src/`.
 
 mod audit;
+mod audit_packet;
 mod calibrate;
 mod corpus;
 mod first_run;
@@ -47,6 +48,8 @@ enum Command {
     /// Inject one anti-pattern per case into real commits of the corpus and
     /// write down what weed caught.
     Mutate(mutate::Request),
+    /// Write a blind audit packet from pinned corpus diffs and rule ids.
+    AuditPacket(audit_packet::Request),
 }
 
 #[derive(Debug, Args)]
@@ -117,6 +120,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         Command::Calibrate(args) => run_calibrate(&args),
         Command::Suppressions(args) => run_suppressions(&args),
         Command::Mutate(request) => Ok(mutate::run(&request)?),
+        Command::AuditPacket(request) => Ok(audit_packet::run(&request, &root())?),
     }
 }
 
@@ -133,11 +137,12 @@ fn run_calibrate(args: &CalibrateArgs) -> Result<(), Box<dyn Error>> {
         .clone()
         .unwrap_or_else(|| root().join(first_run::DEFAULT_PATH));
     let first = first_run::read(&first_path, &labelled(&first_path))?;
-    let audit_path = args
-        .audit
-        .clone()
-        .unwrap_or_else(|| root().join(audit::DEFAULT_PATH));
-    let audit = audit::read(&audit_path, &labelled(&audit_path));
+    // One named file when the caller points at it, which is how the suites
+    // probe the wording; otherwise every audit the repository carries.
+    let audit = match &args.audit {
+        Some(path) => audit::read(path, &labelled(path)),
+        None => audit::read_all(&root()),
+    };
     let scratch = tempfile::tempdir()?;
 
     let mut measurements = Vec::new();

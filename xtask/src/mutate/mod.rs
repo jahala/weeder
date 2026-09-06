@@ -165,6 +165,54 @@ pub fn run(request: &Request) -> Result<(), String> {
     Ok(())
 }
 
+/// Rebuild the mutation diff for one recalled case from the pinned corpus.
+pub fn replay_diff(
+    repo: &crate::corpus::Repo,
+    sha: &str,
+    rule: &str,
+    lang: &str,
+) -> Result<String, String> {
+    let lang =
+        Language::from_slug(lang).ok_or_else(|| format!("{lang} is not a recall language"))?;
+    let working = corpus::prepare(repo)?;
+    let root = working.root;
+    let sha = git::capture(
+        &root,
+        &["rev-parse", "--verify", &format!("{sha}^{{commit}}")],
+    )?
+    .trim()
+    .to_string();
+    let parent = git::capture(&root, &["rev-parse", "--verify", &format!("{sha}^")])?
+        .trim()
+        .to_string();
+    git::run(&root, &["checkout", "--quiet", "--force", "--detach", &sha])?;
+    let paths = git::lines(&root, &["ls-files"])?;
+    let changed = git::lines(
+        &root,
+        &["diff", "--name-only", "--find-renames", &parent, &sha],
+    )?;
+    let added = git::lines(
+        &root,
+        &["diff", "--name-only", "--diff-filter=A", &parent, &sha],
+    )?;
+    let tree = Tree::read(&root, paths, changed, &added, &[lang]);
+    let seed = seed_of(&sha, rule, lang);
+    let planted = inject::inject(rule, lang, &tree, seed).map_err(|_| {
+        format!(
+            "{repo_name} {sha} has no replayable {rule} site",
+            repo_name = repo.name
+        )
+    })?;
+    let _before = apply(&root, &planted, &tree)?;
+    let mut arguments = vec!["diff", "--no-ext-diff", &parent, "--"];
+    for (path, _) in &planted.writes {
+        arguments.push(path);
+    }
+    let diff = git::capture(&root, &arguments)?;
+    restore(&root, &planted, &tree)?;
+    Ok(diff.trim_end_matches('\n').to_string())
+}
+
 /// One outcome per repository, made of what each of its slices came back with,
 /// in repository order and, inside one repository, in the order the window was
 /// sliced. Two runs put the same cases in the same places.
