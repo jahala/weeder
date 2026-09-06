@@ -201,6 +201,9 @@ def has_reason(row):
     return len(reason) >= 20 and re.search(r"[A-Za-z]", reason)
 
 
+old_class_agreed = {}
+
+
 def check_sample(audit, name, sample, audit_rows):
     agreed = 0
     for item in sample:
@@ -210,8 +213,18 @@ def check_sample(audit, name, sample, audit_rows):
             continue
         if not has_reason(row):
             complaints.append(f"{audit['path']} gives sampled {name} case {item['key']} no reasoning")
-        if row["verdict"] == item["original"]:
+        # Ruling of 2026-09-06: a blind reader can judge one thing, whether the
+        # rule's claim is true of the change. So a blocked commit agrees when
+        # both sides say claim-false (false-positive) or both say claim-true
+        # (true-positive or acceptable, a label the audit never counts). A
+        # recall case agrees on miss against miss, as before.
+        if name == "blocked":
+            if (row["verdict"] == "false-positive") == (item["original"] == "false-positive"):
+                agreed += 1
+        elif row["verdict"] == item["original"]:
             agreed += 1
+        if row["verdict"] == item["original"]:
+            old_class_agreed[name] = old_class_agreed.get(name, 0) + 1
     return len(sample), agreed
 
 
@@ -305,8 +318,9 @@ prose = "\n".join(
     line for line in report.splitlines() if line.strip() and not line.lstrip().startswith("#")
 ).strip()
 first_sentence = re.split(r"(?<=[.!?])\s+", prose, maxsplit=1)[0] if prose else ""
-all_rows = list(sighted_rows.values()) + list(blind_rows.values())
-if any(agreed * 100 < 90 * count for count, agreed in all_rows):
+# Ruling of 2026-09-06: the bar is read on the blind re-grade alone. A sighted
+# one is recorded beside it, its arithmetic checked above, and never decides.
+if any(agreed * 100 < 90 * count for count, agreed in blind_rows.values()):
     if "untrusted" not in first_sentence.lower():
         complaints.append(f"{REPORT}'s first sentence does not say the classification is untrusted")
 

@@ -37,7 +37,7 @@ corpus="${WEED_CALIBRATION_CORPUS:-docs/calibration/corpus.toml}"
 # Every audit the repository carries counts, packet, response and transcript
 # files aside: a blind re-grade under the bar keeps the verdict pending however
 # well a sighted one did. The probes name one file to read instead.
-audit="${WEED_CALIBRATION_AUDIT:-$(ls docs/calibration-audit*.md 2>/dev/null | grep -v '\.packet\.\|\.response\.\|transcript' | tr '\n' ':' | sed 's/:$//')}"
+audit="${WEED_CALIBRATION_AUDIT:-$(grep -l '^Blind: yes' docs/calibration-audit*.md 2>/dev/null | grep -v '\.packet\.\|\.response\.\|transcript' | tr '\n' ':' | sed 's/:$//')}"
 result="${WEED_CALIBRATION_METRIC:-docs/calibration/metric.json}"
 
 command -v python3 >/dev/null 2>&1 || {

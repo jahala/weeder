@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a075ed-e899-7ae1-a1cc-bbe558d3eade"}
+{"type":"thread.started","thread_id":"01a07648-8034-7610-94c1-ed732af55c81"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: acceptable\nReasoning: T1 correctly flagged deleted tests, but they covered SymbolIndex plumbing that was deleted as inert and no longer shipped, so the removal did not weaken remaining behavior."}}
-{"type":"turn.completed","usage":{"input_tokens":37291,"cached_input_tokens":20864,"output_tokens":178,"reasoning_output_tokens":89}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: acceptable\nReasoning: T1 truly caught deletion of six SymbolIndex tests, but the tested dead allocator was removed with the inert plumbing, so coverage was not weakened for remaining behavior."}}
+{"type":"turn.completed","usage":{"input_tokens":37152,"cached_input_tokens":20864,"output_tokens":130,"reasoning_output_tokens":45}}

@@ -378,8 +378,17 @@ fn gather(files: &[(PathBuf, String)], name_samples_by_file: bool) -> Audit {
             records,
         };
     }
+    // Ruling of 2026-09-06: only a blind re-grade can lift the qualification. A
+    // sighted one, where the auditor could read the builder's class, is kept in
+    // `records` and named beside the verdict, and never pooled into what
+    // decides it.
     let mut all = Vec::new();
+    let mut counted = 0;
     for record in &records {
+        if !matches!(record.sight, Sight::Blind) {
+            continue;
+        }
+        counted += 1;
         for sample in &record.samples {
             let mut sample = sample.clone();
             if name_samples_by_file {
@@ -387,6 +396,13 @@ fn gather(files: &[(PathBuf, String)], name_samples_by_file: bool) -> Audit {
             }
             all.push(sample);
         }
+    }
+    if counted == 0 {
+        return Audit {
+            label: "a blind re-grade".to_string(),
+            samples: None,
+            records,
+        };
     }
     Audit {
         label,

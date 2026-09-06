@@ -1,0 +1,2 @@
+{"type": "input", "case": "blocked:tilth:59c87110ab", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
+{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: acceptable\nReasoning: T1/T2 correctly caught the deleted decoder test and four assertions, but the hand-rolled behavior was replaced by a standard percent-encoding crate, so the review friction is justified without a real weakening."}

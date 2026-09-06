@@ -25,8 +25,8 @@
 [[commit]]
 repo = "tilth"
 sha = "11aef933c92ce44b878356619d918a8893e72444"
-classification = "false-positive"
-reasoning = "T1 says src/mcp/tools/files.rs went with 8 cases and whatever it covered is now covered by nobody. The same commit adds src/mcp/tools/list.rs with 8 cases over the same ground, tool_files_empty_patterns_errors reappearing as tool_list_empty_patterns_errors and so on down the file. The count is right and the sentence under it is not."
+classification = "acceptable"
+reasoning = "T1 says src/mcp/tools/files.rs went with 8 cases and whatever it covered is now covered by nobody. The same commit adds src/mcp/tools/list.rs with 8 cases over the same ground, tool_files_empty_patterns_errors reappearing as tool_list_empty_patterns_errors and so on down the file. The count is right and the sentence under it is not. Under the ruling of 2026-09-06 the claim is the drop itself, which is true of this change, so this is claim-true; the sentence about what is held is the rule's own overclaim and is on rules-tests to fix."
 
 [[commit]]
 repo = "tilth"
@@ -55,8 +55,8 @@ reasoning = "T1 says a case left src/mcp/tools/definitions.rs, 3 down to 2, and 
 [[commit]]
 repo = "tilth"
 sha = "18eb6643ff9d8eee2b7e9572c7881a6c00a6e30e"
-classification = "false-positive"
-reasoning = "T2 says 21 assertions went out of src/mcp/mod.rs, 29 down to 8, so the suite reports green over behaviour nobody is holding. The commit's own subject is co-locate tests, and every one of those assertions is in src/mcp/tools/mod.rs, files.rs and edit.rs in the same change. The count holds and the consequence does not."
+classification = "acceptable"
+reasoning = "T2 says 21 assertions went out of src/mcp/mod.rs, 29 down to 8, so the suite reports green over behaviour nobody is holding. The commit's own subject is co-locate tests, and every one of those assertions is in src/mcp/tools/mod.rs, files.rs and edit.rs in the same change. The count holds and the consequence does not. Under the ruling of 2026-09-06 the claim is the drop itself, which is true of this change, so this is claim-true; the sentence about what is held is the rule's own overclaim and is on rules-tests to fix."
 
 [[commit]]
 repo = "tilth"
@@ -79,8 +79,8 @@ reasoning = "T2 says src/install.rs went from 66 assertions to 65, and it did. T
 [[commit]]
 repo = "tilth"
 sha = "5a4edbf5c508832e9770ae315e1625a81aae1e1f"
-classification = "false-positive"
-reasoning = "T2 says 21 assertions went out of src/search/callers.rs, 33 down to 12, so the suite reports green over behaviour nobody is holding. The same commit creates bloom_walk.rs, callee_query.rs and scope.rs and puts 26 assertions in them. Nothing stopped being held."
+classification = "acceptable"
+reasoning = "T2 says 21 assertions went out of src/search/callers.rs, 33 down to 12, so the suite reports green over behaviour nobody is holding. The same commit creates bloom_walk.rs, callee_query.rs and scope.rs and puts 26 assertions in them. Nothing stopped being held. Under the ruling of 2026-09-06 the claim is the drop itself, which is true of this change, so this is claim-true; the sentence about what is held is the rule's own overclaim and is on rules-tests to fix."
 
 [[commit]]
 repo = "tilth"

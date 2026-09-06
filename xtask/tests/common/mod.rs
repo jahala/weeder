@@ -247,8 +247,12 @@ impl Bench {
     }
 
     /// Write the re-grade, one row per sample.
+    /// The bench's own re-grade declares itself blind: under the ruling of
+    /// 2026-09-06 only a blind re-grade can lift the qualification, and a suite
+    /// probing the wording is probing that one. A sighted or undeclared file is
+    /// written with `write_audit_record` and a declaration of its own.
     pub fn write_audit(&self, samples: &[(&str, usize, usize)]) {
-        std::fs::write(self.audit(), audit_text(None, samples))
+        std::fs::write(self.audit(), audit_text(Some("yes"), samples))
             .expect("the audit should be writable");
     }
 

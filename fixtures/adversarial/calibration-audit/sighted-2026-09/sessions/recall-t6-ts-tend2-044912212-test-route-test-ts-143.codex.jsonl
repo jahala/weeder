@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07649-0a9f-7462-83bd-966e8c211ae0"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: miss\nReasoning: The report says T6 was planted at test/route.test.ts:143 by weakening an error assertion, and every listed miss was planted and not reported there."}}
+{"type":"turn.completed","usage":{"input_tokens":37150,"cached_input_tokens":2432,"output_tokens":214,"reasoning_output_tokens":129}}

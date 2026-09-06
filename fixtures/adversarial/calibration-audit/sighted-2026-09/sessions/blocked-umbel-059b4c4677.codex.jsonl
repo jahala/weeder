@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a075ed-fc12-7a31-b7eb-702068459b62"}
+{"type":"thread.started","thread_id":"01a07648-97d8-7bd1-ad29-daefaab977cc"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: acceptable\nReasoning: T2 correctly saw assertions removed, but they covered the old per-worker cwd hooks design, and the new shared CODEX_HOME behavior is tested in replacement coverage."}}
-{"type":"turn.completed","usage":{"input_tokens":37292,"cached_input_tokens":20864,"output_tokens":181,"reasoning_output_tokens":92}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: acceptable\nReasoning: T2 correctly reports three assertions dropped, but they covered the old cwd-local hooks design replaced by shared CODEX_HOME coverage in existing and added tests."}}
+{"type":"turn.completed","usage":{"input_tokens":37155,"cached_input_tokens":20864,"output_tokens":164,"reasoning_output_tokens":81}}

@@ -1,0 +1,2 @@
+{"type": "input", "case": "blocked:tend2:067730ddd0", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
+{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: acceptable\nReasoning: T2 correctly identified one dropped assertion, but it only checked byte identity for a generated file this commit stopped emitting, while remaining freshness checks still covered built outputs."}

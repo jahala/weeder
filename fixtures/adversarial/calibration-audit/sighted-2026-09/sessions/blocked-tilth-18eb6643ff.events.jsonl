@@ -1,2 +1,2 @@
-{"type": "input", "case": "blocked:tilth:18eb6643ff", "sha256": "e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f"}
-{"type": "answer", "answer": "Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: false-positive\nReasoning: The removed assertions were co-located into other MCP test modules in the same commit, so the behavior did not become untested."}
+{"type": "input", "case": "blocked:tilth:18eb6643ff", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
+{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: acceptable\nReasoning: T2 correctly observed assertions dropped from src/mcp/mod.rs, but the same commit relocated those tests into tool modules, so coverage was preserved while still meriting review."}

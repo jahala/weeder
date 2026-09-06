@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a075ed-f14a-7a01-ac8c-c6ba38d035be"}
+{"type":"thread.started","thread_id":"01a07648-90ce-7781-9393-cc676525ccdf"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: acceptable\nReasoning: T2 correctly caught one dropped assertion, but it covered a removed entry_style field whose replacement JsonLocal behavior remained asserted in the same test."}}
-{"type":"turn.completed","usage":{"input_tokens":37290,"cached_input_tokens":20864,"output_tokens":183,"reasoning_output_tokens":98}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: acceptable\nReasoning: T2 correctly found one assertion drop, but the removed entry_style check was replaced by an asserted JsonLocal ConfigFormat match, so the refactor did not weaken coverage."}}
+{"type":"turn.completed","usage":{"input_tokens":37152,"cached_input_tokens":20864,"output_tokens":123,"reasoning_output_tokens":36}}

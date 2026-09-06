@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:D2:go:hcl:6bf1a67a9:gohcl/decode.go:6", "sha256": "37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee"}
+{"type": "answer", "answer": "Answered report SHA-256: 37376da2e41e8719143d43aeef9ef68753645ab34673ab71b718ddb74adb1eee\nVerdict: miss\nReasoning: The report says gohcl/decode.go was planted with a gohcl-to-hcldec import, a D2 forbidden-boundary crossing, and lists it as planted but not reported."}
