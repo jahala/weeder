@@ -52,6 +52,10 @@ pub struct Config {
     pub doc_commands: Vec<String>,
     /// `[guard] protected`: branches guard refuses to rewrite or push non-fast-forward to.
     pub protected_branches: Vec<String>,
+    /// `[guardrails] paths`: the path globs this repository holds at the
+    /// constitution tier. weed ships a set of those it recognises everywhere;
+    /// this is where a repository names the ones only it can know. C3 reads it.
+    pub guardrail_paths: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -88,6 +92,7 @@ impl Default for Config {
             },
             doc_commands: Vec::new(),
             protected_branches: vec!["main".to_string(), "master".to_string()],
+            guardrail_paths: Vec::new(),
         }
     }
 }
@@ -181,6 +186,11 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
             config.protected_branches = branches;
         }
     }
+    if let Some(guardrails) = raw.guardrails {
+        if let Some(paths) = guardrails.paths {
+            config.guardrail_paths = paths;
+        }
+    }
 
     Ok(config)
 }
@@ -235,6 +245,7 @@ struct RawConfig {
     thresholds: Option<RawThresholds>,
     docs: Option<RawDocs>,
     guard: Option<RawGuard>,
+    guardrails: Option<RawGuardrails>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -281,4 +292,10 @@ struct RawDocs {
 #[serde(deny_unknown_fields)]
 struct RawGuard {
     protected: Option<Vec<String>>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawGuardrails {
+    paths: Option<Vec<String>>,
 }

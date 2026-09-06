@@ -178,6 +178,9 @@ struct Assertions {
     receivers: &'static [&'static str],
     /// Members that report a failure on the handle the runner passes a test.
     handle_members: &'static [&'static str],
+    /// Members that open a test inside a test on that same handle. Only a
+    /// language whose runner declares one test and runs many under it has one.
+    handle_subtests: &'static [&'static str],
 }
 
 const NOTHING: Assertions = Assertions {
@@ -185,6 +188,7 @@ const NOTHING: Assertions = Assertions {
     roots: &[],
     receivers: &[],
     handle_members: &[],
+    handle_subtests: &[],
 };
 
 fn assertions(lang: Lang) -> Assertions {
@@ -214,6 +218,7 @@ fn assertions(lang: Lang) -> Assertions {
         Lang::Go => Assertions {
             receivers: &["require", "assert"],
             handle_members: &["Error", "Fatal", "Fail"],
+            handle_subtests: &["Run"],
             ..NOTHING
         },
         Lang::Other => NOTHING,
@@ -233,12 +238,28 @@ impl Suite {
     /// for it.
     #[must_use]
     pub fn of(lang: Lang, mask: &Mask) -> Suite {
-        let handles = if assertions(lang).handle_members.is_empty() {
+        let table = assertions(lang);
+        let handles = if table.handle_members.is_empty() && table.handle_subtests.is_empty() {
             BTreeSet::new()
         } else {
             handles(mask)
         };
         Suite { lang, handles }
+    }
+
+    /// Whether the 1-based line opens a test inside a test: the member a runner
+    /// gives its handle for exactly that, called on the handle this file named.
+    #[must_use]
+    pub fn opens_subtest(&self, mask: &Mask, line: u32) -> bool {
+        let table = assertions(self.lang);
+        let code = mask.code(line);
+        names(&code).iter().any(|name| {
+            name.is_called()
+                && name
+                    .receiver()
+                    .is_some_and(|receiver| self.handles.contains(receiver))
+                && table.handle_subtests.contains(&name.last())
+        })
     }
 
     /// How many assertions the whole file makes.

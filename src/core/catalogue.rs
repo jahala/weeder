@@ -175,7 +175,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Block,
         short_description: "A guardrail file was edited",
-        full_description: "A change touched a workflow, a harness settings file, a git hook, `weed.toml`, or the hard-limits section of `AGENTS.md` or `CLAUDE.md`.",
+        full_description: "A change touched a harness settings file, a git hook, `weed.toml`, or the hard-limits section of `AGENTS.md` or `CLAUDE.md`.",
         network: Network::None,
     },
     Rule {
@@ -184,6 +184,14 @@ const CATALOGUE: &[Rule] = &[
         default_level: Level::Warn,
         short_description: "An ignore file was broadened over source or tests",
         full_description: "An added ignore pattern matches source or test paths of the repository's languages, hiding them from review and from tooling.",
+        network: Network::None,
+    },
+    Rule {
+        id: "C3",
+        face: Face::Check,
+        default_level: Level::Warn,
+        short_description: "A workflow was changed",
+        full_description: "A file under `.github/workflows/` was added, edited or taken away; the change blocks where `[guardrails] paths` names the path.",
         network: Network::None,
     },
     Rule {
