@@ -16,9 +16,9 @@ One mutation per case so a hit is unambiguous. Per rule, the injector finds a si
 
 ## Tests
 - [x] (code) `cargo xtask mutate` injects one anti-pattern per case for every check rule in each of ts, py, rs and go from the calibration corpus, runs weed on each, and writes the recall section of `docs/calibration-2026-09.md` with every miss named · scripts/check/recall.sh @f58e341 · by cli
-- [x] (code) recall for T1, T3, S1, X1, C1 and G1 is at or above 95 percent per language, and every warn-level rule's recall is reported · scripts/check/recall-bar.sh @a31cd2b · by cli
+- [x] (code) recall for T1, T3, S1, X1, C1 and G1 is at or above 95 percent per language, and every warn-level rule's recall is reported · scripts/check/recall-bar.sh @4cb94db · by cli
 - [x] (code) `cargo xtask mutate` walks the window that ends at each entry's pinned tip in `docs/calibration/corpus.toml`, the corpus calibration judges, so two runs over one corpus plant the same cases and write the same recall section byte for byte, and a commit added to a source after the pin changes nothing; proven on a history built for the purpose and then on the shipped corpus · scripts/check/recall-pinned.sh @2969c7f · by cli
-- [ ] (code) every planted case is a genuine instance of its rule's shape at the planted site: after planting, the injector's own scanner finds the shape on that line or the case is reported as unplantable and never counted as a miss, the report carries the unplantable count per rule and language beside the misses, and fixtures cover the two shapes the blind audit named, a D1 case that only changed a version string and a T6 case that broke a test's signature · scripts/check/recall-shape.sh
+- [x] (code) every planted case is a genuine instance of its rule's shape at the planted site: after planting, the injector's own scanner finds the shape on that line or the case is reported as unplantable and never counted as a miss, the report carries the unplantable count per rule and language beside the misses, and fixtures cover the two shapes the blind audit named, a D1 case that only changed a version string and a T6 case that broke a test's signature · scripts/check/recall-shape.sh @df1514f · by cli
 
 ## Needs #rules-prod
 

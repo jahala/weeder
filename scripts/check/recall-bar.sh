@@ -71,16 +71,17 @@ section = section.group(1)
 rows = {}
 for line in section.splitlines():
     found = re.match(
-        r"\|\s*([A-Z]\d)\s*\|\s*(\w+)\s*\|\s*(\w+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*([^|]+)\|",
+        r"\|\s*([A-Z]\d)\s*\|\s*(\w+)\s*\|\s*(\w+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*([^|]+)\|",
         line,
     )
     if found:
-        rule, level, language, counted, hits, misses, recall = found.groups()
+        rule, level, language, counted, hits, misses, unplantable, recall = found.groups()
         rows[(rule, language)] = {
             "level": level,
             "cases": int(counted),
             "hits": int(hits),
             "misses": int(misses),
+            "unplantable": int(unplantable),
             "recall": recall.strip(),
         }
 
