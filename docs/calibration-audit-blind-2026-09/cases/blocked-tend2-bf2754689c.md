@@ -29,13 +29,13 @@ index a405429..8b668ff 100644
 +++ b/README.md
 @@ -14,7 +14,7 @@ a browser)*. Every claim on it is either verifier-stamped or honestly open.
  ```bash
- npm install -g @plotplot/tend2   # the engine: tend2 bin + MCP server + renderer assets (publish pending — until then, use the from-source path below)
+ npm install -g @plotplot/tend2   # the engine: tend2 bin + MCP server + renderer assets (publish pending, until then, use the from-source path below)
  tend2 init                       # scaffold docs/tend2/ in your project: a starter loop + the offline renderer
--tend2 next docs/tend2            # route the work — agents start here every session
-+tend2 next                       # where things stand + what needs you — humans and agents start here
+-tend2 next docs/tend2            # route the work, agents start here every session
++tend2 next                       # where things stand + what needs you, humans and agents start here
  ```
  
- Using Claude Code? Install the plugin too — eight `/tend2:*` skills, the MCP server, and a SessionStart hook that auto-orients every session from your map: see [`plugin/README.md`](./plugin/README.md).
+ Using Claude Code? Install the plugin too, eight `/tend2:*` skills, the MCP server, and a SessionStart hook that auto-orients every session from your map: see [`plugin/README.md`](./plugin/README.md).
 diff --git a/docs/tend2-program-ledger.md b/docs/tend2-program-ledger.md
 index 60e2868..9b8cb7d 100644
 --- a/docs/tend2-program-ledger.md
@@ -44,29 +44,29 @@ index 60e2868..9b8cb7d 100644
  ## What tend2 is
  Loops + evals for agents, impeccable self-briefing pages for humans, a pass only a verifier can write. Identity (decided): product + command = **tend2** ("tend to"), npm = **@plotplot/tend2** (org scope, squat-proof, publish rides packaging).
  
--## Where we are (2026-08-18, end of day — THE RIDERS ARE BUILT, THE FLIP IS THE OWNER'S)
-+## Where we are (2026-08-18, late — THE COHERENCE PASS: ONE ORIENTATION COMMAND)
+-## Where we are (2026-08-18, end of day, THE RIDERS ARE BUILT, THE FLIP IS THE OWNER'S)
++## Where we are (2026-08-18, late, THE COHERENCE PASS: ONE ORIENTATION COMMAND)
 +
 +The owner reviewed the day's surface and caught what fast building had blurred, then green-lit the cleanup ("clean this up properly"):
 +
-+- **`tend2 next` is THE orientation command** — human-readable by default, zero-arg (finds docs/tend2), one screen: next up · running now · needs you (every open human ask, oldest-ignored first, each with its exact command) · gone stale (moved evidence with re-earn commands, untouched pages, uncited personas) · unbriefed-failures hint. READ-ONLY by doctrine — only `verify` writes. `--json` carries the machine shape; MCP unchanged. **The `season` command was removed same-day it shipped** (the owner's catch: next/watch/season were three aspects of one command; git-status precedent); `watch` survives as the live stream only.
-+- **One asset convention**: `migrate` now matches `init` — renderer assets copied ALONGSIDE the pages, `./loop.css` hrefs, self-contained maps; `--renderer-dir` is the override. This kills the loose root-folder class (pleach's `slice/` fossil).
-+- **Grouped help**: `tend2` with no args teaches the surface in four groups — start here / daily / fleets / occasionally.
++- **`tend2 next` is THE orientation command**, human-readable by default, zero-arg (finds docs/tend2), one screen: next up · running now · needs you (every open human ask, oldest-ignored first, each with its exact command) · gone stale (moved evidence with re-earn commands, untouched pages, uncited personas) · unbriefed-failures hint. READ-ONLY by doctrine, only `verify` writes. `--json` carries the machine shape; MCP unchanged. **The `season` command was removed same-day it shipped** (the owner's catch: next/watch/season were three aspects of one command; git-status precedent); `watch` survives as the live stream only.
++- **One asset convention**: `migrate` now matches `init`, renderer assets copied ALONGSIDE the pages, `./loop.css` hrefs, self-contained maps; `--renderer-dir` is the override. This kills the loose root-folder class (pleach's `slice/` fossil).
++- **Grouped help**: `tend2` with no args teaches the surface in four groups, start here / daily / fleets / occasionally.
 +
 +Below stands as the state before this pass:
 +
-+## Where we were (2026-08-18, end of day — THE RIDERS ARE BUILT, THE FLIP IS THE OWNER'S)
++## Where we were (2026-08-18, end of day, THE RIDERS ARE BUILT, THE FLIP IS THE OWNER'S)
  
  Nine merged PRs today (#87–#95), every one red-first, green-only, verifier-stamped on its map page:
  
 @@ -14,7 +24,7 @@ Nine merged PRs today (#87–#95), every one red-first, green-only, verifier-sta
- - **The alliance deepened**: their mining plan reviewed (my §A finding — smoke skip-fresh vacuity — was its headline, fixed my side same day with `--force` smokes + canary re-pin), v1.2 contract batch CONVERGED on all four amendments (drafting on their owner's go), additive journal `provider`/`model` fields ACCEPTED (settles casting's design — journal-only ledger, builds after their G-batch).
+ - **The alliance deepened**: their mining plan reviewed (my §A finding, smoke skip-fresh vacuity, was its headline, fixed my side same day with `--force` smokes + canary re-pin), v1.2 contract batch CONVERGED on all four amendments (drafting on their owner's go), additive journal `provider`/`model` fields ACCEPTED (settles casting's design, journal-only ledger, builds after their G-batch).
  - **Remaining buildable**: #81 day-zero, #26 casting (waits on pleach's fields), #100 estates (the migrate page's human gate). Everything else on the map that's open is a human or judge pen.
  
--**Owner's open acts (the complete list)**: `npm publish --access=public`; the map's human checks — `tend2 next docs/tend2` or `tend2 season docs/tend2` lists them all with commands; the public flip per `docs/forge-surface-decision.md`'s runbook (privacy re-sweep → public → Pages from root → confirm render → approve forge c3).
-+**Owner's open acts (the complete list)**: `npm publish --access=public`; the map's human checks — `tend2 next` lists them all with commands; the public flip per `docs/forge-surface-decision.md`'s runbook (privacy re-sweep → public → Pages from root → confirm render → approve forge c3).
+-**Owner's open acts (the complete list)**: `npm publish --access=public`; the map's human checks, `tend2 next docs/tend2` or `tend2 season docs/tend2` lists them all with commands; the public flip per `docs/forge-surface-decision.md`'s runbook (privacy re-sweep → public → Pages from root → confirm render → approve forge c3).
++**Owner's open acts (the complete list)**: `npm publish --access=public`; the map's human checks, `tend2 next` lists them all with commands; the public flip per `docs/forge-surface-decision.md`'s runbook (privacy re-sweep → public → Pages from root → confirm render → approve forge c3).
  
- ## Where we were (2026-08-18 morning — TEND2-ONLY, RESTRUCTURED, THE CRAFT TRANSMITS)
+ ## Where we were (2026-08-18 morning, TEND2-ONLY, RESTRUCTURED, THE CRAFT TRANSMITS)
  
 diff --git a/docs/tend2/cli.loop.html b/docs/tend2/cli.loop.html
 index 017f570..d8875f3 100644
@@ -76,9 +76,9 @@ index 017f570..d8875f3 100644
  ## Tests
  - [x] (code) every command's exit codes and routing are proven at the argv layer · test/cli.test.ts @0282083
  
--- [x] (code) directory routing: `loop next <dir>` routes across a forest using the ONE shared classifier (failing > runnable-open > claimed; blocked excluded and named; needs-you listed) — never EISDIR, single-file mode unchanged · test/cli-next-dir.test.ts @5e41257
+-- [x] (code) directory routing: `loop next <dir>` routes across a forest using the ONE shared classifier (failing > runnable-open > claimed; blocked excluded and named; needs-you listed), never EISDIR, single-file mode unchanged · test/cli-next-dir.test.ts @5e41257
 -- [x] (code) stuck history surfaced: routing output names prior attempts and escalations read from Tried ("c9: 3 judge-fails, escalated") so no fresh agent re-attacks a thrashed check blind · test/cli-next-dir.test.ts @632a253
-+- [x] (code) directory routing: `loop next <dir>` routes across a forest using the ONE shared classifier (failing > runnable-open > claimed; blocked excluded and named; needs-you listed) — never EISDIR, single-file mode unchanged · test/cli-next-dir.test.ts @47ff263
++- [x] (code) directory routing: `loop next <dir>` routes across a forest using the ONE shared classifier (failing > runnable-open > claimed; blocked excluded and named; needs-you listed), never EISDIR, single-file mode unchanged · test/cli-next-dir.test.ts @47ff263
 +- [x] (code) stuck history surfaced: routing output names prior attempts and escalations read from Tried ("c9: 3 judge-fails, escalated") so no fresh agent re-attacks a thrashed check blind · test/cli-next-dir.test.ts @ec69eb0
  ## Needs #kernel
  ## For #the-fresh-agent #the-solo-builder
@@ -90,15 +90,15 @@ index b395981..fb1a533 100644
 @@ -28,11 +28,12 @@ The grammar is written down once (`loop/FORMAT.md`) and the goldens are not synt
  - [x] (code) the v1 audit-derivation gaming holes are pinned closed · test/lessons.test.ts @9ec6f2d
  
- - [ ] (code) a sample/demo page cannot hijack forest routing as a fake failing recommendation — convention or marker, decided not drifted · test/route.test.ts
--- [ ] (code) narrative-scope honesty: a page narrating what no check covers is surfaced (lint dimension) or the decision not to is recorded — the story layer joins LAW 2 · test/lint.test.ts
-+- [ ] (code) narrative-scope honesty: a page narrating what no check covers is surfaced (lint dimension) or the decision not to is recorded — the story layer joins LAW 2 · test/narrative-truth.test.ts
+ - [ ] (code) a sample/demo page cannot hijack forest routing as a fake failing recommendation, convention or marker, decided not drifted · test/route.test.ts
+-- [ ] (code) narrative-scope honesty: a page narrating what no check covers is surfaced (lint dimension) or the decision not to is recorded, the story layer joins LAW 2 · test/lint.test.ts
++- [ ] (code) narrative-scope honesty: a page narrating what no check covers is surfaced (lint dimension) or the decision not to is recorded, the story layer joins LAW 2 · test/narrative-truth.test.ts
  
  ## For #the-fresh-agent #the-steward
  ## Tried
- - 2026-07-02 audit fix: an unrecognized `##` heading now ends a structured section — prose under it can no longer be swallowed as checks
+ - 2026-07-02 audit fix: an unrecognized `##` heading now ends a structured section, prose under it can no longer be swallowed as checks
  - 2026-07-02 audit fix: the dek no longer swallows a heading when the author omits the blank line
-+- 2026-08-18 the narrative-truth check was mis-anchored at test/lint.test.ts (exists, passes, proves nothing about the unbuilt lint dimension) and a sweep false-stamped it — re-anchored at the intended test/narrative-truth.test.ts, honestly open until #91 builds. Third sighting of the anchor-at-the-claim's-own-test lesson
++- 2026-08-18 the narrative-truth check was mis-anchored at test/lint.test.ts (exists, passes, proves nothing about the unbuilt lint dimension) and a sweep false-stamped it, re-anchored at the intended test/narrative-truth.test.ts, honestly open until #91 builds. Third sighting of the anchor-at-the-claim's-own-test lesson
  </script>
  <script src="../../renderer/loop.js"></script>
 diff --git a/docs/tend2/needs-me.loop.html b/docs/tend2/needs-me.loop.html
@@ -106,20 +106,20 @@ index 9fe0533..7ec3e3b 100644
 --- a/docs/tend2/needs-me.loop.html
 +++ b/docs/tend2/needs-me.loop.html
 @@ -11,13 +11,14 @@
- **Goal.** `tend2 next` merges workers-blocked-on-you RIGHT NOW (from journals of running plans — burning money, listed first) with the map's open human checks (second), one list, plain language, no new surface. The sign-off queue is the human bottleneck the whole product exists to respect.
+ **Goal.** `tend2 next` merges workers-blocked-on-you RIGHT NOW (from journals of running plans, burning money, listed first) with the map's open human checks (second), one list, plain language, no new surface. The sign-off queue is the human bottleneck the whole product exists to respect.
  
  ## Tests
 -- [x] (code) a running journal's blocked node merges above open human checks; no journal degrades to map-only · test/needs-me.test.ts @ecc3355
 -- [x] (code) each line names the loop, the ask, and the action (approve/refute/answer) · test/needs-me.test.ts @d7a5b60
 +- [x] (code) a running journal's blocked node merges above open human checks; no journal degrades to map-only · test/needs-me.test.ts @80c3701
 +- [x] (code) each line names the loop, the ask, and the action (approve/refute/answer) · test/needs-me.test.ts @d632175
- - [ ] (human) the owner's daily "what needs me" is answered by one command — replacing the walkie/scroll ritual
+ - [ ] (human) the owner's daily "what needs me" is answered by one command, replacing the walkie/scroll ritual
  
  ## Needs #cli
  ## For #the-solo-builder
  ## Tried
  - 2026-08-18 shaped from task #82; decided 2026-08-17: no batched web surface at v1 (post-release loop view per the #16 decision), no cross-repo aggregation, no digests
-+- 2026-08-18 coherence pass (the owner's catch): `next` is now human-readable by default — the needsMe union prints as sentences with waiting-since annotations, oldest-ignored first, and lists EVERY open human ask (an early sign-off is still a sign-off); `--json` carries the machine shape; zero-arg `tend2 next` finds docs/tend2
++- 2026-08-18 coherence pass (the owner's catch): `next` is now human-readable by default, the needsMe union prints as sentences with waiting-since annotations, oldest-ignored first, and lists EVERY open human ask (an early sign-off is still a sign-off); `--json` carries the machine shape; zero-arg `tend2 next` finds docs/tend2
  </script>
  <script src="../../renderer/loop.js"></script>
 diff --git a/docs/tend2/season.loop.html b/docs/tend2/season.loop.html
@@ -128,19 +128,19 @@ index a4ea7c5..272d6c9 100644
 +++ b/docs/tend2/season.loop.html
 @@ -7,17 +7,18 @@
  <body>
- <noscript>This page renders its markdown payload with JavaScript — enable JS, or read the raw payload in the page source.</noscript>
+ <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
  <script type="text/markdown" id="loop">
--# season — is this map still true?
--**Goal.** Runs are minutes, sign-offs are days; nobody owns the quarter. A scheduled bare verify sweep (safe post-AUD-1) plus a one-page staleness digest: checks whose evidence moved, loops longest untouched, human checks longest open, personas no recent Tried cites. Surfaces only — never auto-edits; the ritual asks, a person or agent acts. The de-nesting proved the need: a rename made 8 pages silently stale until a question exposed it.
-+# season — the map's decay is always in view
-+**Goal.** Runs are minutes, sign-offs are days; nobody owns the quarter. Decay must surface without a ritual anyone has to remember: `tend2 next` reports it every time — stamps whose evidence moved (with the exact re-earn command), pages longest untouched, personas nothing recent cites, sign-offs annotated with how long they have waited. Detection is READ-ONLY; only `tend2 verify` re-earns. The de-nesting proved the need: a rename made 8 pages silently stale until a question exposed it.
+-# season, is this map still true?
+-**Goal.** Runs are minutes, sign-offs are days; nobody owns the quarter. A scheduled bare verify sweep (safe post-AUD-1) plus a one-page staleness digest: checks whose evidence moved, loops longest untouched, human checks longest open, personas no recent Tried cites. Surfaces only, never auto-edits; the ritual asks, a person or agent acts. The de-nesting proved the need: a rename made 8 pages silently stale until a question exposed it.
++# season, the map's decay is always in view
++**Goal.** Runs are minutes, sign-offs are days; nobody owns the quarter. Decay must surface without a ritual anyone has to remember: `tend2 next` reports it every time, stamps whose evidence moved (with the exact re-earn command), pages longest untouched, personas nothing recent cites, sign-offs annotated with how long they have waited. Detection is READ-ONLY; only `tend2 verify` re-earns. The de-nesting proved the need: a rename made 8 pages silently stale until a question exposed it.
  
  ## Tests
 -- [x] (code) the sweep re-verifies a fixture forest without disturbing fresh stamps; the digest names exactly the aged items · test/season.test.ts @61abb1e
 -- [x] (code) a live-map sweep leaves all stamps intact (the AUD-1 regression bar) · test/season.test.ts @c56cc0c
 -- [ ] (human) the digest reads as a to-refresh list the owner would actually act on
-+- [x] (code) staleness detection is read-only — moved evidence is named with its re-earn command, never re-run or re-stamped by the reporting surface · test/next-status.test.ts @b9ba786
-+- [x] (code) decay sections appear only when real — re-earned evidence leaves the list; quiet lanes stay silent · test/next-status.test.ts @74cbec9
++- [x] (code) staleness detection is read-only, moved evidence is named with its re-earn command, never re-run or re-stamped by the reporting surface · test/next-status.test.ts @b9ba786
++- [x] (code) decay sections appear only when real, re-earned evidence leaves the list; quiet lanes stay silent · test/next-status.test.ts @74cbec9
 +- [ ] (human) the decay report reads as a to-refresh list the owner would actually act on
  
  ## Needs #verify-engine #cli
@@ -148,21 +148,21 @@ index a4ea7c5..272d6c9 100644
  ## Tried
 -- 2026-08-18 shaped from task #86; pleach's v1-format garden joins after their own migration settles; no scoring, no single readiness number (the two-progress-numbers lesson)
 +- 2026-08-18 shaped from task #86 as a separate `tend2 season` command (sweep + digest); pleach's v1-format garden joins after their own migration settles; no scoring, no single readiness number (the two-progress-numbers lesson)
-+- 2026-08-18 the owner's catch, same day it shipped: next / watch / season were three aspects of ONE command — the season command was REMOVED and its decay report folded into `tend2 next` (the git-status precedent: one "where am I?"). The write half died on doctrine: only the verifier writes, so the "sweep" is now the printed re-earn commands, not an execution. `watch` survives as the live stream only
++- 2026-08-18 the owner's catch, same day it shipped: next / watch / season were three aspects of ONE command, the season command was REMOVED and its decay report folded into `tend2 next` (the git-status precedent: one "where am I?"). The write half died on doctrine: only the verifier writes, so the "sweep" is now the printed re-earn commands, not an execution. `watch` survives as the live stream only
  </script>
  <script src="../../renderer/loop.js"></script>
 diff --git a/plugin/skills/next/SKILL.md b/plugin/skills/next/SKILL.md
 index e898bd1..160419f 100644
 --- a/plugin/skills/next/SKILL.md
 +++ b/plugin/skills/next/SKILL.md
-@@ -13,7 +13,7 @@ Repo-local, no global install assumed: `tend2 <cmd>` — or the `loop` bin, wher
+@@ -13,7 +13,7 @@ Repo-local, no global install assumed: `tend2 <cmd>`, or the `loop` bin, wher
  
  ## The one flow
  
--1. **Ask the tool, not your intuition:** run `tend2 next <dir>` (or `loop_next`) on the forest directory. It routes hard: failing loops first, then runnable open work, then claimed re-verification — with blocked loops excluded and named (FORMAT.md §4).
-+1. **Ask the tool, not your intuition:** run `tend2 next` (or `loop_next`) on the forest directory — zero-arg finds `docs/tend2`. It routes hard: failing loops first, then runnable open work, then claimed re-verification — with blocked loops excluded and named (FORMAT.md §4). The default output is the human orientation view (next up · running · needs you · gone stale); add `--json` when you need the machine shape.
- 2. **Present the recommendation with its reason** — one line each for: what it recommends, why, what's blocked on what, and what sits in needs-you (human checks awaiting their owner).
- 3. **Route by the table below** — the mapping is mechanical; never hand-guess it.
+-1. **Ask the tool, not your intuition:** run `tend2 next <dir>` (or `loop_next`) on the forest directory. It routes hard: failing loops first, then runnable open work, then claimed re-verification, with blocked loops excluded and named (FORMAT.md §4).
++1. **Ask the tool, not your intuition:** run `tend2 next` (or `loop_next`) on the forest directory, zero-arg finds `docs/tend2`. It routes hard: failing loops first, then runnable open work, then claimed re-verification, with blocked loops excluded and named (FORMAT.md §4). The default output is the human orientation view (next up · running · needs you · gone stale); add `--json` when you need the machine shape.
+ 2. **Present the recommendation with its reason**, one line each for: what it recommends, why, what's blocked on what, and what sits in needs-you (human checks awaiting their owner).
+ 3. **Route by the table below**, the mapping is mechanical; never hand-guess it.
  
 diff --git a/src/cli/index.ts b/src/cli/index.ts
 index c73ef70..73becda 100644
@@ -192,9 +192,9 @@ index c73ef70..73becda 100644
 -  console.error('       loop init [<dir>]                # scaffold a map (default docs/tend2) + renderer assets');
 -  console.error('       loop watch [--repo-root DIR] [--journal FILE] [--once]   # live view of a pleach run, needs-you bell');
 -  console.error('       loop ingest <dir> [--journal FILE]   # draft Tried briefings from failed run verdicts (never touches checks)');
--  console.error('       loop season <dir> [--repo-root DIR] [--runner "..."] [--days N]   # sweep + staleness digest — is this map still true?');
+-  console.error('       loop season <dir> [--repo-root DIR] [--runner "..."] [--days N]   # sweep + staleness digest, is this map still true?');
 -  console.error('       loop mcp                         # start the MCP server on stdio');
-+  console.error('tend2 — loops + evals for agents, self-briefing pages for humans');
++  console.error('tend2, loops + evals for agents, self-briefing pages for humans');
 +  console.error('');
 +  console.error('start here');
 +  console.error('  tend2 init [dir]                 scaffold a map (docs/tend2) with the offline renderer alongside');
@@ -217,7 +217,7 @@ index c73ef70..73becda 100644
 +  console.error('');
 +  console.error('occasionally');
 +  console.error('  tend2 lint <file...>             format checks  [--strict]  ·  --fixtures <src-dir> <fixtures-file...>');
-+  console.error('  tend2 migrate <v1-dir> <out>     convert a tend v1 garden — assets copied alongside  [--migrated-at YYYY-MM-DD] [--renderer-dir DIR]');
++  console.error('  tend2 migrate <v1-dir> <out>     convert a tend v1 garden, assets copied alongside  [--migrated-at YYYY-MM-DD] [--renderer-dir DIR]');
 +  console.error('  tend2 mcp                        the MCP server on stdio');
  }
  
@@ -242,7 +242,7 @@ index c73ef70..73becda 100644
    loops: (LoopSummary & { history: string[] })[];
  }
  
-+/** Latest YYYY-MM-DD in a page's Tried lines — how long an ask has waited. */
++/** Latest YYYY-MM-DD in a page's Tried lines, how long an ask has waited. */
 +function lastTriedDate(doc: LoopDoc): string | null {
 +  const dates = doc.tried
 +    .map((t) => t.match(/\b(\d{4}-\d{2}-\d{2})\b/)?.[1])
@@ -252,7 +252,7 @@ index c73ef70..73becda 100644
 +
  /**
   * The needs-me union: workers blocked RIGHT NOW (from the pleach journal,
-  * resolved through the map dir's own git dir — no flag, no config) above the
+  * resolved through the map dir's own git dir, no flag, no config) above the
   * map's open human checks. One list, plain language; a repo without a journal
   * degrades to map-only.
   */
@@ -265,14 +265,14 @@ index c73ef70..73becda 100644
 -    const journalPath = join(resolve(dir, probe.stdout.trim()), 'pleach', 'journal.jsonl');
 -    if (existsSync(journalPath)) {
 -      for (const { node, reason } of needsYouNow(parseJournal(readFileSync(journalPath, 'utf8')))) {
--        entries.push({ loop: node, ask: reason, action: 'answer the worker prompt — a pleach run is waiting on this', source: 'worker' });
+-        entries.push({ loop: node, ask: reason, action: 'answer the worker prompt, a pleach run is waiting on this', source: 'worker' });
 -      }
 +  if (probe.status !== 0) return null;
 +  const path = join(resolve(dir, probe.stdout.trim()), 'pleach', 'journal.jsonl');
 +  return existsSync(path) ? path : null;
 +}
 +
-+/** A path as the user would type it — relative to where they stand, unless that's worse. */
++/** A path as the user would type it, relative to where they stand, unless that's worse. */
 +function displayPath(abs: string): string {
 +  const rel = relative(process.cwd(), abs);
 +  return rel !== '' && !rel.startsWith('..') ? rel : abs;
@@ -284,14 +284,14 @@ index c73ef70..73becda 100644
 +  const journalPath = journalPathNear(dir);
 +  if (journalPath !== null) {
 +    for (const { node, reason } of needsYouNow(parseJournal(readFileSync(journalPath, 'utf8')))) {
-+      entries.push({ loop: node, ask: reason, action: 'answer the worker prompt — a pleach run is waiting on this', source: 'worker', waitingSince: null });
++      entries.push({ loop: node, ask: reason, action: 'answer the worker prompt, a pleach run is waiting on this', source: 'worker', waitingSince: null });
      }
    }
  
 -  for (const id of needsYouIds) {
 -    const doc = docsById.get(id);
 -    if (doc === undefined) continue;
-+  // EVERY open human ask, not only sole-blocker pages — an early sign-off is
++  // EVERY open human ask, not only sole-blocker pages, an early sign-off is
 +  // still a sign-off, and the owner decides the order, not the router.
 +  const mapEntries: StatusNeedsMe[] = [];
 +  for (const [id, doc] of docsById) {
@@ -339,7 +339,7 @@ index c73ef70..73becda 100644
 +
 +const DECAY_DAYS = 30;
 +
-+/** Everything the orientation surface reports beyond routing — all READ-ONLY. */
++/** Everything the orientation surface reports beyond routing, all READ-ONLY. */
 +function collectStatus(dir: string, routed: NextDirectoryResult, docsById: Map<string, LoopDoc>, repoRootFlag: string | undefined): StatusData {
 +  const topProbe = spawnSync('git', ['rev-parse', '--show-toplevel'], { cwd: dir, encoding: 'utf8' });
 +  const repoRoot = repoRootFlag ?? (topProbe.status === 0 ? topProbe.stdout.trim() : process.cwd());
@@ -418,11 +418,11 @@ index c73ef70..73becda 100644
    if (file === undefined) {
 -    usage();
 -    return 2;
-+    console.error('no map found — run `tend2 init` to scaffold docs/tend2');
++    console.error('no map found, run `tend2 init` to scaffold docs/tend2');
 +    return 1;
    }
    // The first thing a newcomer ever runs: a missing map answers honestly and
-   // names the way forward — never a raw errno (stranger-test F3).
+   // names the way forward, never a raw errno (stranger-test F3).
 @@ -453,8 +553,17 @@ function runNextCommand(args: string[]): number {
      return 1;
    }
@@ -430,7 +430,7 @@ index c73ef70..73becda 100644
 -    const result = isDirectory(file) ? routeNextDirectory(file) : nextAction(file);
 -    console.log(JSON.stringify(result, null, 2));
 +    if (!isDirectory(file)) {
-+      // Single-loop mode is the runtime's action API — machines consume it.
++      // Single-loop mode is the runtime's action API, machines consume it.
 +      console.log(JSON.stringify(nextAction(file), null, 2));
 +      return 0;
 +    }
@@ -452,7 +452,7 @@ index c73ef70..73becda 100644
 -  const cssHref = `${sliceRel}/loop.css`;
 -  const jsHref = `${sliceRel}/loop.js`;
 +  // ONE asset convention, shared with `init`: the renderer is copied ALONGSIDE
-+  // the pages and referenced as ./loop.css — a migrated map is self-contained,
++  // the pages and referenced as ./loop.css, a migrated map is self-contained,
 +  // never dependent on a loose root folder (the slice/ fossil this replaces).
 +  // --renderer-dir remains the override for repos that keep a shared copy.
 +  const rendererDirFlag = stringFlag(flags, '--renderer-dir');
@@ -476,7 +476,7 @@ index c73ef70..73becda 100644
 +  if (rendererDirFlag === undefined) {
 +    const assets = findSliceDir();
 +    if (assets === null) {
-+      console.error('renderer assets not found (renderer/loop.css + renderer/loop.js) — broken install?');
++      console.error('renderer assets not found (renderer/loop.css + renderer/loop.js), broken install?');
 +      return 1;
 +    }
 +    copyFileSync(join(assets, 'loop.css'), join(outDirAbs, 'loop.css'));
@@ -490,9 +490,9 @@ index c73ef70..73becda 100644
  }
  
 -/**
-- * `loop season` — is this map still true? A bare verify sweep (fresh stamps
+- * `loop season`, is this map still true? A bare verify sweep (fresh stamps
 - * skip by construction, the AUD-1 bar; only moved evidence re-runs) plus a
-- * one-page staleness digest. Surfaces only — the ritual asks, a person or
+- * one-page staleness digest. Surfaces only, the ritual asks, a person or
 - * agent acts.
 - */
 -function runSeasonCommand(args: string[]): number {
@@ -516,7 +516,7 @@ index c73ef70..73becda 100644
 -    const before = parse(extracted.payload);
 -    const id = basename(file).replace(/\.loop\.html$/, '');
 -
--    // Which stamps had their evidence move — decided BEFORE the sweep runs.
+-    // Which stamps had their evidence move, decided BEFORE the sweep runs.
 -    const staleBefore = before.checks
 -      .map((check, i) => ({ check, n: i + 1 }))
 -      .filter(({ check }) => check.state === 'pass' && isCheckStale(check, repoRoot)?.stale === true);
@@ -580,9 +580,9 @@ index 152fffe..0000000
 +++ /dev/null
 @@ -1,75 +0,0 @@
 -/**
-- * `tend2 season` — is this map still true? The pure half: a one-page
+- * `tend2 season`, is this map still true? The pure half: a one-page
 - * staleness digest from what the sweep and the parser already know.
-- * Surfaces only — the ritual asks, a person or agent acts; nothing here
+- * Surfaces only, the ritual asks, a person or agent acts; nothing here
 - * writes anything. No scoring, no single readiness number (the
 - * two-progress-numbers lesson): each section is its own honest list.
 - */
@@ -618,13 +618,13 @@ index 152fffe..0000000
 -  const moved = loops.flatMap((l) => l.moved.map((m) => ({ id: l.id, ...m })));
 -  if (moved.length > 0) {
 -    lines.push('', 'evidence moved (re-run by the sweep):');
--    for (const m of moved) lines.push(`  ${m.id}:c${m.n} ${truncate(m.claim)} — ${m.outcome}`);
+-    for (const m of moved) lines.push(`  ${m.id}:c${m.n} ${truncate(m.claim)}, ${m.outcome}`);
 -  }
 -
 -  const waiting = loops.flatMap((l) => l.openHuman.map((h) => ({ id: l.id, lastTried: l.lastTried, ...h })));
 -  if (waiting.length > 0) {
 -    lines.push('', 'human checks waiting:');
--    // Oldest pages first — the longest-ignored ask leads.
+-    // Oldest pages first, the longest-ignored ask leads.
 -    waiting.sort((a, b) => (a.lastTried ?? '').localeCompare(b.lastTried ?? ''));
 -    for (const w of waiting) {
 -      lines.push(`  ${w.id}:c${w.n} ${truncate(w.claim)}${w.lastTried !== null ? ` (page last touched ${w.lastTried})` : ''}`);
@@ -637,7 +637,7 @@ index 152fffe..0000000
 -    .slice(0, 5);
 -  if (untouched.length > 0) {
 -    lines.push('', 'longest untouched:');
--    for (const l of untouched) lines.push(`  ${l.id} — last Tried ${l.lastTried}`);
+-    for (const l of untouched) lines.push(`  ${l.id}, last Tried ${l.lastTried}`);
 -  }
 -
 -  // A persona is alive when some recent Tried line anywhere mentions it.
@@ -661,10 +661,10 @@ index 0000000..dd49a43
 +++ b/src/run/status.ts
 @@ -0,0 +1,85 @@
 +/**
-+ * The orientation surface — `tend2 next`'s human output (owner decision
++ * The orientation surface, `tend2 next`'s human output (owner decision
 + * 2026-08-18: next/watch/season were three aspects of ONE command). Pure
 + * formatting over collected facts; sections appear only when real; READ-ONLY
-+ * by doctrine — staleness is named with its re-earn command, and only the
++ * by doctrine, staleness is named with its re-earn command, and only the
 + * verifier ever writes. `--json` carries the machine shape; `watch` remains
 + * the live stream.
 + */
@@ -676,7 +676,7 @@ index 0000000..dd49a43
 +  ask: string;
 +  action: string;
 +  source: 'worker' | 'map';
-+  /** The page's latest Tried date — how long this ask has been ignorable. */
++  /** The page's latest Tried date, how long this ask has been ignorable. */
 +  waitingSince: string | null;
 +}
 +
@@ -688,7 +688,7 @@ index 0000000..dd49a43
 +  running: WatchStatus | null;
 +  blockedAsks: Array<{ node: string; reason: string }>;
 +  needsMe: StatusNeedsMe[];
-+  /** Stamped checks whose evidence moved — with the exact re-earn command. */
++  /** Stamped checks whose evidence moved, with the exact re-earn command. */
 +  stale: Array<{ id: string; n: number; file: string }>;
 +  untouched: Array<{ id: string; lastTried: string }>;
 +  uncitedPersonas: string[];
@@ -703,8 +703,8 @@ index 0000000..dd49a43
 +
 +  lines.push('', 'next up');
 +  lines.push(d.recommendation !== null
-+    ? `  → ${d.recommendation.id} — ${d.recommendation.reason}`
-+    : '  nothing dispatchable — every open loop is blocked or waiting on you');
++    ? `  → ${d.recommendation.id}, ${d.recommendation.reason}`
++    : '  nothing dispatchable, every open loop is blocked or waiting on you');
 +
 +  const live = d.running !== null && (d.running.running.length > 0 || d.running.blockedOnYou.length > 0);
 +  if (live) {
@@ -718,7 +718,7 @@ index 0000000..dd49a43
 +    lines.push('', `needs you (${d.needsMe.length})`);
 +    for (const n of d.needsMe) {
 +      const since = n.waitingSince !== null ? `  (waiting since ${n.waitingSince})` : '';
-+      lines.push(`  ${n.loop} — ${truncate(n.ask)}${since}`);
++      lines.push(`  ${n.loop}, ${truncate(n.ask)}${since}`);
 +      lines.push(`      ${n.action}`);
 +    }
 +  }
@@ -727,7 +727,7 @@ index 0000000..dd49a43
 +  if (decayed) {
 +    lines.push('', 'gone stale');
 +    for (const s of d.stale) {
-+      lines.push(`  ${s.id}:c${s.n} — evidence moved since its stamp`);
++      lines.push(`  ${s.id}:c${s.n}, evidence moved since its stamp`);
 +      lines.push(`      re-earn: tend2 verify ${s.file}`);
 +    }
 +    if (d.untouched.length > 0) {
@@ -739,7 +739,7 @@ index 0000000..dd49a43
 +  }
 +
 +  if (d.unbriefedCount > 0) {
-+    lines.push('', `${d.unbriefedCount} failure${d.unbriefedCount === 1 ? '' : 's'} unbriefed — tend2 ingest ${d.dir} drafts their Tried lines`);
++    lines.push('', `${d.unbriefedCount} failure${d.unbriefedCount === 1 ? '' : 's'} unbriefed, tend2 ingest ${d.dir} drafts their Tried lines`);
 +  }
 +
 +  lines.push('', `${d.freshCount} stamp${d.freshCount === 1 ? '' : 's'} verified-fresh.`);
@@ -759,8 +759,8 @@ index 8b40631..6c97eb5 100644
        needsYou: string[];
        loops: Array<{ id: string; blocked: boolean; blockedOn: string[] }>;
 @@ -61,7 +61,7 @@ describe('loop next directory routing', () => {
-     writeLoopFile('claimed', '# claimed — demo\n**Goal.** g\n\n## Tests\n- [x] (code) naked pass · t.ts\n');
-     writeLoopFile('open', '# open — demo\n**Goal.** g\n\n## Tests\n- [ ] (code) untouched · t.ts\n');
+     writeLoopFile('claimed', '# claimed, demo\n**Goal.** g\n\n## Tests\n- [x] (code) naked pass · t.ts\n');
+     writeLoopFile('open', '# open, demo\n**Goal.** g\n\n## Tests\n- [ ] (code) untouched · t.ts\n');
  
 -    const routed = captureNext(['next', repo, '--repo-root', repo]) as {
 +    const routed = captureNext(['next', repo, '--repo-root', repo, '--json']) as {
@@ -768,8 +768,8 @@ index 8b40631..6c97eb5 100644
      };
      expect(routed.recommendation).toEqual({ id: 'open', reason: 'open' });
 @@ -71,7 +71,7 @@ describe('loop next directory routing', () => {
-     writeLoopFile('blocked-red', '# blocked-red — demo\n**Goal.** g\n\n## Needs #ready\n## Tests\n- [!] (code) blocked failure · t.ts\n');
-     writeLoopFile('ready', '# ready — demo\n**Goal.** g\n\n## Tests\n- [ ] (code) runnable work · t.ts\n');
+     writeLoopFile('blocked-red', '# blocked-red, demo\n**Goal.** g\n\n## Needs #ready\n## Tests\n- [!] (code) blocked failure · t.ts\n');
+     writeLoopFile('ready', '# ready, demo\n**Goal.** g\n\n## Tests\n- [ ] (code) runnable work · t.ts\n');
  
 -    const routed = captureNext(['next', repo, '--repo-root', repo]) as {
 +    const routed = captureNext(['next', repo, '--repo-root', repo, '--json']) as {
@@ -778,7 +778,7 @@ index 8b40631..6c97eb5 100644
      };
 @@ -99,7 +99,7 @@ describe('loop next directory routing', () => {
        + '- 2026-07-01 run: judged c9 → fail\n'
-       + '- 2026-07-01 run: escalated — c9 need a human\n');
+       + '- 2026-07-01 run: escalated, c9 need a human\n');
  
 -    const routed = captureNext(['next', repo, '--repo-root', repo]) as {
 +    const routed = captureNext(['next', repo, '--repo-root', repo, '--json']) as {
@@ -805,10 +805,10 @@ index 0000000..2b830a1
 +++ b/test/next-status.test.ts
 @@ -0,0 +1,158 @@
 +/**
-+ * `tend2 next` — THE orientation command (owner decision 2026-08-18: next /
++ * `tend2 next`, THE orientation command (owner decision 2026-08-18: next /
 + * watch / season were three aspects of one command). Human-readable by
 + * default: next up · running now · needs you · gone stale · unbriefed hint.
-+ * READ-ONLY: staleness is detected and named with its re-earn command — the
++ * READ-ONLY: staleness is detected and named with its re-earn command, the
 + * verifier stays the only writer. `--json` keeps the machine shape. The
 + * `season` command is gone; `watch` survives as the live stream only.
 + */
@@ -847,7 +847,7 @@ index 0000000..2b830a1
 +  writeFileSync(join(repo, 'tests', 'a.check.mjs'), 'process.exit(0);\n');
 +
 +  page('aged', [
-+    '# aged — d',
++    '# aged, d',
 +    '**Goal.** g',
 +    '',
 +    '## Tests',
@@ -859,7 +859,7 @@ index 0000000..2b830a1
 +  ].join('\n'));
 +
 +  page('open-work', [
-+    '# open-work — d',
++    '# open-work, d',
 +    '**Goal.** g',
 +    '',
 +    '## Tests',
@@ -869,9 +869,9 @@ index 0000000..2b830a1
 +    '- 2026-08-18 shaped today',
 +  ].join('\n'));
 +
-+  page('the-ghost', '# the-ghost — a persona nothing cites\n**Who.** Forgotten.\n\n## Jobs\n- When lost, I want a map, so I can move.\n');
++  page('the-ghost', '# the-ghost, a persona nothing cites\n**Who.** Forgotten.\n\n## Jobs\n- When lost, I want a map, so I can move.\n');
 +
-+  // Earn a real stamp on aged:c1, then move its evidence — the stale fixture.
++  // Earn a real stamp on aged:c1, then move its evidence, the stale fixture.
 +  expect(run(['verify', join(map, 'aged.loop.html'), '--repo-root', repo, '--runner', 'node {evidence}']).code).toBe(0);
 +  writeFileSync(join(repo, 'tests', 'a.check.mjs'), '// moved\nprocess.exit(0);\n');
 +});
@@ -880,7 +880,7 @@ index 0000000..2b830a1
 +  rmSync(repo, { recursive: true, force: true });
 +});
 +
-+describe('the orientation output — plain language, sections only when real', () => {
++describe('the orientation output, plain language, sections only when real', () => {
 +  it('leads with next up, lists needs-you with commands and waiting-since, names stale evidence with its re-earn command', () => {
 +    const { code, out } = run(['next', map, '--repo-root', repo]);
 +    expect(code).toBe(0);
@@ -896,7 +896,7 @@ index 0000000..2b830a1
 +    expect(out).toContain('the-ghost'); // uncited persona surfaces
 +  });
 +
-+  it('is READ-ONLY — detection never re-runs, re-stamps, or touches a page', () => {
++  it('is READ-ONLY, detection never re-runs, re-stamps, or touches a page', () => {
 +    const before = readFileSync(join(map, 'aged.loop.html'), 'utf8');
 +    run(['next', map, '--repo-root', repo]);
 +    expect(readFileSync(join(map, 'aged.loop.html'), 'utf8')).toBe(before);
@@ -920,7 +920,7 @@ index 0000000..2b830a1
 +    expect(out).toMatch(/unbriefed.*tend2 ingest/);
 +  });
 +
-+  it('sections never invent — re-earned evidence leaves the stale list, quiet lanes stay silent', () => {
++  it('sections never invent, re-earned evidence leaves the stale list, quiet lanes stay silent', () => {
 +    // Re-earn the moved stamp; the page's AGE remains honestly reported.
 +    run(['verify', join(map, 'aged.loop.html'), '--repo-root', repo, '--runner', 'node {evidence}']);
 +    const { out } = run(['next', map, '--repo-root', repo]);
@@ -941,7 +941,7 @@ index 0000000..2b830a1
 +    expect(Array.isArray(parsed.loops)).toBe(true);
 +  });
 +
-+  it('season is gone — one command owns orientation', () => {
++  it('season is gone, one command owns orientation', () => {
 +    expect(run(['season', map]).code).toBe(2);
 +  });
 +});
@@ -950,7 +950,7 @@ index 0000000..2b830a1
 +  it('tend2 next with no path finds docs/tend2 from the repo', () => {
 +    const conventional = join(repo, 'docs', 'tend2');
 +    mkdirSync(conventional, { recursive: true });
-+    writeFileSync(join(conventional, 'only.loop.html'), '<!doctype html>\n<script type="text/markdown" id="loop">\n# only — d\n**Goal.** g\n\n## Tests\n- [ ] (code) todo · tests/t.mjs\n</script>\n');
++    writeFileSync(join(conventional, 'only.loop.html'), '<!doctype html>\n<script type="text/markdown" id="loop">\n# only, d\n**Goal.** g\n\n## Tests\n- [ ] (code) todo · tests/t.mjs\n</script>\n');
 +    const prev = process.cwd();
 +    try {
 +      process.chdir(repo);
@@ -995,10 +995,10 @@ index ac1c4ea..0000000
 +++ /dev/null
 @@ -1,126 +0,0 @@
 -/**
-- * `tend2 season` — is this map still true? A bare verify sweep (fresh stamps
-- * skip by construction — the AUD-1 bar) plus a one-page staleness digest:
+- * `tend2 season`, is this map still true? A bare verify sweep (fresh stamps
+- * skip by construction, the AUD-1 bar) plus a one-page staleness digest:
 - * evidence that moved, human checks waiting, loops longest untouched,
-- * personas nothing recent cites. Surfaces only — the ritual asks, a person
+- * personas nothing recent cites. Surfaces only, the ritual asks, a person
 - * or agent acts. Stamps in this test are EARNED by the verifier, never
 - * hand-written: the fixture is a live map in the honest sense.
 - */
@@ -1037,7 +1037,7 @@ index ac1c4ea..0000000
 -  writeFileSync(join(repo, 'tests', 'b.check.mjs'), 'process.exit(0);\n');
 -
 -  page('aged', [
--    '# aged — d',
+-    '# aged, d',
 -    '**Goal.** g',
 -    '',
 -    '## Tests',
@@ -1048,7 +1048,7 @@ index ac1c4ea..0000000
 -  ].join('\n'));
 -
 -  page('fresh', [
--    '# fresh — d',
+-    '# fresh, d',
 -    '**Goal.** g',
 -    '',
 -    '## Tests',
@@ -1060,14 +1060,14 @@ index ac1c4ea..0000000
 -  ].join('\n'));
 -
 -  page('the-ghost', [
--    '# the-ghost — a persona nothing cites',
+-    '# the-ghost, a persona nothing cites',
 -    '**Who.** Someone the map forgot.',
 -    '',
 -    '## Jobs',
 -    '- When lost, I want a map, so I can move.',
 -  ].join('\n'));
 -
--  // Earn real stamps — the verifier's pen, not ours.
+-  // Earn real stamps, the verifier's pen, not ours.
 -  expect(run(['verify', join(map, 'aged.loop.html'), '--repo-root', repo, '--runner', 'node {evidence}']).code).toBe(0);
 -  expect(run(['verify', join(map, 'fresh.loop.html'), '--repo-root', repo, '--runner', 'node {evidence}']).code).toBe(0);
 -});
@@ -1094,12 +1094,12 @@ index ac1c4ea..0000000
 -    expect(out).toContain('human checks waiting');
 -    expect(out).toContain('fresh:c2 the owner approves the fresh look');
 -    expect(out).toContain('longest untouched');
--    expect(out).toMatch(/aged — last Tried 2026-01-05/);
+-    expect(out).toMatch(/aged, last Tried 2026-01-05/);
 -    expect(out).toContain('personas uncited');
 -    expect(out).toContain('the-ghost');
 -  });
 -
--  it('a moved evidence that now fails is named as failing — never silently re-stamped', () => {
+-  it('a moved evidence that now fails is named as failing, never silently re-stamped', () => {
 -    writeFileSync(join(repo, 'tests', 'a.check.mjs'), 'process.exit(1);\n');
 -    const { code, out } = run(['season', map, '--repo-root', repo, '--runner', 'node {evidence}']);
 -    expect(code).toBe(0); // season surfaces; it does not gate
@@ -1113,8 +1113,8 @@ index ac1c4ea..0000000
 -  });
 -
 -  it('a persona cited by a recent Tried line is not listed', () => {
--    page('cited-persona', '# cited-persona — p\n**Who.** Cited.\n\n## Jobs\n- When x, I want y, so z.\n');
--    page('citer', '# citer — d\n**Goal.** g\n\n## Tried\n- 2026-08-18 built for cited-persona per their ask\n');
+-    page('cited-persona', '# cited-persona, p\n**Who.** Cited.\n\n## Jobs\n- When x, I want y, so z.\n');
+-    page('citer', '# citer, d\n**Goal.** g\n\n## Tried\n- 2026-08-18 built for cited-persona per their ask\n');
 -    const { out } = run(['season', map, '--repo-root', repo, '--runner', 'node {evidence}']);
 -    expect(out).toContain('the-ghost');
 -    expect(out).not.toMatch(/^\s+cited-persona$/m);

@@ -133,7 +133,7 @@ index cfd37a1..34bf27e 100644
                  servers_key: "mcpServers",
              },
 -            entry_style: EntryStyle::Standard,
-             note: Some("User scope — available in all projects."),
+             note: Some("User scope, available in all projects."),
          }),
  
 @@ -238,7 +238,6 @@ fn resolve_host(host: &str) -> Result<HostInfo, String> {
@@ -157,7 +157,7 @@ index cfd37a1..34bf27e 100644
                  servers_key: "servers",
              },
 -            entry_style: EntryStyle::Standard,
-             note: Some("Project scope — run from your project root."),
+             note: Some("Project scope, run from your project root."),
          }),
  
 @@ -267,17 +264,15 @@ fn resolve_host(host: &str) -> Result<HostInfo, String> {
@@ -179,7 +179,7 @@ index cfd37a1..34bf27e 100644
 +            format: ConfigFormat::JsonLocal {
 +                servers_key: "mcp",
 +            },
-             note: Some("User scope — available in all projects."),
+             note: Some("User scope, available in all projects."),
          }),
  
 @@ -287,7 +282,6 @@ fn resolve_host(host: &str) -> Result<HostInfo, String> {
@@ -187,7 +187,7 @@ index cfd37a1..34bf27e 100644
                  servers_key: "mcpServers",
              },
 -            entry_style: EntryStyle::Standard,
-             note: Some("User scope — available in all projects."),
+             note: Some("User scope, available in all projects."),
          }),
  
 @@ -295,159 +289,132 @@ fn resolve_host(host: &str) -> Result<HostInfo, String> {
@@ -195,7 +195,7 @@ index cfd37a1..34bf27e 100644
              path: home.join(".codex/config.toml"),
              format: ConfigFormat::Toml,
 -            entry_style: EntryStyle::Standard,
-             note: Some("User scope — available in all projects."),
+             note: Some("User scope, available in all projects."),
          }),
  
          // Amp user scope: ~/.config/amp/settings.json → amp.mcpServers
@@ -206,7 +206,7 @@ index cfd37a1..34bf27e 100644
                  servers_key: "amp.mcpServers",
              },
 -            entry_style: EntryStyle::Standard,
-             note: Some("User scope — available in all projects."),
+             note: Some("User scope, available in all projects."),
          }),
  
          // Google Antigravity user scope: ~/.gemini/antigravity/mcp_config.json → mcpServers
@@ -217,7 +217,7 @@ index cfd37a1..34bf27e 100644
                  servers_key: "mcpServers",
              },
 -            entry_style: EntryStyle::Standard,
-             note: Some("User scope — available in all projects."),
+             note: Some("User scope, available in all projects."),
          }),
  
          // Factory Droid user scope: ~/.factory/mcp.json → mcpServers
@@ -228,7 +228,7 @@ index cfd37a1..34bf27e 100644
                  servers_key: "mcpServers",
              },
 -            entry_style: EntryStyle::Standard,
-             note: Some("User scope — available in all projects."),
+             note: Some("User scope, available in all projects."),
          }),
  
          // Zed user scope: ~/.config/zed/settings.json → context_servers (NOT mcpServers)
@@ -239,7 +239,7 @@ index cfd37a1..34bf27e 100644
                  servers_key: "context_servers",
              },
 -            entry_style: EntryStyle::Standard,
-             note: Some("User scope — available in all projects."),
+             note: Some("User scope, available in all projects."),
          }),
  
          // GitHub Copilot CLI user scope: ~/.copilot/mcp-config.json → mcpServers
@@ -250,7 +250,7 @@ index cfd37a1..34bf27e 100644
                  servers_key: "mcpServers",
              },
 -            entry_style: EntryStyle::Standard,
-             note: Some("User scope — available in all projects."),
+             note: Some("User scope, available in all projects."),
          }),
  
          // AugmentCode user scope: ~/.augment/settings.json → mcpServers
@@ -261,7 +261,7 @@ index cfd37a1..34bf27e 100644
                  servers_key: "mcpServers",
              },
 -            entry_style: EntryStyle::Standard,
-             note: Some("User scope — available in all projects."),
+             note: Some("User scope, available in all projects."),
          }),
  
          // Kiro user scope: ~/.kiro/settings/mcp.json → mcpServers
@@ -272,7 +272,7 @@ index cfd37a1..34bf27e 100644
                  servers_key: "mcpServers",
              },
 -            entry_style: EntryStyle::Standard,
-             note: Some("User scope — available in all projects."),
+             note: Some("User scope, available in all projects."),
          }),
  
          // Kilo Code (VS Code extension): globalStorage → mcpServers
@@ -316,7 +316,7 @@ index cfd37a1..34bf27e 100644
                  servers_key: "mcpServers",
              },
 -            entry_style: EntryStyle::Standard,
-             note: Some("Project scope — run from your project root."),
+             note: Some("Project scope, run from your project root."),
          }),
  
          // Qwen Code user scope: ~/.qwen/settings.json → mcpServers
@@ -327,7 +327,7 @@ index cfd37a1..34bf27e 100644
                  servers_key: "mcpServers",
              },
 -            entry_style: EntryStyle::Standard,
-             note: Some("User scope — available in all projects."),
+             note: Some("User scope, available in all projects."),
          }),
  
          // Crush user scope: ~/.config/crush/crush.json → mcp (NOT mcpServers)
@@ -339,7 +339,7 @@ index cfd37a1..34bf27e 100644
 +            format: ConfigFormat::Json {
 +                servers_key: "mcp",
 +            },
-             note: Some("User scope — available in all projects."),
+             note: Some("User scope, available in all projects."),
          }),
  
          // Pi coding agent user scope: ~/.pi/agent/mcp.json → mcpServers
@@ -350,7 +350,7 @@ index cfd37a1..34bf27e 100644
                  servers_key: "mcpServers",
              },
 -            entry_style: EntryStyle::Standard,
-             note: Some("User scope — available in all projects."),
+             note: Some("User scope, available in all projects."),
          }),
  
 @@ -551,9 +518,10 @@ mod tests {

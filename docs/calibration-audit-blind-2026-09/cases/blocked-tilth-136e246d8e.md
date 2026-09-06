@@ -35,12 +35,12 @@ index 5d9171f..61431be 100644
 -ALWAYS group edits to multiple files into ONE tilth_edit call (max 20 files). Never call tilth_edit twice in a row.
 -tilth_read → copy anchors (<line>:<hash>) (BOTH line and hash required) → pass to tilth_edit.
 +tilth_write: Batch write one or more files. Replaces the host Edit and Write tools.
-+Three per-file modes: hash (default — replace lines at hash anchors), overwrite (whole file), append (add to end).
++Three per-file modes: hash (default, replace lines at hash anchors), overwrite (whole file), append (add to end).
 +ALWAYS group writes to multiple files into ONE tilth_write call (max 20 files). Never call tilth_write twice in a row.
 +Each file path may appear at most once per call.
-+hash mode — edit an existing file:
++hash mode, edit an existing file:
 +tilth_read → copy anchors (<line>:<hash>) (BOTH line and hash required) → pass to tilth_write.
- tilth_search does NOT provide hashes — you MUST tilth_read the file or section first.
+ tilth_search does NOT provide hashes, you MUST tilth_read the file or section first.
 -Shape: {"files": [{"path": "a.rs", "edits": [...]}, {"path": "b.rs", "edits": [...]}]}
 -Single file: {"files": [{"path": "a.rs", "edits": [{"start": "<line>:<hash>", "content": "<new code>"}]}]}
 -Edit forms inside `edits`:
@@ -49,18 +49,18 @@ index 5d9171f..61431be 100644
  Range:       {"start": "<line>:<hash>", "end": "<line>:<hash>", "content": "..."}
  Delete:      {"start": "<line>:<hash>", "content": ""}
 -Per-file results: each file is processed independently. A hash mismatch on one file does NOT block the others.
--isError is false whenever ≥1 file succeeded — always scan the per-file `## <path>` sections for failures rather than trusting the top-level status.
+-isError is false whenever ≥1 file succeeded, always scan the per-file `## <path>` sections for failures rather than trusting the top-level status.
  Hash mismatch → file changed, re-read THAT file and retry it (other files in the batch already applied).
  A parse error on one edit invalidates ALL edits for that file (none applied); retry the whole file's edits after fixing the malformed entry.
--Each file path may appear at most once per call — group all edits for a file under its single entry.
-+overwrite mode — create a file, or replace one whole:
+-Each file path may appear at most once per call, group all edits for a file under its single entry.
++overwrite mode, create a file, or replace one whole:
 +{"path": "new.rs", "mode": "overwrite", "content": "<full file body>"}
-+Create-only by default — fails if the file exists. Pass "overwrite": true to replace an existing file.
-+append mode — add to the end, creating the file if absent:
++Create-only by default, fails if the file exists. Pass "overwrite": true to replace an existing file.
++append mode, add to the end, creating the file if absent:
 +{"path": "log.txt", "mode": "append", "content": "<text to append>"}
 +Per-file results: each file is processed independently. A failure on one file does NOT block the others.
-+isError is false whenever ≥1 file succeeded — always scan the per-file `## <path>` sections for failures rather than trusting the top-level status.
- Large files: tilth_read shows outline — use section to get hashlined content.
++isError is false whenever ≥1 file succeeded, always scan the per-file `## <path>` sections for failures rather than trusting the top-level status.
+ Large files: tilth_read shows outline, use section to get hashlined content.
  Pass diff: true to see a compact before/after diff per file.
 -After editing a function signature, tilth_edit shows callers that may need updating.
 -DO NOT use the host Edit tool. Use tilth_edit for all edits.
@@ -103,12 +103,12 @@ index 1442fd2..a9852ad 100644
 -ALWAYS group edits to multiple files into ONE tilth_edit call (max 20 files). Never call tilth_edit twice in a row.
 -tilth_read → copy anchors (<line>:<hash>) (BOTH line and hash required) → pass to tilth_edit.
 +tilth_write: Batch write one or more files. Replaces the host Edit and Write tools.
-+Three per-file modes: hash (default — replace lines at hash anchors), overwrite (whole file), append (add to end).
++Three per-file modes: hash (default, replace lines at hash anchors), overwrite (whole file), append (add to end).
 +ALWAYS group writes to multiple files into ONE tilth_write call (max 20 files). Never call tilth_write twice in a row.
 +Each file path may appear at most once per call.
-+hash mode — edit an existing file:
++hash mode, edit an existing file:
 +tilth_read → copy anchors (<line>:<hash>) (BOTH line and hash required) → pass to tilth_write.
- tilth_search does NOT provide hashes — you MUST tilth_read the file or section first.
+ tilth_search does NOT provide hashes, you MUST tilth_read the file or section first.
 -Shape: {"files": [{"path": "a.rs", "edits": [...]}, {"path": "b.rs", "edits": [...]}]}
 -Single file: {"files": [{"path": "a.rs", "edits": [{"start": "<line>:<hash>", "content": "<new code>"}]}]}
 -Edit forms inside `edits`:
@@ -117,18 +117,18 @@ index 1442fd2..a9852ad 100644
  Range:       {"start": "<line>:<hash>", "end": "<line>:<hash>", "content": "..."}
  Delete:      {"start": "<line>:<hash>", "content": ""}
 -Per-file results: each file is processed independently. A hash mismatch on one file does NOT block the others.
--isError is false whenever ≥1 file succeeded — always scan the per-file `## <path>` sections for failures rather than trusting the top-level status.
+-isError is false whenever ≥1 file succeeded, always scan the per-file `## <path>` sections for failures rather than trusting the top-level status.
  Hash mismatch → file changed, re-read THAT file and retry it (other files in the batch already applied).
  A parse error on one edit invalidates ALL edits for that file (none applied); retry the whole file's edits after fixing the malformed entry.
--Each file path may appear at most once per call — group all edits for a file under its single entry.
-+overwrite mode — create a file, or replace one whole:
+-Each file path may appear at most once per call, group all edits for a file under its single entry.
++overwrite mode, create a file, or replace one whole:
 +{"path": "new.rs", "mode": "overwrite", "content": "<full file body>"}
-+Create-only by default — fails if the file exists. Pass "overwrite": true to replace an existing file.
-+append mode — add to the end, creating the file if absent:
++Create-only by default, fails if the file exists. Pass "overwrite": true to replace an existing file.
++append mode, add to the end, creating the file if absent:
 +{"path": "log.txt", "mode": "append", "content": "<text to append>"}
 +Per-file results: each file is processed independently. A failure on one file does NOT block the others.
-+isError is false whenever ≥1 file succeeded — always scan the per-file `## <path>` sections for failures rather than trusting the top-level status.
- Large files: tilth_read shows outline — use section to get hashlined content.
++isError is false whenever ≥1 file succeeded, always scan the per-file `## <path>` sections for failures rather than trusting the top-level status.
+ Large files: tilth_read shows outline, use section to get hashlined content.
  Pass diff: true to see a compact before/after diff per file.
 -After editing a function signature, tilth_edit shows callers that may need updating.
 -DO NOT use the host Edit tool. Use tilth_edit for all edits.
@@ -253,8 +253,8 @@ index dca39e9..3146f2b 100644
 +++ b/src/mcp/tools/definitions.rs
 @@ -4,7 +4,7 @@ pub(in crate::mcp) fn tool_definitions(edit_mode: bool) -> Vec<Value> {
      let read_desc = if edit_mode {
-         "Read a file with smart outlining. Replaces cat/head/tail and the host Read tool — \
-          use this for all file reading. Output uses hashline format (line:hash|content) — \
+         "Read a file with smart outlining. Replaces cat/head/tail and the host Read tool, \
+          use this for all file reading. Output uses hashline format (line:hash|content), \
 -         the line:hash anchors are required by tilth_edit. Small files return full hashlined content. \
 +         the line:hash anchors are required by tilth_write. Small files return full hashlined content. \
           Large files return a structural outline (no hashlines); use `section` to get hashlined \
@@ -265,9 +265,9 @@ index dca39e9..3146f2b 100644
      if edit_mode {
          tools.push(serde_json::json!({
 -            "name": "tilth_edit",
--            "description": "Batch edit one or more files in one call using hashline anchors from tilth_read. ALWAYS group edits to multiple files into a single tilth_edit call — never call tilth_edit twice in a row. Each file is processed independently (best-effort): a hash mismatch on one file does not block the others; results are reported per file. Partial success returns isError: false — scan the per-file `## <path>` sections for failures rather than trusting the top-level status. A parse error on one edit invalidates ALL edits for that file (none applied); retry the whole file after fixing the malformed entry. Each file path may appear at most once per call. Max 20 files per call.",
+-            "description": "Batch edit one or more files in one call using hashline anchors from tilth_read. ALWAYS group edits to multiple files into a single tilth_edit call, never call tilth_edit twice in a row. Each file is processed independently (best-effort): a hash mismatch on one file does not block the others; results are reported per file. Partial success returns isError: false, scan the per-file `## <path>` sections for failures rather than trusting the top-level status. A parse error on one edit invalidates ALL edits for that file (none applied); retry the whole file after fixing the malformed entry. Each file path may appear at most once per call. Max 20 files per call.",
 +            "name": "tilth_write",
-+            "description": "Batch write one or more files in one call. Replaces the host Edit and Write tools — DO NOT use those. Three per-file modes: `hash` (default — replace lines at hash anchors from tilth_read), `overwrite` (whole file; create-only by default — pass `overwrite: true` to replace an existing file), `append` (append `content`, creates if absent). overwrite/append responses echo the file's hashlines so you can chain anchored edits in the next call without re-reading. ALWAYS group writes to multiple files into a single tilth_write call — never call tilth_write twice in a row. Each file is processed independently (best-effort): a failure on one file does not block the others; results are reported per file. Partial success returns isError: false — scan the per-file `## <path>` sections for failures rather than trusting the top-level status. A parse error on one edit invalidates ALL edits for that file (none applied); retry the whole file after fixing the malformed entry. Each file path may appear at most once per call. Max 20 files per call. Example overwrite (new file): `tilth_write(files: [{path: \"src/new.rs\", mode: \"overwrite\", content: \"fn main(){}\\n\"}])`.",
++            "description": "Batch write one or more files in one call. Replaces the host Edit and Write tools, DO NOT use those. Three per-file modes: `hash` (default, replace lines at hash anchors from tilth_read), `overwrite` (whole file; create-only by default, pass `overwrite: true` to replace an existing file), `append` (append `content`, creates if absent). overwrite/append responses echo the file's hashlines so you can chain anchored edits in the next call without re-reading. ALWAYS group writes to multiple files into a single tilth_write call, never call tilth_write twice in a row. Each file is processed independently (best-effort): a failure on one file does not block the others; results are reported per file. Partial success returns isError: false, scan the per-file `## <path>` sections for failures rather than trusting the top-level status. A parse error on one edit invalidates ALL edits for that file (none applied); retry the whole file after fixing the malformed entry. Each file path may appear at most once per call. Max 20 files per call. Example overwrite (new file): `tilth_write(files: [{path: \"src/new.rs\", mode: \"overwrite\", content: \"fn main(){}\\n\"}])`.",
              "inputSchema": {
                  "type": "object",
                  "required": ["files"],
@@ -291,7 +291,7 @@ index dca39e9..3146f2b 100644
 +                                    "type": "string",
 +                                    "enum": ["hash", "h", "overwrite", "w", "append", "a"],
 +                                    "default": "hash",
-+                                    "description": "Write mode. hash (default): replace lines at hash anchors via `edits`. overwrite: write whole file from `content`; create-only by default — set `overwrite: true` to replace existing. append: append `content`, creates if absent."
++                                    "description": "Write mode. hash (default): replace lines at hash anchors via `edits`. overwrite: write whole file from `content`; create-only by default, set `overwrite: true` to replace existing. append: append `content`, creates if absent."
                                  },
                                  "edits": {
                                      "type": "array",
@@ -420,7 +420,7 @@ index 0417408..0000000
 -    if edits_val.is_empty() {
 -        return FileEditTask::ParseError {
 -            label: path_str.to_string(),
--            msg: "'edits' array is empty — omit this file or add at least one edit".into(),
+-            msg: "'edits' array is empty, omit this file or add at least one edit".into(),
 -        };
 -    }
 -
@@ -523,7 +523,7 @@ index 0417408..0000000
 -
 -    #[test]
 -    fn parse_file_edit_rejects_empty_edits_array() {
--        // Schema says minItems: 1, but schema validation is advisory — enforce
+-        // Schema says minItems: 1, but schema validation is advisory, enforce
 -        // at runtime so a client that bypasses the schema can't silently get
 -        // a no-op success.
 -        let val = serde_json::json!({ "path": "noop.txt", "edits": [] });
@@ -574,14 +574,14 @@ index 0000000..c99c93f
 --- /dev/null
 +++ b/src/mcp/tools/write.rs
 @@ -0,0 +1,538 @@
-+//! `tilth_write` — batch file writes in three per-file modes:
++//! `tilth_write`, batch file writes in three per-file modes:
 +//!
-+//! * `hash` (default) — replace lines at hash anchors from `tilth_read`
++//! * `hash` (default), replace lines at hash anchors from `tilth_read`
 +//!   (the former `tilth_edit`). Delegated to [`crate::edit::apply_batch`].
-+//! * `overwrite` — whole-file write from `content`. Create-only by default
++//! * `overwrite`, whole-file write from `content`. Create-only by default
 +//!   (atomic `O_CREAT|O_EXCL`); pass `overwrite: true` to replace an existing
 +//!   file. See [`crate::mcp::write`] for the symlink guarantees.
-+//! * `append` — append `content`, creating the file if absent.
++//! * `append`, append `content`, creating the file if absent.
 +//!
 +//! Duplicate paths are rejected up front across **all** modes, so two entries
 +//! can never race a write against the same file.
@@ -617,7 +617,7 @@ index 0000000..c99c93f
 +    if edits_val.is_empty() {
 +        return FileEditTask::ParseError {
 +            label: path_str.to_string(),
-+            msg: "'edits' array is empty — omit this file or add at least one edit".into(),
++            msg: "'edits' array is empty, omit this file or add at least one edit".into(),
 +        };
 +    }
 +
@@ -746,7 +746,7 @@ index 0000000..c99c93f
 +    // Up-front duplicate-path rejection across ALL modes. hash mode also
 +    // re-checks inside apply_batch as a defense-in-depth guarantee, but
 +    // overwrite/append are written inline and would otherwise escape that
-+    // check — two entries must never race a write against the same file.
++    // check, two entries must never race a write against the same file.
 +    {
 +        use std::collections::HashSet;
 +        let mut seen: HashSet<String> = HashSet::new();
@@ -754,7 +754,7 @@ index 0000000..c99c93f
 +            if let Some(path_str) = f.get("path").and_then(|v| v.as_str()) {
 +                if !seen.insert(crate::edit::normalize_path_key(Path::new(path_str))) {
 +                    return Err(format!(
-+                        "duplicate file path in batch: {path_str} — each path may appear at most once per call"
++                        "duplicate file path in batch: {path_str}, each path may appear at most once per call"
 +                    ));
 +                }
 +            }
@@ -847,7 +847,7 @@ index 0000000..c99c93f
 +                    }
 +                    Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
 +                        direct_results.push(format!(
-+                            "## {}\nerror: file already exists — pass `overwrite: true` to replace it",
++                            "## {}\nerror: file already exists, pass `overwrite: true` to replace it",
 +                            path.display()
 +                        ));
 +                    }
@@ -963,7 +963,7 @@ index 0000000..c99c93f
 +            parse_overwrite_flag(&serde_json::json!({"overwrite": true})),
 +            Some(true)
 +        );
-+        // String "true" is NOT a bool — reject rather than coerce.
++        // String "true" is NOT a bool, reject rather than coerce.
 +        assert_eq!(
 +            parse_overwrite_flag(&serde_json::json!({"overwrite": "true"})),
 +            None
@@ -1120,13 +1120,13 @@ index 0000000..c902795
 @@ -0,0 +1,180 @@
 +//! `tilth_write` file-mode helpers: `overwrite` and `append`.
 +//!
-+//! `overwrite` is **create-only by default** — an atomic `O_CREAT|O_EXCL`
++//! `overwrite` is **create-only by default**, an atomic `O_CREAT|O_EXCL`
 +//! open fails with `ErrorKind::AlreadyExists` if the path already exists
 +//! (regular file *or* dangling symlink), so there is no TOCTOU window and no
 +//! silent clobber. Pass `overwrite = true` to replace an existing file. The
 +//! rewrite refuses to follow symlinks (live or dangling): on Unix the open
 +//! passes `O_NOFOLLOW`, so the kernel returns `ELOOP` rather than resolving
-+//! the link and writing the target — closing the scope-escape at the syscall
++//! the link and writing the target, closing the scope-escape at the syscall
 +//! layer. `ELOOP` is remapped to `ErrorKind::InvalidInput`. On non-Unix the
 +//! rewrite falls back to `fs::write` (Windows symlink semantics differ; no
 +//! analogous escape).
