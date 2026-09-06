@@ -4,7 +4,20 @@
   "commits_judged": 635,
   "false_positives": 2,
   "metric": "block-level false-positive share across the calibration repositories",
-  "regrade": null,
+  "regrade": [
+    {
+      "agreed": 20,
+      "agreement_percent": 100.0,
+      "regraded": 20,
+      "sample": "blocked commits"
+    },
+    {
+      "agreed": 20,
+      "agreement_percent": 100.0,
+      "regraded": 20,
+      "sample": "recall cases"
+    }
+  ],
   "repos": [
     {
       "blocked": 1,
@@ -44,5 +57,5 @@
   ],
   "share_percent": 0.31,
   "source": "docs/calibration-2026-09.md",
-  "verdict": "ship, pending the independent re-grade"
+  "verdict": "ship"
 }
