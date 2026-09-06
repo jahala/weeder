@@ -72,7 +72,7 @@ fn judges_every_commit_that_has_a_parent_and_writes_the_verdict_first() {
     let mut lines = report.lines();
     assert_eq!(
         lines.next(),
-        Some("# calibration, weed over real history, 2026-09"),
+        Some("# calibration: weed over real history, 2026-09"),
         "the file opens with its title"
     );
     lines.next();
