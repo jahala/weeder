@@ -14,11 +14,11 @@
 
 | Repo | Path | Default branch |
 |---|---|---|
-| tilth | `/Users/jahala/CascadeProjects/tilth` | `main` |
-| pleach | `/Users/jahala/conductor/workspaces/pleach-v1/cayenne` | its default branch |
-| tend2 | `/Users/jahala/conductor/workspaces/feature-map/missoula` | its default branch |
-| copeca | `/Users/jahala/conductor/workspaces/copeca/cancun` | its default branch |
-| umbel | `/Users/jahala/conductor/workspaces/rctrl/master` | `master` |
+| tilth | `https://github.com/jahala/tilth.git` | `main` |
+| pleach | `https://github.com/jahala/pleach.git` | its default branch |
+| tend2 | `https://github.com/jahala/tend.git` | its default branch |
+| copeca | `https://github.com/jahala/copeca.git` | its default branch |
+| umbel | `https://github.com/jahala/umbel.git` | `master` |
 
 A repo with fewer than 200 commits contributes every commit it has, and the file says so. The run never writes to those repositories: it reads them through `git` with `--base <parent>` against a detached worktree it creates under a temp dir and removes.
 

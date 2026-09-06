@@ -21,7 +21,7 @@
 | T7 | test uncollected by rename: a test file or case renamed so the runner no longer collects it | block | rename detection plus naming conventions: `*.test.ts`/`*.spec.ts`, `test_*.py`/`*_test.py`, `#[test]` kept, `*_test.go` and `TestXxx` |
 | M1 | mock over the unit under change: a test in the diff mocks a module whose production file is also in the diff | warn | mock specifiers (`vi.mock`, `jest.mock`, `unittest.mock.patch`, `mockall`, `gomock`) resolved against the diff's prod paths through the reader's import resolution |
 
-tend2's `src/verify/mock.ts` (in `/Users/jahala/conductor/workspaces/feature-map/missoula/`) is prior art for M1 on TypeScript: read it for the shapes it catches, do not port it.
+tend2's `src/verify/mock.ts` (in tend2's own repository, github.com/jahala/tend) is prior art for M1 on TypeScript: read it for the shapes it catches, do not port it.
 
 ## Tests
 - [x] (code) T2 fires at block level when a changed test file's assertion count drops, per language, and stays silent when assertions move between cases with the count unchanged or a `Weed-allow: T2` trailer carries a reason · tests/rule_t2.rs @a1956d1 · by cli
