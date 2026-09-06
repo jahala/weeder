@@ -118,7 +118,7 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
             if entry.iter().any(|span| span.contains(&line)) {
                 continue;
             }
-            if let Some(leftover) = leftover(&table, &mask, line) {
+            if let Some(leftover) = leftover(&table, mask, line) {
                 findings.push(finding(path, line, &leftover));
             }
         }

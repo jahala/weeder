@@ -86,7 +86,7 @@ pub fn code_words(tree: &Tree) -> BTreeMap<String, Vec<Site>> {
 pub fn code_lines(file: &TreeFile) -> Vec<(u32, String)> {
     let mask = file.mask();
     (1..=file.text().lines().count() as u32)
-        .map(|line| (line, mask.code(line)))
+        .map(|line| (line, mask.code(line).into_owned()))
         .collect()
 }
 

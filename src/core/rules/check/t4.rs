@@ -31,7 +31,7 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
         let before = change.before.mask();
         let after = change.after.mask();
         for pair in change.replacements() {
-            if let Some(widening) = widening(&before, &after, &pair) {
+            if let Some(widening) = widening(before, after, &pair) {
                 findings.push(finding(path, pair.new_line, &widening));
             }
         }

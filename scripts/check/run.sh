@@ -9,6 +9,12 @@ case "$evidence" in
     name="$(basename "$evidence" .rs)"
     exec cargo test --package xtask --test "$name" -- --nocapture
     ;;
+  tests/speed.rs)
+    # The latency budget is a wall-clock claim about the binary people run, and
+    # the tests that hold it are absent from a debug build. This evidence is
+    # measured on the release profile or it is not measured at all.
+    exec cargo test --release --test speed -- --nocapture
+    ;;
   tests/*.rs)
     name="$(basename "$evidence" .rs)"
     exec cargo test --test "$name" -- --nocapture

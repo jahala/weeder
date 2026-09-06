@@ -24,6 +24,7 @@ use crate::core::registry::{self, parse_snapshot, Registry, Snapshot, SNAPSHOT_P
 use crate::core::rules;
 use crate::core::sarif::{self, Context, EXIT_CLEAN, EXIT_COULD_NOT_RUN, RULES_DOC};
 use crate::core::specimen;
+use crate::core::syntax::Mask;
 use crate::core::tree::{CommandListing, Tree, TreeFile};
 use crate::faces::{read_config, Answer, Format};
 use crate::seams::{exec, fs, git, reader};
@@ -191,11 +192,19 @@ fn read_file(root: &Path, path: String) -> Result<TreeFile, String> {
         }
         _ => Outline::default(),
     };
+    // The one scan of the file's bytes: every rule that asks whether a line is
+    // code, a comment or a literal reads this, so none of them scans it again.
+    let syntax = match (&classification, &content) {
+        (Some(classification), Some(content)) => Mask::of(classification.lang, content),
+        // A file with no text is a file with no lines, which is a scan of nothing.
+        _ => Mask::default(),
+    };
     Ok(TreeFile {
         path,
         content,
         classification,
         outline,
+        syntax,
     })
 }
 
