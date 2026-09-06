@@ -146,21 +146,54 @@ fn path_segments(path: &str) -> Vec<String> {
 /// import and a dotted package spell the same thing.
 fn segments(importer: &str, source: &str) -> Vec<String> {
     let source = source.trim();
-    let dots = source
-        .chars()
-        .take_while(|character| *character == '.')
-        .count();
-    let named = split(&source[dots..]);
-    if dots == 0 {
-        return named;
-    }
+    let Some((climb, named)) = relative(source) else {
+        return split(source);
+    };
     let mut here: Vec<String> = path_segments(importer);
+    // The file's own name first, then one directory for every step up.
     here.pop();
-    for _ in 1..dots {
+    for _ in 0..climb {
         here.pop();
     }
-    here.extend(named);
+    here.extend(split(&named));
     here
+}
+
+/// How far a relative name climbs before it names anything, and what is left of
+/// it once it has. The two spellings count differently and mean the same thing:
+/// a path writes each step up as `..`, and a dotted package writes the first
+/// dot for the directory it is in and one more dot for every step above it. A
+/// name that is not relative climbs nothing and is answered whole.
+fn relative(source: &str) -> Option<(usize, String)> {
+    if !source.starts_with('.') {
+        return None;
+    }
+    if !source.contains('/') {
+        let dots = source
+            .chars()
+            .take_while(|character| *character == '.')
+            .count();
+        return Some((dots.saturating_sub(1), source[dots..].to_string()));
+    }
+    let mut climb = 0;
+    let mut rest = source;
+    loop {
+        if let Some(tail) = rest.strip_prefix("../") {
+            climb += 1;
+            rest = tail;
+            continue;
+        }
+        if let Some(tail) = rest.strip_prefix("./") {
+            rest = tail;
+            continue;
+        }
+        break;
+    }
+    if rest == ".." {
+        climb += 1;
+        rest = "";
+    }
+    Some((climb, rest.to_string()))
 }
 
 /// A module name broken into the words it is written from, with an extension

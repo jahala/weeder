@@ -13,7 +13,7 @@ src/faces/     the CLI subcommands: check, scan, guard, bite, hook, rules
 tests/         integration tests that drive the real `weed` binary on real git repositories in temp dirs (assert_cmd + tempfile); tests/common/ holds the fixture harness
 fixtures/adversarial/<RULE>/<lang>/{fire,silent}/{before,after}/   one minimal repo history per rule per language: `before/` is committed as HEAD, `after/` is the working tree; a file `after/.weed-commit` carries the commit message (for trailers) and is never copied. A scan rule judges one state, so its fixture carries `before/` alone and the tree is left as `before/` committed it
 schemas/       vendored official schemas (sarif-schema-2.1.0.json)
-xtask/         weed's own measurements, a workspace member so they judge with the core the binary ships: `cargo xtask calibrate` writes docs/calibration-2026-09.md, `cargo xtask suppressions` counts the allowances each repository wrote
+xtask/         weed's own measurements, the bench and never the product, a workspace member so they judge with the core the binary ships: `cargo xtask calibrate` writes docs/calibration-2026-09.md, `cargo xtask suppressions` counts the allowances each repository wrote, `cargo xtask mutate` is the recall campaign that plants one anti-pattern per case in real commits of the same corpus and writes the recall section of the same file
 scripts/check/ evidence scripts a loop cites; run.sh is the runner tend2 verify uses
 scripts/proof/ evidence that starts a real agent session and writes what happened into docs/proof-2026-09.md
 docs/          sarif.md · pleach.md · tend2-seam.md · calibration-2026-09.md · proof-2026-09.md · dogfood.md · dogfood/<loop>.md · tend2/ (the map)
@@ -48,11 +48,19 @@ Dependency direction is weed's own doctrine and its D2 rule enforces it on itsel
 
 ```
 cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace
+cargo xtask mutate                             # the recall campaign, on the calibration corpus
 bash scripts/check/run.sh tests/<name>.rs     # one evidence file, the way the verifier runs it
 tend2 next docs/tend2                          # where things stand
 ```
 
-`tilth-core` is a git dependency on `https://github.com/jahala/tilth`, pinned by rev to the commit the tilth agent landed (the tilth-core loop names it). Nothing in the repo points at a path on this machine; the worktree at `.context/tilth-core` exists only so the evidence script can run the crate's own suite.
+The corpus `cargo xtask mutate` reads is cloned into `weed-recall-corpus` under the
+temporary directory, or wherever `WEED_RECALL_CACHE` names, and the source
+repositories are only ever read from. It is the one place in the repository that
+names paths on the conductor's machine, because the calibration loop names those
+five repositories; each is moved with `WEED_CORPUS_<NAME>`, and the two Go
+projects the garden has no Go for are pinned by commit and fetched once.
+
+`tilth-core` is a git dependency on `https://github.com/jahala/tilth`, pinned by rev to the commit the tilth agent landed (the tilth-core loop names it). Nothing weed is built from points at a path on this machine; the worktree at `.context/tilth-core` exists only so the evidence script can run the crate's own suite.
 
 <!-- tend2:begin -->
 ## tend2 — this project plans on loops
