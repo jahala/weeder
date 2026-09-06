@@ -1,6 +1,8 @@
 target/
-# .loop-scratch/ is not ignored while pleach stages an ignored scratch file as
-# a fatal error (dogfood P8); a landing strips whatever a worker left there.
+# A worker's scratch. Ignored again now that the nodes have run; pleach 0.0.1
+# stages an ignored scratch file as a fatal error (dogfood P8), so a run under
+# it takes this line out first.
+.loop-scratch/
 .context/
 
 # The umbrella's own brand files arrive with a petals fetch and belong to the
@@ -11,3 +13,7 @@ target/
 /.brand/products/*
 !/.brand/products/weed/
 .DS_Store
+# Browser captures and emitted work orders never belong in the tree; the cast
+# and audit tables the emitter reads stay.
+.playwright-mcp/
+plans/weed*.plan.json
