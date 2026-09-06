@@ -1,0 +1,75 @@
+{
+  "goal": "A static Rust binary that reads what an agent produced and refuses the growth that should not be there, deleted or weakened tests, skips, stubs, swallowed errors, secrets, guardrail edits, dependency-direction violations, in milliseconds, with zero tokens, every finding as SARIF 2.1.0. `weed check` judges a diff and may block; `weed scan` judges the tree and never blocks; `weed guard` is the law in git through hooks; `weed bite` proves a test fails without its change. For maintainers drowning in agent-authored pull requests who need a deterministic gate before they read, for teams running agents on several harnesses who want one law, and for the garden's own fleets through pleach.",
+  "source": "docs/tend2#recall",
+  "nodes": [
+    {
+      "id": "recall",
+      "work": {
+        "prompt": "You are a worker in a build loop. Make the checks below pass, honestly.\nNobody reviews your prose — only the verifier's verdict counts, so put all effort into the work itself.\n\n## The goal\nCalibration measures false blocks on real good commits; this loop measures the mirror. `cargo xtask mutate` takes real merged commits from the five garden repos and injects each anti-pattern mechanically, a test case deleted, a `.skip` added, an assertion dropped, a `TODO` body, a swallowed error, a secret, a workflow file edited, one mutation per case, per language, then runs `weed check --base <parent> --strict` and records whether the rule fired on exactly that. Recall for the block-level rules T1, T3, S1, X1, C1 and G1 is at or above 95 percent per language; warn-level rules are reported, aiming at 80. Both numbers sit in `docs/calibration-2026-09.md` beside precision, on real code.\n\n## Your environment\n- You are at the repository root of an isolated git worktree. Work here directly.\n- Leave your changes in the working tree; do not create branches, commit, or push.\n- The loop file (docs/tend2/recall.tend2.html) is your full context — read it, including its narrative. It is READ-ONLY for you.\n\n## Checks to close\n- (code) `cargo xtask mutate` injects one anti-pattern per case for every check rule in each of ts, py, rs and go from the calibration corpus, runs weed on each, and writes the recall section of `docs/calibration-2026-09.md` with every miss named · evidence expected at: scripts/check/recall.sh\n- (code) recall for T1, T3, S1, X1, C1 and G1 is at or above 95 percent per language, and every warn-level rule's recall is reported · evidence expected at: scripts/check/recall-bar.sh\n\n## Definition of done — verify yourself before finishing\nYou are done when this exact command exits 0 (it is the gate the conductor will run):\n\n    tend2 verify docs/tend2/recall.tend2.html --repo-root . --force --expect-payload d131de247182 --runner 'bash scripts/check/run.sh {evidence}'\n\nRun it yourself. If it does not exit 0, you are not done. Do not declare success in prose that a command disagrees with.\n\n## Already tried (do not repeat)\n- 2026-09-05 shaped from cape-town's binding checks: precision alone lets a gate ship that fires on nothing\n- 2026-09-05 one mutation per case, never several: a hit must be attributable to one rule, and a miss to one site\n\n## Rules\n- Write the failing test first where it does not exist; then make it pass.\n- You must not edit the loop file — check states belong to the verifier.\n- You must not weaken, skip, or mock the unit under test to force a green; mocked-unit evidence is detected and refused.\n- Solve the CLASS of problem the claim names, not the test's example inputs. Hardcoding fixture strings, phrases, or patterns from the check or its tests into source (lookup tables, regex lists, phrase maps) is refused work even when the test goes green — it is an answer key, not a product.\n- If the claim cannot be met generically with what you have, that is a real finding: write BLOCKED.md naming the missing capability (a model, a library, a redesign, a split of the check into honest tiers) instead of faking generality.\n- Production quality only: no stubs, no TODOs, no placeholder implementations; match the style of the surrounding code.\n- Probe/scratch files (toolchain checks, experiments) go in `.loop-scratch/` only — it is never collected; scratch files elsewhere pollute the delivery.\n- If you are genuinely blocked, write BLOCKED.md at the repo root — what you tried, what stopped you, what a fix needs. An honest BLOCKED.md is a good outcome; a faked green is the worst possible one."
+      },
+      "accept": {
+        "smoke": "tend2 verify docs/tend2/recall.tend2.html --repo-root . --force --expect-payload d131de247182 --runner 'bash scripts/check/run.sh {evidence}'",
+        "audit": {
+          "command": "tend2 verify docs/tend2/recall.tend2.html --repo-root . --force --expect-payload d131de247182 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
+          "provider": "codex",
+          "selfIntegrity": true
+        }
+      },
+      "policy": {
+        "timeoutMs": 5400000
+      },
+      "worker": {
+        "provider": "claude",
+        "model": "opus"
+      },
+      "needs": []
+    }
+  ],
+  "warnings": [
+    {
+      "loopId": "core",
+      "code": "unwired-modules",
+      "message": "5 checks cite 5 src modules (Cargo.toml, weed.toml, AGENTS.md, CLAUDE.md, src/core/), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "garden-fit",
+      "code": "unwired-modules",
+      "message": "7 checks cite 12 src modules (Cargo.toml, schemas/garden.schema.json, .brand/products/weed/identity.md, .github/workflows/ci.yml, .github/workflows/release.yml, npm/package.json, npm/, garden.json, SKILL.md, .brand/products/weed/, examples/ci/github.yml, README.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "hardening",
+      "code": "unwired-modules",
+      "message": "5 checks cite 6 src modules (tests/determinism.rs, fixtures/adversarial/, tests/sarif_order.rs, src/core/, tests/core_hostile.rs, tests/check_hostile.rs), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "hooks",
+      "code": "unwired-modules",
+      "message": "4 checks cite 3 src modules (docs/proof-2026-09.md, scripts/proof/claude-stop.sh, scripts/proof/gemini-stop.sh), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "rules-block",
+      "code": "unwired-modules",
+      "message": "6 checks cite 3 src modules (weed.toml, AGENTS.md, CLAUDE.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "rules-prod",
+      "code": "unwired-modules",
+      "message": "7 checks cite 2 src modules (Cargo.toml, .gitignore), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "sarif",
+      "code": "unwired-modules",
+      "message": "4 checks cite 2 src modules (schemas/sarif-schema-2.1.0.json, docs/sarif.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "scan",
+      "code": "unwired-modules",
+      "message": "8 checks cite 5 src modules (CLAUDE.md, AGENTS.md, README.md, /, Cargo.toml), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "tilth-core",
+      "code": "unwired-modules",
+      "message": "4 checks cite 5 src modules (.context/tilth-core, src/seams/reader.rs, Cargo.toml, src/, src/core/), but no single check's evidence spans 2+ of them"
+    }
+  ]
+}

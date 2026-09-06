@@ -125,6 +125,14 @@ What worked, so it is on record: the spawn, send, wait, read, kill lifecycle beh
 
 **Fix.** Before the node commit, list what `git status --ignored --short` holds under the paths the worker touched. Either refuse the node with those paths as the reason, or carry a line in the receipt and the journal: "n paths under an ignore rule were not committed". The same check would have caught the BLOCKED.md case from the other direction.
 
+### P8. Staging refuses an ignored scratch file and the finished node is destroyed
+
+**Reproduction.** A worker writes a file under `.loop-scratch/` through its editor, as the emitted prompt instructs, in a repository whose `.gitignore` names that directory (tend2 `init` writes both). The worker finishes and stops. `stage()` in `src/seams/isolate.ts` receives that path, `git ls-files --others --exclude-standard --cached` returns nothing for it because it is ignored, the `test -e` fallback meant for fresh empty directories keeps it anyway, and `git add -A -- …` exits 1 with "The following paths are ignored by one of your .gitignore files". pleach reports `failed after 0 attempt(s)`, `catastrophic isolate failure`, quarantines nothing and removes the worktree.
+
+**Impact.** The calibration node: 55 minutes of an opus worker, four checks stamped in its tree, gone. Recovered only because the worker's own transcript held every write and edit.
+
+**Fix.** Run `git check-ignore -q` on each path before the existence probe and drop the ignored ones, which also honours the prompt's promise that scratch is never collected. And treat a staging failure like a failed gate: the tree exists and is the evidence, so quarantine it.
+
 What worked: `pleach validate` turns a map's `## Needs` edges into waves with no hand editing; the marker, hygiene and smoke ladder ran in order on every node; receipts froze the facts at classify time and named the failing gate and every reason; quarantine kept failed work; `pleach land` ran the land gate on the merged stack and fast-forwarded the branch; the journal fed `tend2 watch` and `tend2 next` with no configuration; the provider-diversity check refused nothing it should have allowed. Timings for the record: core, codex, 2 attempts, 6 m 21 s; sarif, claude/opus, 1 attempt, 13 m, smoke and codex audit green first pass.
 
 ## tend2, for context
