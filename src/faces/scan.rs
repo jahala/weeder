@@ -14,6 +14,7 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::core::catalogue::{self, Face};
+use crate::core::change;
 use crate::core::classify::{classify_file, Lang};
 use crate::core::config::Config;
 use crate::core::finding::Finding;
@@ -178,9 +179,14 @@ fn read_file(root: &Path, path: String) -> Result<TreeFile, String> {
         .as_deref()
         .map(|content| classify_file(&path, content));
     // Only a file in a language weed reads has anything to outline, and the
-    // outline is the expensive half of reading a tree.
+    // outline is the expensive half of reading a tree. A file past the weight
+    // anyone reads is left unparsed for the same reason `check` leaves one: its
+    // lines are still here for a rule that judges lines.
     let outline = match (&content, &classification) {
-        (Some(content), Some(classification)) if classification.lang != Lang::Other => {
+        (Some(content), Some(classification))
+            if classification.lang != Lang::Other
+                && change::reads_as_code(Some(content.len() as u64)) =>
+        {
             reader::outline(Path::new(&path), content)
         }
         _ => Outline::default(),

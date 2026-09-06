@@ -8,12 +8,9 @@
 //! yes to before this change, and saying it again every time somebody edits it
 //! would teach a reviewer to look away.
 
-use crate::core::change::Change;
+use crate::core::change::{Change, READABLE};
 use crate::core::finding::{Finding, Level, Message, Region};
 use crate::core::rules::check::Judgement;
-
-/// The weight above which a file stops being something anyone reads.
-const MEBIBYTE: u64 = 1024 * 1024;
 
 pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
     judged.changes.iter().filter_map(added).collect()
@@ -28,14 +25,14 @@ fn added(change: &Change) -> Option<Finding> {
     if change.after.binary {
         return Some(finding(path, change, Blob::binary(&weight)));
     }
-    (change.after.size? > MEBIBYTE).then(|| finding(path, change, Blob::large(&weight)))
+    (change.after.size? > READABLE).then(|| finding(path, change, Blob::large(&weight)))
 }
 
 /// What the added file weighs, written the way a person reads a size.
 fn weight(change: &Change) -> String {
     let bytes = change.after.size.unwrap_or_default();
-    if bytes >= MEBIBYTE {
-        format!("{} MiB", bytes / MEBIBYTE)
+    if bytes >= READABLE {
+        format!("{} MiB", bytes / READABLE)
     } else {
         format!("{bytes} bytes")
     }
