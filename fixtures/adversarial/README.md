@@ -67,3 +67,10 @@ The same rule applies to a blob. `{{weed:binary}}` is expanded into a run of
 control bytes opening with a NUL, which is git's own test for a file it cannot
 show a diff of and the one weed asks too. G2's `fire/` fixtures write it, and
 this repository carries no blob of its own to prove the point with.
+
+`calibration-audit/` is the one directory here that is not a rule's fixture set:
+it holds the blind re-grade's case packets, verbatim hunks from the pinned corpus
+with weed's own findings beside them, and the raw record of each auditor session.
+They are specimens in the same sense, real diffs that fired a rule, and they live
+under this root so that `[scope] specimens` keeps weed from judging what it
+already judged once. The matrix walks rule ids and never reads this directory.

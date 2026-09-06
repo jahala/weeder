@@ -15,8 +15,8 @@ import tempfile
 
 AUDIT = pathlib.Path("docs/calibration-audit-blind-2026-09.md")
 REPORT = pathlib.Path("docs/calibration-2026-09.md")
-CASE_DIR = pathlib.Path("docs/calibration-audit-blind-2026-09/cases")
-SESSION_DIR = pathlib.Path("docs/calibration-audit-blind-2026-09/sessions")
+CASE_DIR = pathlib.Path("fixtures/adversarial/calibration-audit/blind-2026-09/cases")
+SESSION_DIR = pathlib.Path("fixtures/adversarial/calibration-audit/blind-2026-09/sessions")
 SPENT_SEEDS = {"calibration-audit-blind-2026-09-47"}
 complaints = []
 

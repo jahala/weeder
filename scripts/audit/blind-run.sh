@@ -20,7 +20,7 @@ root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
 seed="${1:?seed required}"
 jobs="${2:-4}"
-base="docs/calibration-audit-blind-2026-09"
+base="fixtures/adversarial/calibration-audit/blind-2026-09"
 cases="$base/cases"
 sessions="$base/sessions"
 only="${WEED_AUDIT_ONLY:-}"
@@ -134,6 +134,6 @@ out = [
 out += [f"| {repo} | `{sha[:10]}` | {verdict} | {reason} |" for repo, sha, verdict, reason, _ in blocked]
 out += ["", "## Recall Case Sample", "", "| Rule | Language | Repository | Commit | Path | Auditor verdict | Reasoning |", "|---|---|---|---|---|---|---|"]
 out += [f"| {rule} | {lang} | {repo} | `{sha}` | `{path}` | {verdict} | {reason} |" for rule, lang, repo, sha, path, verdict, reason in recall]
-(base.parent / "calibration-audit-blind-2026-09.md").write_text("\n".join(out) + "\n", encoding="utf-8")
+pathlib.Path("docs/calibration-audit-blind-2026-09.md").write_text("\n".join(out) + "\n", encoding="utf-8")
 print(f"blind audit written: blocked {b_agreed}/{len(blocked)}, recall {r_agreed}/{len(recall)}")
 PY

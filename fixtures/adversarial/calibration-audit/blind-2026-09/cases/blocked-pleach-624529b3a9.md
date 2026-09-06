@@ -354,7 +354,7 @@ index 0000000..8c2424b
 +    const h = makeHarness({
 +      changedByNode: { x: ['src/config.ts'] },
 +      stagedDiffByNode: {
-+        x: '+++ b/src/config.ts\n+const k = "AKIAIOSFODNN7EXAMPLE";\n',
++        x: '+++ b/src/config.ts\n+const k = "<published example credential, stamp AKIA>";\n',
 +      },
 +    });
 +    const summary = await runPlan(promptPlan(1), h.deps, OPTS);
@@ -454,7 +454,7 @@ index 0000000..57c91f1
 +    const diff = [
 +      'diff --git a/src/config.ts b/src/config.ts',
 +      '+++ b/src/config.ts',
-+      '+const key = "AKIAIOSFODNN7EXAMPLE";',
++      '+const key = "<published example credential, stamp AKIA>";',
 +    ].join('\n');
 +    const r = checkDiffHygiene({
 +      workKind: 'prompt',
@@ -481,7 +481,7 @@ index 0000000..57c91f1
 +
 +  test('REMOVING a secret is not a violation (deleted lines are not scanned)', () => {
 +    const diff =
-+      '+++ b/src/config.ts\n-const key = "AKIAIOSFODNN7EXAMPLE";\n+const key = env.KEY;\n';
++      '+++ b/src/config.ts\n-const key = "<published example credential, stamp AKIA>";\n+const key = env.KEY;\n';
 +    const r = checkDiffHygiene({
 +      workKind: 'prompt',
 +      stagedFiles: ['src/config.ts'],

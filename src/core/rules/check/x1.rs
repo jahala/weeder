@@ -102,6 +102,18 @@ const PUBLISHED: &[(&str, &str)] = &[
     ("sk_test_", "4eC39HqLyjWDarjtT1zdp7dc"),
 ];
 
+/// The published examples, joined, for a writer that must not carry one whole:
+/// a packet of real hunks quotes whatever the corpus quoted, and a scanner that
+/// does not know a textbook from a key reads the packet too. The join happens
+/// here at the call and nowhere in a file.
+#[must_use]
+pub fn published_examples() -> Vec<(String, &'static str)> {
+    PUBLISHED
+        .iter()
+        .map(|(stamp, tail)| (format!("{stamp}{tail}"), *stamp))
+        .collect()
+}
+
 /// How long a value has to be before disorder means anything, and how disordered
 /// it has to be. Four bits a character is above English prose and below the
 /// base64 of random bytes.
