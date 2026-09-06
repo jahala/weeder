@@ -220,11 +220,11 @@ fn parse_rule_setting(rule: &str, value: &str) -> Result<RuleSetting, ConfigErro
 }
 
 /// What the catalogue's default level means as a config setting: scan rules are
-/// on or off, check rules carry a level.
+/// on or off, the rules that judge a change carry a level.
 fn default_setting(rule: &Rule) -> RuleSetting {
     match rule.face {
         Face::Scan => RuleSetting::On,
-        Face::Check => match rule.default_level {
+        Face::Check | Face::Bite => match rule.default_level {
             Level::Block => RuleSetting::Block,
             Level::Warn | Level::Note => RuleSetting::Warn,
         },

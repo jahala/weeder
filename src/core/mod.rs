@@ -1,3 +1,4 @@
+pub mod bite;
 pub mod catalogue;
 pub mod change;
 pub mod classify;
@@ -18,6 +19,7 @@ pub mod suppress;
 pub mod syntax;
 pub mod tree;
 
+pub use bite::{Trial, Verdict};
 pub use catalogue::{Face, Rule};
 pub use change::{Change, Side};
 pub use classify::{classify_file, Classification, FileKind, Lang};

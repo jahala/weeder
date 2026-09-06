@@ -352,6 +352,102 @@ pub fn config_unset(root: &Path, key: &str) -> Result<(), GitError> {
     }
 }
 
+/// The settings weed's own commits are made under. A machine with no identity
+/// configured still has to be able to build the state a test runs in, and the
+/// author of a commit nobody will ever see is weed itself. Signing is off for
+/// the same reason: a key that wants a passphrase would hold the run forever.
+const AUTHORING: [&str; 3] = [
+    "user.name=weed bite",
+    "user.email=bite@weed.invalid",
+    "commit.gpgsign=false",
+];
+
+/// What happened to a commit weed tried to apply.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Applied {
+    /// The change is in the worktree, as a commit of its own.
+    Clean,
+    /// git would not apply it, and this is what it said about that.
+    Refused { message: String },
+}
+
+/// A second working tree of this repository, checked out at a commit, at a path
+/// of weed's choosing. `bite` needs one: it runs a test command over states the
+/// caller's own checkout must never be made to hold.
+pub fn add_worktree(root: &Path, at: &Path, commit: &str) -> Result<(), GitError> {
+    let arguments = [
+        OsStr::new("worktree"),
+        OsStr::new("add"),
+        OsStr::new("--detach"),
+        at.as_os_str(),
+        OsStr::new(commit),
+    ];
+    let added = attempt_os(root, &[], &arguments)?;
+    if added.code == 0 {
+        Ok(())
+    } else {
+        Err(GitError::Refused {
+            command: format!("worktree add {}", at.display()),
+            message: first_line(&added.stderr),
+        })
+    }
+}
+
+/// A worktree taken away again, with whatever the command that ran in it left
+/// behind. A judge that scatters checkouts across a machine is one nobody runs
+/// twice, so this is called on the way out of every path, verdict or refusal.
+pub fn remove_worktree(root: &Path, at: &Path) -> Result<(), GitError> {
+    let arguments = [
+        OsStr::new("worktree"),
+        OsStr::new("remove"),
+        OsStr::new("--force"),
+        at.as_os_str(),
+    ];
+    let removed = attempt_os(root, &[], &arguments)?;
+    if removed.code == 0 {
+        return Ok(());
+    }
+    // git keeps its own record of a worktree beside the repository. Where the
+    // checkout could not be taken away, the record still can be, so the next
+    // run is not judged by the leavings of this one.
+    attempt(root, &["worktree", "prune"])?;
+    Err(GitError::Refused {
+        command: format!("worktree remove {}", at.display()),
+        message: first_line(&removed.stderr),
+    })
+}
+
+/// One commit's change, applied on top of whatever a worktree holds, as a
+/// commit of its own. The hooks are told to stay out of it: a repository whose
+/// hooks judge a commit must not get to judge the states weed builds to ask a
+/// question, and weed's own guard is one of those hooks.
+pub fn apply_commit(worktree: &Path, commit: &str, message: &str) -> Result<Applied, GitError> {
+    let picked = attempt(worktree, &["cherry-pick", "--no-commit", commit])?;
+    if picked.code != 0 {
+        return Ok(Applied::Refused {
+            message: first_line(&picked.stderr),
+        });
+    }
+    let arguments = [
+        OsStr::new("commit"),
+        OsStr::new("--no-verify"),
+        // A change already present in the base leaves nothing to commit, and
+        // the state to run the tests in is the same either way.
+        OsStr::new("--allow-empty"),
+        OsStr::new("--message"),
+        OsStr::new(message),
+    ];
+    let committed = attempt_os(worktree, &AUTHORING, &arguments)?;
+    if committed.code == 0 {
+        Ok(Applied::Clean)
+    } else {
+        Err(GitError::Refused {
+            command: format!("commit {commit}"),
+            message: first_line(&committed.stderr),
+        })
+    }
+}
+
 fn head_or_empty_tree(root: &Path) -> Result<String, GitError> {
     match resolve_ref(root, "HEAD") {
         Ok(commit) => Ok(commit),
@@ -447,11 +543,24 @@ impl Attempt {
 /// One git invocation. Its config comes from the repository alone: a global
 /// `quotepath` or an external diff driver must not change what weed judges.
 fn attempt(directory: &Path, arguments: &[&str]) -> Result<Attempt, GitError> {
+    let arguments: Vec<&OsStr> = arguments.iter().map(|word| OsStr::new(*word)).collect();
+    attempt_os(directory, &[], &arguments)
+}
+
+/// The same invocation, with settings of weed's own in front of it and
+/// arguments that are paths rather than words. A path this machine hands weed
+/// is not promised to be utf-8, and a worktree is named by one.
+fn attempt_os(
+    directory: &Path,
+    settings: &[&str],
+    arguments: &[&OsStr],
+) -> Result<Attempt, GitError> {
     let output = Command::new("git")
         .arg("-C")
         .arg(directory.as_os_str())
         .args(["-c", "core.quotepath=false"])
-        .args(arguments.iter().map(OsStr::new))
+        .args(settings.iter().flat_map(|setting| ["-c", setting]))
+        .args(arguments)
         .output()
         .map_err(|error| GitError::Unavailable {
             message: error.to_string(),
