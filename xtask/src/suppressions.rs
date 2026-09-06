@@ -31,8 +31,9 @@ pub struct Installed {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RepoRate {
     pub name: String,
-    pub reference: String,
-    /// The whole default branch, which is the ground the rate stands on.
+    /// The commit the corpus pins the history at.
+    pub tip: String,
+    /// Every commit reaching the pin, which is the ground the rate stands on.
     pub commits: usize,
     /// Nothing where guard was never installed.
     pub installed: Option<Installed>,
@@ -72,13 +73,18 @@ impl RepoRate {
 
 /// Count the allowances one repository wrote, leaving it as it was found.
 pub fn measure(repo: &Repo, scratch_parent: &Path) -> Result<RepoRate, Box<dyn Error>> {
-    let before = fingerprint(&repo.path)?;
+    let Some(local) = repo.local() else {
+        // A url is read over upload-pack, which hands objects out and takes
+        // nothing in. There is nothing on this machine for the run to disturb.
+        return count(repo, scratch_parent);
+    };
+    let before = fingerprint(&local)?;
     let rate = count(repo, scratch_parent);
-    let after = fingerprint(&repo.path)?;
+    let after = fingerprint(&local)?;
     if before != after {
         return Err(format!(
             "{} changed while it was being read, so the rate is not of the history it names. run the measurement on a checkout nothing else is working in.",
-            repo.path.display()
+            local.display()
         )
         .into());
     }
@@ -86,8 +92,7 @@ pub fn measure(repo: &Repo, scratch_parent: &Path) -> Result<RepoRate, Box<dyn E
 }
 
 fn count(repo: &Repo, scratch_parent: &Path) -> Result<RepoRate, Box<dyn Error>> {
-    let scratch = Scratch::fetch(scratch_parent, &repo.name, &repo.path)?;
-    let reference = crate::repo::default_ref(&repo.path)?;
+    let scratch = Scratch::fetch(scratch_parent, &repo.name, &repo.source, &repo.tip)?;
     let history = scratch.history()?;
     let installed = install(&scratch)?;
     let at = installed
@@ -108,7 +113,7 @@ fn count(repo: &Repo, scratch_parent: &Path) -> Result<RepoRate, Box<dyn Error>>
 
     Ok(RepoRate {
         name: repo.name.clone(),
-        reference,
+        tip: repo.tip.clone(),
         commits: history.len(),
         commits_since: history.len() - at,
         trailers_since: trailers(&history[at..]),

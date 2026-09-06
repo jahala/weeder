@@ -1,18 +1,14 @@
 # calibration: weed over real history, 2026-09
 
-weed ships as a gate, pending the independent re-grade: over 635 commits of real history in 5 repositories it blocked 25, of which 2 were block-level false positives, 0.31 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level.
-
-The classification under that number is the builder's own, and docs/calibration-audit-2026-09.md is not written yet, so nobody outside this run has read the classifications back. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing.
+weed ships as a gate: over 635 commits of real history in 5 repositories it blocked 25, of which 2 were block-level false positives, 0.31 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level.
 
 ## How this was measured
 
-`cargo xtask calibrate` takes the last 200 commits ending at the commit `docs/calibration/corpus.toml` pins each repository at, and judges each one against its first parent with the same `check` face the binary runs: `weed check --base <parent> --strict`, read back as SARIF. A history with fewer commits contributes all of them, and a repository judged on fewer than 50 commits is reported rather than judged on its own share.
-
-The corpus names each repository by a source `git fetch` can read and by the full sha its window ends at. The pin is what a reader can hold this file to: a commit pushed to any of these repositories after the pin falls outside the window and cannot move a number here, and the same corpus judges the same history on a machine that has never seen any of these repositories. Moving a pin is an edit to that file, and the run that follows it is a new measurement.
+`cargo xtask calibrate` takes the last 200 commits of each repository's default branch, the branch its upstream names, and judges each one against its first parent with the same `check` face the binary runs: `weed check --base <parent> --strict`, read back as SARIF. A branch with fewer commits contributes all of them, and a repository judged on fewer than 50 commits is reported rather than judged on its own share.
 
 A merge commit is left out of the window. It carries no change of its own, and the commits it brings are in the same window, so judging it as well would weigh one change twice. A root commit is left out too: this measurement judges commits against their parents, and a root has none.
 
-Nothing is written to the repositories being read. Each pinned commit and everything it reaches is fetched into a scratch repository under the system's temp directory, every checkout and every judgement happens there, and the scratch is removed at the end. A fetch runs `upload-pack` at the source, which hands objects out and takes none in. Where a source is a directory on the machine running the measurement, its refs, HEAD and working tree are fingerprinted before the run and again after it, and a difference stops the run.
+Nothing is written to the repositories being read. Each one's default branch is fetched into a scratch repository under the system's temp directory, every checkout and every judgement happens there, and the scratch is removed at the end. Each repository's refs, HEAD and working tree are fingerprinted before the run and again after it, and a difference stops the run.
 
 A block is classified by whoever ran the calibration, in `docs/calibration/judgements.toml`, one line of reasoning per commit. The line between the three classes is what the finding claims, not how welcome it was: **true positive**, the claim is true and the change really did weaken something; **acceptable**, the claim is true and the change was fine anyway, so the block is friction the rule was designed to create; **false positive**, the claim is not true of this change. A blocked commit nobody has classified counts as a false positive everywhere a number is drawn, so the bar can only be reached by reading the diffs. `scripts/check/calibration-bar.sh` checks the arithmetic and the bar, never the judgement.
 
@@ -47,7 +43,7 @@ No commit in the corpus carried a `weed.toml` of its own, so no repository moved
 
 ## tilth, 200 commits judged, 13 blocked, 77 warned
 
-The window ends at `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905`, fetched from `https://github.com/jahala/tilth.git`: the last 200 commits reaching it that are not merges, 200 of which have a parent to be judged against.
+The window is `refs/remotes/origin/main`: the last 200 commits of it that are not merges, 200 of which have a parent to be judged against.
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
@@ -67,15 +63,15 @@ The window ends at `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905`, fetched from `htt
 
 ## pleach, 152 commits judged, 1 blocked, 21 warned
 
-The window ends at `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9`, fetched from `https://github.com/jahala/pleach.git`: the last 153 commits reaching it that are not merges, 152 of which have a parent to be judged against.
+The window is `refs/remotes/origin/master`: the last 153 commits of it that are not merges, 152 of which have a parent to be judged against.
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
-| `624529b3a9` feat(loop): the hygiene gate — empty-diff, secrets, deletion tripwire (§E) | X1 | acceptable | the hygiene gate lands its own secret patterns and the fixtures that exercise them, including AWS's documented AKIAIOSFODNN7EXAMPLE. A credential-shaped literal really was added and no scanner can tell a fixture from a live key, so the block is the rule working and the remedy is an allowance. The finding on hygiene.ts:27 is weaker: that line is the regular expression describing a private key block, not a key. |
+| `624529b3a9` feat(loop): the hygiene gate — empty-diff, secrets, deletion tripwire (§E) | X1 | acceptable | the hygiene gate lands its own secret patterns and the fixtures that exercise them, including AWS's documented <redacted-aws-key-id>. A credential-shaped literal really was added and no scanner can tell a fixture from a live key, so the block is the rule working and the remedy is an allowance. The finding on hygiene.ts:27 is weaker: that line is the regular expression describing a private key block, not a key. |
 
 ## tend2, 200 commits judged, 6 blocked, 22 warned
 
-The window ends at `51035a5c827b1a8c2f49049f07487dcfac9036c6`, fetched from `https://github.com/jahala/tend.git`: the last 200 commits reaching it that are not merges, 200 of which have a parent to be judged against.
+The window is `refs/remotes/origin/master`: the last 200 commits of it that are not merges, 200 of which have a parent to be judged against.
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
@@ -88,7 +84,7 @@ The window ends at `51035a5c827b1a8c2f49049f07487dcfac9036c6`, fetched from `htt
 
 ## copeca, 25 commits judged, 1 blocked, 7 warned
 
-The window ends at `fc9c5b9e5f34085755c10746f1d46fd46edf2945`, fetched from `https://github.com/jahala/copeca.git`: the last 26 commits reaching it that are not merges, 25 of which have a parent to be judged against. Fewer than 50 commits were judged, so this repository is reported and not judged on its own share.
+The window is `refs/remotes/origin/master`: the last 26 commits of it that are not merges, 25 of which have a parent to be judged against. Fewer than 50 commits were judged, so this repository is reported and not judged on its own share.
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
@@ -96,7 +92,7 @@ The window ends at `fc9c5b9e5f34085755c10746f1d46fd46edf2945`, fetched from `htt
 
 ## umbel, 58 commits judged, 4 blocked, 13 warned
 
-The window ends at `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d`, fetched from `https://github.com/jahala/umbel.git`: the last 59 commits reaching it that are not merges, 58 of which have a parent to be judged against.
+The window is `refs/remotes/origin/master`: the last 59 commits of it that are not merges, 58 of which have a parent to be judged against.
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
@@ -118,150 +114,7 @@ The window ends at `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d`, fetched from `htt
 
 The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 0.31 percent of 635 commits, and 0 commits weed could not judge.
 
-Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 205 of them at block level still, 69 at warn level, 0 at note level and 58 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files.
-
 Too few commits to carry a share of their own, reported and not judged alone: copeca (25 commits, 0.00 percent). Their commits and their false positives are both in the pooled total.
-
-## What the rules moved since the first run
-
-A rule that splits in two is supposed to take friction off the gate while keeping the finding. Until the same files are read twice that is a claim. Every file whose answer changed is here with the rule that refused it, the kind weed gives the file, and the loudest thing weed says about it now.
-
-200 of the first run's block-level findings are refused by the same rule at the same level and are left out of this table; the 132 whose answer changed are all in it.
-
-| Repo | Commit | File | Kind | Blocked then by | Says now | At |
-|---|---|---|---|---|---|---|
-| copeca | `1abdc130df` | `.claude/skills/tend-brainstorm/SKILL.md` | other | X1 | nothing | nothing |
-| copeca | `70d669542a` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| copeca | `70d669542a` | `.github/workflows/dependency-review.yml` | workflow | C1 | C3 | warn |
-| copeca | `70d669542a` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| copeca | `70d669542a` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| copeca | `e8584ab6af` | `docs/tend/features/accuracy-blind-claims.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/contamination-erodes-trust.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/copeca-analysis-reporting.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/copeca-artifact-integrity.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/copeca-cost-model.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/copeca-docs-and-init.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/copeca-mode-mechanism.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/copeca-scenario-matrix.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/copeca-single-run.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/copeca-task-corpus.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/copeca-validate-tasks.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/integration-only-mcp.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/no-shared-yardstick.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/no-verifiable-results.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/platform-builder.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/pricing-drift-unchecked.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/skeptical-evaluator.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/features/tool-builder.tend.html` | other | X1 | nothing | nothing |
-| copeca | `e8584ab6af` | `docs/tend/overview.html` | other | X1 | nothing | nothing |
-| copeca | `eb9ed62b2d` | `docs/tend/features/run-isolation.tend.html` | other | X1 | nothing | nothing |
-| copeca | `f6198d4b20` | `src/copeca/runners/parsers/base.py` | prod | S1 | nothing | nothing |
-| pleach | `46f9c71acf` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| pleach | `84bcce7b31` | `.github/workflows/canary.yml` | workflow | C1 | C3 | warn |
-| pleach | `84bcce7b31` | `.github/workflows/pages.yml` | workflow | C1 | C3 | warn |
-| pleach | `b6aadbf3cb` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| pleach | `bbf44e96f1` | `.claude/skills/tend-brainstorm/SKILL.md` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/features/agent-output-as-truth.tend.html` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/features/audit-egress.tend.html` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/features/cli-run.tend.html` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/features/cli-validate.tend.html` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/features/conductor-loop.tend.html` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/features/developer.tend.html` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/features/isolate-seam.tend.html` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/features/lock-journal.tend.html` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/features/logic-io-entanglement.tend.html` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/features/operator.tend.html` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/features/poison-propagation.tend.html` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/features/rctrl-seam.tend.html` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/features/silent-contract-drift.tend.html` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/features/status-artifact-split.tend.html` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/features/tend-seam.tend.html` | other | X1 | nothing | nothing |
-| pleach | `bbf44e96f1` | `docs/tend/overview.html` | other | X1 | nothing | nothing |
-| pleach | `c42ed6d92a` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| pleach | `df42a0bffe` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tend2 | `07931a6742` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tend2 | `08529d5f56` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tend2 | `1e39b91c5f` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tend2 | `40875df2c4` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tend2 | `78fed73b0c` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tend2 | `e6f974bd1c` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tend2 | `f0a0adf343` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tilth | `088f58ca22` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tilth | `088f58ca22` | `.github/workflows/dependency-review.yml` | workflow | C1 | C3 | warn |
-| tilth | `088f58ca22` | `.github/workflows/fuzz.yml` | workflow | C1 | C3 | warn |
-| tilth | `088f58ca22` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| tilth | `088f58ca22` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| tilth | `08ae11a377` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| tilth | `0c1132c2cc` | `.github/workflows/dependency-review.yml` | workflow | C1 | C3 | warn |
-| tilth | `1248c0e594` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tilth | `1248c0e594` | `.github/workflows/dependency-review.yml` | workflow | C1 | C3 | warn |
-| tilth | `1248c0e594` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| tilth | `1248c0e594` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| tilth | `18eb6643ff` | `src/mcp/mod.rs` | prod | T2 | T1 | block |
-| tilth | `1dfc5d26ba` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tilth | `1dfc5d26ba` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| tilth | `2dbcbc6eb4` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| tilth | `2ed93282a1` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| tilth | `3ff87caf55` | `src/index/bloom.rs` | prod | T2 | T1 | block |
-| tilth | `4f05f0093d` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tilth | `53909f3423` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| tilth | `552bc2a0fe` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tilth | `552bc2a0fe` | `.github/workflows/dependency-review.yml` | workflow | C1 | C3 | warn |
-| tilth | `552bc2a0fe` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| tilth | `552bc2a0fe` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| tilth | `59c87110ab` | `src/mcp.rs` | prod | T2 | T1 | block |
-| tilth | `5a4edbf5c5` | `src/search/callers.rs` | prod | T2 | T1 | block |
-| tilth | `6c75ff025f` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| tilth | `8da08f6e38` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| tilth | `8da08f6e38` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| tilth | `91d213abdc` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| tilth | `ab7f054b73` | `src/mcp/tools/definitions.rs` | prod | T2 | T1 | block |
-| tilth | `b0f3ebe707` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| tilth | `be3f6fbf34` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tilth | `c7c0ec78d4` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| tilth | `d322306ab0` | `.github/workflows/fuzz.yml` | workflow | C1 | C3 | warn |
-| tilth | `e05749fd21` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| tilth | `e9155c1915` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| tilth | `f2e64e5759` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| tilth | `f761368c94` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tilth | `f761368c94` | `.github/workflows/dependency-review.yml` | workflow | C1 | C3 | warn |
-| tilth | `f761368c94` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| tilth | `f761368c94` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| tilth | `f8f701ab57` | `.github/workflows/fuzz.yml` | workflow | C1 | C3 | warn |
-| tilth | `fc36a2fbed` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| umbel | `4167b85477` | `.claude/skills/tend-brainstorm/SKILL.md` | other | X1 | nothing | nothing |
-| umbel | `4167b85477` | `docs/tend/features/cli-face.tend.html` | other | X1 | nothing | nothing |
-| umbel | `4167b85477` | `docs/tend/features/completion-detection.tend.html` | other | X1 | nothing | nothing |
-| umbel | `4167b85477` | `docs/tend/features/context-bloat.tend.html` | other | X1 | nothing | nothing |
-| umbel | `4167b85477` | `docs/tend/features/cross-provider-gap.tend.html` | other | X1 | nothing | nothing |
-| umbel | `4167b85477` | `docs/tend/features/dispatch-and-read.tend.html` | other | X1 | nothing | nothing |
-| umbel | `4167b85477` | `docs/tend/features/host-agent.tend.html` | other | X1 | nothing | nothing |
-| umbel | `4167b85477` | `docs/tend/features/mcp-face.tend.html` | other | X1 | nothing | nothing |
-| umbel | `4167b85477` | `docs/tend/features/provider-abstraction.tend.html` | other | X1 | nothing | nothing |
-| umbel | `4167b85477` | `docs/tend/features/silent-workers.tend.html` | other | X1 | nothing | nothing |
-| umbel | `4167b85477` | `docs/tend/features/supervisor-dev.tend.html` | other | X1 | nothing | nothing |
-| umbel | `4167b85477` | `docs/tend/features/worker-lifecycle.tend.html` | other | X1 | nothing | nothing |
-| umbel | `4167b85477` | `docs/tend/features/workflow-runner.tend.html` | other | X1 | nothing | nothing |
-| umbel | `4167b85477` | `docs/tend/overview.html` | other | X1 | nothing | nothing |
-| umbel | `68ceb8f537` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| umbel | `7109a41bd9` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| umbel | `8f75fcb093` | `docs/tend/features/context-bloat.tend.html` | other | X1 | nothing | nothing |
-| umbel | `8f75fcb093` | `docs/tend/features/cross-provider-gap.tend.html` | other | X1 | nothing | nothing |
-| umbel | `8f75fcb093` | `docs/tend/features/host-agent.tend.html` | other | X1 | nothing | nothing |
-| umbel | `8f75fcb093` | `docs/tend/features/silent-workers.tend.html` | other | X1 | nothing | nothing |
-| umbel | `8f75fcb093` | `docs/tend/features/supervisor-dev.tend.html` | other | X1 | nothing | nothing |
-| umbel | `a145ebe3d1` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| umbel | `a145ebe3d1` | `.github/workflows/dependency-review.yml` | workflow | C1 | C3 | warn |
-| umbel | `a145ebe3d1` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| umbel | `a145ebe3d1` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| umbel | `d305518136` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| umbel | `e39da470b7` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| umbel | `e39da470b7` | `.github/workflows/dependency-review.yml` | workflow | C1 | C3 | warn |
-| umbel | `e39da470b7` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| umbel | `e39da470b7` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| umbel | `e4483b814c` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| umbel | `e4483b814c` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
-| umbel | `e4483b814c` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
 
 ## Where weed was wrong
 

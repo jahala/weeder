@@ -14,9 +14,9 @@ tests/         integration tests that drive the real `weed` binary on real git r
 fixtures/adversarial/<RULE>/<lang>/{fire,silent}/{before,after}/   one minimal repo history per rule per language: `before/` is committed as HEAD, `after/` is the working tree; a file `after/.weed-commit` carries the commit message (for trailers) and is never copied. A scan rule judges one state, so its fixture carries `before/` alone and the tree is left as `before/` committed it
 schemas/       vendored official schemas (sarif-schema-2.1.0.json)
 xtask/         weed's own measurements, the bench and never the product, a workspace member so they judge with the core the binary ships: `cargo xtask calibrate` writes docs/calibration-2026-09.md, `cargo xtask suppressions` counts the allowances each repository wrote, `cargo xtask mutate` is the recall campaign that plants one anti-pattern per case in real commits of the same corpus and writes the recall section of the same file
-scripts/check/ evidence scripts a loop cites; run.sh is the runner tend2 verify uses
+scripts/check/ evidence scripts a loop cites; run.sh is the runner tend2 verify uses, and scripts/corpus-scratch.sh fetches the calibration corpus at its pins so the evidence reads the same history the measurement did
 scripts/proof/ evidence that starts a real agent session and writes what happened into docs/proof-2026-09.md
-docs/          sarif.md · pleach.md · tend2-seam.md · calibration-2026-09.md · proof-2026-09.md · dogfood.md · dogfood/<loop>.md · tend2/ (the map)
+docs/          sarif.md · pleach.md · tend2-seam.md · calibration-2026-09.md · proof-2026-09.md · dogfood.md · dogfood/<loop>.md · tend2/ (the map) · calibration/ (corpus.toml pins every repository the calibration judges by source and full sha, judgements.toml classifies each block, first-run.toml is what the first run refused and is history rather than output)
 examples/      pleach/plan.json · ci/github.yml
 garden.json    the manifest the umbrella reads (F1); schemas/garden.schema.json is its vendored, flagged schema
 SKILL.md       the whole binary in one file for an agent; its body must name every subcommand and flag `weed --help` prints

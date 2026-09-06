@@ -4,11 +4,13 @@
 # installed, counts none before that day, and the calibration file reports that
 # rate beside precision with the true-positive count on the same line.
 #
-# Every number the measurement gives is recomputed here from git directly: the
-# commit that first brought a guard bundle into the tree, the commits from there
-# to the tip, the trailers on them, and the trailers written before. The marker
-# the install is found by is read out of weed's own source, so the script and the
-# binary cannot drift apart into agreeing about the wrong string.
+# Every number the measurement gives is recomputed here from git directly, in a
+# scratch fetched at the same pins the corpus names rather than in any checkout
+# on this machine: the commit that first brought a guard bundle into the tree,
+# the commits from there to the pin, the trailers on them, and the trailers
+# written before. The marker the install is found by is read out of weed's own
+# source, so the script and the binary cannot drift apart into agreeing about the
+# wrong string.
 #
 # No garden repository has installed guard yet, so every rate today is zero, and
 # a measurement that can only answer zero proves nothing. The suite in
@@ -41,32 +43,16 @@ scratch="$(mktemp -d)"
 trap 'command -v trash >/dev/null 2>&1 && trash "$scratch"' EXIT
 status=0
 
-python3 - "$corpus" > "$scratch/corpus" <<'PY'
-import re, sys
-
-text = open(sys.argv[1], encoding="utf-8").read()
-for block in text.split("[[repo]]")[1:]:
-    name = re.search(r'^\s*name\s*=\s*"([^"]+)"', block, re.M)
-    path = re.search(r'^\s*path\s*=\s*"([^"]+)"', block, re.M)
-    if name and path:
-        print(f"{name.group(1)}\t{path.group(1)}")
-PY
+# The corpus, fetched at its pins into a scratch this script owns.
+bash "$root/scripts/corpus-scratch.sh" "$scratch/corpus-scratch" > "$scratch/corpus"
 [ -s "$scratch/corpus" ] || { echo "$corpus names no repositories" >&2; exit 1; }
 
-# git's own answer, repository by repository.
+# git's own answer, repository by repository, taken at the pin.
 : > "$scratch/expected"
-while IFS=$'\t' read -r name path; do
-  reference="$(git -C "$path" symbolic-ref --quiet refs/remotes/origin/HEAD || true)"
-  if [ -z "$reference" ]; then
-    for candidate in refs/heads/main refs/heads/master; do
-      if git -C "$path" rev-parse --verify --quiet "$candidate" >/dev/null; then reference="$candidate"; break; fi
-    done
-  fi
-  [ -n "$reference" ] || reference="$(git -C "$path" rev-parse --symbolic-full-name HEAD)"
-
-  history="$(git -C "$path" log --reverse --format='%H' "$reference")"
+while IFS=$'\t' read -r name path tip source; do
+  history="$(git -C "$path" log --reverse --format='%H' refs/heads/calibration)"
   commits="$(printf '%s\n' "$history" | grep -c . || true)"
-  install="$(git -C "$path" log --reverse --format='%H' -S"$marker" "$reference" | head -1 || true)"
+  install="$(git -C "$path" log --reverse --format='%H' -S"$marker" refs/heads/calibration | head -1 || true)"
 
   since=0
   trailers_since=0
@@ -82,7 +68,8 @@ while IFS=$'\t' read -r name path; do
       trailers_before=$((trailers_before + allowances))
     fi
   done
-  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$name" "$commits" "$install" "$since" "$trailers_since" "$trailers_before" \
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "$name" "$commits" "$install" "$since" "$trailers_since" "$trailers_before" "$tip" \
     >> "$scratch/expected"
 done < "$scratch/corpus"
 
@@ -102,7 +89,7 @@ complaints = []
 
 expected = []
 for line in open(sys.argv[2], encoding="utf-8").read().splitlines():
-    name, commits, install, since, trailers_since, trailers_before = line.split("\t")
+    name, commits, install, since, trailers_since, trailers_before, tip = line.split("\t")
     expected.append(
         {
             "repo": name,
@@ -111,6 +98,7 @@ for line in open(sys.argv[2], encoding="utf-8").read().splitlines():
             "commits_since_install": int(since),
             "trailers_since_install": int(trailers_since),
             "trailers_before_install": int(trailers_before),
+            "tip": tip,
         }
     )
 
@@ -124,6 +112,10 @@ for want in expected:
             complaints.append(
                 f"{want['repo']}: the measurement says {field}={got[field]} and git says {want[field]}"
             )
+    if got.get("tip") != want["tip"]:
+        complaints.append(
+            f"{want['repo']}: the measurement was taken at {got.get('tip')} and the corpus pins {want['tip']}"
+        )
     installed = (got.get("installed") or {}).get("sha")
     if installed != want["install"]:
         complaints.append(
@@ -179,7 +171,7 @@ for complaint in complaints:
     print(complaint, file=sys.stderr)
 if complaints:
     raise SystemExit(1)
-print(f"{len(expected)} repositories, every rate and every install day the same as git's own")
+print(f"{len(expected)} repositories, every rate and every install day the same as git's own at the pin")
 PY
 
 # The history no garden repository has yet: an install with allowances on both
@@ -187,4 +179,4 @@ PY
 cargo test --package xtask --test suppressions || status=1
 
 [ "$status" -eq 0 ] || exit "$status"
-echo "cargo xtask suppressions: the rate is git's own count from the day guard is installed, zero before, and the calibration file carries it beside precision"
+echo "cargo xtask suppressions: the rate is git's own count at the pin from the day guard is installed, zero before, and the calibration file carries it beside precision"

@@ -5,6 +5,10 @@
 //! Nothing here writes to a source repository. A fetch runs `upload-pack` there
 //! and takes objects away; every ref, every checkout and every judgement happens
 //! in a directory under the system's temp dir that is removed at the end.
+//!
+//! The scratch is cut at the corpus's pin rather than at whatever a branch says
+//! today, so a commit pushed to a source after the pin is not in the window and
+//! cannot move the report.
 
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -49,35 +53,6 @@ pub fn git(directory: &Path, arguments: &[&str]) -> Result<String, GitError> {
         .to_string())
 }
 
-/// Whether git answers a question with a yes rather than an error, for the
-/// questions whose answer is the exit code: does this ref exist, has this commit
-/// a parent.
-fn asks(directory: &Path, arguments: &[&str]) -> bool {
-    git(directory, arguments).is_ok()
-}
-
-/// The branch a repository's history is judged on: the default branch its
-/// upstream names, which is what a gate in CI would run against. The local
-/// branch of the same name is not asked, a checkout on a machine can sit years
-/// behind the branch it was cut from; where there is no upstream at all, the
-/// conventional names are tried in turn, and then whatever HEAD is on.
-pub fn default_ref(source: &Path) -> Result<String, GitError> {
-    if let Ok(reference) = git(
-        source,
-        &["symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"],
-    ) {
-        if !reference.is_empty() {
-            return Ok(reference);
-        }
-    }
-    for candidate in ["refs/heads/main", "refs/heads/master"] {
-        if asks(source, &["rev-parse", "--verify", "--quiet", candidate]) {
-            return Ok(candidate.to_string());
-        }
-    }
-    git(source, &["rev-parse", "--symbolic-full-name", "HEAD"])
-}
-
 /// Everything about a repository that a run could disturb: where HEAD points,
 /// every ref and what it points at, the worktrees it has, and what the working
 /// tree and index hold that the last commit does not. Taken before the
@@ -100,7 +75,7 @@ pub fn fingerprint(source: &Path) -> Result<String, GitError> {
     ))
 }
 
-/// A scratch copy of one repository's default branch, under the system's temp
+/// A scratch copy of one repository, cut at the pin, under the system's temp
 /// dir, that the walk checks out commit by commit and that is removed when the
 /// run ends.
 #[derive(Debug)]
@@ -113,10 +88,11 @@ pub struct Scratch {
 const BRANCH: &str = "refs/heads/calibration";
 
 impl Scratch {
-    /// Fetch a source repository's default branch into a fresh repository under
-    /// `parent`. `git fetch` from a path reads the source and writes nothing to
-    /// it, which is why the walk never adds a worktree over there.
-    pub fn fetch(parent: &Path, name: &str, source: &Path) -> Result<Scratch, GitError> {
+    /// Fetch one commit of a source repository, and everything it reaches, into
+    /// a fresh repository under `parent`, with the pin as the only branch head.
+    /// `git fetch` reads the source and writes nothing to it, which is why the
+    /// walk never adds a worktree over there.
+    pub fn fetch(parent: &Path, name: &str, source: &str, tip: &str) -> Result<Scratch, GitError> {
         let path = parent.join(name);
         std::fs::create_dir_all(&path).map_err(|error| GitError {
             command: format!("init {}", path.display()),
@@ -126,18 +102,15 @@ impl Scratch {
         // A judgement reads a file at a ref, and the walk checks a commit out,
         // so the scratch repository holds the objects rather than borrowing
         // them: nothing it does can reach back into the source.
-        let reference = default_ref(source)?;
-        let refspec = format!("+{reference}:{BRANCH}");
-        git(
-            &path,
-            &[
-                "fetch",
-                "--quiet",
-                "--no-tags",
-                &source.display().to_string(),
-                &refspec,
-            ],
-        )?;
+        git(&path, &["fetch", "--quiet", "--no-tags", source, tip])?;
+        git(&path, &["update-ref", BRANCH, tip])?;
+        let head = git(&path, &["rev-parse", BRANCH])?;
+        if head != tip {
+            return Err(GitError {
+                command: format!("update-ref {BRANCH} {tip}"),
+                message: format!("the scratch for {name} is at {head} and the corpus pins {tip}"),
+            });
+        }
         Ok(Scratch { path })
     }
 
