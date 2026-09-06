@@ -1,13 +1,14 @@
 //! C1, a guardrail was edited.
 //!
 //! A guardrail decides what the other checks do, so any change to one is the
-//! finding: the workflow, the harness settings, the hook, weed's own law. The
-//! two markdown files are read section by section instead, because most of what
-//! they hold is prose and one section of them is law.
+//! finding: the harness settings, the hook, weed's own law. The two markdown
+//! files are read section by section instead, because most of what they hold is
+//! prose and one section of them is law.
 //!
-//! The neighbour is the pair that looks the same and is not: a file under
-//! `.github/` that owns nothing but review, and a paragraph of `AGENTS.md`
-//! three sections away from the limits.
+//! The neighbours are the three that look the same and are not: a file under
+//! `.github/` that owns nothing but review, a paragraph of `AGENTS.md` three
+//! sections away from the limits, and a workflow, which is a by-law C3 warns
+//! about rather than a constitution C1 stops a commit over.
 
 mod common;
 
@@ -17,14 +18,17 @@ use common::{fixture, fixture_file, Repo};
 const CASE: &str = "paths";
 
 /// Every guardrail path the rule names, as the fire fixture writes them.
-const GUARDRAILS: [&str; 6] = [
+const GUARDRAILS: [&str; 5] = [
     ".claude/settings.json",
     ".codex/config.toml",
     ".gemini/settings.json",
     ".githooks/pre-commit",
-    ".github/workflows/ci.yml",
     "weed.toml",
 ];
+
+/// The by-law the fire fixture edits alongside them. It is a change C3 reports,
+/// and C1 has nothing to say about it.
+const WORKFLOW: &str = ".github/workflows/ci.yml";
 
 /// The instructions file, whose law lives in one section.
 const INSTRUCTIONS: &str = "AGENTS.md";
@@ -38,19 +42,39 @@ fn c1_fires_at_block_level_on_every_guardrail_path_and_inside_the_hard_limits() 
     let run = repo.weed(&["check"]);
 
     assert_eq!(run.code, 2, "a guardrail edit blocks\n{}", run.stderr);
-    let findings = run.findings();
+    let findings: Vec<common::Finding> = run
+        .findings()
+        .into_iter()
+        .filter(|finding| finding.rule == "C1")
+        .collect();
     let mut expected: Vec<String> = GUARDRAILS.iter().map(ToString::to_string).collect();
     expected.push(INSTRUCTIONS.to_string());
     expected.sort();
+    let mut named: Vec<String> = findings
+        .iter()
+        .map(|finding| finding.path.clone())
+        .collect();
+    named.sort();
+    named.dedup();
     assert_eq!(
-        run.paths(),
-        expected,
+        named, expected,
         "every guardrail is named, and nothing else is"
     );
     for finding in &findings {
-        assert_eq!(finding.rule, "C1", "the rule is C1");
         assert_eq!(finding.level, "error", "C1 blocks");
     }
+
+    let changed = repo.git(&["diff", "HEAD", "--name-only"]);
+    assert!(
+        changed.lines().any(|line| line == WORKFLOW),
+        "the workflow must be in the diff, or the silence about it proves nothing"
+    );
+    assert!(
+        run.findings()
+            .iter()
+            .any(|finding| finding.rule == "C3" && finding.path == WORKFLOW),
+        "the workflow edit is C3's to report"
+    );
 
     let after = fixture_file("C1", CASE, "fire/after", INSTRUCTIONS);
     let before = fixture_file("C1", CASE, "fire/before", INSTRUCTIONS);

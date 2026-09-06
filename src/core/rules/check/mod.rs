@@ -13,10 +13,12 @@ use crate::core::rules::configured_level;
 
 pub mod c1;
 pub mod c2;
+pub mod c3;
 pub mod d1;
 pub mod d2;
 pub mod g1;
 pub mod g2;
+pub mod generated;
 pub mod idiom;
 pub mod m1;
 pub mod s1;
@@ -74,6 +76,7 @@ const DETECTORS: &[(&str, Detector)] = &[
     ("X2", x2::evaluate),
     ("C1", c1::evaluate),
     ("C2", c2::evaluate),
+    ("C3", c3::evaluate),
     ("G1", g1::evaluate),
     ("G2", g2::evaluate),
 ];

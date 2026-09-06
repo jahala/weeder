@@ -1,0 +1,5 @@
+pipeline:
+  - name: build
+    run: make build
+  - name: ship
+    run: make ship

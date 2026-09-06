@@ -36,6 +36,9 @@ dependency_lag = 5
 
 [guard]
 protected = ["main", "release"]
+
+[guardrails]
+paths = [".github/workflows/release.yml"]
 "#,
     ))
     .expect("valid config should parse");
@@ -50,6 +53,14 @@ protected = ["main", "release"]
     assert_eq!(config.thresholds.todo_age_days, 14);
     assert_eq!(config.thresholds.dependency_lag, 5);
     assert_eq!(config.protected_branches, vec!["main", "release"]);
+    assert_eq!(
+        config.guardrail_paths,
+        vec![".github/workflows/release.yml"]
+    );
+    assert!(
+        defaults.guardrail_paths.is_empty(),
+        "a repository that names no path of its own holds only the guardrails weed knows"
+    );
 }
 
 #[test]

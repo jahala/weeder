@@ -11,13 +11,17 @@ mod common;
 use common::{suite, workspace, xtask, Repo};
 
 /// A repository with a root commit, a clean commit, a commit that deletes a test
-/// case, and a commit that edits a guardrail file. Two of its four commits
-/// block, and the root is not judged at all: it has no parent.
+/// case, and a commit that edits the harness settings, which is a guardrail.
+/// Two of its four commits block, and the root is not judged at all: it has no
+/// parent.
 fn probe() -> Repo {
     let repo = Repo::init();
     repo.write("src/lib.rs", "pub fn one() -> u32 {\n    1\n}\n");
     repo.write("tests/unit.rs", &suite(3));
-    repo.write(".github/workflows/ci.yml", "name: CI\non: push\n");
+    repo.write(
+        ".claude/settings.json",
+        "{\n  \"hooks\": {\n    \"PreToolUse\": []\n  }\n}\n",
+    );
     repo.commit("the repository begins");
 
     repo.write(
@@ -30,10 +34,10 @@ fn probe() -> Repo {
     repo.commit("one case fewer");
 
     repo.write(
-        ".github/workflows/ci.yml",
-        "name: CI\non: [push, pull_request]\n",
+        ".claude/settings.json",
+        "{\n  \"hooks\": {\n    \"PreToolUse\": [],\n    \"PostToolUse\": []\n  }\n}\n",
     );
-    repo.commit("the workflow runs on pull requests too");
+    repo.commit("the harness runs a hook after a tool too");
     repo
 }
 
@@ -123,7 +127,7 @@ fn a_classified_block_takes_the_class_the_ledger_gives_it() {
         &judgements,
         format!(
             "[[commit]]\nrepo = \"probe\"\nsha = \"{}\"\nclassification = \"true-positive\"\nreasoning = \"a case really did go\"\n\n\
-             [[commit]]\nrepo = \"probe\"\nsha = \"{}\"\nclassification = \"acceptable\"\nreasoning = \"the workflow edit is what C1 watches\"\n",
+             [[commit]]\nrepo = \"probe\"\nsha = \"{}\"\nclassification = \"acceptable\"\nreasoning = \"a harness settings edit is what C1 watches\"\n",
             shas[2], shas[3]
         ),
     )
@@ -190,7 +194,7 @@ fn the_window_is_the_last_commits_and_nothing_older() {
         "a window of two judges the two newest commits:\n{report}"
     );
     assert!(
-        report.contains("the workflow runs on pull requests too"),
+        report.contains("the harness runs a hook after a tool too"),
         "the newest commit is in the window:\n{report}"
     );
     assert!(
