@@ -307,7 +307,7 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 
 ## Recall
 
-Every rule that blocks, T1, T3, S1, X1, C1, G1, catches at least 95 percent of the anti-patterns planted for it, in each of ts, py, rs and go. 2832 cases were planted one anti-pattern at a time in real commits, and 2778 of them were caught on the site they were planted in.
+Every rule that blocks, T1, T3, S1, X1, C1, G1, catches at least 95 percent of the anti-patterns planted for it, in each of ts, py, rs and go. 2791 cases were planted one anti-pattern at a time in real commits, and 2762 of them were caught on the site they were planted in.
 
 The campaign is `cargo xtask mutate`. For each case it checks out a real commit of a corpus repository, plants one anti-pattern in its tree with a scanner that knows nothing about weed's detectors, and runs `weed check --base <parent> --strict`. A case counts as caught only where the rule fires on the file the shape was planted in, on the lines it was planted on where it has lines. A site the unmutated commit already fires that rule on is passed over, so no hit is inherited from the commit itself.
 
@@ -316,11 +316,11 @@ The campaign is `cargo xtask mutate`. For each case it checks out a real commit 
 | Repository | Source | Window ends at | Commits walked | Cases |
 |---|---|---|---|---|
 | cobra | `https://github.com/spf13/cobra.git` | `adbc8813901bba65827259daa8e22ff94ec1f30e` | 200 | 320 |
-| copeca | `https://github.com/jahala/copeca.git` | `fc9c5b9e5f34085755c10746f1d46fd46edf2945` | 15 | 264 |
+| copeca | `https://github.com/jahala/copeca.git` | `fc9c5b9e5f34085755c10746f1d46fd46edf2945` | 15 | 251 |
 | hcl | `https://github.com/hashicorp/hcl.git` | `6abbb088cdb82416d1b3d9fcbaab29534133567a` | 200 | 360 |
 | pleach | `https://github.com/jahala/pleach.git` | `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9` | 21 | 280 |
-| tend2 | `https://github.com/jahala/tend.git` | `51035a5c827b1a8c2f49049f07487dcfac9036c6` | 22 | 280 |
-| tilth | `https://github.com/jahala/tilth.git` | `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905` | 191 | 1048 |
+| tend2 | `https://github.com/jahala/tend.git` | `51035a5c827b1a8c2f49049f07487dcfac9036c6` | 76 | 280 |
+| tilth | `https://github.com/jahala/tilth.git` | `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905` | 191 | 1020 |
 | umbel | `https://github.com/jahala/umbel.git` | `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d` | 34 | 280 |
 
 The garden five are the repositories calibration measures precision on, read from `docs/calibration/corpus.toml` at the commits it pins them at. They carry no Go between them and weed judges Go, so the Go column is measured on two Go projects that `docs/calibration/corpus-go.toml` pins the same way, read exactly as the five are.
@@ -329,103 +329,102 @@ Every window ends at the pin. A commit pushed to one of these sources later is o
 
 Files the injector planted nothing in, counted once for each commit they were read at:
 
-- added by the commit, so nothing in it was there to change: 326
-- carrying a NUL byte, which git writes no text diff for: 70
-- saying a generator wrote it: 623
+- added by the commit, so nothing in it was there to change: 343
+- carrying a NUL byte, which git writes no text diff for: 164
+- saying a generator wrote it: 713
 
 ### Recall, per rule and language
 
-| Rule | Level | Language | Cases | Hits | Misses | Recall |
-|---|---|---|---|---|---|---|
-| T1 | block | ts | 42 | 40 | 2 | 95.2% |
-| T1 | block | py | 34 | 34 | 0 | 100.0% |
-| T1 | block | rs | 40 | 40 | 0 | 100.0% |
-| T1 | block | go | 40 | 40 | 0 | 100.0% |
-| T2 | block | ts | 42 | 42 | 0 | 100.0% |
-| T2 | block | py | 34 | 34 | 0 | 100.0% |
-| T2 | block | rs | 40 | 40 | 0 | 100.0% |
-| T2 | block | go | 40 | 40 | 0 | 100.0% |
-| T3 | block | ts | 42 | 42 | 0 | 100.0% |
-| T3 | block | py | 34 | 34 | 0 | 100.0% |
-| T3 | block | rs | 40 | 40 | 0 | 100.0% |
-| T3 | block | go | 40 | 40 | 0 | 100.0% |
-| T4 | warn | ts | 42 | 39 | 3 | 92.9% |
-| T4 | warn | py | 14 | 14 | 0 | 100.0% |
-| T4 | warn | rs | 40 | 39 | 1 | 97.5% |
-| T4 | warn | go | 0 | 0 | 0 | no cases |
-| T5 | warn | ts | 42 | 42 | 0 | 100.0% |
-| T5 | warn | py | 17 | 17 | 0 | 100.0% |
-| T5 | warn | rs | 40 | 40 | 0 | 100.0% |
-| T5 | warn | go | 20 | 20 | 0 | 100.0% |
-| T6 | warn | ts | 42 | 28 | 14 | 66.7% |
-| T6 | warn | py | 14 | 10 | 4 | 71.4% |
-| T6 | warn | rs | 40 | 40 | 0 | 100.0% |
-| T6 | warn | go | 20 | 20 | 0 | 100.0% |
-| T7 | block | ts | 42 | 42 | 0 | 100.0% |
-| T7 | block | py | 34 | 34 | 0 | 100.0% |
-| T7 | block | rs | 0 | 0 | 0 | no cases |
-| T7 | block | go | 40 | 40 | 0 | 100.0% |
-| M1 | warn | ts | 42 | 42 | 0 | 100.0% |
-| M1 | warn | py | 7 | 7 | 0 | 100.0% |
-| M1 | warn | rs | 18 | 18 | 0 | 100.0% |
-| M1 | warn | go | 40 | 40 | 0 | 100.0% |
-| S1 | block | ts | 42 | 42 | 0 | 100.0% |
-| S1 | block | py | 34 | 34 | 0 | 100.0% |
-| S1 | block | rs | 40 | 40 | 0 | 100.0% |
-| S1 | block | go | 40 | 40 | 0 | 100.0% |
-| S2 | warn | ts | 42 | 42 | 0 | 100.0% |
-| S2 | warn | py | 34 | 33 | 1 | 97.1% |
-| S2 | warn | rs | 40 | 40 | 0 | 100.0% |
-| S2 | warn | go | 40 | 40 | 0 | 100.0% |
-| S3 | warn | ts | 42 | 42 | 0 | 100.0% |
-| S3 | warn | py | 34 | 34 | 0 | 100.0% |
-| S3 | warn | rs | 40 | 40 | 0 | 100.0% |
-| S3 | warn | go | 40 | 40 | 0 | 100.0% |
-| D1 | warn | ts | 42 | 42 | 0 | 100.0% |
-| D1 | warn | py | 33 | 13 | 20 | 39.4% |
-| D1 | warn | rs | 40 | 40 | 0 | 100.0% |
-| D1 | warn | go | 20 | 20 | 0 | 100.0% |
-| D2 | block | ts | 42 | 42 | 0 | 100.0% |
-| D2 | block | py | 14 | 14 | 0 | 100.0% |
-| D2 | block | rs | 40 | 40 | 0 | 100.0% |
-| D2 | block | go | 20 | 11 | 9 | 55.0% |
-| X1 | block | ts | 42 | 42 | 0 | 100.0% |
-| X1 | block | py | 34 | 34 | 0 | 100.0% |
-| X1 | block | rs | 40 | 40 | 0 | 100.0% |
-| X1 | block | go | 40 | 40 | 0 | 100.0% |
-| X2 | block | ts | 42 | 42 | 0 | 100.0% |
-| X2 | block | py | 34 | 34 | 0 | 100.0% |
-| X2 | block | rs | 40 | 40 | 0 | 100.0% |
-| X2 | block | go | 40 | 40 | 0 | 100.0% |
-| C1 | block | ts | 42 | 42 | 0 | 100.0% |
-| C1 | block | py | 35 | 35 | 0 | 100.0% |
-| C1 | block | rs | 40 | 40 | 0 | 100.0% |
-| C1 | block | go | 40 | 40 | 0 | 100.0% |
-| C2 | warn | ts | 42 | 42 | 0 | 100.0% |
-| C2 | warn | py | 32 | 32 | 0 | 100.0% |
-| C2 | warn | rs | 40 | 40 | 0 | 100.0% |
-| C2 | warn | go | 40 | 40 | 0 | 100.0% |
-| C3 | warn | ts | 42 | 42 | 0 | 100.0% |
-| C3 | warn | py | 33 | 33 | 0 | 100.0% |
-| C3 | warn | rs | 40 | 40 | 0 | 100.0% |
-| C3 | warn | go | 40 | 40 | 0 | 100.0% |
-| G1 | block | ts | 42 | 42 | 0 | 100.0% |
-| G1 | block | py | 34 | 34 | 0 | 100.0% |
-| G1 | block | rs | 40 | 40 | 0 | 100.0% |
-| G1 | block | go | 40 | 40 | 0 | 100.0% |
-| G2 | warn | ts | 42 | 42 | 0 | 100.0% |
-| G2 | warn | py | 35 | 35 | 0 | 100.0% |
-| G2 | warn | rs | 40 | 40 | 0 | 100.0% |
-| G2 | warn | go | 40 | 40 | 0 | 100.0% |
+| Rule | Level | Language | Cases | Hits | Misses | Unplantable | Recall |
+|---|---|---|---|---|---|---|---|
+| T1 | block | ts | 42 | 40 | 2 | 0 | 95.2% |
+| T1 | block | py | 34 | 34 | 0 | 0 | 100.0% |
+| T1 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
+| T1 | block | go | 40 | 39 | 1 | 0 | 97.5% |
+| T2 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
+| T2 | block | py | 34 | 34 | 0 | 0 | 100.0% |
+| T2 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
+| T2 | block | go | 40 | 40 | 0 | 0 | 100.0% |
+| T3 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
+| T3 | block | py | 34 | 34 | 0 | 0 | 100.0% |
+| T3 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
+| T3 | block | go | 40 | 40 | 0 | 0 | 100.0% |
+| T4 | warn | ts | 42 | 41 | 1 | 0 | 97.6% |
+| T4 | warn | py | 14 | 14 | 0 | 0 | 100.0% |
+| T4 | warn | rs | 40 | 39 | 1 | 0 | 97.5% |
+| T4 | warn | go | 0 | 0 | 0 | 0 | no cases |
+| T5 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
+| T5 | warn | py | 17 | 17 | 0 | 0 | 100.0% |
+| T5 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
+| T5 | warn | go | 20 | 20 | 0 | 0 | 100.0% |
+| T6 | warn | ts | 42 | 28 | 14 | 0 | 66.7% |
+| T6 | warn | py | 14 | 14 | 0 | 0 | 100.0% |
+| T6 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
+| T6 | warn | go | 20 | 20 | 0 | 0 | 100.0% |
+| T7 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
+| T7 | block | py | 34 | 34 | 0 | 0 | 100.0% |
+| T7 | block | rs | 0 | 0 | 0 | 0 | no cases |
+| T7 | block | go | 40 | 40 | 0 | 0 | 100.0% |
+| M1 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
+| M1 | warn | py | 7 | 7 | 0 | 0 | 100.0% |
+| M1 | warn | rs | 18 | 18 | 0 | 0 | 100.0% |
+| M1 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
+| S1 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
+| S1 | block | py | 34 | 34 | 0 | 0 | 100.0% |
+| S1 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
+| S1 | block | go | 40 | 40 | 0 | 0 | 100.0% |
+| S2 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
+| S2 | warn | py | 34 | 33 | 1 | 0 | 97.1% |
+| S2 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
+| S2 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
+| S3 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
+| S3 | warn | py | 34 | 34 | 0 | 0 | 100.0% |
+| S3 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
+| S3 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
+| D1 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
+| D1 | warn | py | 0 | 0 | 0 | 0 | no cases |
+| D1 | warn | rs | 32 | 32 | 0 | 0 | 100.0% |
+| D1 | warn | go | 20 | 20 | 0 | 0 | 100.0% |
+| D2 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
+| D2 | block | py | 14 | 14 | 0 | 0 | 100.0% |
+| D2 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
+| D2 | block | go | 20 | 11 | 9 | 0 | 55.0% |
+| X1 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
+| X1 | block | py | 34 | 34 | 0 | 0 | 100.0% |
+| X1 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
+| X1 | block | go | 40 | 40 | 0 | 0 | 100.0% |
+| X2 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
+| X2 | block | py | 34 | 34 | 0 | 0 | 100.0% |
+| X2 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
+| X2 | block | go | 40 | 40 | 0 | 0 | 100.0% |
+| C1 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
+| C1 | block | py | 35 | 35 | 0 | 0 | 100.0% |
+| C1 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
+| C1 | block | go | 40 | 40 | 0 | 0 | 100.0% |
+| C2 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
+| C2 | warn | py | 32 | 32 | 0 | 0 | 100.0% |
+| C2 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
+| C2 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
+| C3 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
+| C3 | warn | py | 33 | 33 | 0 | 0 | 100.0% |
+| C3 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
+| C3 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
+| G1 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
+| G1 | block | py | 34 | 34 | 0 | 0 | 100.0% |
+| G1 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
+| G1 | block | go | 40 | 40 | 0 | 0 | 100.0% |
+| G2 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
+| G2 | warn | py | 35 | 35 | 0 | 0 | 100.0% |
+| G2 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
+| G2 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
+
+Unplantable is the column the misses have to be read beside. The injector writes its shape into the tree and then reads the tree back with its own scanner, and where the shape is not there afterwards — a version string that pins nothing, a marker written past the end of the case it was meant for — the case is thrown away rather than counted. It is neither a hit nor a miss: weed was never shown the anti-pattern, so neither number may be charged with it.
 
 ### Every miss
 
 Each of these was planted and not reported. The before and after of every one is kept under the campaign's cache directory, as `cases/<rule>/<language>/<repository>-<commit>`, so a number nobody believes can be replayed by hand. `WEED_RECALL_CACHE` says where that directory is; it sits under the temporary directory otherwise.
 
-- T6 · py · copeca `fc9c5b9e5` · `tests/config/test_loader.py:37`, an error assertion stopped naming the error
-- T6 · py · copeca `1b01df97f` · `tests/runners/test_base_runner.py:62`, an error assertion stopped naming the error
-- T6 · py · copeca `41cfc63ae` · `tests/config/test_loader.py:37`, an error assertion stopped naming the error
-- T6 · py · copeca `70d669542` · `tests/config/test_scenario_loader.py:38`, an error assertion stopped naming the error
+- T1 · go · cobra `3f3b81882` · `doc/man_examples_test.go`, the case `ExampleGenManTree` was deleted
 - S2 · py · copeca `387932ad5` · `tests/e2e/fake_agent.py:61`, a handler was added that catches and says nothing
 - D2 · go · hcl `9466647a1` · `hclwrite/ast_block.go:6`, `hclwrite` was made to import `integrationtest`
 - D2 · go · hcl `bd45ab812` · `hclwrite/format.go:6`, `hclwrite` was made to import `integrationtest`
@@ -453,33 +452,12 @@ Each of these was planted and not reported. The before and after of every one is
 - T6 · ts · tend2 `5b1f7a471` · `test/verify.test.ts:176`, an error assertion stopped naming the error
 - T6 · ts · tend2 `ad070a0d4` · `test/verify.test.ts:176`, an error assertion stopped naming the error
 - T6 · ts · tend2 `99296a937` · `test/verify.test.ts:176`, an error assertion stopped naming the error
-- D1 · py · tilth `f5c0afa97` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `ec06323c7` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `5d3d16ce5` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `1f3c7565c` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `c05475fd4` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `752cb8925` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `35dcaec21` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `49ccc86e9` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `95b0189c7` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `aca137834` · `benchmark/fixtures/setup.py`, a dependency pin was moved
 - T4 · rs · tilth `5b0539e6a` · `src/mcp/write.rs:148`, a wait was widened from 1 to 10
-- D1 · py · tilth `5b0539e6a` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `bd73c8223` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `5fa0c8611` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `ad9eb2cdb` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `e7ef4647e` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `8825050ec` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `9f0d8a289` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `5ff2929b3` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `b4d96c68e` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- D1 · py · tilth `9ebb4c65f` · `benchmark/fixtures/setup.py`, a dependency pin was moved
-- T4 · ts · umbel `ea995c590` · `test/unit/errors.test.ts:61`, a wait was widened from 5000 to 50000
-- T4 · ts · umbel `e4f19b13d` · `test/unit/errors.test.ts:61`, a wait was widened from 5000 to 50000
 
 ### Where a shape had nowhere to go
 
-- T4 · go, no commit of the corpus held a site for this shape: 400 commits offered none, and 0 more were passed over because the commit itself already fires the rule there
+- T4 · go, no commit of the corpus held a site for this shape: 400 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
 - T7 · rs, the language's runner does not collect by name, so no rename takes a case out of the run
+- D1 · py, no commit of the corpus held a site for this shape: 206 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
 
 <!-- recall:end -->
