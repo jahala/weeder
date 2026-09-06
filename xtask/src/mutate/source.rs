@@ -228,10 +228,11 @@ impl Source {
             Language::Go => {
                 let rest = trimmed.strip_prefix("func ")?;
                 let name = rest.split('(').next()?;
-                (name.starts_with("Test")
-                    || name.starts_with("Benchmark")
-                    || name.starts_with("Fuzz"))
-                .then(|| name.to_string())
+                // The four shapes `go test` collects a function by.
+                ["Test", "Benchmark", "Fuzz", "Example"]
+                    .iter()
+                    .any(|collected| name.starts_with(collected))
+                    .then(|| name.to_string())
             }
         }
     }
@@ -298,18 +299,28 @@ impl Source {
         last
     }
 
-    /// The line a block's body opens on: the line after the one that opened it.
+    /// The line a block's body opens on: the line after the one that opens it,
+    /// which is not always the line it was declared on. A signature written
+    /// over several lines opens its body at the brace below it, and a line put
+    /// in front of that is inside the signature rather than inside the body.
     pub fn body_first(&self, first: usize) -> Option<usize> {
         let end = self.block_end(first)?;
-        (end > first).then_some(first + 1)
+        let opens = (first..end).find(|at| {
+            let code = self.code.get(*at).map_or("", String::as_str);
+            match self.lang {
+                Language::Py => code.trim_end().ends_with(':'),
+                _ => code.contains('{'),
+            }
+        })?;
+        (end > opens).then_some(opens + 1)
     }
 
     /// The indentation the body of a block is written at.
     pub fn body_indent(&self, first: usize) -> String {
         let outer = self.lines.get(first).map_or("", String::as_str);
         let inner = self
-            .lines
-            .get(first + 1)
+            .body_first(first)
+            .and_then(|at| self.lines.get(at))
             .filter(|line| !line.trim().is_empty())
             .map_or("", |line| line.as_str());
         let deeper = leading_whitespace(inner);
@@ -336,13 +347,7 @@ impl Source {
             let trimmed = code.trim_start();
             let opens = match self.lang {
                 Language::Py => trimmed.starts_with("def ") || trimmed.starts_with("async def "),
-                Language::Rs => {
-                    trimmed.starts_with("fn ")
-                        || trimmed.starts_with("pub fn ")
-                        || trimmed.starts_with("pub(crate) fn ")
-                        || trimmed.starts_with("async fn ")
-                        || trimmed.starts_with("pub async fn ")
-                }
+                Language::Rs => declares_a_rust_function(trimmed),
                 Language::Go => trimmed.starts_with("func "),
                 Language::Ts => {
                     (trimmed.starts_with("function ")
@@ -498,6 +503,32 @@ pub struct Case {
     pub first: u32,
     /// Zero-based, the line the block closes on.
     pub last: u32,
+}
+
+/// Whether a line declares a Rust function, under whatever it is qualified
+/// with: a visibility, and any of the words that may stand in front of `fn`.
+/// A visibility that names where it reaches, `pub(in crate::mcp)`, is one word
+/// however it is written, so what stands in brackets is set aside first.
+fn declares_a_rust_function(trimmed: &str) -> bool {
+    let Some((before, _)) = trimmed.split_once("fn ") else {
+        return false;
+    };
+    let mut depth = 0i32;
+    let mut plain = String::new();
+    for character in before.chars() {
+        match character {
+            '(' => depth += 1,
+            ')' => depth -= 1,
+            _ if depth == 0 => plain.push(character),
+            _ => {}
+        }
+    }
+    plain.split_whitespace().all(|word| {
+        matches!(
+            word,
+            "pub" | "async" | "const" | "unsafe" | "extern" | "default"
+        ) || word.starts_with('"')
+    })
 }
 
 /// The title a call was given, where the first thing it was handed is a string.

@@ -20,6 +20,7 @@ mod inject;
 mod judge;
 mod report;
 pub use report::section as recall_section;
+mod shape;
 mod source;
 mod tree;
 
@@ -112,6 +113,10 @@ pub struct Outcome {
     /// Sites passed over because the commit itself already fires that rule
     /// there, where a hit would prove nothing.
     pub passed_over: BTreeMap<(String, Language), usize>,
+    /// Cases written into the tree where the shape the rule is about was not
+    /// there afterwards. They are neither hits nor misses: weed was never shown
+    /// the anti-pattern, so it cannot be held to it.
+    pub unplantable: BTreeMap<(String, Language), usize>,
     /// Files that are no site at all, by the reason, counted over every commit
     /// the walk read.
     pub no_site: BTreeMap<tree::Passed, usize>,
@@ -264,6 +269,9 @@ fn joined(mut walked: Vec<(String, usize, Outcome)>) -> Vec<Outcome> {
                 held.impossible.extend(outcome.impossible);
                 for (key, counted) in outcome.passed_over {
                     *held.passed_over.entry(key).or_default() += counted;
+                }
+                for (key, counted) in outcome.unplantable {
+                    *held.unplantable.entry(key).or_default() += counted;
                 }
                 for (reason, counted) in outcome.no_site {
                     *held.no_site.entry(reason).or_default() += counted;
@@ -502,6 +510,14 @@ fn walk(
                 }
 
                 let before = apply(&root, &planted, &tree)?;
+                // The tree is read back before the binary is asked anything: a
+                // shape that is not there is a case about nothing, and weed is
+                // held to neither a hit nor a miss on it.
+                if !shape::present(rule, *lang, &planted, &tree, &before) {
+                    restore(&root, &planted, &tree)?;
+                    *outcome.unplantable.entry(key).or_default() += 1;
+                    continue;
+                }
                 let found = judge::check(binary, &root, &parent, &arguments(&planted, &config));
                 let restored = restore(&root, &planted, &tree);
                 let found = found?;

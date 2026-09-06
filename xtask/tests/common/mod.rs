@@ -340,6 +340,65 @@ impl Bench {
         )
     }
 
+    /// The recall campaign over one repository's history, pinned at its tip.
+    pub fn mutate(&self, name: &str, repo: &Repo, extra: &[&str]) -> Run {
+        self.write_corpus(name, repo.root(), &repo.tip());
+        let mut arguments = self.arguments("mutate", &[]);
+        arguments.extend([
+            "--out".to_string(),
+            self.out().display().to_string(),
+            "--json".to_string(),
+            self.cases().display().to_string(),
+            "--cases-dir".to_string(),
+            self.path().join("kept").display().to_string(),
+        ]);
+        arguments.extend(extra.iter().map(|argument| (*argument).to_string()));
+        // The clones the campaign fetches into land in the bench, so a suite
+        // reads a history it built rather than one another run left behind.
+        xtask_under(
+            &arguments.iter().map(String::as_str).collect::<Vec<&str>>(),
+            self.path(),
+        )
+    }
+
+    /// Where the campaign writes what it planted.
+    pub fn cases(&self) -> PathBuf {
+        self.path().join("cases.json")
+    }
+
+    fn run_json(&self) -> serde_json::Value {
+        let text = std::fs::read_to_string(self.cases())
+            .expect("the campaign should write down what it planted");
+        serde_json::from_str(&text).expect("the campaign should write json")
+    }
+
+    /// Every case the campaign planted.
+    pub fn planted(&self) -> Vec<Planted> {
+        self.run_json()["cases"]
+            .as_array()
+            .expect("the run should carry its cases")
+            .iter()
+            .map(|case| Planted {
+                rule: text_at(case, "rule"),
+                language: text_at(case, "language"),
+                path: text_at(case, "path"),
+                caught: case["caught"].as_bool().unwrap_or_default(),
+            })
+            .collect()
+    }
+
+    /// How many shapes the campaign wrote into a tree and could not read back,
+    /// for one rule in one language.
+    pub fn unplantable(&self, rule: &str, language: &str) -> usize {
+        self.run_json()["unplantable"]
+            .as_array()
+            .expect("the run should carry what it could not plant")
+            .iter()
+            .filter(|held| text_at(held, "rule") == rule && text_at(held, "language") == language)
+            .filter_map(|held| held["cases"].as_u64())
+            .sum::<u64>() as usize
+    }
+
     /// Count one repository's allowances at the commit it is pinned to.
     pub fn suppressions(&self, name: &str, repo: &Repo, tip: &str, extra: &[&str]) -> Run {
         self.write_corpus(name, repo.root(), tip);
@@ -370,6 +429,18 @@ impl Bench {
             .unwrap_or_default()
             .to_string()
     }
+}
+
+/// One case a campaign planted, as it wrote it down.
+pub struct Planted {
+    pub rule: String,
+    pub language: String,
+    pub path: String,
+    pub caught: bool,
+}
+
+fn text_at(held: &serde_json::Value, field: &str) -> String {
+    held[field].as_str().unwrap_or_default().to_string()
 }
 
 /// A test file with `cases` cases in it, each making one assertion.

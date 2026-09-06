@@ -278,7 +278,7 @@ const SLACK_WORDS: &[&str] = &[
 ];
 
 /// Where the first name that reads as a slack ends on this line, if one does.
-fn slack_word(code: &str) -> Option<usize> {
+pub(super) fn slack_word(code: &str) -> Option<usize> {
     let characters: Vec<char> = code.chars().collect();
     let mut at = 0;
     while at < characters.len() {
@@ -308,10 +308,16 @@ fn slack_word(code: &str) -> Option<usize> {
 ///
 /// The number that grows is the one written under the slack word, found in the
 /// code rather than in the line: a year inside a string is not a timeout, and a
-/// version is not a tolerance.
+/// version is not a tolerance. Nor is a number a case claims about: moving the
+/// figure an assertion is written around breaks the case rather than loosening
+/// it, whatever the name beside it reads like.
 fn widen_a_slack(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
     for source in rotate(tree.tests(lang), seed) {
+        let claims = source.assertions();
         for (at, code) in source.code.iter().enumerate() {
+            if claims.contains(&(at as u32)) {
+                continue;
+            }
             let Some(word) = slack_word(code) else {
                 continue;
             };
@@ -337,10 +343,10 @@ fn widen_a_slack(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
     None
 }
 
-/// Where the first number after this position is written, as byte offsets. A
-/// number touching a letter is part of a name, and one with two dots in it is a
-/// version rather than a quantity.
-fn number_span(code: &str, from: usize) -> Option<(usize, usize)> {
+/// Where the first number after this position is written, counted in
+/// characters. A number touching a letter is part of a name, and one with two
+/// dots in it is a version rather than a quantity.
+pub(super) fn number_span(code: &str, from: usize) -> Option<(usize, usize)> {
     let bytes: Vec<char> = code.chars().collect();
     let mut at = from.min(bytes.len());
     while at < bytes.len() {
@@ -447,31 +453,45 @@ fn regenerate_an_expectation(lang: Language, tree: &Tree, seed: u64) -> Option<M
     None
 }
 
-fn is_expectation(path: &str) -> bool {
-    let segments: Vec<&str> = path.split('/').collect();
-    let in_directory = segments
-        .iter()
-        .any(|segment| EXPECTATION_DIRECTORIES.contains(segment));
+pub(super) fn is_expectation(path: &str) -> bool {
+    let in_directory = is_recorded_data(path);
     let recorded = extension(path).is_some_and(|found| EXPECTATION_EXTENSIONS.contains(&found));
     let approved = basename(path).contains(".approved.");
     (in_directory || recorded || approved) && !path.ends_with(".go") && !path.ends_with(".rs")
 }
 
+/// Whether a path sits in one of the directories a repository keeps recorded
+/// material in. What is under one is what a test reads, rather than part of the
+/// program.
+pub(super) fn is_recorded_data(path: &str) -> bool {
+    path.split('/')
+        .any(|segment| EXPECTATION_DIRECTORIES.contains(&segment))
+}
+
 /// T6: the claim about a failure stops naming which failure.
+///
+/// A claim is made inside a case and never on the line that declares one: a
+/// test whose name ends in the word a claim is written with is a name, and
+/// rewriting what stands in its brackets breaks its signature rather than
+/// loosening anything.
 fn weaken_an_error_assertion(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
     for source in rotate(tree.tests(lang), seed) {
-        for (at, code) in source.code.iter().enumerate() {
-            let raw = source.lines.get(at)?;
-            let Some(weakened) = weaker(lang, code, raw) else {
-                continue;
-            };
-            let mut lines = source.lines.clone();
-            *lines.get_mut(at)? = weakened;
-            return Some(
-                Mutation::new("an error assertion stopped naming the error", &source.path)
-                    .writing(&source.path, joined(&lines))
-                    .at(at as u32 + 1, at as u32 + 1),
-            );
+        for case in source.cases() {
+            for at in case.first as usize + 1..=case.last as usize {
+                let (Some(code), Some(raw)) = (source.code.get(at), source.lines.get(at)) else {
+                    continue;
+                };
+                let Some(weakened) = weaker(lang, code, raw) else {
+                    continue;
+                };
+                let mut lines = source.lines.clone();
+                *lines.get_mut(at)? = weakened;
+                return Some(
+                    Mutation::new("an error assertion stopped naming the error", &source.path)
+                        .writing(&source.path, joined(&lines))
+                        .at(at as u32 + 1, at as u32 + 1),
+                );
+            }
         }
     }
     None
@@ -480,24 +500,26 @@ fn weaken_an_error_assertion(lang: Language, tree: &Tree, seed: u64) -> Option<M
 fn weaker(lang: Language, code: &str, raw: &str) -> Option<String> {
     match lang {
         Language::Ts => {
-            let call = ["toThrowError", "toThrow", "rejects.toThrow"]
-                .into_iter()
-                .find(|call| code.contains(&format!(".{call}(")))?;
-            let at = raw.find(&format!(".{call}("))? + call.len() + 2;
-            let end = closing(raw, at - 1)?;
-            if raw[at..end].trim().is_empty() {
+            let at = ["toThrowError", "toThrow"].into_iter().find_map(|call| {
+                call_at(code, &format!(".{call}(")).map(|at| at + call.len() + 2)
+            })?;
+            let end = closing(code, at - 1)?;
+            if chars_between(code, at, end).trim().is_empty() {
                 return None;
             }
-            Some(format!("{}{}", &raw[..at], &raw[end..]))
+            let (first, last) = (at_char(raw, at)?, at_char(raw, end)?);
+            Some(format!("{}{}", &raw[..first], &raw[last..]))
         }
         Language::Py => {
-            let at = raw.find("raises(")? + "raises(".len();
-            let end = closing(raw, at - 1)?;
-            let named = raw[at..end].trim();
-            if named.is_empty() || named == "Exception" {
+            let at = call_at(code, "raises(")? + "raises(".len();
+            let end = closing(code, at - 1)?;
+            let named = chars_between(code, at, end);
+            let named = named.trim();
+            if named.is_empty() || named == "Exception" || named == "BaseException" {
                 return None;
             }
-            Some(format!("{}Exception{}", &raw[..at], &raw[end..]))
+            let (first, last) = (at_char(raw, at)?, at_char(raw, end)?);
+            Some(format!("{}Exception{}", &raw[..first], &raw[last..]))
         }
         Language::Rs => {
             if !code.contains("Err(") {
@@ -508,8 +530,9 @@ fn weaker(lang: Language, code: &str, raw: &str) -> Option<String> {
             // be. What is left is the claim with the kind taken out of it.
             let opened = ["matches!(", "assert_eq!(", "assert_ne!("]
                 .into_iter()
-                .find_map(|macro_name| raw.find(macro_name).map(|at| at + macro_name.len()))?;
-            let subject = raw[opened..].split(',').next()?.trim().to_string();
+                .find_map(|macro_name| call_at(code, macro_name).map(|at| at + macro_name.len()))?;
+            let subject = chars_between(code, opened, code.chars().count());
+            let subject = subject.split(',').next()?.trim().to_string();
             if subject.is_empty() || subject.contains(' ') || subject.contains("Err(") {
                 return None;
             }
@@ -538,6 +561,13 @@ fn rename_out_of_the_runner(lang: Language, tree: &Tree, seed: u64) -> Result<Mu
     }
     for source in rotate(tree.tests(lang), seed) {
         if tree.touched(&source.path) || !lang.collects_file(&source.path) {
+            continue;
+        }
+        // A file the runner collects and that declares no case is somebody's
+        // helpers. Renaming it takes no test out of the run, whatever it is
+        // called, so it is no site for a shape about tests that stopped
+        // running.
+        if source.cases().is_empty() {
             continue;
         }
         let Some(renamed) = uncollected_name(lang, &source.path) else {
@@ -650,7 +680,7 @@ fn double_of(lang: Language, test: &Source, production: &Source) -> Option<Strin
 }
 
 /// A type the file makes available to the rest of the program.
-fn exported_type(source: &Source) -> Option<String> {
+pub(super) fn exported_type(source: &Source) -> Option<String> {
     for code in &source.code {
         let trimmed = code.trim_start();
         let declared = match source.lang {
@@ -681,7 +711,7 @@ fn exported_type(source: &Source) -> Option<String> {
 
 /// The marker a stub is left under, assembled rather than written: weed refuses
 /// a work marker in production code, and the injector is production code.
-fn work_marker() -> String {
+pub(super) fn work_marker() -> String {
     ['T', 'O', 'D', 'O'].iter().collect()
 }
 
@@ -871,12 +901,7 @@ fn leave_a_print(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
 /// D1: what the program is built from changes inside a change about something
 /// else.
 fn change_a_manifest(lang: Language, tree: &Tree, _seed: u64) -> Option<Mutation> {
-    let names: &[&str] = match lang {
-        Language::Ts => &["package.json"],
-        Language::Py => &["pyproject.toml", "requirements.txt", "setup.py", "Pipfile"],
-        Language::Rs => &["Cargo.toml"],
-        Language::Go => &["go.mod"],
-    };
+    let names = manifest_names(lang);
     // The names are in the order the language's own packaging prefers them, and
     // so is the search: a repository that declares its dependencies in
     // `pyproject.toml` is not measured on the `setup.py` beside it.
@@ -884,6 +909,10 @@ fn change_a_manifest(lang: Language, tree: &Tree, _seed: u64) -> Option<Mutation
         .paths
         .iter()
         .filter(|path| names.contains(&basename(path)))
+        // A manifest under a directory of recorded material is a file a test
+        // reads. Nothing is built from it, so moving a pin in it is no change
+        // to what the program is built from, whatever the file is called.
+        .filter(|path| !is_recorded_data(path))
         .filter(|path| !tree.touched(path))
         .collect();
     manifests.sort_by_key(|path| {
@@ -904,14 +933,25 @@ fn change_a_manifest(lang: Language, tree: &Tree, _seed: u64) -> Option<Mutation
     None
 }
 
-/// The file with the first version it pins moved on by one patch.
+/// The files a language's own packaging reads its dependencies out of, in the
+/// order it prefers them.
+pub(super) fn manifest_names(lang: Language) -> &'static [&'static str] {
+    match lang {
+        Language::Ts => &["package.json"],
+        Language::Py => &["pyproject.toml", "requirements.txt", "setup.py", "Pipfile"],
+        Language::Rs => &["Cargo.toml"],
+        Language::Go => &["go.mod"],
+    }
+}
+
+/// The file with the first dependency it pins moved on by one patch.
 fn bump(text: &str) -> Option<String> {
     let mut lines: Vec<String> = text.lines().map(ToString::to_string).collect();
     for line in &mut lines {
-        let Some((at, end)) = version_span(line) else {
+        let Some((at, end)) = dependency_pin(line) else {
             continue;
         };
-        let version = &line[at..end];
+        let version = chars_between(line, at, end);
         let mut parts: Vec<String> = version.split('.').map(ToString::to_string).collect();
         let Some(last) = parts.last_mut() else {
             continue;
@@ -920,13 +960,51 @@ fn bump(text: &str) -> Option<String> {
             continue;
         };
         *last = (patch + 1).to_string();
-        let bumped = format!("{}{}{}", &line[..at], parts.join("."), &line[end..]);
+        let bumped = format!(
+            "{}{}{}",
+            chars_between(line, 0, at),
+            parts.join("."),
+            line.chars().skip(end).collect::<String>()
+        );
         *line = bumped;
         let mut written = lines.join("\n");
         written.push('\n');
         return Some(written);
     }
     None
+}
+
+/// The word a file states its own release under, in every manifest the corpus
+/// writes: `version = "1.4.0"`, `"version": "1.4.0"`, `__version__ = "1.4.0"`.
+const OWN_VERSION: &str = "version";
+
+/// Where the version a line pins a dependency at sits, if the line pins one.
+///
+/// A manifest carries two kinds of version and only one of them says what the
+/// program is built from: the release the project is calling itself, and the
+/// ones it names other people's code by. Moving the first changes nothing about
+/// what is built, so a diff that moved it is no dependency change, however much
+/// it looks like one.
+pub(super) fn dependency_pin(line: &str) -> Option<(usize, usize)> {
+    let (at, end) = version_span(line)?;
+    names_a_dependency(&chars_between(line, 0, at)).then_some((at, end))
+}
+
+/// Whether the text a version is written after names the package it pins,
+/// rather than only the word a file states its own release under.
+fn names_a_dependency(before: &str) -> bool {
+    let mut named = false;
+    let mut word = String::new();
+    for character in before.chars().chain(std::iter::once(' ')) {
+        if character.is_alphanumeric() || matches!(character, '_' | '-' | '.') {
+            word.push(character);
+            continue;
+        }
+        let spelled = word.trim_matches(['_', '-', '.']).to_ascii_lowercase();
+        named |= !spelled.is_empty() && spelled != OWN_VERSION;
+        word.clear();
+    }
+    named
 }
 
 /// Where a `1.2.3` sits in a line, if one does.
@@ -1011,7 +1089,7 @@ fn cross_a_boundary(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> 
 
 /// The part of the repository a file belongs to, as a path prefix: the top
 /// directory, or the one below it where the top is only a wrapper.
-fn layer_of(path: &str) -> Option<String> {
+pub(super) fn layer_of(path: &str) -> Option<String> {
     let segments: Vec<&str> = path.split('/').collect();
     if segments.len() < 2 {
         return None;
@@ -1204,7 +1282,7 @@ fn is_instructions(path: &str) -> bool {
     matches!(path, "AGENTS.md" | "CLAUDE.md")
 }
 
-fn is_guardrail(path: &str) -> bool {
+pub(super) fn is_guardrail(path: &str) -> bool {
     is_instructions(path)
         || path == "weed.toml"
         || path == ".gemini/settings.json"
@@ -1221,6 +1299,24 @@ fn widen_the_limits(path: &str, text: &str) -> Option<Mutation> {
         return None;
     }
     let lines: Vec<&str> = text.lines().collect();
+    let (_, end) = hard_limits(text)?;
+    let mut written: Vec<String> = lines.iter().map(ToString::to_string).collect();
+    written.insert(
+        end,
+        "- unless the change is small enough to be obvious".into(),
+    );
+    Some(
+        Mutation::new("a line was written into the hard limits", path)
+            .writing(path, joined(&written))
+            .at(end as u32 + 1, end as u32 + 1),
+    )
+}
+
+/// The lines a document states its hard limits between: the heading that opens
+/// the section, and the line the next heading of the same depth or shallower
+/// begins on, which is one past the last limit.
+pub(super) fn hard_limits(text: &str) -> Option<(usize, usize)> {
+    let lines: Vec<&str> = text.lines().collect();
     let (at, rank) = lines.iter().enumerate().find_map(|(index, line)| {
         let rank = heading_rank(line)?;
         let title = line.trim_start_matches('#').trim().to_ascii_lowercase();
@@ -1232,16 +1328,7 @@ fn widen_the_limits(path: &str, text: &str) -> Option<Mutation> {
         .skip(at + 1)
         .find(|(_, line)| heading_rank(line).is_some_and(|next| next <= rank))
         .map_or(lines.len(), |(next, _)| next);
-    let mut written: Vec<String> = lines.iter().map(ToString::to_string).collect();
-    written.insert(
-        end,
-        "- unless the change is small enough to be obvious".into(),
-    );
-    Some(
-        Mutation::new("a line was written into the hard limits", path)
-            .writing(path, joined(&written))
-            .at(end as u32 + 1, end as u32 + 1),
-    )
+    Some((at, end))
 }
 
 /// How deep a markdown heading sits, or `None` for a line that is not one.
@@ -1296,7 +1383,7 @@ fn edit_a_workflow(_lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> 
     None
 }
 
-fn is_workflow(path: &str) -> bool {
+pub(super) fn is_workflow(path: &str) -> bool {
     path.starts_with(".github/workflows/") && (path.ends_with(".yml") || path.ends_with(".yaml"))
 }
 
@@ -1442,6 +1529,39 @@ fn leading(line: &str) -> String {
     line.chars().take_while(|c| c.is_whitespace()).collect()
 }
 
+/// Where a call by this name is written on a line, as a character index. The
+/// name has to stand on its own: a function whose own name ends in the word a
+/// claim is written with is a name rather than the claim.
+fn call_at(code: &str, call: &str) -> Option<usize> {
+    let characters: Vec<char> = code.chars().collect();
+    let wanted: Vec<char> = call.chars().collect();
+    if wanted.is_empty() || characters.len() < wanted.len() {
+        return None;
+    }
+    (0..=characters.len() - wanted.len()).find(|at| {
+        characters[*at..*at + wanted.len()] == wanted[..]
+            && !characters
+                .get(at.wrapping_sub(1))
+                .is_some_and(|before| before.is_alphanumeric() || *before == '_')
+    })
+}
+
+/// The characters between two positions, counted the way the masked code counts
+/// them.
+fn chars_between(text: &str, first: usize, last: usize) -> String {
+    text.chars().take(last).skip(first).collect()
+}
+
+/// The byte a character sits at, so a position found in the masked code can be
+/// used to cut the line it was masked from. Masking keeps a character for a
+/// character, and a byte for a byte only where the line is ascii.
+fn at_char(raw: &str, index: usize) -> Option<usize> {
+    raw.char_indices()
+        .nth(index)
+        .map(|(byte, _)| byte)
+        .or_else(|| (index == raw.chars().count()).then_some(raw.len()))
+}
+
 /// Where the parenthesis opened at this index is closed.
 fn closing(line: &str, open: usize) -> Option<usize> {
     let characters: Vec<char> = line.chars().collect();
@@ -1542,6 +1662,48 @@ mod tests {
     fn a_version_is_found_and_moved_on() {
         let bumped = bump("  \"left-pad\": \"^1.2.3\",\n").expect("a version to bump");
         assert_eq!(bumped, "  \"left-pad\": \"^1.2.4\",\n");
+    }
+
+    /// The release a project calls itself is not a dependency, and a diff that
+    /// moved it changes nothing about what the program is built from. The blind
+    /// re-grade of the sample found this planted as a manifest change and
+    /// counted against the rule.
+    #[test]
+    fn the_release_a_project_calls_itself_pins_nothing() {
+        assert_eq!(
+            bump("from setuptools import setup\n\nsetup(\n    version=\"1.2.3\",\n)\n"),
+            None,
+            "the only version in the file is the project's own"
+        );
+        assert_eq!(bump("__version__ = \"1.2.3\"\n"), None);
+        let bumped = bump("[project]\nversion = \"1.2.3\"\ndependencies = [\"httpx==0.27.0\"]\n")
+            .expect("the pin to move");
+        assert!(
+            bumped.contains("version = \"1.2.3\"") && bumped.contains("httpx==0.27.1"),
+            "the pin moves and the project's own release stays where it was:\n{bumped}"
+        );
+        let bumped = bump("serde = { version = \"1.0.3\" }\n").expect("the pin to move");
+        assert_eq!(bumped, "serde = { version = \"1.0.4\" }\n");
+    }
+
+    /// A case named after the failure it is about carries the word in its
+    /// signature, and rewriting what stands in those brackets breaks the case
+    /// rather than loosening any claim.
+    #[test]
+    fn a_name_that_ends_in_the_word_is_no_claim() {
+        assert_eq!(
+            weaker(
+                Language::Py,
+                "    def test_empty_source_raises(self):",
+                "    def test_empty_source_raises(self):"
+            ),
+            None
+        );
+        let line = "        with pytest.raises(SchemaValidationError):";
+        assert_eq!(
+            weaker(Language::Py, line, line),
+            Some("        with pytest.raises(Exception):".to_string())
+        );
     }
 
     #[test]

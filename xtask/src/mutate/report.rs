@@ -47,6 +47,9 @@ struct Row {
     lang: Language,
     cases: usize,
     hits: usize,
+    /// Shapes written into a tree that were not there when it was read back, so
+    /// they were never cases at all.
+    unplantable: usize,
 }
 
 impl Row {
@@ -89,6 +92,10 @@ pub fn write(
                 lang: *lang,
                 cases: counted.len(),
                 hits: counted.iter().filter(|case| case.caught).count(),
+                unplantable: outcomes
+                    .iter()
+                    .filter_map(|outcome| outcome.unplantable.get(&(rule.clone(), *lang)))
+                    .sum(),
             });
         }
     }
@@ -209,24 +216,34 @@ fn corpus_table(outcomes: &[Outcome]) -> String {
 }
 
 fn recall_table(rows: &[Row]) -> String {
-    let mut table =
-        String::from("| Rule | Level | Language | Cases | Hits | Misses | Recall |\n|---|---|---|---|---|---|---|\n");
+    let mut table = String::from(
+        "| Rule | Level | Language | Cases | Hits | Misses | Unplantable | Recall |\n|---|---|---|---|---|---|---|---|\n",
+    );
     for row in rows {
         let recall = match row.recall() {
             Some(recall) => format!("{recall:.1}%"),
             None => "no cases".to_string(),
         };
         table.push_str(&format!(
-            "| {} | {} | {} | {} | {} | {} | {} |\n",
+            "| {} | {} | {} | {} | {} | {} | {} | {} |\n",
             row.rule,
             row.level,
             row.lang.slug(),
             row.cases,
             row.hits,
             row.cases - row.hits,
+            row.unplantable,
             recall
         ));
     }
+    table.push_str(
+        "\nUnplantable is the column the misses have to be read beside. The injector writes its \
+         shape into the tree and then reads the tree back with its own scanner, and where the \
+         shape is not there afterwards — a version string that pins nothing, a marker written \
+         past the end of the case it was meant for — the case is thrown away rather than \
+         counted. It is neither a hit nor a miss: weed was never shown the anti-pattern, so \
+         neither number may be charged with it.\n",
+    );
     table
 }
 
@@ -282,6 +299,10 @@ fn absences(outcomes: &[Outcome], plan: &Plan) -> String {
                 .iter()
                 .filter_map(|outcome| outcome.passed_over.get(&key))
                 .sum();
+            let unplantable: usize = outcomes
+                .iter()
+                .filter_map(|outcome| outcome.unplantable.get(&key))
+                .sum();
             let reason = if impossible {
                 "the language's runner does not collect by name, so no rename takes a case out of \
                  the run"
@@ -289,8 +310,9 @@ fn absences(outcomes: &[Outcome], plan: &Plan) -> String {
             } else {
                 format!(
                     "no commit of the corpus held a site for this shape: {looked} commits offered \
-                     none, and {passed} more were passed over because the commit itself already \
-                     fires the rule there"
+                     none, {passed} more were passed over because the commit itself already fires \
+                     the rule there, and {unplantable} were written and read back without the \
+                     shape in them"
                 )
             };
             written.push_str(&format!("- {rule} · {}, {reason}\n", lang.slug()));
@@ -425,7 +447,23 @@ pub fn write_json(path: &PathBuf, outcomes: &[Outcome]) -> Result<(), String> {
             })
         })
         .collect();
-    let document = serde_json::json!({ "repositories": repositories, "cases": cases });
+    let mut counted: BTreeMap<(String, Language), usize> = BTreeMap::new();
+    for outcome in outcomes {
+        for (key, held) in &outcome.unplantable {
+            *counted.entry(key.clone()).or_default() += held;
+        }
+    }
+    let unplantable: Vec<serde_json::Value> = counted
+        .into_iter()
+        .map(|((rule, lang), held)| {
+            serde_json::json!({ "rule": rule, "language": lang.slug(), "cases": held })
+        })
+        .collect();
+    let document = serde_json::json!({
+        "repositories": repositories,
+        "cases": cases,
+        "unplantable": unplantable,
+    });
     std::fs::write(
         path,
         serde_json::to_string_pretty(&document).unwrap_or_default(),
