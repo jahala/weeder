@@ -65,7 +65,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Block,
         short_description: "Assertions were dropped from a changed test file",
-        full_description: "The assertion count of a changed test file fell between HEAD and the working tree, and no allowance carries a reason for it.",
+        full_description: "The assertion count of a changed test file fell between HEAD and the working tree, and no allowance carries a reason for it. An assertion the same change makes in another test file moved rather than went, and is left out of the count and of what the finding claims.",
         network: Network::None,
     },
     Rule {

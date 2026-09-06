@@ -11,6 +11,12 @@ the fixture rather than off the detector, then the detector. Before the detector
 every `fire` test failed and every `silent` test passed, which is the right way round, and worth
 checking deliberately, because a silent test alone proves nothing about a rule that does not exist.
 
+Sharpening a rule moves an older stamp. The T2 follow-the-claim check added cases to
+`tests/rule_t2.rs`, which is also the evidence the first T2 check cites, so `tend2 verify` stamped
+both: the new check earned its first stamp and the old one earned a new one. A stamp that moves
+while the check's own sentence stands still is the evidence being rewritten under it, and it is
+worth reading that way rather than as work redone.
+
 ## What building the test-weakening set found
 
 **A rule that reads test files makes other rules noisier, and that is the truth arriving.** T1's own
@@ -47,6 +53,15 @@ seam already supplements the substrate for Rust attributes, and it now reads Go 
 same way, single and parenthesised, so every rule that asks what a file defines gets the same answer.
 That is a seam change, not a rule workaround: the outline was incomplete, and it was incomplete for
 everyone.
+
+**Following a claim needs two identities, because a move can break either one.** A case that goes
+to another test file takes its assertions with it, and a suite that reorganises rewrites some of the
+lines on the way, so a claim followed by its line alone is lost the moment somebody lifts a value
+into a variable. A claim followed by its case alone is lost the moment the move renames the case.
+T2 follows both, an identical line first so a rewritten one is not credited with a partner the line
+it was written as has the better claim to, and each arrival is spoken for once, so two claims are
+never followed by one. What is left over is what the finding counts, and the sentence about
+behaviour held by nobody is written only when nothing was found anywhere.
 
 **weed reports its own fixtures again, louder.** `weed check` over this loop's diff is clean of
 errors and carries 285 warnings, all of them on `fixtures/adversarial/`: T5, because the loop's
