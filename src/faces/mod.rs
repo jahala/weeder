@@ -10,7 +10,7 @@ pub mod scan;
 
 use std::path::Path;
 
-use crate::core::change::{Change, Side};
+use crate::core::change::{self, Change, Side};
 use crate::core::classify::{classify_file, FileKind};
 use crate::core::config::{parse_config, Config};
 use crate::core::diff::FileDiff;
@@ -136,6 +136,18 @@ pub fn side(root: &Path, source: &Source, path: Option<&str>) -> Result<Side, St
 
     let classification = classify_file(path, &content);
     let file = Path::new(path);
+    // A file past the weight anyone reads is weighed and counted rather than
+    // parsed. G2 reports the file itself, and asking the parser to outline a
+    // blob nobody will open costs more than every rule in the run together.
+    if !change::reads_as_code(size) {
+        return Ok(Side {
+            content: Some(content),
+            classification: Some(classification),
+            size,
+            binary,
+            ..Side::default()
+        });
+    }
     let tests = if classification.kind == FileKind::Test || classification.has_inline_tests {
         reader::test_shape(file, &content)
     } else {

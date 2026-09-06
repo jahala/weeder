@@ -119,6 +119,45 @@ fn g2_stays_silent_on_a_tracked_binary_that_only_changes() {
     assert_eq!(run.code, 0, "nothing found, nothing blocked");
 }
 
+#[test]
+fn a_file_past_the_weight_anyone_reads_is_still_judged_line_by_line() {
+    // Above a mebibyte weed stops handing a file to the parser: an outline of a
+    // blob nobody will open costs more than every rule in the run together. What
+    // it does not stop doing is reading the lines, and this is the proof, because
+    // a size that took a rule off would be a place to hide a change in.
+    let repo = Repo::init();
+    repo.write("src/index.ts", "export const ready = true;\n");
+    repo.commit("the state the change starts from");
+
+    let filler = big_text();
+    assert!(
+        filler.len() > MEBIBYTE,
+        "the file is past the reading weight"
+    );
+    let secret = format!(
+        "export const apiKey = \"{}\";\n",
+        common::published_example("forge-token")
+    );
+    repo.write("src/corpus.ts", &format!("{filler}{secret}"));
+    repo.stage_all();
+
+    let run = repo.weed(&["check", "--strict"]);
+    let rules: Vec<String> = run
+        .findings()
+        .into_iter()
+        .filter(|finding| finding.path == "src/corpus.ts")
+        .map(|finding| finding.rule)
+        .collect();
+    assert!(
+        rules.contains(&"G2".to_string()),
+        "the size is the finding: {rules:?}"
+    );
+    assert!(
+        rules.contains(&"X1".to_string()),
+        "and the line inside it is judged like any other line: {rules:?}"
+    );
+}
+
 /// What the run said about one path.
 fn message(findings: &[common::Finding], path: &str) -> String {
     findings

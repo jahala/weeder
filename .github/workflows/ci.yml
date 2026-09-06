@@ -20,6 +20,20 @@ jobs:
         with:
           components: clippy, rustfmt
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # ratchet:Swatinem/rust-cache@v2
+      # The adversarial matrix runs each language's own test runner: `weed bite`
+      # judges what a suite did, so the suite has to be a real one. node, go and
+      # the interpreter are pinned here rather than taken as whatever the image
+      # happens to ship, so a cell that fails fails for weed's reasons.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # ratchet:actions/setup-node@v7
+        with:
+          node-version: "24"
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # ratchet:actions/setup-go@v7
+        with:
+          go-version: "1.24"
+          cache: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # ratchet:actions/setup-python@v7
+        with:
+          python-version: "3.12"
       # Ubuntu 24.04 restricts unprivileged user namespaces, and the offline
       # proof in tests/scan_offline.rs needs one to take the network away from
       # the process it starts. Lifting the restriction keeps that proof real
@@ -42,6 +56,20 @@ jobs:
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # ratchet:Swatinem/rust-cache@v2
         with:
           key: release
+      # The adversarial matrix runs each language's own test runner: `weed bite`
+      # judges what a suite did, so the suite has to be a real one. node, go and
+      # the interpreter are pinned here rather than taken as whatever the image
+      # happens to ship, so a cell that fails fails for weed's reasons.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # ratchet:actions/setup-node@v7
+        with:
+          node-version: "24"
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # ratchet:actions/setup-go@v7
+        with:
+          go-version: "1.24"
+          cache: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # ratchet:actions/setup-python@v7
+        with:
+          python-version: "3.12"
       # Ubuntu 24.04 restricts unprivileged user namespaces, and the offline
       # proof in tests/scan_offline.rs needs one to take the network away from
       # the process it starts. Lifting the restriction keeps that proof real

@@ -1,0 +1,6 @@
+name: Set the interpreter up
+runs:
+  using: composite
+  steps:
+    - run: python -m pip install --no-cache-dir -r requirements.txt
+      shell: bash

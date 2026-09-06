@@ -188,6 +188,13 @@ An added line is a merge conflict marker, so the file carries both sides of a me
 
 An added file is larger than one mebibyte, or holds binary content, and was not tracked before.
 
+One mebibyte is also where weed stops reading a file as code. Above it a file is
+weighed and its lines are read, and nothing is asked of the parser: an outline of
+a blob nobody will open is the most expensive question a run can ask and it
+answers none anybody had. Every rule that judges a line still judges every line
+of a file that size, so this is a cost weed declines to pay rather than a place
+to hide a change in.
+
 <a id="B1"></a>
 ## B1: A test passed without the change it covers
 

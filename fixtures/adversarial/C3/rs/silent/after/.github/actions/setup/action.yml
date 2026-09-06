@@ -1,0 +1,6 @@
+name: Set the toolchain up
+runs:
+  using: composite
+  steps:
+    - run: rustup component add clippy rustfmt
+      shell: bash
