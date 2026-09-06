@@ -169,7 +169,12 @@ if ! bar "$promoted" "$scratch/good-audit.md" > /dev/null 2> "$scratch/good.err"
   cat "$scratch/good.err" >&2
   status=1
 fi
-if bar "$report" "$scratch/good-audit.md" > /dev/null 2> "$scratch/stale.err"; then
+# The stale case is a pending sentence over a re-grade at the bar. The report in
+# the tree may already read confirmed, so the pending sentence is written into a
+# probe rather than assumed of the file.
+pending="$scratch/pending.md"
+sed "1,3s/^weed ships as a gate: /weed ships as a gate, pending the independent re-grade: /" "$report" > "$pending"
+if bar "$pending" "$scratch/good-audit.md" > /dev/null 2> "$scratch/stale.err"; then
   echo "calibration-bar.sh accepted a pending sentence while the re-grade agrees at the bar, so the wording can go stale unnoticed" >&2
   status=1
 elif ! grep -q "agrees at the bar and the first sentence still calls the verdict pending" "$scratch/stale.err"; then
