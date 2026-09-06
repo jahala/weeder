@@ -221,14 +221,51 @@ impl Bench {
         self.path().join("audit.md")
     }
 
+    /// Every re-grade the bench carries, named the way the repository's own are
+    /// read: the files called `audit*.md`, sorted. With none written the run is
+    /// still pointed at `audit.md`, which is the state where no second party has
+    /// read anything back.
+    pub fn audits(&self) -> Vec<PathBuf> {
+        let mut found: Vec<PathBuf> = std::fs::read_dir(self.path())
+            .map(|entries| {
+                entries
+                    .filter_map(Result::ok)
+                    .map(|entry| entry.path())
+                    .filter(|path| {
+                        path.file_name()
+                            .and_then(|name| name.to_str())
+                            .is_some_and(|name| name.starts_with("audit") && name.ends_with(".md"))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        found.sort();
+        if found.is_empty() {
+            found.push(self.audit());
+        }
+        found
+    }
+
     /// Write the re-grade, one row per sample.
     pub fn write_audit(&self, samples: &[(&str, usize, usize)]) {
-        let mut text =
-            String::from("# the re-grade\n\n| Sample | Re-graded | Agreed |\n|---|---|---|\n");
-        for (name, regraded, agreed) in samples {
-            text.push_str(&format!("| {name} | {regraded} | {agreed} |\n"));
-        }
-        std::fs::write(self.audit(), text).expect("the audit should be writable");
+        std::fs::write(self.audit(), audit_text(None, samples))
+            .expect("the audit should be writable");
+    }
+
+    /// Write one named re-grade beside whatever others the bench holds, with the
+    /// `Blind:` declaration it makes about itself, or none at all. The name is
+    /// the suite's, so it can ask what the report reads off a file whose
+    /// declaration and whose name disagree.
+    pub fn write_audit_record(
+        &self,
+        name: &str,
+        declaration: Option<&str>,
+        samples: &[(&str, usize, usize)],
+    ) -> PathBuf {
+        let path = self.path().join(name);
+        std::fs::write(&path, audit_text(declaration, samples))
+            .expect("the audit should be writable");
+        path
     }
 
     /// Write the record of an earlier run's block-level findings.
@@ -270,9 +307,10 @@ impl Bench {
                 self.judgements().display().to_string(),
                 "--first-run".to_string(),
                 self.first_run().display().to_string(),
-                "--audit".to_string(),
-                self.audit().display().to_string(),
             ]);
+            for audit in self.audits() {
+                arguments.extend(["--audit".to_string(), audit.display().to_string()]);
+            }
         }
         arguments.extend(extra.iter().map(|argument| (*argument).to_string()));
         arguments
@@ -313,6 +351,16 @@ impl Bench {
         std::fs::read_to_string(self.out()).expect("the report should be written")
     }
 
+    /// The report's paragraphs, blank line separated, the title first.
+    pub fn paragraphs(&self) -> Vec<String> {
+        self.report()
+            .split("\n\n")
+            .map(str::trim)
+            .filter(|paragraph| !paragraph.is_empty())
+            .map(str::to_string)
+            .collect()
+    }
+
     /// The report's first sentence, which is the verdict.
     pub fn verdict(&self) -> String {
         self.report()
@@ -334,4 +382,47 @@ pub fn suite(cases: usize) -> String {
         ));
     }
     source
+}
+
+/// One re-grade as a file: the declaration it makes about how it was taken, if
+/// it makes one, and a row per sample.
+fn audit_text(declaration: Option<&str>, samples: &[(&str, usize, usize)]) -> String {
+    let mut text = String::from("# the re-grade\n\n");
+    if let Some(declaration) = declaration {
+        text.push_str(&format!("Blind: {declaration}\n\n"));
+    }
+    text.push_str("| Sample | Re-graded | Agreed |\n|---|---|---|\n");
+    for (name, regraded, agreed) in samples {
+        text.push_str(&format!("| {name} | {regraded} | {agreed} |\n"));
+    }
+    text
+}
+
+/// A repository with one blocking commit, so there is something to classify and
+/// the verdict is a ship rather than a kill.
+pub fn blocking_repo() -> Repo {
+    let repo = Repo::init();
+    repo.write("src/lib.rs", "pub fn one() -> u32 {\n    1\n}\n");
+    repo.write("tests/unit.rs", &suite(3));
+    repo.commit("the repository begins");
+
+    repo.write("tests/unit.rs", &suite(2));
+    repo.commit("one case fewer");
+    repo
+}
+
+/// That repository with its one block classified, so the numbers clear the bar
+/// and only the re-grade decides what the first paragraph says.
+pub fn cleared() -> (Repo, Bench) {
+    let repo = blocking_repo();
+    let bench = Bench::new();
+    std::fs::write(
+        bench.judgements(),
+        format!(
+            "[[commit]]\nrepo = \"probe\"\nsha = \"{}\"\nclassification = \"true-positive\"\nreasoning = \"a case really did go\"\n",
+            repo.tip()
+        ),
+    )
+    .expect("the ledger should be writable");
+    (repo, bench)
 }

@@ -9,39 +9,10 @@
 
 mod common;
 
-use common::{suite, Bench, Repo};
+use common::{blocking_repo, cleared, Bench};
 
 const PROVISIONAL: &str = "weed ships as a gate, pending the independent re-grade:";
 const CONFIRMED: &str = "weed ships as a gate:";
-
-/// A repository with one blocking commit, so there is something to classify and
-/// the verdict is a ship rather than a kill.
-fn probe() -> Repo {
-    let repo = Repo::init();
-    repo.write("src/lib.rs", "pub fn one() -> u32 {\n    1\n}\n");
-    repo.write("tests/unit.rs", &suite(3));
-    repo.commit("the repository begins");
-
-    repo.write("tests/unit.rs", &suite(2));
-    repo.commit("one case fewer");
-    repo
-}
-
-/// The bench, with its one block classified, so the numbers clear the bar and
-/// only the re-grade decides the wording.
-fn cleared() -> (Repo, Bench) {
-    let repo = probe();
-    let bench = Bench::new();
-    std::fs::write(
-        bench.judgements(),
-        format!(
-            "[[commit]]\nrepo = \"probe\"\nsha = \"{}\"\nclassification = \"true-positive\"\nreasoning = \"a case really did go\"\n",
-            repo.tip()
-        ),
-    )
-    .expect("the ledger should be writable");
-    (repo, bench)
-}
 
 #[test]
 fn without_a_re_grade_the_verdict_is_pending() {
@@ -176,7 +147,7 @@ fn the_wording_is_written_from_the_file_and_not_from_the_report() {
 
 #[test]
 fn a_run_that_does_not_clear_the_bar_says_so_whatever_the_re_grade_says() {
-    let repo = probe();
+    let repo = blocking_repo();
     let bench = Bench::new();
     bench.write_audit(&[("blocked commits", 20, 20)]);
 

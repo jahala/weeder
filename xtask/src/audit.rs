@@ -14,8 +14,14 @@
 //! it is read: a row per sample, with how many cases were re-graded and how many
 //! of those agreed. The share is recomputed from those two numbers rather than
 //! read out of the column beside them.
+//!
+//! One more line of it is read, and it decides the sentence after the verdict:
+//! the `Blind:` declaration each re-grade makes about itself. An auditor who
+//! could see the class beside each case before judging agreed with something in
+//! front of them, and a report that prints the agreement without saying so
+//! prints a stronger number than it has.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// The agreement every sample has to reach for the verdict to stand unqualified.
 pub const AGREEMENT_BAR: f64 = 90.0;
@@ -41,10 +47,47 @@ impl Sample {
         self.agreed as f64 * 100.0 / self.regraded as f64
     }
 
-    fn stands(&self) -> bool {
+    /// Whether one sample on its own is enough to rest a verdict on.
+    pub fn stands(&self) -> bool {
         self.regraded >= SAMPLE_FLOOR
             && self.agreed <= self.regraded
             && self.agreement() >= AGREEMENT_BAR
+    }
+}
+
+/// Whether the auditor could see the builder's classification while judging.
+///
+/// It is read from the file's own `Blind:` declaration and from nothing else:
+/// not from the file's name, not from which run wrote it. A re-grade that says
+/// nothing about it has declared nothing, and the report says so rather than
+/// guessing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Sight {
+    /// `Blind: yes`. The auditor judged from a packet, with the builder's class
+    /// out of sight.
+    Blind,
+    /// `Blind: no`. The auditor could read the class beside each case.
+    Sighted,
+    /// The file carries no `Blind:` line.
+    Undeclared,
+}
+
+/// One re-grade the repository carries.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Record {
+    /// The file as the report names it.
+    pub label: String,
+    pub sight: Sight,
+    pub samples: Vec<Sample>,
+}
+
+impl Record {
+    /// Whether this re-grade on its own agrees at the bar on every sample it
+    /// drew. The pooled verdict asks the same of all of them together; the
+    /// anchoring caveat asks it of each, because one re-grade being blind is
+    /// only worth saying while that re-grade stands.
+    pub fn stands(&self) -> bool {
+        !self.samples.is_empty() && self.samples.iter().all(Sample::stands)
     }
 }
 
@@ -56,6 +99,10 @@ pub struct Audit {
     pub label: String,
     /// Nothing where the file is not there yet.
     pub samples: Option<Vec<Sample>>,
+    /// One per re-grade file that is there, in the order they were read. The
+    /// pooled `samples` above decide the verdict; these decide what the report
+    /// may say about how the re-grade was taken.
+    pub records: Vec<Record>,
 }
 
 impl Audit {
@@ -110,6 +157,84 @@ impl Audit {
             short.join(", ")
         ))
     }
+
+    /// What stands behind the classification, in the words the report prints in
+    /// its first paragraph right after the verdict: whether the re-grade the
+    /// number rests on was taken with the builder's class in sight or without
+    /// it. An agreement read off a file that showed the auditor the class it
+    /// was agreeing with is anchored to that class, and forty of forty reads
+    /// stronger than it is when nobody says so.
+    ///
+    /// Every word of it is read from the files' own `Blind:` declarations, so a
+    /// re-grade redone blind changes this sentence by being written and never by
+    /// being described.
+    pub fn sight(&self) -> String {
+        if self.records.is_empty() {
+            return "No re-grade is recorded, so no agreement stands behind that classification to call sighted or blind.".to_string();
+        }
+        let of = |wanted: Sight| -> Vec<&Record> {
+            self.records
+                .iter()
+                .filter(|record| record.sight == wanted)
+                .collect()
+        };
+        let blind = of(Sight::Blind);
+        let sighted = of(Sight::Sighted);
+        let undeclared = of(Sight::Undeclared);
+        let standing: Vec<&Record> = blind
+            .iter()
+            .copied()
+            .filter(|record| record.stands())
+            .collect();
+        if !standing.is_empty() {
+            return format!(
+                "The re-grade behind it is blind: {} declares `Blind: yes` and agrees at the bar, so its auditor judged the cases from a packet with the builder's class out of sight, and {}.",
+                named(&standing),
+                if sighted.is_empty() {
+                    "no sighted re-grade is recorded beside it".to_string()
+                } else {
+                    format!(
+                        "the sighted re-grade in {} is recorded beside it",
+                        named(&sighted)
+                    )
+                },
+            );
+        }
+        let short: Vec<&Record> = blind
+            .iter()
+            .copied()
+            .filter(|record| !record.stands())
+            .collect();
+        let mut parts = Vec::new();
+        if !sighted.is_empty() {
+            parts.push(format!(
+                "The re-grade behind it is a sighted one: {} declares `Blind: no`, so its auditor could read the builder's class beside each case before judging.",
+                named(&sighted)
+            ));
+        }
+        if !short.is_empty() {
+            parts.push(format!(
+                "The blind re-grade in {} is under the bar, so no blind agreement stands behind this number yet.",
+                named(&short)
+            ));
+        }
+        if !undeclared.is_empty() {
+            parts.push(format!(
+                "{} declares no `Blind:` line either way, so what its auditor could read while judging is unrecorded.",
+                named(&undeclared)
+            ));
+        }
+        parts.join(" ")
+    }
+}
+
+/// The files behind a list of re-grades, as the report names them.
+fn named(records: &[&Record]) -> String {
+    records
+        .iter()
+        .map(|record| record.label.clone())
+        .collect::<Vec<String>>()
+        .join(" and ")
 }
 
 /// The audit a run reads when no other path is given.
@@ -145,37 +270,100 @@ pub fn read_all(root: &Path) -> Audit {
         return Audit {
             label: DEFAULT_PATH.to_string(),
             samples: None,
+            records: Vec::new(),
+        };
+    }
+    let files: Vec<(PathBuf, String)> = names
+        .iter()
+        .map(|name| (docs.join(name), format!("docs/{name}")))
+        .collect();
+    gather(&files, true)
+}
+
+/// Read the re-grades a caller names, which is how a suite probes the wording
+/// against files it wrote itself. A file that is not there is not an error: the
+/// re-grade is work that happens after the calibration, and its absence is
+/// exactly what the provisional wording is for.
+pub fn read_many(files: &[(PathBuf, String)]) -> Audit {
+    gather(files, false)
+}
+
+/// The files, read into the one audit the report is written from. Samples are
+/// named by the file they came from only where more than one file was read for
+/// the repository's own record, because a reader of the shipped report has to
+/// know which re-grade a share came off.
+fn gather(files: &[(PathBuf, String)], name_samples_by_file: bool) -> Audit {
+    let label = files
+        .iter()
+        .map(|(_, label)| label.clone())
+        .collect::<Vec<String>>()
+        .join(" and ");
+    let mut records = Vec::new();
+    for (path, label) in files {
+        let Ok(text) = std::fs::read_to_string(path) else {
+            continue;
+        };
+        records.push(Record {
+            label: label.clone(),
+            sight: declared_sight(&text),
+            samples: samples(&text),
+        });
+    }
+    if records.is_empty() {
+        return Audit {
+            label,
+            samples: None,
+            records,
         };
     }
     let mut all = Vec::new();
-    for name in &names {
-        let text = std::fs::read_to_string(docs.join(name)).unwrap_or_default();
-        for mut sample in samples(&text) {
-            sample.name = format!("{} in docs/{name}", sample.name);
+    for record in &records {
+        for sample in &record.samples {
+            let mut sample = sample.clone();
+            if name_samples_by_file {
+                sample.name = format!("{} in {}", sample.name, record.label);
+            }
             all.push(sample);
         }
     }
-    let labels: Vec<String> = names.iter().map(|name| format!("docs/{name}")).collect();
     Audit {
-        label: labels.join(" and "),
+        label,
         samples: Some(all),
+        records,
     }
 }
 
-/// Read the re-grade. A file that is not there is not an error: the re-grade is
-/// work that happens after the calibration, and its absence is exactly what the
-/// provisional wording is for.
-pub fn read(path: &Path, label: &str) -> Audit {
-    let Ok(text) = std::fs::read_to_string(path) else {
-        return Audit {
-            label: label.to_string(),
-            samples: None,
+/// The file's own declaration of how the re-grade was taken: a line reading
+/// `Blind: yes` or `Blind: no`, with whatever the writer put after a semicolon
+/// or a comma as the reason for it. Emphasis and heading marks around the line
+/// are ignored, and a line whose answer is neither word declares nothing.
+fn declared_sight(text: &str) -> Sight {
+    for line in text.lines() {
+        let plain: String = line
+            .chars()
+            .filter(|mark| !matches!(mark, '*' | '_' | '#' | '>' | '`'))
+            .collect();
+        let Some(answer) = plain
+            .trim()
+            .to_ascii_lowercase()
+            .strip_prefix("blind:")
+            .map(|rest| {
+                rest.split([';', ',', '.'])
+                    .next()
+                    .unwrap_or_default()
+                    .trim()
+                    .to_string()
+            })
+        else {
+            continue;
         };
-    };
-    Audit {
-        label: label.to_string(),
-        samples: Some(samples(&text)),
+        match answer.as_str() {
+            "yes" | "true" => return Sight::Blind,
+            "no" | "false" => return Sight::Sighted,
+            _ => continue,
+        }
     }
+    Sight::Undeclared
 }
 
 /// The samples in the agreement table: `| <sample> | <re-graded> | <agreed> |`,

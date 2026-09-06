@@ -115,3 +115,14 @@ carries weed's own X1 prefix table and an allowance with no reason written on
 it, both of them fine where they live and both of them findings once they are
 pasted into a diff. A scratch directory that is collected is not scratch.
 Either the collector skips it or the loop stops calling it disposable.
+
+The anchoring caveat was shaped as a check with two states in its text, only a
+sighted audit and a blind one at the bar, and the repository was in a third when
+the check was dispatched: a blind re-grade exists and agrees on 45 and 60
+percent of its two samples. Writing only the two states the check names would
+have printed a sighted caveat over a report that has a blind audit sitting next
+to it, unmentioned. The generator names all three, and the third reads "the
+blind re-grade in docs/calibration-audit-blind-2026-09.md is under the bar, so
+no blind agreement stands behind this number yet." A check written from the
+states the tree is expected to pass through will miss the one it is in, and the
+worker is the one who finds out.
