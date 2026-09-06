@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-tend2-52b97e43ce.md","sha256":"c1209f038d3b9e8ca2becf55b3f511099ba0deedee0a779a120268b068bbc522"}
+{"type":"answer","answer":"Answered packet SHA-256: c1209f038d3b9e8ca2becf55b3f511099ba0deedee0a779a120268b068bbc522\nVerdict: true-positive\nReasoning: Adds a renderer that explicitly passes raw HTML through, creating a real injection-risk shape."}

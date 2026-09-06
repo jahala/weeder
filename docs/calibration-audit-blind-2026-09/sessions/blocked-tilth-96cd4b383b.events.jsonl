@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-tilth-96cd4b383b.md","sha256":"67b11d3cb4479dd46de0a9bddaacd2a89841df84c77526d5396a6a490301e41a"}
+{"type":"answer","answer":"Answered packet SHA-256: 67b11d3cb4479dd46de0a9bddaacd2a89841df84c77526d5396a6a490301e41a\nVerdict: acceptable\nReasoning: Same brittle body assertion is removed while the required success behavior remains checked."}

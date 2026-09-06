@@ -1,0 +1,2 @@
+{"type":"input","packet":"docs/calibration-audit-blind-2026-09/cases/blocked-umbel-cc3cc0c37c.md","sha256":"518c14529a94942c1c0d4726a43dd592b345e7ef58b29c723282aaf5b6aee20c"}
+{"type":"answer","answer":"Answered packet SHA-256: 518c14529a94942c1c0d4726a43dd592b345e7ef58b29c723282aaf5b6aee20c\nVerdict: true-positive\nReasoning: Adds action extraction with explicit TODOs for unverified transcript shapes."}
