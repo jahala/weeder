@@ -36,10 +36,10 @@ npm install -g @plotplot/weed
 cargo install weed
 ```
 
-Release binaries are published for linux, macos and windows on x86_64 and aarch64; the npm
-wrapper in `npm/` fetches the one for your platform. The npm package is scoped under the garden's
-org because the bare name was taken years ago by an empty placeholder; the crate and the binary
-are plain `weed`.
+Release binaries are published for linux and macos on x86_64 and aarch64, and for windows on
+x86_64; the npm wrapper in `npm/` fetches the one for your platform. The npm package is scoped
+under the garden's org because the bare name was taken years ago by an empty placeholder; the
+crate and the binary are plain `weed`.
 
 ## The faces
 
