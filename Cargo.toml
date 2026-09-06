@@ -1,3 +1,8 @@
+[workspace]
+# The binary, and the measurements that judge it. xtask is a workspace member
+# rather than a script so calibration runs the same core weed ships.
+members = ["xtask"]
+
 [package]
 name = "weed"
 version = "0.1.0"

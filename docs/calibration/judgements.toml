@@ -1,0 +1,445 @@
+# The classifications behind docs/calibration-2026-09.md.
+#
+# weed counts what it blocked; whether a block was right is a person's reading
+# of the diff, and this is where that reading is written down. One entry per
+# blocked commit: the repository, the full sha, the class, and one line saying
+# what was found and why that is the answer.
+#
+#   true-positive   the change really did what the rule says it did
+#   acceptable      the finding's claim is true and the change was fine anyway,
+#                   so the block is friction the rule was designed to create
+#   false-positive  the finding's claim is not true of this change
+#
+# A blocked commit with no entry here counts as a false positive, so the bar can
+# only be met by reading the diffs. `[commit.rules.<RULE>]` gives one rule of a
+# multi-rule block its own class and its own line, where it deserves one.
+
+[[commit]]
+repo = "tilth"
+sha = "11aef933c92ce44b878356619d918a8893e72444"
+classification = "acceptable"
+reasoning = "src/mcp/tools/files.rs went, and its 8 cases with it; the tool it tested was consolidated into tilth_list in the same commit and the repository's test count rose by one, so the cases moved rather than vanished. A file of tests leaving the tree is worth a person's eye either way."
+
+[[commit]]
+repo = "tilth"
+sha = "10bec56a41d9440f159340f99aca01a9dd2d5d85"
+classification = "true-positive"
+reasoning = "the commit says what it did: the substring assertion in no_scope_no_root_defaults_to_cwd was dropped because it flaked, leaving a case that asserts only is_ok. That is a test that now passes whatever search returns."
+
+[[commit]]
+repo = "tilth"
+sha = "96cd4b383b114cb2807b68a6dcf75d64320c42a5"
+classification = "true-positive"
+reasoning = "a fix to the write containment guard also took an assert out of src/mcp/tools/search.rs, 3 assertions down to 2. Production behaviour changed and a check on it went in the same breath, which is the shape T2 exists for."
+
+[[commit]]
+repo = "tilth"
+sha = "7684e99e86c744747d9868009700617c4e079487"
+classification = "true-positive"
+reasoning = "the regression test was adapted to the upstream API: the expect that demanded truncation and the assertion on where the cut landed both went, 10 assertions down to 9. The test was moved to fit the code."
+
+[[commit]]
+repo = "tilth"
+sha = "ab7f054b737958b4fc98401ad411c6861c39a03f"
+classification = "true-positive"
+reasoning = "tilth_read_schema_is_paths_only was deleted with its three asserts when the feature was split into another pull request, and the repository's test count fell by one. The schema it pinned is now held by nobody."
+
+[[commit]]
+repo = "tilth"
+sha = "136e246d8eec94b4e7d3ae83bb3bfd2c3a516fe3"
+classification = "acceptable"
+reasoning = "src/mcp/tools/edit.rs and its one case were replaced by tilth_write in the same commit, and the repository gained 19 tests. The deletion is real and the coverage went up."
+
+[[commit]]
+repo = "tilth"
+sha = "18eb6643ff9d8eee2b7e9572c7881a6c00a6e30e"
+classification = "acceptable"
+reasoning = "10 cases and 21 assertions left src/mcp/mod.rs to sit beside the modules they test, which is what the commit set out to do; the repository's test count did not move."
+
+[[commit]]
+repo = "tilth"
+sha = "76d5d02d3432ff7cd3e984f60801f20402e0fb3d"
+classification = "acceptable"
+reasoning = "src/mcp.rs was split into modules, so the file and its 17 cases are gone from that path and present at the new ones; the repository's test count did not move. weed judges a file at a time and cannot follow a split, so it reports one and a person reads it."
+
+[[commit]]
+repo = "tilth"
+sha = "3ff87caf55335a6e7bc937884f80105e7c55508c"
+classification = "acceptable"
+reasoning = "the hand-rolled bloom filter was replaced by fastbloom, and test_bloom_filter_sizing went with the implementation it sized. The behaviour the case held is no longer in the tree."
+
+[[commit]]
+repo = "tilth"
+sha = "59c87110abe9880e63d22fddfd5e515ce35a976d"
+classification = "acceptable"
+reasoning = "percent_decode was replaced by the percent-encoding crate and percent_decode_basic went with it. The case tested code this commit deleted."
+
+[[commit]]
+repo = "tilth"
+sha = "d422a325fc69ce56bc2aaac6c973015ea0463097"
+classification = "acceptable"
+reasoning = "one assert out of 66 went because the field it read, entry_style, was folded into ConfigFormat; the two cases that carried it were renamed and kept. The property is now held by the type."
+
+[[commit]]
+repo = "tilth"
+sha = "5a4edbf5c508832e9770ae315e1625a81aae1e1f"
+classification = "acceptable"
+reasoning = "bloom_walk, callee_query and scope were extracted into their own modules and their cases followed: 15 cases left callers.rs and callees.rs, and the repository gained four. The move is real and so is the report."
+
+[[commit]]
+repo = "tilth"
+sha = "bd36a436379f864ff3ff21268053d898ff5a0bf2"
+classification = "acceptable"
+reasoning = "SymbolIndex and its six tests were dropped together as inert plumbing. Six cases leaving the tree is exactly the change a person should have to confirm was meant."
+
+[[commit]]
+repo = "pleach"
+sha = "624529b3a972db597b3a8843c7723c667cfe2da5"
+classification = "acceptable"
+reasoning = "the hygiene gate lands its own secret patterns and the fixtures that exercise them, including AWS's documented AKIAIOSFODNN7EXAMPLE. A credential-shaped literal really was added and no scanner can tell a fixture from a live key, so the block is the rule working and the remedy is an allowance. The finding on hygiene.ts:27 is weaker: that line is the regular expression describing a private key block, not a key."
+
+[[commit]]
+repo = "pleach"
+sha = "bbf44e96f14e991d6486cf590cd27fad7446c93a"
+classification = "false-positive"
+reasoning = "every hit is `class=\"detail-meta__key\">` and `class=\"journey-row__key\">` in generated html, plus two lines of prose in a skill about verification recipes. No credential was added; X1 read a css class name and a markdown sentence as an assignment because the name ends in key, token or credentials."
+
+[[commit]]
+repo = "tend2"
+sha = "067730ddd0c737150fd26df604d06b10fb0deeb4"
+classification = "true-positive"
+reasoning = "the byte comparison of dist/loop.js against the built bundle was dropped in the sweep, leaving only the banner check: 5 assertions down to 4. A freshness guard that no longer compares bytes cannot catch a stale commit, which is what the file's own comment says it is for."
+
+[[commit]]
+repo = "tend2"
+sha = "3adc642ce1dff47cd24b397f2988a05749d716de"
+classification = "false-positive"
+reasoning = "the file declares two `it(` call sites before and after; one of them now sits inside a `for` over the sibling directories, so it runs once per directory. The reader counts statically declared cases and missed the generated one, so the claim that a case disappeared is not true."
+
+[[commit]]
+repo = "tend2"
+sha = "bf2754689c6bf7615b3e99570ca3b585ec8f94d7"
+classification = "acceptable"
+reasoning = "test/season.test.ts and its four cases went when the season command was folded into one orientation command; the repository gained three cases. The command those tests covered is not there to be tested."
+
+[[commit]]
+repo = "tend2"
+sha = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+classification = "acceptable"
+reasoning = "the v1 lane was sunset: 70 test files and some 2,400 cases left the tree in one commit, along with the workflows that ran them. A change of that size is the strongest case there is for a gate that stops and asks."
+
+[[commit]]
+repo = "tend2"
+sha = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+classification = "acceptable"
+reasoning = "the killed spike tree and the skein prototype were removed with their 500 cases, and the workflow that built them changed with it. The deletion is deliberate and it is exactly what a person should sign."
+
+[[commit]]
+repo = "tend2"
+sha = "52b97e43ced4160b09f1e85be25f82b87a0595ae"
+classification = "false-positive"
+reasoning = "both hits are `class=\"detail-meta__key\">` and `class=\"journey-row__key\">` in the renderer's html builder. The value is markup, not a credential, and X1 took the class attribute for an assignment."
+
+[[commit]]
+repo = "copeca"
+sha = "eb9ed62b2ddd42d916d68883393f66e1efb1a5ce"
+classification = "false-positive"
+reasoning = "the two hits are the rendered `detail-meta__key` and `journey-row__key` spans in a generated feature page. No credential was added."
+
+[[commit]]
+repo = "copeca"
+sha = "70d669542aa6b6a59837fc5cb536363dbd02a445"
+classification = "acceptable"
+reasoning = "the commit lands publishing workflows, which is what C1 watches and what would have blocked it on its own."
+[commit.rules.X1]
+classification = "false-positive"
+reasoning = "the hit is `key = serialization.load_pem_public_key(pem)` in the signing module: a local variable named key holding the result of a call, not a credential."
+
+[[commit]]
+repo = "copeca"
+sha = "e8584ab6afd5dcd44bcc268c4839235ccb76ebec"
+classification = "false-positive"
+reasoning = "thirty-eight hits, every one of them a `detail-meta__key` or `journey-row__key` span in the generated documentation pages."
+
+[[commit]]
+repo = "copeca"
+sha = "f6198d4b2082e4de44a794cba950032ff83c6136"
+classification = "false-positive"
+reasoning = "`def parse(...) -> \"RunResult\": ...` sits in `class Parser(Protocol)`. In Python an ellipsis body is how a protocol declares a method's type; there is no implementation to finish, and reading it as a stub is reading the language wrong."
+
+[[commit]]
+repo = "copeca"
+sha = "1abdc130dff2147cffb4d2687968a616b6306f16"
+classification = "false-positive"
+reasoning = "both hits are prose in a skill file: an example check reading \"User can log in with valid credentials\" and one about signJWT returning a token. X1 read the words after the colon as an assigned value."
+
+[[commit]]
+repo = "umbel"
+sha = "89c088bc0881ee5de3e77adfb1720d95cd8f4c4e"
+classification = "acceptable"
+reasoning = "the test stopped running `tmux kill-server`, which was reaping every session on the machine, and reaches the same catch path through an empty socket directory instead; one assertion of eighteen went with the teardown it no longer does."
+
+[[commit]]
+repo = "umbel"
+sha = "8f75fcb0935ae2b8c973ad80e5a6ba5d551c2310"
+classification = "false-positive"
+reasoning = "ten hits, all `detail-meta__key` and `journey-row__key` spans in generated persona pages. No credential was added."
+
+[[commit]]
+repo = "umbel"
+sha = "4167b8547783f0abb16576213d1e20dfcc03cf18"
+classification = "false-positive"
+reasoning = "the same generated `detail-meta__key` and `journey-row__key` spans across the new garden pages, plus the two lines of skill prose about credentials and tokens."
+
+[[commit]]
+repo = "umbel"
+sha = "059b4c46770a07b03116df2e70fb3d3f9788c332"
+classification = "acceptable"
+reasoning = "the file was refactored onto a `launch()` helper: 33 assertions down to 30 while the cases went from 22 to 23. The assertions that went were the repeated construction the helper now does once."
+
+[[commit]]
+repo = "umbel"
+sha = "75523a16a3f241de2064b623d3d3035398715e9b"
+classification = "true-positive"
+reasoning = "`TODO(opencode): verify tool-call part shape against a real tool-using transcript` shipped in src/core/providers/opencode.ts. The parser's field extraction is admitted to be unverified in the file that does it."
+
+[[commit]]
+repo = "umbel"
+sha = "cc3cc0c37ca221f101ae39ebea2f2b5fc1cb031c"
+classification = "true-positive"
+reasoning = "two work markers shipped in the codex and gemini providers, each saying the tool-call shape has not been checked against a real transcript. That is unfinished work in production code, named by the author."
+
+[[commit]]
+repo = "tilth"
+sha = "2ed93282a102850b822255c38cf7b0cb003f98b4"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/release.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "f2e64e5759fe770823b6b5df3321b30dbd6fd9e8"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/release.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "b0f3ebe707bdf88e26f49f825f11c94c2acd450f"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/release.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "53909f34234a9a2aa87df7ca96e9a5066f90a193"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "4f05f0093d8586f2fddc2e3df37f91eb9f7ae765"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "2dbcbc6eb42971545d0ed7e43fd578da0a3ee055"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "d322306ab078625658fbb5c675af4ab12358be2d"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/fuzz.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "088f58ca227c71abc1be5b20ae6267e6abb2d4fa"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, `.github/workflows/dependency-review.yml`, `.github/workflows/fuzz.yml`, `.github/workflows/release.yml`, `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "8da08f6e38f6824b0a686505b8bd3a846d150f50"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/release.yml`, `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "e9155c19150bc923e9e133351c5b211b047d35a8"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/release.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "08ae11a377a4b3d9b754aa75274fffd15730336b"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/release.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "1dfc5d26baabc6a89e143a494421af54a42fde1e"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "be3f6fbf34cee915413a6ec7293a4461969667e4"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "f8f701ab5726a89fd20ed46672feeb8cb4e0f501"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/fuzz.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "f761368c94b414de0d2ee529b421b48697762426"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, `.github/workflows/dependency-review.yml`, `.github/workflows/release.yml`, `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "552bc2a0fe342a958de0b1cae0197bafc1cc47cc"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, `.github/workflows/dependency-review.yml`, `.github/workflows/release.yml`, `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "6c75ff025fe7e5bb39c23a9b6809a91f00de8910"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "fc36a2fbed1c96d14387db7dd2f5baf486cc3e6b"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/release.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "0c1132c2ccf57ffa93d1b06d6e1c5947ba55e28b"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/dependency-review.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "e05749fd218d709cf411429033bc309ba74949d0"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "91d213abdc82cae11df8532c859ad3cee6b9a092"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/release.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "c7c0ec78d426920f596fe655ba029ffe1de88807"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tilth"
+sha = "1248c0e594fea22abc80b8f828b9dc5d0b264b64"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, `.github/workflows/dependency-review.yml`, `.github/workflows/release.yml`, `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "pleach"
+sha = "df42a0bffe093b45dc75cc2643bd72465d10add3"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "pleach"
+sha = "84bcce7b3155ea29e891178ed73d824a7718b1fd"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/canary.yml`, `.github/workflows/pages.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "pleach"
+sha = "b6aadbf3cb82b892988f48b2e48f590b2ac4dada"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "pleach"
+sha = "c42ed6d92a671627a29bd0c64107cd19482514db"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "pleach"
+sha = "46f9c71acfac14186100af93c951faae78f26e23"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tend2"
+sha = "1e39b91c5f4e4b57b26dafa0a419d457968e9a10"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tend2"
+sha = "f0a0adf343bd3455cb848b11a9b41c8614dfb852"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tend2"
+sha = "40875df2c4458b466c83464a13eede3cd86c8711"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tend2"
+sha = "e6f974bd1cb3e40347c6710dcd84132d2992ffaa"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "tend2"
+sha = "07931a6742c2d5ed48777d9988f3c8239469ddad"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "umbel"
+sha = "a145ebe3d1af86ed2f389fe9cdb1ce22ce321f7d"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, `.github/workflows/dependency-review.yml`, `.github/workflows/release.yml`, `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "umbel"
+sha = "7109a41bd9df27c67eb600ccd7a357f7cb7b80fd"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/release.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "umbel"
+sha = "68ceb8f53734eff7e210eeeb2c1f863e482b3ea9"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "umbel"
+sha = "d305518136f876823c48c569567ab5e80da40ab6"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "umbel"
+sha = "e4483b814ca5006eb4287db584f16f0f43b3308d"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+
+[[commit]]
+repo = "umbel"
+sha = "e39da470b7afa3fa26efe474a94361af236b7bb7"
+classification = "acceptable"
+reasoning = "the change edits `.github/workflows/ci.yml`, `.github/workflows/dependency-review.yml`, `.github/workflows/release.yml`, `.github/workflows/scorecard.yml`, which is what C1 watches; the edit is the one the subject describes and a reviewer reading it is the rule working."
+

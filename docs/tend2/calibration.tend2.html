@@ -27,10 +27,10 @@ A repo with fewer than 200 commits contributes every commit it has, and the file
 `docs/calibration-2026-09.md` opens with the verdict sentence: ship, or kill with the rules that would have to go. Then one table per repo (commit, rules fired at block level, classification, one line of reasoning), then totals, then the rule-level view: for each block rule, fires, true positives, false positives, and the false-positive share. Classification is a judgement written by whoever runs the calibration; the script checks the arithmetic and the bar, never the judgement.
 
 ## Tests
-- [ ] (code) `cargo xtask calibrate` judges up to the last 200 commits of each listed repo against their parents, writes `docs/calibration-2026-09.md` in the described shape with the verdict first, and leaves the source repositories untouched · scripts/check/calibrate.sh
-- [ ] (code) the calibration file's pooled block-level false-positive share is under two percent of commits judged across the repos, every repo's own count and share is shown, and no line of it records T1, T2, T3 or S1 turned off to get there · scripts/check/calibration-bar.sh
-- [ ] (code) `garden.json`'s metric command runs `scripts/check/calibration-bar.sh` and its latest result is committed · scripts/check/metric.sh
-- [ ] (code) `cargo xtask suppressions` counts `Weed-allow:` trailers per hundred commits on each garden repo from the day guard is installed (zero before), and the calibration file reports the rate beside precision with the true-positive count on the same line · scripts/check/suppression-rate.sh
+- [x] (code) `cargo xtask calibrate` judges up to the last 200 commits of each listed repo against their parents, writes `docs/calibration-2026-09.md` in the described shape with the verdict first, and leaves the source repositories untouched · scripts/check/calibrate.sh @e1538e2 · by cli
+- [x] (code) the calibration file's pooled block-level false-positive share is under two percent of commits judged across the repos, every repo's own count and share is shown, and no line of it records T1, T2, T3 or S1 turned off to get there · scripts/check/calibration-bar.sh @08d2e9a · by cli
+- [x] (code) `garden.json`'s metric command runs `scripts/check/calibration-bar.sh` and its latest result is committed · scripts/check/metric.sh @fc9d35f · by cli
+- [x] (code) `cargo xtask suppressions` counts `Weed-allow:` trailers per hundred commits on each garden repo from the day guard is installed (zero before), and the calibration file reports the rate beside precision with the true-positive count on the same line · scripts/check/suppression-rate.sh @3359ad3 · by cli
 
 ## Needs #rules-prod
 
