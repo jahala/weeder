@@ -1,2 +1,2 @@
 {"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-d2-go-hcl-6bf1a67a9-gohcl-decode-go-6.md", "sha256": "0d11c5bc35717155aba5dfa21d065381978fa7bd3c20f4c40bfbd20cf7ed1cbe"}
-{"type": "answer", "answer": "Answered packet SHA-256: 0d11c5bc35717155aba5dfa21d065381978fa7bd3c20f4c40bfbd20cf7ed1cbe\nVerdict: miss\nReasoning: The diff adds an hcldec import inside gohcl/decode.go at the planted site, matching forbidden boundary D2, and weed reported no finding."}
+{"type": "answer", "answer": "Answered packet SHA-256: 0d11c5bc35717155aba5dfa21d065381978fa7bd3c20f4c40bfbd20cf7ed1cbe\nVerdict: miss\nReasoning: The diff adds a gohcl import of hcldec at the planted import block, matching forbidden boundary D2, and weed reported no finding."}

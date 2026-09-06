@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a07604-e71c-7643-a897-a0d571fe9bbd"}
+{"type":"thread.started","thread_id":"01a0762b-07c7-7973-97f4-7579c1d8d276"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: eb9dc7ba149562f5d199377514373aab06801187ef2fe093456d7fc8d6645cc7\nVerdict: acceptable\nReasoning: Assertions did leave callers.rs, but the deleted tests were moved into new scope and callee_query modules, so behavior remained covered rather than actually weakened."}}
-{"type":"turn.completed","usage":{"input_tokens":36744,"cached_input_tokens":20864,"output_tokens":326,"reasoning_output_tokens":242}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: eb9dc7ba149562f5d199377514373aab06801187ef2fe093456d7fc8d6645cc7\nVerdict: acceptable\nReasoning: Assertions did leave callers.rs, but the relevant scope and query tests were moved into new focused modules, so the behavior remains checked elsewhere."}}
+{"type":"turn.completed","usage":{"input_tokens":34928,"cached_input_tokens":2432,"output_tokens":468,"reasoning_output_tokens":387}}
