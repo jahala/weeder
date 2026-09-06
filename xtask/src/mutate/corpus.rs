@@ -90,7 +90,14 @@ pub fn cache_root() -> PathBuf {
 
 /// Make the working clone, fetching only what the pin is missing.
 pub fn prepare(repo: &Repo) -> Result<Working, String> {
-    let root = cache_root().join(&repo.name);
+    prepare_in(&cache_root(), repo)
+}
+
+/// Make the working clone under a caller-owned root. The campaign uses the
+/// shared recall cache; one-case audit replay uses a private temp root so a
+/// packet cannot inherit a half-restored campaign checkout.
+pub fn prepare_in(cache: &Path, repo: &Repo) -> Result<Working, String> {
+    let root = cache.join(&repo.name);
     std::fs::create_dir_all(&root).map_err(|error| format!("{}: {error}", root.display()))?;
     if !root.join(".git").exists() {
         git::run(&root, &["init", "--quiet"])?;

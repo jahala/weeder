@@ -1,2 +1,2 @@
 {"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/blocked-copeca-70d669542a.md", "sha256": "44974dc9198af0983db2f781af9f725bb2ce838cb14bdb6d26e2e0cad28bd568"}
-{"type": "answer", "answer": "Answered packet SHA-256: 44974dc9198af0983db2f781af9f725bb2ce838cb14bdb6d26e2e0cad28bd568\nVerdict: false-positive\nReasoning: The added line assigns a loaded key object to variable `key`, not a literal secret-looking string or committed credential."}
+{"type": "answer", "answer": "Answered packet SHA-256: 44974dc9198af0983db2f781af9f725bb2ce838cb14bdb6d26e2e0cad28bd568\nVerdict: false-positive\nReasoning: The flagged line assigns a loaded key object from caller-provided PEM bytes, not a literal secret-looking credential added to the repository."}

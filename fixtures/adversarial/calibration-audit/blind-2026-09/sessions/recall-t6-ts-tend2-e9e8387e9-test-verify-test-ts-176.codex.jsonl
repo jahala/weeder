@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a07605-a57d-75f1-81c4-429fccb75cde"}
+{"type":"thread.started","thread_id":"01a0762b-f3ad-7931-b0b1-c79d8d979371"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 0ad9add97ac4feb1bb5a9172cb98a6222e516a9dd1d29b09778250cda1273dd8\nVerdict: miss\nReasoning: The assertion changed from requiring an error matching /description/ to accepting any thrown error, and weed did not report T6 at test/verify.test.ts:176."}}
-{"type":"turn.completed","usage":{"input_tokens":22259,"cached_input_tokens":20864,"output_tokens":90,"reasoning_output_tokens":0}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 7a2855d40aba5fc18752711662e52e6ab95e6cde0a3e51973110c7909ea15af9\nVerdict: miss\nReasoning: The planted diff weakens the assertion from toThrow(/description/) to bare toThrow(), and weed did not report T6 at test/verify.test.ts:176."}}
+{"type":"turn.completed","usage":{"input_tokens":20818,"cached_input_tokens":19840,"output_tokens":91,"reasoning_output_tokens":0}}

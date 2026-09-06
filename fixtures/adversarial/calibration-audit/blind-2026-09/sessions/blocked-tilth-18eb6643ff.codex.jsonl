@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a07604-be70-71b0-8c0b-6ce14e08ac8b"}
+{"type":"thread.started","thread_id":"01a0762a-ddea-72a0-b279-75e041dfb905"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 2ddfd18038fa1430ffc93cb0557ae6f677caea99ba3d276d4b0d20060c7a1a85\nVerdict: acceptable\nReasoning: Assertions were removed from src/mcp/mod.rs, but the affected tests were relocated into narrower module test blocks, preserving the checks rather than weakening coverage."}}
-{"type":"turn.completed","usage":{"input_tokens":28131,"cached_input_tokens":20864,"output_tokens":353,"reasoning_output_tokens":264}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 2ddfd18038fa1430ffc93cb0557ae6f677caea99ba3d276d4b0d20060c7a1a85\nVerdict: acceptable\nReasoning: Assertions were removed from src/mcp/mod.rs, but they were relocated into the relevant tool modules, so the check is true for that file without weakening coverage."}}
+{"type":"turn.completed","usage":{"input_tokens":26691,"cached_input_tokens":19840,"output_tokens":390,"reasoning_output_tokens":299}}

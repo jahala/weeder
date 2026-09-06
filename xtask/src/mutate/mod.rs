@@ -181,9 +181,11 @@ pub fn run(request: &Request) -> Result<(), String> {
     Ok(())
 }
 
-/// Rebuild the mutation, diff and weed findings for one recalled case from the
-/// pinned corpus.
-pub fn replay_case(
+/// Rebuild one recalled case under a caller-owned cache root. Audit packets use
+/// one private root for all sampled recall cases, so replay never reads the
+/// campaign cache and still fetches each repository only once per packet run.
+pub fn replay_case_in(
+    cache: &Path,
     repo: &crate::corpus::Repo,
     sha: &str,
     rule: &str,
@@ -191,7 +193,7 @@ pub fn replay_case(
 ) -> Result<Replay, String> {
     let lang =
         Language::from_slug(lang).ok_or_else(|| format!("{lang} is not a recall language"))?;
-    let working = corpus::prepare(repo)?;
+    let working = corpus::prepare_in(cache, repo)?;
     let root = working.root;
     let sha = git::capture(
         &root,
