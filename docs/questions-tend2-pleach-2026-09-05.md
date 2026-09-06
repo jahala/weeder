@@ -21,6 +21,8 @@ Written 2026-09-05 after reading FORMAT.md, tend2-ARCHITECTURE.md, emit.ts, veri
 
 11. **`verify` kills a check at 120 seconds and reports it as a failure.** `spawnSync(..., { timeout: options.timeoutMs ?? 12e4 })`, with nothing on the command line reaching `timeoutMs`. The recall campaign took 166 seconds, so two checks failed on the clock with a detail that was the last 300 characters of a cargo build, indistinguishable from a check that ran and disagreed; and because `spawnSync` kills the shell and not the processes under it, the two killed campaigns kept running and collided with the third on `index.lock`. The worker found it by reading tend2's source and then made the campaign four times faster, which is a fine outcome and the wrong reason. Three asks: say "killed after 120s" in the detail, add `--timeout` for checks that measure something real, and kill the process group.
 
+12. **A refuted human check never leaves "needs you".** The owner refuted the Gemini live proof (`tend2 verify … --refute 5 --as owner`, the reason in `## Tried`). `next` still lists the loop under "needs you (1)" with the same approve-or-refute prompt, and the check renders `[!]`, indistinguishable from a machine check that failed. A refusal is an answer: show it as `refuted by owner, 2026-09-06` and take it out of the ask list, or the owner is asked the same question every morning.
+
 ## pleach
 
 9. **`--repo-root` on a linked git worktree**, answered by reading `src/seams/gitdir.ts`: a `.git` file is followed to the real git dir, so journal, lock and receipts land there. Only the `--help` text still says `<repo-root>/.git/pleach/journal.jsonl`; worth updating to `<git-dir>`.
