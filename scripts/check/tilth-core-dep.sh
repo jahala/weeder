@@ -35,10 +35,22 @@ if grep -qE '^\[(patch|replace)' Cargo.toml; then
   echo "Cargo.toml carries a [patch] or [replace] table; the pin would not be what builds" >&2
   status=1
 fi
+# A cargo config beside the manifest is not refused for existing: `cargo xtask`
+# is an alias and lives in one. What is refused is anything in such a file that
+# could decide where a dependency comes from, so every table other than [alias]
+# and every `paths` key is a complaint, and the resolved graph below is what
+# settles the pin either way.
 for config in .cargo/config.toml .cargo/config; do
   [ -f "$config" ] || continue
-  echo "$config exists; a cargo config beside the manifest can redirect the pin" >&2
-  status=1
+  stray="$(grep -E '^[[:space:]]*\[' "$config" | grep -vE '^[[:space:]]*\[alias\]' || true)"
+  if [ -n "$stray" ]; then
+    echo "$config carries a table other than [alias]: $(echo "$stray" | tr '\n' ' '). a cargo config beside the manifest can redirect the pin" >&2
+    status=1
+  fi
+  if grep -qE '^[[:space:]]*paths[[:space:]]*=' "$config"; then
+    echo "$config sets paths, which replaces a dependency with a directory on this machine" >&2
+    status=1
+  fi
 done
 
 # The resolved graph: one tilth-core, from that repository, at that commit.
