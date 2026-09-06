@@ -49,7 +49,9 @@ fi
 
 # The answer already in the tree, kept aside while the metric is run again.
 committed="$(mktemp)"
-trap 'rm -f "$committed"' EXIT
+# Scratch goes to the bin, never to rm; where there is no trash command the
+# temp directory keeps it and the system clears it.
+trap 'command -v trash >/dev/null 2>&1 && trash "$committed"' EXIT
 cp "$result" "$committed"
 
 if ! bash -c "$command" > /dev/null; then

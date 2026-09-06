@@ -35,7 +35,9 @@ binary="$root/target/debug/weed"
 # are real git repositories built here, because the exit code the doc claims has
 # to come from the binary rather than from this script's opinion of it.
 scratch="$(mktemp -d)"
-trap 'rm -rf "$scratch"' EXIT
+# Scratch goes to the bin, never to rm; where there is no trash command the
+# temp directory keeps it and the system clears it.
+trap 'command -v trash >/dev/null 2>&1 && trash "$scratch"' EXIT
 
 git_quiet() {
   git -c user.name="weed evidence" -c user.email="evidence@weed.invalid" \

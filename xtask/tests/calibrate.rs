@@ -72,7 +72,7 @@ fn judges_every_commit_that_has_a_parent_and_writes_the_verdict_first() {
     let mut lines = report.lines();
     assert_eq!(
         lines.next(),
-        Some("# calibration — weed over real history, 2026-09"),
+        Some("# calibration, weed over real history, 2026-09"),
         "the file opens with its title"
     );
     lines.next();
@@ -83,7 +83,7 @@ fn judges_every_commit_that_has_a_parent_and_writes_the_verdict_first() {
     );
 
     assert!(
-        report.contains("## probe — 3 commits judged, 2 blocked"),
+        report.contains("## probe, 3 commits judged, 2 blocked"),
         "the root commit has no parent to be judged against, so three of four are judged:\n{report}"
     );
 }
@@ -186,7 +186,7 @@ fn the_window_is_the_last_commits_and_nothing_older() {
     let report = std::fs::read_to_string(&out).expect("the report should be written");
 
     assert!(
-        report.contains("## probe — 2 commits judged"),
+        report.contains("## probe, 2 commits judged"),
         "a window of two judges the two newest commits:\n{report}"
     );
     assert!(

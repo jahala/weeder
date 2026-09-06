@@ -59,7 +59,7 @@ named = re.findall(r'^\s*name\s*=\s*"([^"]+)"', open(corpus_path, encoding="utf-
 sections = re.split(r"^## ", report, flags=re.M)
 counted = {}
 for section in sections:
-    heading = re.match(r"(\S+) — (\d+) commits judged, (\d+) blocked, (\d+) warned$", section.splitlines()[0] if section else "")
+    heading = re.match(r"(\S+), (\d+) commits judged, (\d+) blocked, (\d+) warned$", section.splitlines()[0] if section else "")
     if heading is None:
         continue
     repo, judged, blocked, warned = heading.group(1), int(heading.group(2)), int(heading.group(3)), int(heading.group(4))

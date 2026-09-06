@@ -36,7 +36,9 @@ marker="$(sed -n 's/^pub const BINARY_MARKER: &str = "\(.*\)";$/\1/p' src/core/g
 }
 
 scratch="$(mktemp -d)"
-trap 'rm -rf "$scratch"' EXIT
+# Scratch goes to the bin, never to rm; where there is no trash command the
+# temp directory keeps it and the system clears it.
+trap 'command -v trash >/dev/null 2>&1 && trash "$scratch"' EXIT
 status=0
 
 python3 - "$corpus" > "$scratch/corpus" <<'PY'

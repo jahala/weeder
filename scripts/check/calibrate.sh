@@ -32,7 +32,9 @@ command -v git >/dev/null 2>&1 || { echo "git is not on PATH" >&2; exit 3; }
 [ -f "$corpus" ] || { echo "$corpus is missing: calibration names no repositories to judge" >&2; exit 1; }
 
 scratch="$(mktemp -d)"
-trap 'rm -rf "$scratch"' EXIT
+# Scratch goes to the bin, never to rm; where there is no trash command the
+# temp directory keeps it and the system clears it.
+trap 'command -v trash >/dev/null 2>&1 && trash "$scratch"' EXIT
 status=0
 
 # The corpus, as name and path, read out of the file the run reads.
@@ -127,7 +129,7 @@ if not (verdict.startswith("weed ships as a gate:") or verdict.startswith("weed 
 
 # One section per repository, with the count git itself gives.
 for name, reference, judged in expected:
-    heading = re.search(rf"^## {re.escape(name)} — (\d+) commits judged, (\d+) blocked, (\d+) warned$", report, re.M)
+    heading = re.search(rf"^## {re.escape(name)}, (\d+) commits judged, (\d+) blocked, (\d+) warned$", report, re.M)
     if heading is None:
         complaints.append(f"{name} has no section of its own in the report")
         continue
@@ -140,7 +142,7 @@ for name, reference, judged in expected:
 
 # Every blocked commit is a row with a rule, a class and a reason.
 rows = re.findall(r"^\| `([0-9a-f]{7,})` (.*?) \| ([^|]+) \| ([^|]+) \| ([^|]+) \|$", report, re.M)
-blocked = sum(int(found.group(1)) for found in re.finditer(r"^## \S+ — \d+ commits judged, (\d+) blocked", report, re.M))
+blocked = sum(int(found.group(1)) for found in re.finditer(r"^## \S+, \d+ commits judged, (\d+) blocked", report, re.M))
 if len(rows) != blocked:
     complaints.append(f"the repository tables carry {len(rows)} blocked commits and the headings count {blocked}")
 for sha, subject, ruleids, classification, why in rows:
