@@ -39,9 +39,14 @@ pub struct Request {
     /// moves on.
     #[arg(long, default_value_t = 40)]
     pub cases: usize,
-    /// How far back each repository is walked.
+    /// How far back from the pin each repository is walked.
     #[arg(long, default_value_t = 200)]
     pub commits: usize,
+    /// Read the corpus from here instead of docs/calibration/corpus.toml and
+    /// docs/calibration/corpus-go.toml. Repeat it for more than one file;
+    /// naming any leaves both of those unread.
+    #[arg(long = "corpus", value_name = "path")]
+    pub corpora: Vec<PathBuf>,
     /// The file the recall section is written into.
     #[arg(long, default_value = "docs/calibration-2026-09.md")]
     pub out: PathBuf,
@@ -83,8 +88,10 @@ pub struct Case {
 #[derive(Debug, Default)]
 pub struct Outcome {
     pub repo: String,
-    pub reference: String,
-    pub head: String,
+    /// Where the history was fetched from, as the corpus names it.
+    pub source: String,
+    /// The commit the window ends at, as the corpus pins it.
+    pub tip: String,
     pub walked: usize,
     pub cases: Vec<Case>,
     /// Commits that held no site for a rule in a language.
@@ -108,31 +115,38 @@ pub fn run(request: &Request) -> Result<(), String> {
         .clone()
         .unwrap_or_else(|| corpus::cache_root().join("cases"));
 
-    let sources: Vec<&corpus::Source> = corpus::CORPUS
-        .iter()
-        .filter(|source| request.repos.is_empty() || request.repos.iter().any(|n| n == source.name))
+    let repos: Vec<crate::corpus::Repo> = corpus::read(&corpora(request, &root))?
+        .into_iter()
+        .filter(|repo| request.repos.is_empty() || request.repos.iter().any(|n| n == &repo.name))
         .collect();
-    if sources.is_empty() {
+    if repos.is_empty() {
         return Err("no repository of the corpus was named".to_string());
     }
 
-    let plan = Plan::new(request, &sources);
-    let mut outcomes = Vec::new();
+    // Every clone is fetched at its pin before the first case is planted: what
+    // a repository writes is read off the tree at the pin, and that is what
+    // decides how the cases are shared out.
+    let working = prepare(&repos)?;
+    let plan = Plan::new(request, &working);
+    let mut walked = Vec::new();
     let mut failures = Vec::new();
     std::thread::scope(|scope| {
         let mut running = Vec::new();
-        for source in &sources {
-            let plan = &plan;
-            let binary = binary.clone();
-            let cases_dir = cases_dir.clone();
-            running.push((
-                source.name,
-                scope.spawn(move || walk(source, plan, &binary, &cases_dir)),
-            ));
+        for source in &working {
+            for slice in 0..corpus::SLICES {
+                let plan = &plan;
+                let binary = binary.clone();
+                let cases_dir = cases_dir.clone();
+                running.push((
+                    source.name.clone(),
+                    slice,
+                    scope.spawn(move || walk(source, slice, plan, &binary, &cases_dir)),
+                ));
+            }
         }
-        for (name, handle) in running {
+        for (name, slice, handle) in running {
             match handle.join() {
-                Ok(Ok(outcome)) => outcomes.push(outcome),
+                Ok(Ok(outcome)) => walked.push((name, slice, outcome)),
                 Ok(Err(reason)) => failures.push(format!("{name}: {reason}")),
                 Err(_) => failures.push(format!("{name}: the walk panicked")),
             }
@@ -141,7 +155,7 @@ pub fn run(request: &Request) -> Result<(), String> {
     if !failures.is_empty() {
         return Err(failures.join("\n"));
     }
-    outcomes.sort_by(|one, other| one.repo.cmp(&other.repo));
+    let outcomes = joined(walked);
 
     let written = report::write(&request.out, &outcomes, &levels, &plan)?;
     if let Some(path) = &request.json {
@@ -151,6 +165,73 @@ pub fn run(request: &Request) -> Result<(), String> {
     Ok(())
 }
 
+/// One outcome per repository, made of what each of its slices came back with,
+/// in repository order and, inside one repository, in the order the window was
+/// sliced. Two runs put the same cases in the same places.
+fn joined(mut walked: Vec<(String, usize, Outcome)>) -> Vec<Outcome> {
+    walked.sort_by(|(one, first, _), (other, second, _)| one.cmp(other).then(first.cmp(second)));
+    let mut outcomes: Vec<Outcome> = Vec::new();
+    for (_, _, outcome) in walked {
+        match outcomes.last_mut() {
+            Some(held) if held.repo == outcome.repo => {
+                held.walked += outcome.walked;
+                held.cases.extend(outcome.cases);
+                for (key, counted) in outcome.absent {
+                    *held.absent.entry(key).or_default() += counted;
+                }
+                held.impossible.extend(outcome.impossible);
+                for (key, counted) in outcome.passed_over {
+                    *held.passed_over.entry(key).or_default() += counted;
+                }
+                for (reason, counted) in outcome.no_site {
+                    *held.no_site.entry(reason).or_default() += counted;
+                }
+            }
+            _ => outcomes.push(outcome),
+        }
+    }
+    outcomes
+}
+
+/// The corpus files this run reads: the ones it was given, or calibration's
+/// corpus and the Go history recall adds to it.
+fn corpora(request: &Request, root: &Path) -> Vec<PathBuf> {
+    if !request.corpora.is_empty() {
+        return request.corpora.clone();
+    }
+    vec![
+        root.join(crate::corpus::DEFAULT_PATH),
+        root.join(corpus::GO_PATH),
+    ]
+}
+
+/// Fetch every repository at its pin, and read what each one writes. A source
+/// that will not hand over its pinned commit stops the run: a campaign that
+/// quietly measured six repositories of seven would report a recall nobody
+/// could reproduce.
+fn prepare(repos: &[crate::corpus::Repo]) -> Result<Vec<Working>, String> {
+    let mut working = Vec::new();
+    let mut failures = Vec::new();
+    std::thread::scope(|scope| {
+        let mut running = Vec::new();
+        for repo in repos {
+            running.push((repo.name.clone(), scope.spawn(|| corpus::prepare(repo))));
+        }
+        for (name, handle) in running {
+            match handle.join() {
+                Ok(Ok(one)) => working.push(one),
+                Ok(Err(reason)) => failures.push(format!("{name}: {reason}")),
+                Err(_) => failures.push(format!("{name}: the fetch panicked")),
+            }
+        }
+    });
+    if !failures.is_empty() {
+        return Err(failures.join("\n"));
+    }
+    working.sort_by(|one, other| one.name.cmp(&other.name));
+    Ok(working)
+}
+
 /// What the campaign is asking for: the rules, the languages, and how many
 /// cases each repository owes.
 pub struct Plan {
@@ -158,11 +239,11 @@ pub struct Plan {
     pub languages: Vec<Language>,
     pub commits: usize,
     /// How many cases one repository owes for one rule in one language.
-    quota: BTreeMap<(&'static str, Language), usize>,
+    quota: BTreeMap<(String, Language), usize>,
 }
 
 impl Plan {
-    fn new(request: &Request, sources: &[&corpus::Source]) -> Plan {
+    fn new(request: &Request, sources: &[Working]) -> Plan {
         let rules: Vec<String> = inject::RULES
             .iter()
             .filter(|rule| {
@@ -186,14 +267,13 @@ impl Plan {
         // measurement is never one repository's habits.
         let mut quota = BTreeMap::new();
         for lang in &languages {
-            let serving: Vec<&corpus::Source> = sources
+            let serving: Vec<&Working> = sources
                 .iter()
                 .filter(|source| source.languages.contains(lang))
-                .copied()
                 .collect();
             let each = request.cases.div_ceil(serving.len().max(1));
             for source in serving {
-                quota.insert((source.name, *lang), each);
+                quota.insert((source.name.clone(), *lang), each);
             }
         }
         Plan {
@@ -204,33 +284,43 @@ impl Plan {
         }
     }
 
-    fn owed(&self, repo: &str, lang: Language) -> usize {
-        self.quota
+    /// What one slice of a repository's window owes. The repository's share is
+    /// dealt out over its slices exactly, the first few carrying one more where
+    /// it does not divide, so slicing the walk changes where the cases come from
+    /// and never how many there are.
+    fn owed(&self, repo: &str, lang: Language, slice: usize) -> usize {
+        let owed = self
+            .quota
             .iter()
             .find(|((name, held), _)| *name == repo && *held == lang)
-            .map_or(0, |(_, owed)| *owed)
+            .map_or(0, |(_, owed)| *owed);
+        owed / corpus::SLICES + usize::from(slice < owed % corpus::SLICES)
     }
 }
 
-/// One repository, walked newest commit first until every rule it serves has
-/// the cases it owes.
+/// One slice of one repository's window, walked from the commit the corpus pins
+/// it at, newest first, until every rule it serves has the cases the slice owes.
+///
+/// A slice takes one commit in every `corpus::SLICES` of the window, from its
+/// own starting place, so each reads a spread of the history rather than a block
+/// of it, and together they read the window the pin ends.
 fn walk(
-    source: &corpus::Source,
+    working: &Working,
+    slice: usize,
     plan: &Plan,
     binary: &Path,
     cases_dir: &Path,
 ) -> Result<Outcome, String> {
-    let working = corpus::prepare(source)?;
     let languages: Vec<Language> = plan
         .languages
         .iter()
-        .filter(|lang| source.languages.contains(lang))
+        .filter(|lang| working.languages.contains(lang))
         .copied()
         .collect();
     let mut outcome = Outcome {
-        repo: source.name.to_string(),
-        reference: working.reference.clone(),
-        head: working.head.clone(),
+        repo: working.name.clone(),
+        source: working.source.clone(),
+        tip: working.tip.clone(),
         ..Outcome::default()
     };
     if languages.is_empty() {
@@ -240,22 +330,32 @@ fn walk(
     let mut wanted: BTreeMap<(String, Language), usize> = BTreeMap::new();
     for rule in &plan.rules {
         for lang in &languages {
-            wanted.insert((rule.clone(), *lang), plan.owed(source.name, *lang));
+            wanted.insert(
+                (rule.clone(), *lang),
+                plan.owed(&working.name, *lang, slice),
+            );
         }
     }
 
-    let history = git::lines(
-        &working.root,
+    let root = corpus::slice(working, slice)?;
+    // The window ends at the pin rather than at a branch: a commit pushed to
+    // the source afterwards is outside it, and cannot move a case or a number.
+    let history: Vec<String> = git::lines(
+        &root,
         &[
             "log",
             "--first-parent",
             "--format=%H %P",
             "-n",
             &plan.commits.to_string(),
-            &working.reference,
+            &working.tip,
         ],
-    )?;
-    let config = corpus::cache_root().join(format!("{}.weed.toml", source.name));
+    )?
+    .into_iter()
+    .skip(slice)
+    .step_by(corpus::SLICES)
+    .collect();
+    let config = corpus::cache_root().join(format!("{}-{slice}.weed.toml", working.name));
 
     for entry in history {
         if wanted.values().all(|owed| *owed == 0) {
@@ -267,25 +367,22 @@ fn walk(
             continue;
         };
         let (sha, parent) = (sha.to_string(), parent.to_string());
-        git::run(
-            &working.root,
-            &["checkout", "--quiet", "--force", "--detach", &sha],
-        )?;
+        git::run(&root, &["checkout", "--quiet", "--force", "--detach", &sha])?;
         outcome.walked += 1;
-        let paths = git::lines(&working.root, &["ls-files"])?;
+        let paths = git::lines(&root, &["ls-files"])?;
         let changed = git::lines(
-            &working.root,
+            &root,
             &["diff", "--name-only", "--find-renames", &parent, &sha],
         )?;
         let added = git::lines(
-            &working.root,
+            &root,
             &["diff", "--name-only", "--diff-filter=A", &parent, &sha],
         )?;
-        let tree = Tree::read(&working.root, paths, changed, &added, &languages);
+        let tree = Tree::read(&root, paths, changed, &added, &languages);
         for (reason, counted) in &tree.passed_over {
             *outcome.no_site.entry(*reason).or_default() += counted;
         }
-        let baseline = judge::check(binary, &working.root, &parent, &[])?;
+        let baseline = judge::check(binary, &root, &parent, &[])?;
 
         for rule in &plan.rules {
             for lang in &languages {
@@ -312,12 +409,7 @@ fn walk(
                     baseline.clone()
                 } else {
                     prepare_config(&planted, &config)?;
-                    judge::check(
-                        binary,
-                        &working.root,
-                        &parent,
-                        &arguments(&planted, &config),
-                    )?
+                    judge::check(binary, &root, &parent, &arguments(&planted, &config))?
                 };
                 if against
                     .iter()
@@ -327,25 +419,28 @@ fn walk(
                     continue;
                 }
 
-                let before = apply(&working, &planted)?;
-                let found = judge::check(
-                    binary,
-                    &working.root,
-                    &parent,
-                    &arguments(&planted, &config),
-                );
-                let restored = restore(&working, &planted, &tree);
+                let before = apply(&root, &planted, &tree)?;
+                let found = judge::check(binary, &root, &parent, &arguments(&planted, &config));
+                let restored = restore(&root, &planted, &tree);
                 let found = found?;
                 restored?;
 
                 let caught = caught(&found, &planted, rule);
                 if !caught {
-                    report::keep(cases_dir, source.name, &sha, rule, *lang, &planted, &before)?;
+                    report::keep(
+                        cases_dir,
+                        &working.name,
+                        &sha,
+                        rule,
+                        *lang,
+                        &planted,
+                        &before,
+                    )?;
                 }
                 outcome.cases.push(Case {
                     rule: rule.clone(),
                     lang: *lang,
-                    repo: source.name.to_string(),
+                    repo: working.name.clone(),
                     sha: sha.clone(),
                     path: planted.target.first().cloned().unwrap_or_default(),
                     line: planted.lines.map(|(first, _)| first),
@@ -395,13 +490,23 @@ fn prepare_config(planted: &Mutation, config: &Path) -> Result<(), String> {
     std::fs::write(config, text).map_err(|error| format!("{}: {error}", config.display()))
 }
 
-/// Write the mutation into the working tree and stage it, so the diff git shows
-/// carries a file the tree never had. The text each touched file held before is
-/// answered, for the pair a miss is kept as.
-fn apply(working: &Working, planted: &Mutation) -> Result<Vec<(String, Option<String>)>, String> {
+/// Write the mutation into the working tree, and tell git about a file the tree
+/// never had. The text each touched file held before is answered, for the pair a
+/// miss is kept as.
+///
+/// A diff against a commit reads the working tree for every file git already
+/// knows, and does not see one it has never been told about. So the index is
+/// written only where the case brought a new file, and a case that edits or
+/// removes one costs nothing over the whole tree.
+fn apply(
+    root: &Path,
+    planted: &Mutation,
+    tree: &Tree,
+) -> Result<Vec<(String, Option<String>)>, String> {
     let mut before = Vec::new();
+    let mut brought = false;
     for (path, content) in &planted.writes {
-        let whole = working.root.join(path);
+        let whole = root.join(path);
         before.push((path.clone(), std::fs::read_to_string(&whole).ok()));
         match content {
             Some(text) => {
@@ -411,35 +516,45 @@ fn apply(working: &Working, planted: &Mutation) -> Result<Vec<(String, Option<St
                 }
                 std::fs::write(&whole, text)
                     .map_err(|error| format!("{}: {error}", whole.display()))?;
+                brought |= !tree.paths.iter().any(|held| held == path);
             }
-            None => {
-                git::run(
-                    &working.root,
-                    &["rm", "--quiet", "--force", "--ignore-unmatch", "--", path],
-                )?;
-            }
+            None => match std::fs::remove_file(&whole) {
+                Ok(()) => {}
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(error) => return Err(format!("{}: {error}", whole.display())),
+            },
         }
     }
-    git::run(&working.root, &["add", "--all"])?;
+    if brought {
+        git::run(root, &["add", "--all"])?;
+    }
     Ok(before)
 }
 
 /// Put the tree back exactly as the commit left it. A file the injection added
 /// is one git has been told about, so git is what takes it back out; everything
 /// else is restored from the commit.
-fn restore(working: &Working, planted: &Mutation, tree: &Tree) -> Result<(), String> {
+fn restore(root: &Path, planted: &Mutation, tree: &Tree) -> Result<(), String> {
+    let mut held: Vec<&str> = Vec::new();
     for (path, _) in &planted.writes {
-        if !tree.paths.iter().any(|held| held == path) {
+        if tree.paths.iter().any(|inside| inside == path) {
+            held.push(path);
+        } else {
             git::run(
-                &working.root,
+                root,
                 &["rm", "--quiet", "--force", "--ignore-unmatch", "--", path],
             )?;
         }
     }
-    git::run(
-        &working.root,
-        &["checkout", "--quiet", "--force", "HEAD", "--", "."],
-    )
+    if held.is_empty() {
+        return Ok(());
+    }
+    // Only the files the case touched are taken back from the commit: the rest
+    // of the tree was never moved, and asking git about all of it is what makes
+    // a campaign of thousands of cases slow.
+    let mut arguments = vec!["checkout", "--quiet", "--force", "HEAD", "--"];
+    arguments.extend(held);
+    git::run(root, &arguments)
 }
 
 /// The number that decides which site a commit offers, so two runs of the

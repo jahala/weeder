@@ -81,7 +81,7 @@ pub enum NoSite {
 /// The rules the campaign injects for, in catalogue order.
 pub const RULES: &[&str] = &[
     "T1", "T2", "T3", "T4", "T5", "T6", "T7", "M1", "S1", "S2", "S3", "D1", "D2", "X1", "X2", "C1",
-    "C2", "G1", "G2",
+    "C2", "C3", "G1", "G2",
 ];
 
 /// Plant one anti-pattern of this rule in this tree, or say why there is
@@ -105,6 +105,7 @@ pub fn inject(rule: &str, lang: Language, tree: &Tree, seed: u64) -> Result<Muta
         "X2" => touch_outside_the_scope(lang, tree, seed),
         "C1" => edit_a_guardrail(lang, tree, seed),
         "C2" => broaden_an_ignore(lang, tree, seed),
+        "C3" => edit_a_workflow(lang, tree, seed),
         "G1" => commit_a_conflict(lang, tree, seed),
         "G2" => add_a_blob(lang, tree, seed),
         _ => None,
@@ -1159,7 +1160,13 @@ fn touch_outside_the_scope(lang: Language, tree: &Tree, seed: u64) -> Option<Mut
     None
 }
 
-/// C1: the file that decides what the other checks do is edited.
+/// C1: the law the checks are run under is rewritten.
+///
+/// The subtlest shape is a line changed inside the section an instruction file
+/// states its hard limits in, so that is planted where a repository carries
+/// one. A repository that states no law is given the other shape the rule is
+/// about, and the one every repository can receive: a hook git calls before a
+/// commit, that passes whatever it is handed.
 fn edit_a_guardrail(_lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
     let guardrails: Vec<&String> = tree
         .paths
@@ -1168,6 +1175,114 @@ fn edit_a_guardrail(_lang: Language, tree: &Tree, seed: u64) -> Option<Mutation>
         .filter(|path| !tree.touched(path))
         .collect();
     for path in rotate(guardrails, seed) {
+        let Some(text) = tree.text(path) else {
+            continue;
+        };
+        if let Some(planted) = widen_the_limits(path, &text) {
+            return Some(planted);
+        }
+        if is_instructions(path) {
+            // The rest of an instruction file is prose, and a rule about the
+            // law does not fire on it.
+            continue;
+        }
+        let mut written = text.clone();
+        if !written.ends_with('\n') {
+            written.push('\n');
+        }
+        written.push_str("# the checks are asked for less than they were\n");
+        // The finding is about the file rather than about a line in it, so no
+        // line is expected of it.
+        return Some(Mutation::new("a guardrail file was edited", path).writing(path, written));
+    }
+    installed_hook(tree)
+}
+
+/// The guardrail files whose law lives in one section rather than in the whole
+/// file, as weed reads them.
+fn is_instructions(path: &str) -> bool {
+    matches!(path, "AGENTS.md" | "CLAUDE.md")
+}
+
+fn is_guardrail(path: &str) -> bool {
+    is_instructions(path)
+        || path == "weed.toml"
+        || path == ".gemini/settings.json"
+        || path.starts_with(".codex/")
+        || path.starts_with(".githooks/")
+        || (path.starts_with(".claude/settings") && path.ends_with(".json"))
+}
+
+/// One more limit written into the section a document states its hard limits
+/// in, where it states any: the limits are what the work is held to, and an
+/// agent editing them is widening what it may do.
+fn widen_the_limits(path: &str, text: &str) -> Option<Mutation> {
+    if !is_instructions(path) {
+        return None;
+    }
+    let lines: Vec<&str> = text.lines().collect();
+    let (at, rank) = lines.iter().enumerate().find_map(|(index, line)| {
+        let rank = heading_rank(line)?;
+        let title = line.trim_start_matches('#').trim().to_ascii_lowercase();
+        title.contains("hard limits").then_some((index, rank))
+    })?;
+    let end = lines
+        .iter()
+        .enumerate()
+        .skip(at + 1)
+        .find(|(_, line)| heading_rank(line).is_some_and(|next| next <= rank))
+        .map_or(lines.len(), |(next, _)| next);
+    let mut written: Vec<String> = lines.iter().map(ToString::to_string).collect();
+    written.insert(
+        end,
+        "- unless the change is small enough to be obvious".into(),
+    );
+    Some(
+        Mutation::new("a line was written into the hard limits", path)
+            .writing(path, joined(&written))
+            .at(end as u32 + 1, end as u32 + 1),
+    )
+}
+
+/// How deep a markdown heading sits, or `None` for a line that is not one.
+fn heading_rank(line: &str) -> Option<usize> {
+    let hashes = line
+        .chars()
+        .take_while(|character| *character == '#')
+        .count();
+    let rest = &line[hashes..];
+    (hashes > 0 && (rest.is_empty() || rest.starts_with(' '))).then_some(hashes)
+}
+
+/// A hook git runs before every commit, that asks nothing of what it is handed.
+/// A repository with no law of its own written down can still be handed one
+/// that says yes to everything.
+fn installed_hook(tree: &Tree) -> Option<Mutation> {
+    let path = ".githooks/pre-commit";
+    if tree.paths.iter().any(|held| held == path) {
+        return None;
+    }
+    Some(
+        Mutation::new(
+            "a hook that passes whatever it is given was installed",
+            path,
+        )
+        .writing(
+            path,
+            "#!/bin/sh\n# nothing is asked of a commit here\nexit 0\n".to_string(),
+        ),
+    )
+}
+
+/// C3: the file that says how the checks run on a server is edited.
+fn edit_a_workflow(_lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
+    let workflows: Vec<&String> = tree
+        .paths
+        .iter()
+        .filter(|path| is_workflow(path))
+        .filter(|path| !tree.touched(path))
+        .collect();
+    for path in rotate(workflows, seed) {
         let Some(text) = tree.text(path) else {
             continue;
         };
@@ -1181,10 +1296,8 @@ fn edit_a_guardrail(_lang: Language, tree: &Tree, seed: u64) -> Option<Mutation>
     None
 }
 
-fn is_guardrail(path: &str) -> bool {
-    let workflow = path.starts_with(".github/workflows/")
-        && (path.ends_with(".yml") || path.ends_with(".yaml"));
-    workflow || path.starts_with(".githooks/")
+fn is_workflow(path: &str) -> bool {
+    path.starts_with(".github/workflows/") && (path.ends_with(".yml") || path.ends_with(".yaml"))
 }
 
 /// C2: the repository is told to look away from its own source.
