@@ -126,3 +126,28 @@ blind re-grade in docs/calibration-audit-blind-2026-09.md is under the bar, so
 no blind agreement stands behind this number yet." A check written from the
 states the tree is expected to pass through will miss the one it is in, and the
 worker is the one who finds out.
+
+Redoing the ledger broke a check on another loop's page, and nothing warned
+about it. The sighted re-grade in `docs/calibration-audit-2026-09.md` re-graded
+a seeded sample drawn from the report's blocked commits; sharpening T1 moved two
+commits out of that block set, which moved the sample, which left the sighted
+audit re-grading cases the report no longer holds. `tend2 verify` on this loop
+was green throughout, because the file belongs to calibration-audit. The repair
+was a runner of its own, `scripts/audit/sighted-run.sh`, so the sighted re-grade
+is now taken by code from the report the ledger describes rather than typed once
+against a report that has since moved. A record produced by hand goes stale
+silently; a record produced by a script goes stale loudly, the next time the
+script runs.
+
+Worth having, though, for what it showed. The sighted re-grade agrees with the
+redone ledger on 40 of 40 and the blind one on 34 of 40, over the same seeded
+draw from the same report, differing only in what the auditor could read. That
+is the anchoring caveat's whole argument, measured on this repository's own
+numbers rather than argued for.
+
+`tend2 verify --force` on this loop takes about twenty minutes, and most of it is
+three evidence scripts fetching and judging the same 635 commits one after
+another. Each is right to stand on its own history rather than on a file another
+script left behind. Between them there is no way to say "this corpus, already
+fetched, already judged", so the loop pays for the corpus once per check that
+needs it.

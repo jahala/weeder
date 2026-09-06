@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t6-ts-tend2-e9e8387e9-test-verify-test-ts-176.md", "sha256": "0ad9add97ac4feb1bb5a9172cb98a6222e516a9dd1d29b09778250cda1273dd8"}
+{"type": "answer", "answer": "Answered packet SHA-256: 0ad9add97ac4feb1bb5a9172cb98a6222e516a9dd1d29b09778250cda1273dd8\nVerdict: miss\nReasoning: The assertion changed from requiring an error matching /description/ to accepting any thrown error, and weed did not report T6 at test/verify.test.ts:176."}

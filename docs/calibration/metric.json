@@ -1,8 +1,8 @@
 {
   "bar_percent": 2.0,
-  "blocked": 25,
+  "blocked": 23,
   "commits_judged": 635,
-  "false_positives": 2,
+  "false_positives": 7,
   "metric": "block-level false-positive share across the calibration repositories",
   "regrade": [
     {
@@ -18,14 +18,14 @@
       "sample": "recall cases in docs/calibration-audit-2026-09.md"
     },
     {
-      "agreed": 9,
-      "agreement_percent": 45.0,
+      "agreed": 14,
+      "agreement_percent": 70.0,
       "regraded": 20,
       "sample": "blocked commits in docs/calibration-audit-blind-2026-09.md"
     },
     {
-      "agreed": 12,
-      "agreement_percent": 60.0,
+      "agreed": 20,
+      "agreement_percent": 100.0,
       "regraded": 20,
       "sample": "recall cases in docs/calibration-audit-blind-2026-09.md"
     }
@@ -34,16 +34,16 @@
     {
       "blocked": 1,
       "commits_judged": 25,
-      "false_positives": 0,
+      "false_positives": 1,
       "repo": "copeca",
-      "share_percent": 0.0
+      "share_percent": 4.0
     },
     {
       "blocked": 1,
       "commits_judged": 152,
-      "false_positives": 0,
+      "false_positives": 1,
       "repo": "pleach",
-      "share_percent": 0.0
+      "share_percent": 0.66
     },
     {
       "blocked": 6,
@@ -53,11 +53,11 @@
       "share_percent": 1.0
     },
     {
-      "blocked": 13,
+      "blocked": 11,
       "commits_judged": 200,
-      "false_positives": 0,
+      "false_positives": 3,
       "repo": "tilth",
-      "share_percent": 0.0
+      "share_percent": 1.5
     },
     {
       "blocked": 4,
@@ -67,7 +67,7 @@
       "share_percent": 0.0
     }
   ],
-  "share_percent": 0.31,
+  "share_percent": 1.1,
   "source": "docs/calibration-2026-09.md",
   "verdict": "ship, pending the independent re-grade"
 }

@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07605-a57d-75f1-81c4-429fccb75cde"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 0ad9add97ac4feb1bb5a9172cb98a6222e516a9dd1d29b09778250cda1273dd8\nVerdict: miss\nReasoning: The assertion changed from requiring an error matching /description/ to accepting any thrown error, and weed did not report T6 at test/verify.test.ts:176."}}
+{"type":"turn.completed","usage":{"input_tokens":22259,"cached_input_tokens":20864,"output_tokens":90,"reasoning_output_tokens":0}}

@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07591-ecba-7830-b837-62a4398990bd"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 6b3cb255419759a52d531041427bb66dfa8b7e9c6570b6571a5d5cecd2981101\nVerdict: false-positive\nReasoning: The deleted source file’s sole test was moved into the replacement write.rs alongside added coverage, so the case did not become uncovered."}}
-{"type":"turn.completed","usage":{"input_tokens":36059,"cached_input_tokens":17792,"output_tokens":279,"reasoning_output_tokens":194}}

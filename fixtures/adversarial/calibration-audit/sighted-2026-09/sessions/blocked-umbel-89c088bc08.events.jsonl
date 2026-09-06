@@ -1,0 +1,2 @@
+{"type": "input", "case": "blocked:umbel:89c088bc08", "sha256": "e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f"}
+{"type": "answer", "answer": "Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: acceptable\nReasoning: T2 correctly identified one dropped assertion, but it was redundant with toEqual([]), while the change preserved coverage and avoided killing unrelated tmux sessions."}

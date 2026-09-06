@@ -1,0 +1,2 @@
+{"type": "input", "case": "blocked:tilth:7684e99e86", "sha256": "e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f"}
+{"type": "answer", "answer": "Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: acceptable\nReasoning: T2's assertion-count claim is true, but the removed check depended on a fork-only API while the remaining test still covers the regression-relevant output behavior."}

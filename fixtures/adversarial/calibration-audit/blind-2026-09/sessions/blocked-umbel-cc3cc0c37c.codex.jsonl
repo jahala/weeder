@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07592-6188-7a31-b632-24ce3a89e605"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 029c6836bf39673a813904214df5168b95051f7156a8acb8f8f6ec5e24d6b941\nVerdict: acceptable\nReasoning: The packet reports real TODO markers in production provider files, but with the diff omitted there is no evidence they weakened behavior beyond intended TODO-blocking friction."}}
-{"type":"turn.completed","usage":{"input_tokens":22063,"cached_input_tokens":20864,"output_tokens":415,"reasoning_output_tokens":326}}

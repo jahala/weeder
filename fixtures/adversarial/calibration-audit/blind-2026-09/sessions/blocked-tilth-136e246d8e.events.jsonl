@@ -1,2 +1,0 @@
-{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/blocked-tilth-136e246d8e.md", "sha256": "6b3cb255419759a52d531041427bb66dfa8b7e9c6570b6571a5d5cecd2981101"}
-{"type": "answer", "answer": "Answered packet SHA-256: 6b3cb255419759a52d531041427bb66dfa8b7e9c6570b6571a5d5cecd2981101\nVerdict: false-positive\nReasoning: The deleted source file\u2019s sole test was moved into the replacement write.rs alongside added coverage, so the case did not become uncovered."}

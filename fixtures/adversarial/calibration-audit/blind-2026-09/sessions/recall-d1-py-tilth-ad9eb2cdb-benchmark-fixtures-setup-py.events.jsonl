@@ -1,2 +1,0 @@
-{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-d1-py-tilth-ad9eb2cdb-benchmark-fixtures-setup-py.md", "sha256": "5d72ac2efca6c49769ef099d644986a980693a85003bfabfb43c012bc7779279"}
-{"type": "answer", "answer": "Answered packet SHA-256: 5d72ac2efca6c49769ef099d644986a980693a85003bfabfb43c012bc7779279\nVerdict: not-a-case\nReasoning: The planted diff only changes an application health-check version string in setup.py, not a dependency manifest or dependency pin."}

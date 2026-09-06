@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t6-ts-tend2-5b1f7a471-test-verify-test-ts-176.md", "sha256": "c415903357b8df8a520261c24f5a9e4a95a980dba0330e2d2c7bc67bee7e5945"}
+{"type": "answer", "answer": "Answered packet SHA-256: c415903357b8df8a520261c24f5a9e4a95a980dba0330e2d2c7bc67bee7e5945\nVerdict: miss\nReasoning: The planted change weakens the assertion from checking /description/ to any thrown error, and weed reported no finding there."}

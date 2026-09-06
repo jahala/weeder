@@ -1,2 +1,0 @@
-{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-t6-py-copeca-41cfc63ae-tests-config-test-loader-py-37.md", "sha256": "054573dfa3192bb55d85e747e7fb9aa52b0b30b5a8c78caf07f6a984688f82ae"}
-{"type": "answer", "answer": "Answered packet SHA-256: 054573dfa3192bb55d85e747e7fb9aa52b0b30b5a8c78caf07f6a984688f82ae\nVerdict: not-a-case\nReasoning: The pytest.raises assertion still names SchemaValidationError and matches \"source\"; only the test function signature changed, so T6 is not genuinely present."}

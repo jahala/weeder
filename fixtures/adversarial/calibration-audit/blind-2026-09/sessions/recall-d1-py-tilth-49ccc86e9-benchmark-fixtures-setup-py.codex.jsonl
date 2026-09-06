@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07592-651f-77a2-9008-a5399a3c8f10"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 3c75523da188cd79df8e15cf4db4f5f2db257d4f6b337ee33d376fabd0c49061\nVerdict: not-a-case\nReasoning: The planted site only changes an application health-check version string from 1.0.0 to 1.0.1, not a dependency manifest or dependency pin."}}
-{"type":"turn.completed","usage":{"input_tokens":22271,"cached_input_tokens":20864,"output_tokens":155,"reasoning_output_tokens":59}}

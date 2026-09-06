@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a07591-e6fe-70c1-9454-65c3fce86854"}
+{"type":"thread.started","thread_id":"01a07604-baf6-7210-a38c-f285609f0b8d"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 35da22f605a660db6b83e1926263b65bc126be7e024bcd8e23a6609693c310e1\nVerdict: acceptable\nReasoning: The changed test did drop an assertion, but the removed substring check was brittle against real search output while the remaining assertion still covers the intended success path."}}
-{"type":"turn.completed","usage":{"input_tokens":22354,"cached_input_tokens":20864,"output_tokens":443,"reasoning_output_tokens":355}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 8e38bca42bca1003bfacc126125f3a7a7c4256274dbdc2da0528dc1b8d3b0d86\nVerdict: acceptable\nReasoning: An assertion was removed, but the remaining is_ok check still covers the intended behavior while the deleted body substring check was explicitly brittle."}}
+{"type":"turn.completed","usage":{"input_tokens":22432,"cached_input_tokens":20864,"output_tokens":281,"reasoning_output_tokens":193}}

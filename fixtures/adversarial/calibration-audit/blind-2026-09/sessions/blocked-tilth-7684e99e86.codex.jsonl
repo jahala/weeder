@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07604-ec92-7061-b871-511b02eaca92"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 7f3097556ed2a7cfa010622330a2e79681907c54cace6da98e4330ae3590c339\nVerdict: acceptable\nReasoning: An assertion was removed, but the test still checks truncation and directly verifies body content survives, replacing the internal line-number proxy with the observable behavior."}}
+{"type":"turn.completed","usage":{"input_tokens":22529,"cached_input_tokens":20864,"output_tokens":470,"reasoning_output_tokens":383}}

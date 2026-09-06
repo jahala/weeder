@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t6-ts-tend2-044912212-test-route-test-ts-143.md", "sha256": "606cd174211e818cad266190555501252c13a59b18e249d5a9726b11de56dc05"}
+{"type": "answer", "answer": "Answered packet SHA-256: 606cd174211e818cad266190555501252c13a59b18e249d5a9726b11de56dc05\nVerdict: miss\nReasoning: The planted line weakens toThrow from matching /sample/ to no named error assertion, and weed reported no finding there."}

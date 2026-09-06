@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T4:ts:pleach:3a1306011:test/loop/run-work.test.ts:10", "sha256": "e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f"}
+{"type": "answer", "answer": "Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: miss\nReasoning: The planted change widened a TypeScript test wait from 1000 to 10000, matching T4, and the report lists it under Every miss as not reported."}

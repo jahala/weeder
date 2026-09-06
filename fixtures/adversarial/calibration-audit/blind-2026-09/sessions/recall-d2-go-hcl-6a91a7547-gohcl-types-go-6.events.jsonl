@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-d2-go-hcl-6a91a7547-gohcl-types-go-6.md", "sha256": "129dabb614960061cd77869e2d17dabe6e0c7a8f2d1f052b5fa9dd24bd450cb7"}
+{"type": "answer", "answer": "Answered packet SHA-256: 129dabb614960061cd77869e2d17dabe6e0c7a8f2d1f052b5fa9dd24bd450cb7\nVerdict: miss\nReasoning: The planted import adds gohcl's forbidden dependency on hcldec, and weed reported no finding at that site."}

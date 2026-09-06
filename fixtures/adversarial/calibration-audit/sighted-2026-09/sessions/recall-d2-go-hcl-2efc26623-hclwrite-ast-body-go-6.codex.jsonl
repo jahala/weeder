@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a075ee-0ea2-7990-a101-2cc5a52b82fd"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: miss\nReasoning: The report states hclwrite/ast_body.go was planted with a forbidden hclwrite-to-integrationtest import and lists it under Every miss, meaning weed did not report it at that site."}}
+{"type":"turn.completed","usage":{"input_tokens":37293,"cached_input_tokens":20864,"output_tokens":211,"reasoning_output_tokens":114}}

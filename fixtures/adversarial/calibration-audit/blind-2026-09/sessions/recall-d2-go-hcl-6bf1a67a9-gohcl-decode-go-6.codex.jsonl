@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07605-3baf-7a62-a7b7-fd589f7774d5"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 0d11c5bc35717155aba5dfa21d065381978fa7bd3c20f4c40bfbd20cf7ed1cbe\nVerdict: miss\nReasoning: The diff adds an hcldec import inside gohcl/decode.go at the planted site, matching forbidden boundary D2, and weed reported no finding."}}
+{"type":"turn.completed","usage":{"input_tokens":22158,"cached_input_tokens":20864,"output_tokens":88,"reasoning_output_tokens":0}}

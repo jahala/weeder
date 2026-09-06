@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:S2:py:copeca:387932ad5:tests/e2e/fake_agent.py:61", "sha256": "e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f"}
+{"type": "answer", "answer": "Answered report SHA-256: e28653bd2fcc350c351d45813d25011a79b3f0e5451c91844f5aabda3099666f\nVerdict: miss\nReasoning: The report says the planted Python change added a handler that catches and says nothing, which is S2's swallowed-error shape, and it was not reported."}

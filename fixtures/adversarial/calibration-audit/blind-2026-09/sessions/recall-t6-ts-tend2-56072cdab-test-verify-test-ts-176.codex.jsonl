@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a07592-f2cd-7eb2-8475-c8f86daf6f5a"}
+{"type":"thread.started","thread_id":"01a07605-8b2b-7a31-8a15-d5240025fe02"}
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 6b92f1ddee7d31585b6aa0019a76e1fb632a965626c01b7f96240afa3ec2a084\nVerdict: miss\nReasoning: The planted test assertion changed from toThrow(/description/) to bare toThrow(), weakening the named error check, and weed did not report T6 at test/verify.test.ts:176."}}
-{"type":"turn.completed","usage":{"input_tokens":22704,"cached_input_tokens":20864,"output_tokens":96,"reasoning_output_tokens":0}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: f41127ad1ea374f43fd13ae6a2021af64f6e365fe775af03f03d22eada359e3b\nVerdict: miss\nReasoning: The planted test changed toThrow(/description/) to bare toThrow(), weakening the error assertion, and weed reported no T6 finding at test/verify.test.ts:176."}}
+{"type":"turn.completed","usage":{"input_tokens":22768,"cached_input_tokens":20864,"output_tokens":141,"reasoning_output_tokens":49}}

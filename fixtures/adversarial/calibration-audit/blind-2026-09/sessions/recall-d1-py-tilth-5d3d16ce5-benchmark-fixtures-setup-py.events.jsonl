@@ -1,2 +1,0 @@
-{"type": "input", "packet": "docs/calibration-audit-blind-2026-09/cases/recall-d1-py-tilth-5d3d16ce5-benchmark-fixtures-setup-py.md", "sha256": "e4d8a5ce085e37d7674b041d0911ab32bec0aa0b07345acc2073655de19a2d37"}
-{"type": "answer", "answer": "Answered packet SHA-256: e4d8a5ce085e37d7674b041d0911ab32bec0aa0b07345acc2073655de19a2d37\nVerdict: not-a-case\nReasoning: The planted site changes only an application version string in setup.py, not a dependency manifest or dependency pin."}
