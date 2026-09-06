@@ -23,6 +23,8 @@ Written 2026-09-05 after reading FORMAT.md, tend2-ARCHITECTURE.md, emit.ts, veri
 
 12. **A refuted human check never leaves "needs you".** The owner refuted the Gemini live proof (`tend2 verify … --refute 5 --as owner`, the reason in `## Tried`). `next` still lists the loop under "needs you (1)" with the same approve-or-refute prompt, and the check renders `[!]`, indistinguishable from a machine check that failed. A refusal is an answer: show it as `refuted by owner, 2026-09-06` and take it out of the ask list, or the owner is asked the same question every morning.
 
+13. **A test file whose tests are compiled out stamps green.** `tests/speed.rs` gates its budget tests on the release profile; the runner built it in debug, four unrelated tests passed, and `verify` stamped the latency claim on a run that never looked at a clock. `verify` reads the runner's exit code and nothing else. Two asks: print the count of tests that ran beside the stamp, and refuse a stamp when the evidence file ran zero tests of the kind the claim names, or at least when it ran none at all.
+
 ## pleach
 
 9. **`--repo-root` on a linked git worktree**, answered by reading `src/seams/gitdir.ts`: a `.git` file is followed to the real git dir, so journal, lock and receipts land there. Only the `--help` text still says `<repo-root>/.git/pleach/journal.jsonl`; worth updating to `<git-dir>`.

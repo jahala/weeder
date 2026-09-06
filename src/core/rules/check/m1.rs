@@ -45,7 +45,7 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
             continue;
         }
         let mask = change.after.mask();
-        for (line, double) in doubles(&mask) {
+        for (line, double) in doubles(mask) {
             if let Some(covered) = resolve(&double, path, &production) {
                 findings.push(finding(path, line, &double, covered));
             }

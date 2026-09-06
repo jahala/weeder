@@ -72,12 +72,12 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
         let mask = change.after.mask();
         let mut stubs: Vec<(u32, Stub)> = change
             .added()
-            .filter_map(|(line, _)| Some((line, stub_on(&mask, line)?)))
+            .filter_map(|(line, _)| Some((line, stub_on(mask, line)?)))
             .collect();
         // A body that does nothing is found through the outline rather than
         // line by line, so it arrives out of order and may land on a line a
         // marker already spoke for.
-        for (line, stub) in empty_bodies(lang, &mask, change) {
+        for (line, stub) in empty_bodies(lang, mask, change) {
             if !stubs.iter().any(|(reported, _)| *reported == line) {
                 stubs.push((line, stub));
             }

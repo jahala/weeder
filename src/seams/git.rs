@@ -2,9 +2,11 @@
 //! question. Every call is an argument array handed to `git`, never a shell
 //! string, so a path or a ref that looks like a flag or a pipe is data.
 
+use std::collections::HashMap;
 use std::ffi::OsStr;
+use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 use crate::seams::fs;
 
@@ -143,15 +145,184 @@ impl Blob {
 
 /// A file at a ref: `None` where the ref does not carry the file.
 pub fn file_at_ref(root: &Path, reference: &str, path: &str) -> Result<Option<Blob>, GitError> {
-    let object = format!("{reference}:{path}");
-    blob(root, &["show", &object])
+    Ok(files_at_ref(root, reference, &[path])?
+        .into_iter()
+        .flatten()
+        .next())
 }
 
-/// A file in the index: what a commit would carry. git spells the index as a
-/// ref with no name in front of the colon.
-pub fn file_in_index(root: &Path, path: &str) -> Result<Option<Blob>, GitError> {
-    let object = format!(":{path}");
-    blob(root, &["show", &object])
+/// Every one of these paths as a ref carries it, in the order they were asked
+/// about, and `None` where the ref carries no such file.
+///
+/// git is asked twice however many files there are: once for what the ref
+/// holds, once for the bytes behind it. A fifty-file change therefore costs two
+/// processes rather than fifty, and starting a process is most of what reading
+/// a small file costs. A ref this repository cannot resolve carries none of
+/// them, which is the answer a repository before its first commit has.
+pub fn files_at_ref(
+    root: &Path,
+    reference: &str,
+    paths: &[&str],
+) -> Result<Vec<Option<Blob>>, GitError> {
+    if paths.is_empty() {
+        return Ok(Vec::new());
+    }
+    let listing = match run_lossy(root, &["ls-tree", "-r", "-z", "--full-tree", reference]) {
+        Ok(listing) => listing,
+        Err(GitError::Refused { .. }) => return Ok(vec![None; paths.len()]),
+        Err(other) => return Err(other),
+    };
+    read_objects(root, paths, &tree_objects(&listing))
+}
+
+/// The same question of the index: what a commit would carry, for every path
+/// at once. A path the index holds unmerged is carried at three stages and at
+/// none of them is it what a commit would carry, so those are left out here as
+/// they are everywhere else weed reads the index.
+pub fn files_in_index(root: &Path, paths: &[&str]) -> Result<Vec<Option<Blob>>, GitError> {
+    if paths.is_empty() {
+        return Ok(Vec::new());
+    }
+    let listing = run_lossy(root, &["ls-files", "-s", "-z"])?;
+    read_objects(root, paths, &index_objects(&listing))
+}
+
+/// What a `ls-tree -r -z` listing says each path is: `<mode> <type> <object>`,
+/// a tab, and the path, one record per NUL. Only the blobs are kept, a gitlink
+/// names a commit in another repository and there is no file here to read.
+fn tree_objects(listing: &str) -> HashMap<&str, &str> {
+    named(listing.split('\u{0}').filter_map(|record| {
+        let (fields, path) = record.split_once('\t')?;
+        let mut fields = fields.split_whitespace();
+        let _mode = fields.next()?;
+        let kind = fields.next()?;
+        let object = fields.next()?;
+        (kind == "blob").then_some((path, object))
+    }))
+}
+
+/// The same of a `ls-files -s -z` listing: `<mode> <object> <stage>`, a tab,
+/// and the path. Stage zero is the file a commit would carry; the stages of an
+/// unmerged path are the sides of a merge nobody has finished.
+fn index_objects(listing: &str) -> HashMap<&str, &str> {
+    named(listing.split('\u{0}').filter_map(|record| {
+        let (fields, path) = record.split_once('\t')?;
+        let mut fields = fields.split_whitespace();
+        let _mode = fields.next()?;
+        let object = fields.next()?;
+        let stage = fields.next()?;
+        (stage == "0").then_some((path, object))
+    }))
+}
+
+/// The object each path names, and none for a path that names two.
+///
+/// A listing is read as lossy text, and a repository may hold two paths whose
+/// names differ only in bytes that are not utf-8: read that way they are one
+/// path naming two files. Reading one file as another is the answer a judge
+/// must never give, so neither is read, which is the answer weed has always had
+/// for a path it could not resolve.
+fn named<'a>(records: impl Iterator<Item = (&'a str, &'a str)>) -> HashMap<&'a str, &'a str> {
+    let mut found: HashMap<&str, &str> = HashMap::new();
+    let mut ambiguous: Vec<&str> = Vec::new();
+    for (path, object) in records {
+        if found
+            .insert(path, object)
+            .is_some_and(|held| held != object)
+        {
+            ambiguous.push(path);
+        }
+    }
+    for path in ambiguous {
+        found.remove(path);
+    }
+    found
+}
+
+/// The bytes behind each path, in the order the paths were asked about. The
+/// objects go to one `cat-file --batch`, which answers them in the order they
+/// were written to it, so the answers pair back up by position.
+fn read_objects(
+    root: &Path,
+    paths: &[&str],
+    objects: &HashMap<&str, &str>,
+) -> Result<Vec<Option<Blob>>, GitError> {
+    let wanted: Vec<&str> = paths
+        .iter()
+        .filter_map(|path| objects.get(path).copied())
+        .collect();
+    let mut read = batch(root, &wanted)?.into_iter();
+    paths
+        .iter()
+        .map(|path| match objects.contains_key(path) {
+            false => Ok(None),
+            true => read.next().ok_or_else(|| GitError::Refused {
+                command: "cat-file --batch".to_string(),
+                message: format!("git answered for fewer objects than weed asked about, and {path} was one of them"),
+            }),
+        })
+        .collect()
+}
+
+/// One `cat-file --batch` over these objects. It answers each one with a line
+/// naming it, its type and its length, then that many bytes and a newline; an
+/// object it cannot find it answers with the name and `missing`, which is not
+/// a failure here, the file is simply not there to read.
+fn batch(root: &Path, objects: &[&str]) -> Result<Vec<Option<Blob>>, GitError> {
+    if objects.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut asked = objects.join("\n");
+    asked.push('\n');
+    let attempt = attempt_writing(root, &["cat-file", "--batch"], asked.into_bytes())?;
+    if attempt.code != 0 {
+        return Err(attempt.refusal(&["cat-file", "--batch"]));
+    }
+    let mut answers = Vec::with_capacity(objects.len());
+    let mut rest = attempt.stdout.as_slice();
+    for object in objects {
+        let (answer, remainder) = answer(rest, object)?;
+        answers.push(answer);
+        rest = remainder;
+    }
+    Ok(answers)
+}
+
+/// One object's answer, and what is left of the stream behind it.
+fn answer<'a>(stream: &'a [u8], object: &str) -> Result<(Option<Blob>, &'a [u8]), GitError> {
+    let unreadable = |what: &str| GitError::Refused {
+        command: "cat-file --batch".to_string(),
+        message: format!("weed could not read git's answer for {object}: {what}"),
+    };
+    let end = stream
+        .iter()
+        .position(|byte| *byte == b'\n')
+        .ok_or_else(|| unreadable("the line naming it never ends"))?;
+    let header = String::from_utf8_lossy(&stream[..end]);
+    let rest = &stream[end + 1..];
+    let mut fields = header.split_whitespace();
+    let _name = fields.next().ok_or_else(|| unreadable("it is empty"))?;
+    let Some(kind) = fields.next() else {
+        return Err(unreadable("it says neither a type nor `missing`"));
+    };
+    if kind == "missing" {
+        return Ok((None, rest));
+    }
+    let Some(length) = fields.next() else {
+        return Err(unreadable("it names no length"));
+    };
+    let size: usize = length
+        .parse()
+        .map_err(|_| unreadable("its length is not a number"))?;
+    if rest.len() < size + 1 {
+        return Err(unreadable("it is shorter than the length it names"));
+    }
+    Ok((
+        Some(Blob {
+            bytes: rest[..size].to_vec(),
+        }),
+        &rest[size + 1..],
+    ))
 }
 
 /// A file in the working tree, or `None` where there is no such file.
@@ -161,18 +332,6 @@ pub fn file_in_tree(root: &Path, path: &str) -> Result<Option<Blob>, GitError> {
         message: error.message,
     })?;
     Ok(bytes.map(|bytes| Blob { bytes }))
-}
-
-/// What a git invocation wrote, where it worked. A refusal, no such object,
-/// answers `None`: there is no version of the file to read.
-fn blob(root: &Path, arguments: &[&str]) -> Result<Option<Blob>, GitError> {
-    let attempt = attempt(root, arguments)?;
-    if attempt.code != 0 {
-        return Ok(None);
-    }
-    Ok(Some(Blob {
-        bytes: attempt.stdout,
-    }))
 }
 
 /// Every path the repository holds, as the index carries them: what a commit
@@ -545,6 +704,50 @@ impl Attempt {
 fn attempt(directory: &Path, arguments: &[&str]) -> Result<Attempt, GitError> {
     let arguments: Vec<&OsStr> = arguments.iter().map(|word| OsStr::new(*word)).collect();
     attempt_os(directory, &[], &arguments)
+}
+
+/// One git invocation with a list written to it. A child that answers with more
+/// than a pipe holds would fill it and stop while weed was still writing, and
+/// weed would stop waiting for a reader that is itself waiting, so the writing
+/// goes out on a thread of its own and the reading happens here.
+fn attempt_writing(
+    directory: &Path,
+    arguments: &[&str],
+    input: Vec<u8>,
+) -> Result<Attempt, GitError> {
+    let unavailable = |error: std::io::Error| GitError::Unavailable {
+        message: error.to_string(),
+    };
+    let mut child = Command::new("git")
+        .arg("-C")
+        .arg(directory.as_os_str())
+        .args(["-c", "core.quotepath=false"])
+        .args(arguments)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(unavailable)?;
+
+    // A git that has answered everything it was asked leaves before the last of
+    // the input reaches it, and the write fails with a closed pipe. That is an
+    // answer arriving early rather than a failure, and what git wrote is read
+    // below either way.
+    let writing = child.stdin.take().map(|mut pipe| {
+        std::thread::spawn(move || {
+            let _ = pipe.write_all(&input);
+        })
+    });
+    let output = child.wait_with_output().map_err(unavailable)?;
+    if let Some(writing) = writing {
+        let _ = writing.join();
+    }
+
+    Ok(Attempt {
+        code: output.status.code().unwrap_or(-1),
+        stdout: output.stdout,
+        stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+    })
 }
 
 /// The same invocation, with settings of weed's own in front of it and

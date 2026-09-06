@@ -83,3 +83,20 @@ the matrix drives node, the interpreter, cargo and go, and the CI workflow pins
 all three non-Rust toolchains rather than taking whatever the image ships. A
 machine without one of them fails the test rather than skipping the language,
 which is the right way round.
+
+## The headroom pass, 2026-09-06
+
+`tend2 verify` stamped the latency check before a single measurement ran. The
+runner maps `tests/speed.rs` to `cargo test --test speed`, which is a debug
+build, and the budget tests are `#[cfg(not(debug_assertions))]` because timing a
+debug binary measures nobody's machine. So the evidence compiled itself out and
+the run came back green on the four tests that were left. The stamp was honest
+about what it saw; what it saw was an empty room.
+
+The fix belongs in the runner rather than in the test: `scripts/check/run.sh`
+now sends this one file to the release profile, and `tests/speed.rs` holds the
+runner to it, so a check that cites a wall clock cannot be stamped by a build
+that never looked at one. Worth generalising, for whoever writes the next
+evidence mapping: a runner that decides which build the evidence runs on is part
+of the evidence, and a check whose test can be compiled out needs the test to
+say where it must not be.

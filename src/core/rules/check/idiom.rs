@@ -94,7 +94,7 @@ fn indented_block(mask: &Mask, from: u32) -> Option<Block> {
 #[must_use]
 pub fn body(lang: Lang, mask: &Mask, span: Block) -> Option<String> {
     let lines: Vec<String> = (span.first..=span.last)
-        .map(|line| mask.outside_comments(line))
+        .map(|line| mask.outside_comments(line).into_owned())
         .collect();
     match lang {
         Lang::Python => indented_body(&lines),
@@ -181,9 +181,9 @@ fn is_punctuation(statement: &str) -> bool {
 fn written(mask: &Mask, line: u32) -> String {
     let code = mask.outside_comments(line);
     if code.trim().is_empty() {
-        mask.comments(line)
+        mask.comments(line).into_owned()
     } else {
-        code
+        code.into_owned()
     }
 }
 

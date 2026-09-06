@@ -184,7 +184,7 @@ fn cases(side: &Side) -> Vec<Case> {
     let mask = side.mask();
     declared
         .into_iter()
-        .map(|unit| written(&mask, unit))
+        .map(|unit| written(mask, unit))
         .collect()
 }
 

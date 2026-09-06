@@ -200,17 +200,17 @@ fn claims(side: &Side) -> Vec<Claim> {
         return Vec::new();
     }
     let mask = side.mask();
-    let suite = Suite::of(side.lang(), &mask);
+    let suite = Suite::of(side.lang(), mask);
     let cases: Vec<&TestUnit> = side.tests.cases().collect();
     let mut made = Vec::new();
     for line in 1..=mask.line_count() {
-        let count = suite.assertions(&mask, line);
+        let count = suite.assertions(mask, line);
         if count == 0 {
             continue;
         }
         let claim = Claim {
             case: enclosing(&cases, line).to_string(),
-            line: written(&mask, line),
+            line: written(mask, line),
         };
         made.extend(std::iter::repeat_n(claim, count));
     }

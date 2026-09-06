@@ -84,7 +84,7 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
         let mask = change.after.mask();
         let table = handling(lang);
         for (line, _) in change.added() {
-            if let Some(swallowed) = swallowed(&table, lang, &mask, line) {
+            if let Some(swallowed) = swallowed(&table, lang, mask, line) {
                 findings.push(finding(path, line, &swallowed));
             }
         }
