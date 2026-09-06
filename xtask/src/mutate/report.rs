@@ -239,8 +239,8 @@ fn recall_table(rows: &[Row]) -> String {
     table.push_str(
         "\nUnplantable is the column the misses have to be read beside. The injector writes its \
          shape into the tree and then reads the tree back with its own scanner, and where the \
-         shape is not there afterwards — a version string that pins nothing, a marker written \
-         past the end of the case it was meant for — the case is thrown away rather than \
+         shape is not there afterwards, a version string that pins nothing, a marker written \
+         past the end of the case it was meant for, the case is thrown away rather than \
          counted. It is neither a hit nor a miss: weed was never shown the anti-pattern, so \
          neither number may be charged with it.\n",
     );
