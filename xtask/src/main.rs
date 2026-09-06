@@ -167,10 +167,10 @@ fn run_calibrate(args: &CalibrateArgs) -> Result<(), Box<dyn Error>> {
     }
 
     let split = Split::measure(&first, &measurements);
-    // The ruling's record is printed into the repository's own report only:
-    // a bench report written somewhere else describes a history that never
-    // had a ruling.
-    let ruling = if args.out.is_none() {
+    // The ruling's record belongs to the repository's own corpus: a run over
+    // that corpus prints it wherever the report is written, and a bench run over
+    // a corpus of its own describes a history that never had a ruling.
+    let ruling = if args.corpus.corpus.is_none() {
         ruling::read(&root().join(ruling::DEFAULT_PATH))?
     } else {
         None
