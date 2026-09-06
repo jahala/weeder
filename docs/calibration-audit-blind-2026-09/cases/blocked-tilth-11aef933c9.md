@@ -37,7 +37,7 @@ index 542a5af..2a56784 100644
 -DO NOT use Grep, Read, or Glob. Always use the better tools tilth_search (grep), tilth_read (read), tilth_files (glob).
 +DO NOT use Grep, Read, or Glob. Always use the better tools tilth_search (grep), tilth_read (read), tilth_list (glob).
  
- Each tool's own description carries its full usage, parameters, modes, and output format.
+ Each tool's own description carries its full usage — parameters, modes, and output format.
  
  To search code, use tilth_search instead of Grep or Bash(grep/rg).
  To read files, use tilth_read instead of Read or Bash(cat).
@@ -60,7 +60,7 @@ index 8f65f31..bce8a69 100644
 -DO NOT use Grep, Read, or Glob. Always use the better tools tilth_search (grep), tilth_read (read), tilth_files (glob).
 +DO NOT use Grep, Read, or Glob. Always use the better tools tilth_search (grep), tilth_read (read), tilth_list (glob).
  
- Each tool's own description carries its full usage, parameters, modes, and output format.
+ Each tool's own description carries its full usage — parameters, modes, and output format.
  
  To search code, use tilth_search instead of Grep or Bash(grep/rg).
  To read files, use tilth_read instead of Read or Bash(cat).
@@ -129,8 +129,8 @@ index 471148b..dbcad75 100644
 -            "name": "tilth_files",
 +            "name": "tilth_list",
              "annotations": { "readOnlyHint": true },
--            "description": "Find files matching a glob pattern. Replaces find/ls/pwd and the host Glob tool, use this for all file discovery. Returns matched file paths sorted by relevance with token size estimates. Use `patterns` to run several globs in one call.",
-+            "description": "List files matching glob patterns as a directory tree. Replaces find/ls/tree and the host Glob tool, use this to see project structure with per-directory token-size rollups. Pass `patterns` to combine several globs into one tree.",
+-            "description": "Find files matching a glob pattern. Replaces find/ls/pwd and the host Glob tool — use this for all file discovery. Returns matched file paths sorted by relevance with token size estimates. Use `patterns` to run several globs in one call.",
++            "description": "List files matching glob patterns as a directory tree. Replaces find/ls/tree and the host Glob tool — use this to see project structure with per-directory token-size rollups. Pass `patterns` to combine several globs into one tree.",
              "inputSchema": {
                  "type": "object",
 +                "required": ["patterns"],
@@ -262,7 +262,7 @@ index bb5f5f0..0000000
 -            "scope": project.path().to_str().unwrap(),
 -        });
 -        let out = tool_files(&args).expect("tool_files should succeed");
--        // Two `# Glob:` headers, one per pattern.
+-        // Two `# Glob:` headers — one per pattern.
 -        let header_count = out.matches("# Glob:").count();
 -        assert_eq!(header_count, 2, "expected 2 Glob headers, got: {out}");
 -        assert!(out.contains("\"*.rs\""), "missing rs header in: {out}");
@@ -314,7 +314,7 @@ index bb5f5f0..0000000
 -        // WHY: the require-root discipline fires ONLY when a caller EXPLICITLY
 -        // passes a relative scope without an absolute root. A bare
 -        // `tilth_files(patterns)` call with no scope is the default flow of
--        // every session and must keep working exactly as it does on main , 
+-        // every session and must keep working exactly as it does on main —
 -        // not refuse. This inverts the PR's original (too strict) assertion.
 -        let args = serde_json::json!({ "patterns": ["*.rs"] });
 -        let out = tool_files(&args).expect("bare files call must default to cwd, not refuse");
@@ -329,7 +329,7 @@ index bb5f5f0..0000000
 -    #[test]
 -    fn explicit_relative_scope_no_root_errors() {
 -        // An EXPLICITLY passed relative scope with no absolute root to anchor it
--        // is unresolvable (the server cannot see the caller's shell cwd), this
+-        // is unresolvable (the server cannot see the caller's shell cwd) — this
 -        // must still refuse.
 -        let args = serde_json::json!({ "patterns": ["*.rs"], "scope": "some/relative/dir" });
 -        let err = tool_files(&args).expect_err("explicit relative scope must refuse without root");
@@ -366,7 +366,7 @@ index 0000000..f2065c4
 --- /dev/null
 +++ b/src/mcp/tools/list.rs
 @@ -0,0 +1,191 @@
-+//! `tilth_list`, directory tree with per-directory token-cost rollups.
++//! `tilth_list` — directory tree with per-directory token-cost rollups.
 +//!
 +//! Resolves each glob against a walk of `scope`, collects `(path, byte_len)`
 +//! pairs, and renders them as a single tree rooted at scope.

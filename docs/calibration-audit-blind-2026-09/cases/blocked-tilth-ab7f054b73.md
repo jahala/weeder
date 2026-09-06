@@ -37,7 +37,7 @@ index 17fab8b..892b6d0 100644
  Small files → full content. Large files → structural outline.
 -For one file you may also pass section ("<start>-<end>" or "<heading text>"), sections (array of ranges), or full.
 +section: "<start>-<end>" or "<heading text>"
-+sections: array of ranges/headings, multiple slices from the same file in one call.
++sections: array of ranges/headings — multiple slices from the same file in one call.
 +paths: read multiple files in one call.
  Output:
  <line_number> │ <content>                  ← full/section mode
@@ -54,7 +54,7 @@ index 28c2f83..980b86f 100644
  Small files → full content. Large files → structural outline.
 -For one file you may also pass section ("<start>-<end>" or "<heading text>"), sections (array of ranges), or full.
 +section: "<start>-<end>" or "<heading text>"
-+sections: array of ranges/headings, multiple slices from the same file in one call.
++sections: array of ranges/headings — multiple slices from the same file in one call.
 +paths: read multiple files in one call.
  Output:
  <line_number> │ <content>                  ← full/section mode
@@ -80,15 +80,15 @@ index fe8938b..ba3d6b1 100644
           Large files return a structural outline (no hashlines); use `section` to get hashlined \
           content for the lines you want to edit. Use `sections` to grab several disjoint slices \
           from the same file in one call. Use `full` to force complete content. \
--         Always pass `paths` as an array of file paths, a single-element array reads one file."
+-         Always pass `paths` as an array of file paths — a single-element array reads one file."
 +         Use `paths` to read multiple files in one call."
      } else {
-         "Read a file with smart outlining. Replaces cat/head/tail and the host Read tool, \
+         "Read a file with smart outlining. Replaces cat/head/tail and the host Read tool — \
           use this for all file reading. Small files return full content. Large files return \
           a structural outline (functions, classes, imports) so you see the shape without \
           consuming your context window. Use `section` to read a specific line range or heading. \
           Use `sections` to grab several disjoint slices from the same file in one call. \
--         Use `full` to force complete content. Always pass `paths` as an array of file paths, a single-element array reads one file."
+-         Use `full` to force complete content. Always pass `paths` as an array of file paths — a single-element array reads one file."
 +         Use `full` to force complete content. Use `paths` to read multiple files in one call."
      };
      let mut tools = vec![
@@ -108,7 +108,7 @@ index fe8938b..ba3d6b1 100644
                          "items": { "type": "string" },
 -                        "minItems": 1,
 -                        "maxItems": 20,
--                        "description": "File paths to read (max 20). ALWAYS an array, use a single-element array for one file. Each file gets independent smart handling. Singular `path` is not accepted."
+-                        "description": "File paths to read (max 20). ALWAYS an array — use a single-element array for one file. Each file gets independent smart handling. Singular `path` is not accepted."
 +                        "description": "Multiple file paths to read in one call. Each file gets independent smart handling. Saves round-trips vs multiple single reads."
                      },
                      "section": {
@@ -162,7 +162,7 @@ index 87ca93e..ce6370f 100644
      let force_signature = mode_str == "signature";
      let force_stripped = mode_str == "stripped";
  
--    // Batch-only API: `paths` is required, pass a single-element array to read
+-    // Batch-only API: `paths` is required — pass a single-element array to read
 -    // one file. The singular `path` parameter was removed; accepting both made
 -    // agents guess which one each call wanted.
 -    let paths_arr = args.get("paths").and_then(|v| v.as_array()).ok_or(
@@ -182,12 +182,12 @@ index 87ca93e..ce6370f 100644
 -    let sections_arr = args.get("sections").and_then(|v| v.as_array());
 -
 -    // Multi-file batch read (capped at 20 to bound I/O). section/sections are
--    // single-file controls, reject them rather than silently ignore. `mode`
+-    // single-file controls — reject them rather than silently ignore. `mode`
 -    // (and its legacy `full` alias) reshape each file, so they're fine in batch.
 -    if paths_arr.len() > 1 {
 -        if section.is_some() || sections_arr.is_some() {
 -            return Err(
--                "section / sections apply to a single file, pass exactly one path in `paths` to use them"
+-                "section / sections apply to a single file — pass exactly one path in `paths` to use them"
 -                    .into(),
 -            );
 +    // Multi-file batch read (capped at 20 to bound I/O)

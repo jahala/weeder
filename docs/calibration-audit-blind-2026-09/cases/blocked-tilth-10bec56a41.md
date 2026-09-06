@@ -28,7 +28,7 @@ index 9bf2db6..b02a22b 100644
 --- a/src/mcp/tools/search.rs
 +++ b/src/mcp/tools/search.rs
 @@ -112,6 +112,14 @@ mod tests {
-     /// session and must keep working exactly as it does on main, refusing
+     /// session and must keep working exactly as it does on main — refusing
      /// here would break every session's default search. This inverts the PR's
      /// original (too strict) assertion.
 +    ///

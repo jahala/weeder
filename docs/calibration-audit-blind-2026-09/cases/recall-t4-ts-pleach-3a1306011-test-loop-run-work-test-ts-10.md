@@ -34,7 +34,7 @@ index 8fd49c5..4cced0c 100644
 --- a/test/loop/run-work.test.ts
 +++ b/test/loop/run-work.test.ts
 @@ -7,7 +7,7 @@ import { promptFor, runWork } from '../../src/loop/run-work.ts';
- // spec: §6 run-work, the three Work shapes and their gates. In-memory Worker
+ // spec: §6 run-work — the three Work shapes and their gates. In-memory Worker
  // and scripted ExecFn; the subject is runWork's control flow.
  
 -const TIMEOUT = 1000;

@@ -28,7 +28,7 @@ index 9bf2db6..b02a22b 100644
 --- a/src/mcp/tools/search.rs
 +++ b/src/mcp/tools/search.rs
 @@ -112,6 +112,14 @@ mod tests {
-     /// session and must keep working exactly as it does on main, refusing
+     /// session and must keep working exactly as it does on main — refusing
      /// here would break every session's default search. This inverts the PR's
      /// original (too strict) assertion.
 +    ///
@@ -62,11 +62,11 @@ index 2ca17da..13f8298 100644
      // Containment root for the overwrite/append scope guard. This is the write
      // sandbox boundary, NOT a path-resolution channel: an explicit `scope`
 -    // anchors it, otherwise it falls back to the server cwd. Kept cwd-defaulting
--    // on purpose, the read-side require-root discipline (resolve_scope) governs
+-    // on purpose — the read-side require-root discipline (resolve_scope) governs
 -    // where reads resolve; a bare hash-mode write with an absolute path must not
 -    // be refused just because it omitted `scope`.
 +    // anchors it. When `scope` is absent, default to `root` if one was
-+    // supplied, `root` names the caller's actual checkout, so it is the
++    // supplied — `root` names the caller's actual checkout, so it is the
 +    // correct containment boundary for a root-anchored write; falling back to
 +    // the server's process cwd here would refuse a legitimate root-only write
 +    // whenever the server was launched from a different directory than
@@ -89,18 +89,18 @@ index 2ca17da..13f8298 100644
 +    #[test]
 +    fn root_only_no_scope_write_succeeds_into_root() {
 +        // KNOWN HIGH (review on #158): `root` reaches path resolution
-+        // (resolve_write_path) but NOT the containment guard, `scope_root`
++        // (resolve_write_path) but NOT the containment guard — `scope_root`
 +        // fell back to `current_dir()` whenever `scope` was omitted, ignoring
 +        // `root` entirely. Headline scenario: server process cwd is one
-+        // directory (call it dirA, here, whatever `current_dir()` naturally
++        // directory (call it dirA — here, whatever `current_dir()` naturally
 +        // is under `cargo test`), the caller passes `root` = a DIFFERENT
 +        // directory (dirB) plus a relative path under dirB, and supplies NO
 +        // `scope`. Before the fix, `scope_root` defaulted to dirA, the write
 +        // resolved into dirB (correctly, via resolve_write_path), and
-+        // `path_within_scope(dirB_path, dirA)` refused it, a false-positive
++        // `path_within_scope(dirB_path, dirA)` refused it — a false-positive
 +        // containment failure for a legitimate root-anchored write.
 +        //
-+        // No `set_current_dir` here, the codebase's own tests document that
++        // No `set_current_dir` here — the codebase's own tests document that
 +        // mutating process cwd inside a test races other parallel tests (see
 +        // edit.rs's `normalize_path_key_is_cwd_independent` comment). Using
 +        // the ambient `current_dir()` as the implicit "dirA" and a fresh

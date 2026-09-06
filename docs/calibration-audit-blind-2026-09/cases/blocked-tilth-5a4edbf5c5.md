@@ -141,7 +141,7 @@ index 0000000..f5dd1aa
 +//! Per-language tree-sitter queries for matching call expressions, with a
 +//! global compiled-`Query` cache. Used by the caller-direction walk
 +//! (`callers::find_callers_batch`) and the callee-direction extractor
-+//! (`callees::extract_callee_names`), they share both the query strings
++//! (`callees::extract_callee_names`) — they share both the query strings
 +//! and the compiled-query cache.
 +
 +use std::collections::HashMap;
@@ -216,7 +216,7 @@ index 0000000..f5dd1aa
 +
 +/// Global cache of compiled tree-sitter queries for callee extraction.
 +///
-+/// Keyed by `(symbol_count, field_count)`, a pair that uniquely identifies
++/// Keyed by `(symbol_count, field_count)` — a pair that uniquely identifies
 +/// each grammar in practice. We avoid keying by `Language::name()` because
 +/// older grammars (ABI < 15) do not register a name and would return `None`,
 +/// silently disabling the cache and callee extraction entirely.
@@ -386,7 +386,7 @@ index 9721d8f..f84e98f 100644
 -
 -/// Global cache of compiled tree-sitter queries for callee extraction.
 -///
--/// Keyed by `(symbol_count, field_count)`, a pair that uniquely identifies
+-/// Keyed by `(symbol_count, field_count)` — a pair that uniquely identifies
 -/// each grammar in practice. We avoid keying by `Language::name()` because
 -/// older grammars (ABI < 15) do not register a name and would return `None`,
 -/// silently disabling the cache and callee extraction entirely.
@@ -602,8 +602,8 @@ index 988dc26..12f3a8f 100644
 -                return ignore::WalkState::Continue;
 -            }
 -
--            // Fast byte check via memchr::memmem (SIMD), skip files without any target symbol
-+            // Fast byte check via memchr::memmem (SIMD), cheap second pass that
+-            // Fast byte check via memchr::memmem (SIMD) — skip files without any target symbol
++            // Fast byte check via memchr::memmem (SIMD) — cheap second pass that
 +            // eliminates bloom false positives before tree-sitter parses.
              if !targets
                  .iter()
@@ -618,7 +618,7 @@ index 988dc26..12f3a8f 100644
      };
  
 @@ -208,7 +187,7 @@ fn find_callers_treesitter_batch(
-     // One Arc per file, all call sites share the same allocation.
+     // One Arc per file — all call sites share the same allocation.
      let shared_content: Arc<String> = Arc::new(content.to_string());
  
 -    let Some(callers) = super::callees::with_callee_query(ts_lang, query_str, |query| {
@@ -723,7 +723,7 @@ index 988dc26..12f3a8f 100644
 -
 -/// Find the nearest enclosing definition for `(path, line)` by re-parsing
 -/// the file with tree-sitter (cached on `OutlineCache`). AST-correct across
--/// every language tilth supports, replaces parsing the rendered outline
+-/// every language tilth supports — replaces parsing the rendered outline
 -/// string back into structured data.
 -///
 -/// Returns `None` if the file isn't a code file, the parse fails, or `line`
@@ -935,7 +935,7 @@ index 988dc26..12f3a8f 100644
 -
 -    #[test]
 -    fn enclosing_at_caches_parse_across_calls() {
--        // Two calls into the same file should reuse the cached parse , 
+-        // Two calls into the same file should reuse the cached parse —
 -        // observable indirectly by mutating the file between calls without
 -        // touching mtime: the first parse wins, the second sees stale data
 -        // because the mtime didn't change. (Test only asserts the cache hit
@@ -990,7 +990,7 @@ index 988dc26..12f3a8f 100644
 -        // not via the `name`/`identifier`/`declarator` fields that
 -        // extract_definition_name probes. So methods inside `impl Foo {...}`
 -        // produce the bare function name, not `"Foo.bar"`. Pre-existing
--        // behavior of find_enclosing_function, pinned here so a future
+-        // behavior of find_enclosing_function — pinned here so a future
 -        // qualifier improvement is an intentional, visible change.
 -        let tmp = tempfile::tempdir().unwrap();
 -        let p = write(
@@ -1129,7 +1129,7 @@ index 0000000..1ce9954
 +
 +/// Find the nearest enclosing definition for `(path, line)` by re-parsing
 +/// the file with tree-sitter (cached on `OutlineCache`). AST-correct across
-+/// every language tilth supports, replaces parsing the rendered outline
++/// every language tilth supports — replaces parsing the rendered outline
 +/// string back into structured data.
 +///
 +/// Returns `None` if the file isn't a code file, the parse fails, or `line`
@@ -1331,7 +1331,7 @@ index 0000000..1ce9954
 +
 +    #[test]
 +    fn enclosing_at_caches_parse_across_calls() {
-+        // Two calls into the same file should reuse the cached parse , 
++        // Two calls into the same file should reuse the cached parse —
 +        // observable indirectly by mutating the file between calls without
 +        // touching mtime: the first parse wins, the second sees stale data
 +        // because the mtime didn't change. (Test only asserts the cache hit
@@ -1386,7 +1386,7 @@ index 0000000..1ce9954
 +        // not via the `name`/`identifier`/`declarator` fields that
 +        // extract_definition_name probes. So methods inside `impl Foo {...}`
 +        // produce the bare function name, not `"Foo.bar"`. Pre-existing
-+        // behavior of find_enclosing_function, pinned here so a future
++        // behavior of find_enclosing_function — pinned here so a future
 +        // qualifier improvement is an intentional, visible change.
 +        let tmp = tempfile::tempdir().unwrap();
 +        let p = write(

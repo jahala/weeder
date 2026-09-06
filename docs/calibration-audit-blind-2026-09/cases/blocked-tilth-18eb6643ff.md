@@ -88,7 +88,7 @@ index c4404ad..ee40cba 100644
 @@ -364,11 +362,7 @@ fn handle_request(req: &JsonRpcRequest, services: &Services) -> JsonRpcResponse
  
  /// Execute a tool by name with the given arguments. Returns formatted output or error string.
- /// No classifier involved, the caller specifies the tool explicitly.
+ /// No classifier involved — the caller specifies the tool explicitly.
 -pub(crate) fn dispatch_tool(
 -    tool: &str,
 -    args: &Value,
@@ -206,7 +206,7 @@ index c4404ad..ee40cba 100644
 -            "scope": project.path().to_str().unwrap(),
 -        });
 -        let out = tool_files(&args).expect("tool_files should succeed");
--        // Two `# Glob:` headers, one per pattern.
+-        // Two `# Glob:` headers — one per pattern.
 -        let header_count = out.matches("# Glob:").count();
 -        assert_eq!(header_count, 2, "expected 2 Glob headers, got: {out}");
 -        assert!(out.contains("\"*.rs\""), "missing rs header in: {out}");
@@ -255,7 +255,7 @@ index c4404ad..ee40cba 100644
 -
 -    #[test]
 -    fn parse_file_edit_rejects_empty_edits_array() {
--        // Schema says minItems: 1, but schema validation is advisory, enforce
+-        // Schema says minItems: 1, but schema validation is advisory — enforce
 -        // at runtime so a client that bypasses the schema can't silently get
 -        // a no-op success.
 -        let val = serde_json::json!({ "path": "noop.txt", "edits": [] });
@@ -284,8 +284,8 @@ index ae5125a..3b6f7e3 100644
 -pub(crate) fn tool_definitions(edit_mode: bool) -> Vec<Value> {
 +pub(in crate::mcp) fn tool_definitions(edit_mode: bool) -> Vec<Value> {
      let read_desc = if edit_mode {
-         "Read a file with smart outlining. Replaces cat/head/tail and the host Read tool, \
-          use this for all file reading. Output uses hashline format (line:hash|content), \
+         "Read a file with smart outlining. Replaces cat/head/tail and the host Read tool — \
+          use this for all file reading. Output uses hashline format (line:hash|content) — \
 diff --git a/src/mcp/tools/deps.rs b/src/mcp/tools/deps.rs
 index a4f6ebe..f120d8f 100644
 --- a/src/mcp/tools/deps.rs
@@ -347,7 +347,7 @@ index 13e9079..0417408 100644
 +
 +    #[test]
 +    fn parse_file_edit_rejects_empty_edits_array() {
-+        // Schema says minItems: 1, but schema validation is advisory, enforce
++        // Schema says minItems: 1, but schema validation is advisory — enforce
 +        // at runtime so a client that bypasses the schema can't silently get
 +        // a no-op success.
 +        let val = serde_json::json!({ "path": "noop.txt", "edits": [] });
@@ -405,7 +405,7 @@ index fdeda03..64861a6 100644
 +            "scope": project.path().to_str().unwrap(),
 +        });
 +        let out = tool_files(&args).expect("tool_files should succeed");
-+        // Two `# Glob:` headers, one per pattern.
++        // Two `# Glob:` headers — one per pattern.
 +        let header_count = out.matches("# Glob:").count();
 +        assert_eq!(header_count, 2, "expected 2 Glob headers, got: {out}");
 +        assert!(out.contains("\"*.rs\""), "missing rs header in: {out}");
