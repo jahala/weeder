@@ -17,6 +17,7 @@ One mutation per case so a hit is unambiguous. Per rule, the injector finds a si
 ## Tests
 - [x] (code) `cargo xtask mutate` injects one anti-pattern per case for every check rule in each of ts, py, rs and go from the calibration corpus, runs weed on each, and writes the recall section of `docs/calibration-2026-09.md` with every miss named · scripts/check/recall.sh @f58e341 · by cli
 - [x] (code) recall for T1, T3, S1, X1, C1 and G1 is at or above 95 percent per language, and every warn-level rule's recall is reported · scripts/check/recall-bar.sh @a31cd2b · by cli
+- [ ] (code) `cargo xtask mutate` walks the window that ends at each entry's pinned tip in `docs/calibration/corpus.toml`, the corpus calibration judges, so two runs over one corpus plant the same cases and write the same recall section byte for byte, and a commit added to a source after the pin changes nothing; proven on a history built for the purpose and then on the shipped corpus · scripts/check/recall-pinned.sh
 
 ## Needs #rules-prod
 
@@ -24,5 +25,7 @@ One mutation per case so a hit is unambiguous. Per rule, the injector finds a si
 - 2026-09-05 shaped from cape-town's binding checks: precision alone lets a gate ship that fires on nothing
 - 2026-09-05 one mutation per case, never several: a hit must be attributable to one rule, and a miss to one site
 - 2026-09-06 built by pleach node `recall` (claude/opus, codex audit) in two attempts, 115 minutes: 2608 cases planted in real commits of the five corpus repositories, 2556 caught, 52 missed and every miss named; every block rule at or above 95 percent in each of ts, py, rs and go. The second attempt found the report writer's own `misses()` returning nothing whatever it was handed, which both evidence scripts caught from opposite directions; the worker's notes are in docs/dogfood/recall.md. D2's relative-import resolution was fixed on the way, since the campaign planted `../` imports it could not follow. Landed by hand over calibration: both loops had grown the xtask crate and the report, merged into one bench with one file
+- 2026-09-06 calibration's recalibration found the campaign picks its own branch per repository (`origin/main`, `origin/landing-rewrite`) and reads whatever it says today, so the miss list moved between two runs over what was nominally one corpus. Shaped above: the campaign walks the pinned corpus, which changes the commits it plants in and so the figures, which is this loop's measurement to take again rather than calibration's to alter
+- 2026-09-06 conductor: the pleach running these nodes collects `.loop-scratch/` into the delivery and the hygiene gate judges it with `weed check --strict` (dogfood P8 and P10), so keep scratch under `$TMPDIR`, trash anything left under `.loop-scratch/` before you finish, and never leave a credential-shaped string, even a quoted one, in a file that will be collected
 </script>
 <script src="loop.js"></script>
