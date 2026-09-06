@@ -69,19 +69,19 @@ struct Loop {
 pub fn case_count(side: &Side) -> usize {
     let lang = side.lang();
     let mask = side.mask();
-    let loops = loops(lang, &mask);
-    let suite = Suite::of(lang, &mask);
+    let loops = loops(lang, mask);
+    let suite = Suite::of(lang, mask);
     let declared: Vec<&TestUnit> = side.tests.cases().collect();
 
     let mut total = 0;
     for case in &declared {
-        total += subtests(&mask, &suite, &loops, case)
-            .unwrap_or_else(|| stands_for(&mask, &loops, case.start_line));
+        total += subtests(mask, &suite, &loops, case)
+            .unwrap_or_else(|| stands_for(mask, &loops, case.start_line));
     }
-    for line in unseen(lang, &mask, &declared) {
-        total += stands_for(&mask, &loops, line);
+    for line in unseen(lang, mask, &declared) {
+        total += stands_for(mask, &loops, line);
     }
-    total + macro_generated(lang, &mask)
+    total + macro_generated(lang, mask)
 }
 
 /// How many cases one declaration stands for: the entries of the table driving

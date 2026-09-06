@@ -62,7 +62,7 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
         let lang = language(change);
         let mask = change.after.mask();
         for (line, _) in change.added() {
-            if let Some(marker) = marker(lang, &mask, line) {
+            if let Some(marker) = marker(lang, mask, line) {
                 findings.push(finding(path, line, &marker));
             }
         }

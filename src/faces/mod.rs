@@ -15,6 +15,8 @@ use crate::core::classify::{classify_file, FileKind};
 use crate::core::config::{parse_config, Config};
 use crate::core::diff::FileDiff;
 use crate::core::read::TestShape;
+use crate::core::syntax::Mask;
+use crate::seams::git::Blob;
 use crate::seams::{fs, git, reader};
 
 /// The name of the file a repository states its law in.
@@ -84,69 +86,101 @@ pub enum Source {
 /// Each changed file with both of its sides read: the text, what the path is,
 /// and what the reader makes of the inside of it. This is the one place weed
 /// touches a file for the rules, so a detector stays pure and testable whole.
+///
+/// Both sides of every file are read in one question to the seam rather than
+/// one question per file: a fifty-file change costs a handful of processes
+/// instead of a hundred, and a person waiting on a commit feels the difference.
 pub fn gather(
     root: &Path,
     base: &str,
     after: &Source,
     judged: Vec<FileDiff>,
 ) -> Result<Vec<Change>, String> {
-    judged
+    let before_paths: Vec<Option<&str>> =
+        judged.iter().map(|diff| diff.old_path.as_deref()).collect();
+    let after_paths: Vec<Option<&str>> =
+        judged.iter().map(|diff| diff.new_path.as_deref()).collect();
+    let before = sides(root, &Source::Reference(base.to_string()), &before_paths)?;
+    let after = sides(root, after, &after_paths)?;
+    Ok(judged
         .into_iter()
-        .map(|diff| {
-            let before = side(
-                root,
-                &Source::Reference(base.to_string()),
-                diff.old_path.as_deref(),
-            )?;
-            let after = side(root, after, diff.new_path.as_deref())?;
-            Ok(Change {
-                diff,
-                before,
-                after,
-            })
+        .zip(before)
+        .zip(after)
+        .map(|((diff, before), after)| Change {
+            diff,
+            before,
+            after,
+        })
+        .collect())
+}
+
+/// One side of each of these files, in the order they were asked for. A side
+/// with no file is nothing to read at all, and keeps its place in the answer.
+fn sides(root: &Path, source: &Source, paths: &[Option<&str>]) -> Result<Vec<Side>, String> {
+    let named: Vec<&str> = paths.iter().flatten().copied().collect();
+    let mut read = blobs(root, source, &named)?.into_iter();
+    paths
+        .iter()
+        .map(|path| match path {
+            None => Ok(Side::default()),
+            Some(path) => {
+                let blob = read
+                    .next()
+                    .ok_or_else(|| format!("git answered for fewer files than weed asked about, and {path} was one of them. report it with the change that caused it."))?;
+                Ok(blob.map_or_else(Side::default, |blob| side(path, &blob)))
+            }
         })
         .collect()
 }
 
-/// One side of one file. A side with no file is nothing to read at all. A file
-/// whose bytes are not text has no lines for a rule to judge, and still has a
-/// path and a weight, which is what G2 asks about.
-pub fn side(root: &Path, source: &Source, path: Option<&str>) -> Result<Side, String> {
-    let Some(path) = path else {
-        return Ok(Side::default());
-    };
-    let blob = match source {
-        Source::Reference(reference) => git::file_at_ref(root, reference, path),
-        Source::Index => git::file_in_index(root, path),
-        Source::Tree => git::file_in_tree(root, path),
+/// The bytes each path holds where the caller is looking. The index and a ref
+/// are questions for git, and both answer for as many paths as they are asked
+/// about at once; the working tree is a question for the filesystem, which has
+/// no process to start.
+fn blobs(root: &Path, source: &Source, paths: &[&str]) -> Result<Vec<Option<Blob>>, String> {
+    match source {
+        Source::Reference(reference) => git::files_at_ref(root, reference, paths),
+        Source::Index => git::files_in_index(root, paths),
+        Source::Tree => paths
+            .iter()
+            .map(|path| git::file_in_tree(root, path))
+            .collect(),
     }
-    .map_err(|error| error.to_string())?;
-    let Some(blob) = blob else {
-        return Ok(Side::default());
-    };
+    .map_err(|error| error.to_string())
+}
+
+/// One side of one file, as the bytes git handed over. A file whose bytes are
+/// not text has no lines for a rule to judge, and still has a path and a
+/// weight, which is what G2 asks about.
+fn side(path: &str, blob: &Blob) -> Side {
     let (size, binary) = (Some(blob.size()), blob.is_binary());
     let Some(content) = blob.text() else {
-        return Ok(Side {
+        return Side {
             classification: Some(classify_file(path, "")),
             size,
             binary,
             ..Side::default()
-        });
+        };
     };
 
     let classification = classify_file(path, &content);
     let file = Path::new(path);
+    // The one scan of the file's bytes: what every rule that asks whether a
+    // line is code, a comment or a literal reads, so none of them scans it
+    // again. A file too large to parse is still a file whose lines are judged.
+    let syntax = Mask::of(classification.lang, &content);
     // A file past the weight anyone reads is weighed and counted rather than
     // parsed. G2 reports the file itself, and asking the parser to outline a
     // blob nobody will open costs more than every rule in the run together.
     if !change::reads_as_code(size) {
-        return Ok(Side {
+        return Side {
             content: Some(content),
             classification: Some(classification),
             size,
             binary,
+            syntax,
             ..Side::default()
-        });
+        };
     }
     let tests = if classification.kind == FileKind::Test || classification.has_inline_tests {
         reader::test_shape(file, &content)
@@ -158,7 +192,7 @@ pub fn side(root: &Path, source: &Source, path: Option<&str>) -> Result<Side, St
     // is asking about a declaration on whichever side of the suite it sits.
     let outline = reader::outline(file, &content);
     let imports = reader::imports(file, &content);
-    Ok(Side {
+    Side {
         content: Some(content),
         classification: Some(classification),
         tests,
@@ -166,5 +200,6 @@ pub fn side(root: &Path, source: &Source, path: Option<&str>) -> Result<Side, St
         imports,
         size,
         binary,
-    })
+        syntax,
+    }
 }

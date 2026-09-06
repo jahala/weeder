@@ -74,7 +74,7 @@ fn uncollected_cases(change: &Change) -> Vec<Finding> {
         .filter(|definition| collects_case(lang, &definition.name))
         .filter(|definition| !now.iter().any(|kept| kept.name == definition.name))
     {
-        let held = body(&before, gone);
+        let held = body(before, gone);
         let Some(renamed) = now
             .iter()
             .filter(|definition| !collects_case(lang, &definition.name))
@@ -82,7 +82,7 @@ fn uncollected_cases(change: &Change) -> Vec<Finding> {
             // The same body under another name is the same test: a case that
             // was rewritten as well as renamed is a case weed will not claim to
             // have followed.
-            .find(|definition| body(&after, definition) == held)
+            .find(|definition| body(after, definition) == held)
         else {
             continue;
         };

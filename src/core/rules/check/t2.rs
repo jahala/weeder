@@ -53,7 +53,7 @@ fn count(change: &Change, side: Side) -> usize {
         .as_ref()
         .map_or(Lang::Other, |classification| classification.lang);
     let mask = side.mask();
-    Suite::of(lang, &mask).assertion_count(&mask)
+    Suite::of(lang, mask).assertion_count(mask)
 }
 
 fn finding(path: &str, change: &Change, before: usize, after: usize) -> Finding {

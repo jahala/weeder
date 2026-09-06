@@ -11,6 +11,8 @@
 //! before it and the one after it, which is what separates `skip` the member
 //! from `skip` inside `skipped`.
 
+use std::borrow::Cow;
+
 use crate::core::classify::Lang;
 
 /// What a character belongs to.
@@ -23,9 +25,37 @@ pub enum Syntax {
 }
 
 /// A file read once, so a rule can ask any of its lines what it is made of.
+///
+/// What the scan keeps is where each thing starts rather than what every
+/// character is: a line, and the runs of code, comment and literal it is made
+/// of. A file is nearly all code and its lines carry a run or two, so this is
+/// the file itself and a little over, where a kind per character would be
+/// several times the file. The difference is the difference between reading a
+/// twenty mebibyte file and holding it several times over.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Mask {
-    lines: Vec<Vec<(char, Syntax)>>,
+    /// The file as it was scanned. The scan is only ever read against the text
+    /// it was made from, so the two live together.
+    content: String,
+    lines: Vec<Line>,
+    /// Every line's runs, one after another. A line names where its own begin.
+    runs: Vec<Run>,
+}
+
+/// One line of the file: where it sits in the content, and where its runs begin.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Line {
+    start: usize,
+    end: usize,
+    first_run: usize,
+}
+
+/// Where one run of a single kind begins, counted in characters from the start
+/// of the line. The run reaches to the next one, or to the end of the line.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Run {
+    from: usize,
+    syntax: Syntax,
 }
 
 impl Mask {
@@ -37,25 +67,53 @@ impl Mask {
         let dialect = dialect(lang);
         let mut state = State::Code;
         let mut lines = Vec::new();
-        for line in content.lines() {
-            let characters: Vec<char> = line.chars().collect();
-            let mut kinds = vec![Syntax::Code; characters.len()];
+        let mut runs = Vec::new();
+        // One buffer for the whole file rather than one per line: the scan
+        // needs a line as characters, and a file is a great many lines.
+        let mut characters: Vec<char> = Vec::new();
+        let mut kinds: Vec<Syntax> = Vec::new();
+        let mut start = 0;
+        for raw in content.split_inclusive('\n') {
+            let line = written(raw);
+            characters.clear();
+            characters.extend(line.chars());
+            kinds.clear();
+            kinds.resize(characters.len(), Syntax::Code);
             state = scan(&dialect, &characters, &mut kinds, state);
-            lines.push(characters.into_iter().zip(kinds).collect());
+            lines.push(Line {
+                start,
+                end: start + line.len(),
+                first_run: runs.len(),
+            });
+            let mut open: Option<Syntax> = None;
+            for (at, kind) in kinds.iter().enumerate() {
+                if open != Some(*kind) {
+                    runs.push(Run {
+                        from: at,
+                        syntax: *kind,
+                    });
+                    open = Some(*kind);
+                }
+            }
+            start += raw.len();
         }
-        Mask { lines }
+        Mask {
+            content: content.to_string(),
+            lines,
+            runs,
+        }
     }
 
     /// The 1-based line with everything that is not code blanked.
     #[must_use]
-    pub fn code(&self, line: u32) -> String {
+    pub fn code(&self, line: u32) -> Cow<'_, str> {
         self.view(line, |syntax| syntax == Syntax::Code)
     }
 
     /// The 1-based line with its literals blanked. A comment is still there,
     /// which is where a work marker belongs and where it still counts.
     #[must_use]
-    pub fn outside_literals(&self, line: u32) -> String {
+    pub fn outside_literals(&self, line: u32) -> Cow<'_, str> {
         self.view(line, |syntax| syntax != Syntax::Literal)
     }
 
@@ -63,7 +121,7 @@ impl Mask {
     /// the program: a literal counts here, because a function returning one is
     /// returning something.
     #[must_use]
-    pub fn outside_comments(&self, line: u32) -> String {
+    pub fn outside_comments(&self, line: u32) -> Cow<'_, str> {
         self.view(line, |syntax| syntax != Syntax::Comment)
     }
 
@@ -71,14 +129,14 @@ impl Mask {
     /// blanked. This is what the author said to the next reader, which is how a
     /// rule tells a body left empty by accident from one left empty on purpose.
     #[must_use]
-    pub fn comments(&self, line: u32) -> String {
+    pub fn comments(&self, line: u32) -> Cow<'_, str> {
         self.view(line, |syntax| syntax == Syntax::Comment)
     }
 
     /// What the 1-based line's literals hold, with the code and the comments
     /// blanked. This is what the program says, as opposed to what it does.
     #[must_use]
-    pub fn literals(&self, line: u32) -> String {
+    pub fn literals(&self, line: u32) -> Cow<'_, str> {
         self.view(line, |syntax| syntax == Syntax::Literal)
     }
 
@@ -90,14 +148,11 @@ impl Mask {
     /// characters and not the same bytes.
     #[must_use]
     pub fn literal_runs(&self, line: u32) -> Vec<Literal> {
-        let Some(index) = (line as usize).checked_sub(1) else {
-            return Vec::new();
-        };
         let mut runs: Vec<Literal> = Vec::new();
         let mut open: Option<Literal> = None;
-        for (at, (character, syntax)) in self.lines.get(index).into_iter().flatten().enumerate() {
-            match (*syntax == Syntax::Literal, &mut open) {
-                (true, Some(literal)) => literal.text.push(*character),
+        for (at, (character, syntax)) in self.characters(line).enumerate() {
+            match (syntax == Syntax::Literal, &mut open) {
+                (true, Some(literal)) => literal.text.push(character),
                 (true, None) => {
                     open = Some(Literal {
                         start: at,
@@ -117,19 +172,66 @@ impl Mask {
         u32::try_from(self.lines.len()).unwrap_or(u32::MAX)
     }
 
-    fn view(&self, line: u32, keep: impl Fn(Syntax) -> bool) -> String {
+    /// A view of one line: the characters this kind of view keeps, and a space
+    /// for every one it does not. Nearly every line of nearly every file is one
+    /// run of code, and a view of such a line is the line itself, which is why
+    /// this hands back what it was already holding rather than a copy of it.
+    fn view(&self, line: u32, keep: impl Fn(Syntax) -> bool) -> Cow<'_, str> {
+        let (text, runs) = self.at(line);
+        if let [only] = runs {
+            return match keep(only.syntax) {
+                true => Cow::Borrowed(text),
+                false => Cow::Owned(text.chars().map(|_| ' ').collect()),
+            };
+        }
+        Cow::Owned(
+            self.characters(line)
+                .map(|(character, syntax)| if keep(syntax) { character } else { ' ' })
+                .collect(),
+        )
+    }
+
+    /// The 1-based line, character by character, each with what it belongs to.
+    /// A line the file does not have is no characters at all.
+    fn characters(&self, line: u32) -> impl Iterator<Item = (char, Syntax)> + '_ {
+        let (text, runs) = self.at(line);
+        let mut next = 0;
+        let mut open = Syntax::Code;
+        text.chars().enumerate().map(move |(at, character)| {
+            while runs.get(next).is_some_and(|run| run.from <= at) {
+                open = runs[next].syntax;
+                next += 1;
+            }
+            (character, open)
+        })
+    }
+
+    /// One 1-based line as it is written, and the runs it is made of.
+    fn at(&self, line: u32) -> (&str, &[Run]) {
         let Some(index) = (line as usize).checked_sub(1) else {
-            return String::new();
+            return ("", &[]);
         };
-        self.lines
-            .get(index)
-            .map(|characters| {
-                characters
-                    .iter()
-                    .map(|(character, syntax)| if keep(*syntax) { *character } else { ' ' })
-                    .collect()
-            })
-            .unwrap_or_default()
+        let Some(line) = self.lines.get(index) else {
+            return ("", &[]);
+        };
+        let last = self
+            .lines
+            .get(index + 1)
+            .map_or(self.runs.len(), |next| next.first_run);
+        (
+            &self.content[line.start..line.end],
+            &self.runs[line.first_run..last],
+        )
+    }
+}
+
+/// One line as `str::lines` reads it: what `split_inclusive` handed over,
+/// without the newline that ends it, and without the carriage return a windows
+/// editor puts in front of that.
+fn written(raw: &str) -> &str {
+    match raw.strip_suffix('\n') {
+        Some(line) => line.strip_suffix('\r').unwrap_or(line),
+        None => raw,
     }
 }
 
