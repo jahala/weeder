@@ -14,11 +14,17 @@
 //! for "no statements", `pass`, `...`, a bare return, a return of the language's
 //! empty value. The reader's outline says where each body starts and ends, the
 //! change says the body is new, and the finding lands on the statement itself.
+//!
+//! One empty body is not a stub at all. Python states a shape by writing a
+//! signature and no body, so the methods of a protocol and of an abstract base
+//! are types rather than work left over: there is nothing there to finish, and
+//! writing something would be putting an implementation where a declaration
+//! belongs. weed reads the class the method is written in and lets those be.
 
 use crate::core::change::Change;
 use crate::core::classify::{FileKind, Lang};
 use crate::core::finding::{Finding, Level, Message, Region};
-use crate::core::read::{Definition, DefinitionKind};
+use crate::core::read::{Definition, DefinitionKind, Outline};
 use crate::core::rules::check::idiom;
 use crate::core::rules::check::Judgement;
 use crate::core::syntax::{words, Mask};
@@ -41,6 +47,12 @@ const RAISING: &[&str] = &["throw", "raise", "panic"];
 /// A message that says the work is not done, with everything but its letters
 /// taken out, so spelling and punctuation stop mattering.
 const UNFINISHED_PHRASES: &[&str] = &["notimplemented", "notyetimplemented", "unimplemented"];
+
+/// The bases a Python class is given when its methods are declarations. A
+/// protocol states the shape a caller may rely on and an abstract base states
+/// what a subclass has to write; neither one carries an implementation, which
+/// is why an empty body under either is the whole of what was meant.
+const DECLARING_BASES: &[&str] = &["Protocol", "ABC", "ABCMeta"];
 
 pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
     let changes = judged.changes;
@@ -139,6 +151,9 @@ fn empty_bodies(lang: Lang, mask: &Mask, change: &Change) -> Vec<(u32, Stub)> {
         if !added.iter().any(|added| definition.spans(*added)) {
             continue;
         }
+        if declares_a_type(lang, mask, &change.after.outline, definition) {
+            continue;
+        }
         found.push((line, Stub::empty_body(&definition.name, &statement)));
     }
     found
@@ -167,6 +182,53 @@ fn does_nothing(lang: Lang, mask: &Mask, definition: &Definition) -> Option<(u32
         .find(|line| idiom::normalize(&mask.outside_comments(*line)) == *only)
         .unwrap_or(definition.start_line);
     Some((line, only.to_string()))
+}
+
+/// Whether an empty body is the declaration itself rather than work deferred:
+/// a Python method written inside a class that states a shape.
+fn declares_a_type(lang: Lang, mask: &Mask, outline: &Outline, definition: &Definition) -> bool {
+    if lang != Lang::Python {
+        return false;
+    }
+    let Some(class) = enclosing_class(outline, definition) else {
+        return false;
+    };
+    bases(&mask.code(class.start_line))
+        .iter()
+        .any(|base| DECLARING_BASES.contains(base))
+}
+
+/// The class a definition is written inside, the innermost one where they nest.
+fn enclosing_class<'a>(outline: &'a Outline, definition: &Definition) -> Option<&'a Definition> {
+    outline
+        .flatten()
+        .into_iter()
+        .filter(|candidate| {
+            candidate.kind == DefinitionKind::Class
+                && candidate.start_line <= definition.start_line
+                && definition.end_line <= candidate.end_line
+        })
+        .max_by_key(|candidate| candidate.start_line)
+}
+
+/// What a class declaration says it is built on, each base named by its last
+/// segment, so a base reached through its module answers for itself. A base
+/// given as a keyword argument, the metaclass, is read from the value it names.
+fn bases(declaration: &str) -> Vec<&str> {
+    let Some(open) = declaration.find('(') else {
+        return Vec::new();
+    };
+    let close = declaration[open..]
+        .rfind(')')
+        .map_or(declaration.len(), |end| open + end);
+    declaration[open + 1..close]
+        .split(',')
+        .map(|base| {
+            let named = base.rsplit('=').next().unwrap_or(base).trim();
+            named.rsplit('.').next().unwrap_or(named)
+        })
+        .filter(|base| !base.is_empty())
+        .collect()
 }
 
 /// A stub, as it will be quoted back to the reader.

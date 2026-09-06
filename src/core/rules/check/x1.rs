@@ -14,7 +14,16 @@
 //! halves are needed: a long random string under a plain name is a fixture, a
 //! short readable string under a key name is a setting, and the digests filling
 //! a lockfile are named for what they are and never for a credential.
+//!
+//! That second path only runs where weed knows the grammar. Telling a name from
+//! a value takes a language that has assignments in it; a page, a stylesheet and
+//! a paragraph are full of `name = value` that assigns nothing, a class called
+//! `detail-meta__key`, an attribute, a sentence with a colon in the middle of
+//! it. So the prefix path reads every file weed is handed and the name path
+//! reads source alone, which is the only place a name means what it says.
 
+use crate::core::change::Change;
+use crate::core::classify::Lang;
 use crate::core::finding::{Finding, Level, Message, Region};
 use crate::core::rules::check::Judgement;
 
@@ -84,9 +93,13 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
         let Some(path) = change.diff.new_path.as_deref() else {
             continue;
         };
+        let source = is_source(change);
         for (line, text) in change.added() {
             if let Some(shape) = issued(text) {
                 findings.push(finding(path, line, &shape));
+                continue;
+            }
+            if !source {
                 continue;
             }
             if let Some(name) = named_and_disordered(text) {
@@ -95,6 +108,16 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
         }
     }
     findings
+}
+
+/// Whether the file is written in a language weed reads. Outside one, weed has
+/// no grammar to tell an assignment from a class name or a colon in a sentence.
+fn is_source(change: &Change) -> bool {
+    change
+        .after
+        .classification
+        .as_ref()
+        .is_some_and(|classification| classification.lang != Lang::Other)
 }
 
 /// The credential shape a line carries, named by its frame rather than by its

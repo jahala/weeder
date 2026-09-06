@@ -8,6 +8,10 @@ pub enum FileKind {
     Manifest,
     Generated,
     Guardrail,
+    /// A file that says how the checks are run on a server. It decides less
+    /// than a guardrail does and is edited far more often, which is why it has
+    /// a kind, and a rule, of its own.
+    Workflow,
     Other,
 }
 
@@ -34,7 +38,9 @@ pub fn classify_file(path: impl AsRef<Path>, content: &str) -> Classification {
     let path = path.as_ref();
     let path_text = normalize(path);
     let lang = classify_lang(path);
-    let kind = if is_guardrail(&path_text) {
+    let kind = if is_workflow(&path_text) {
+        FileKind::Workflow
+    } else if is_guardrail(&path_text) {
         FileKind::Guardrail
     } else if is_manifest(&path_text) {
         FileKind::Manifest
@@ -82,11 +88,16 @@ fn classify_lang(path: &Path) -> Lang {
     }
 }
 
+/// Where a forge keeps the runs it performs on a change. A repository states
+/// its own by-laws here, and every one of them is a file somebody edits.
+fn is_workflow(path: &str) -> bool {
+    path.starts_with(".github/workflows/")
+}
+
 fn is_guardrail(path: &str) -> bool {
     path == "weed.toml"
         || path == "AGENTS.md"
         || path == "CLAUDE.md"
-        || path.starts_with(".github/workflows/")
         || path.starts_with(".codex/")
         || path.starts_with(".githooks/")
         || path == ".gemini/settings.json"

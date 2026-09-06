@@ -7,8 +7,10 @@
 //! written independently of how the detector finds them.
 //!
 //! The neighbour writes the same tokens where they are honest: a `TODO` a test
-//! carries about itself, and a `TODO` a production file holds inside a string
-//! because the string is what it returns.
+//! carries about itself, a `TODO` a production file holds inside a string
+//! because the string is what it returns, and the one body that does nothing on
+//! purpose, a Python method under a protocol or an abstract base, where the
+//! ellipsis is how the language states a type and there is nothing to finish.
 
 mod common;
 
@@ -134,4 +136,85 @@ fn stub_lines(language: &Language, case: &str) -> Vec<u64> {
     lines.sort_unstable();
     lines.dedup();
     lines
+}
+
+/// The Python neighbour's declaring classes: a protocol and an abstract base,
+/// each with a method whose whole body is an ellipsis.
+const DECLARED: [&str; 2] = ["Sink", "Store"];
+
+/// The Python fire fixture's concrete pair: a function and a class method, both
+/// with the same ellipsis body and nothing declaring it.
+const CONCRETE: [&str; 2] = ["flush", "Buffer"];
+
+#[test]
+fn s1_stays_silent_on_an_ellipsis_that_declares_a_type_and_fires_on_one_that_defers() {
+    let neighbour = fixture_file("S1", "py", "silent/after", "src/client.py");
+    for class in DECLARED {
+        let declared = ellipsis_bodies_under(&neighbour, class);
+        assert!(
+            !declared.is_empty(),
+            "the neighbour has to write a method with an ellipsis body under `{class}`, or it is not a neighbour"
+        );
+    }
+
+    let run = fixture("S1", "py", "silent").weed(&["check"]);
+    assert_eq!(
+        run.findings(),
+        Vec::new(),
+        "an ellipsis under a protocol or an abstract base is the declaration, not a body nobody wrote"
+    );
+    assert_eq!(run.code, 0, "nothing found, nothing blocked");
+
+    let source = fixture_file("S1", "py", "fire/after", "src/client.py");
+    let reported = fixture("S1", "py", "fire").weed(&["check"]);
+    let lines: Vec<u64> = reported
+        .findings()
+        .into_iter()
+        .filter(|finding| finding.rule == "S1")
+        .filter_map(|finding| finding.line)
+        .collect();
+    for concrete in CONCRETE {
+        let bodies = ellipsis_bodies_under(&source, concrete);
+        assert!(
+            !bodies.is_empty(),
+            "the fire fixture has to write an ellipsis body under `{concrete}`"
+        );
+        for line in bodies {
+            assert!(
+                lines.contains(&line),
+                "line {line}, an ellipsis under `{concrete}`, defers an implementation and is reported: {lines:?}"
+            );
+        }
+    }
+}
+
+/// The 1-based lines holding an ellipsis body inside the declaration that names
+/// `owner`: everything written further in than the line declaring it, up to the
+/// next line written at the same indentation or less.
+fn ellipsis_bodies_under(source: &str, owner: &str) -> Vec<u64> {
+    let lines: Vec<&str> = source.lines().collect();
+    let Some(start) = lines.iter().position(|line| {
+        line.split(|c: char| !(c.is_alphanumeric() || c == '_'))
+            .any(|word| word == owner)
+    }) else {
+        return Vec::new();
+    };
+    let opening = indent(lines[start]);
+    let mut found = Vec::new();
+    for (index, line) in lines.iter().enumerate().skip(start + 1) {
+        if line.trim().is_empty() {
+            continue;
+        }
+        if indent(line) <= opening {
+            break;
+        }
+        if line.trim() == "..." || line.trim_end().ends_with(": ...") {
+            found.push(index as u64 + 1);
+        }
+    }
+    found
+}
+
+fn indent(line: &str) -> usize {
+    line.len() - line.trim_start().len()
 }

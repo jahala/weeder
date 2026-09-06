@@ -32,8 +32,12 @@ fn classifies_v1_languages_tests_manifests_guardrails_and_generated_files() {
         assert_eq!(classify_file(path, "").kind, FileKind::Manifest, "{path}");
     }
 
+    assert_eq!(
+        classify_file(".github/workflows/ci.yml", "").kind,
+        FileKind::Workflow
+    );
+
     for path in [
-        ".github/workflows/ci.yml",
         ".claude/settings.local.json",
         ".gemini/settings.json",
         ".codex/config.toml",
