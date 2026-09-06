@@ -1,0 +1,8 @@
+# One alias, and nothing else. `cargo xtask` is how weed's measurements are run:
+# calibration and the suppression rate are the same core the binary ships,
+# driven from a workspace member rather than from a second implementation of the
+# diff walk. Nothing here redirects a dependency; the pin in Cargo.toml is what
+# builds, and scripts/check/tilth-core-dep.sh holds that.
+
+[alias]
+xtask = "run --quiet --release --package xtask --"

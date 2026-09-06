@@ -1,0 +1,24 @@
+# The history calibration judges: the five garden repositories, as checkouts on
+# the machine running the measurement. A path here is read and never written to;
+# `cargo xtask calibrate --repo <name>=<path>` points an entry somewhere else,
+# which is how the suites run against a repository they built themselves.
+
+[[repo]]
+name = "tilth"
+path = "/Users/jahala/CascadeProjects/tilth"
+
+[[repo]]
+name = "pleach"
+path = "/Users/jahala/conductor/workspaces/pleach-v1/cayenne"
+
+[[repo]]
+name = "tend2"
+path = "/Users/jahala/conductor/workspaces/feature-map/missoula"
+
+[[repo]]
+name = "copeca"
+path = "/Users/jahala/conductor/workspaces/copeca/cancun"
+
+[[repo]]
+name = "umbel"
+path = "/Users/jahala/conductor/workspaces/rctrl/master"

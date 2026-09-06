@@ -18,8 +18,9 @@ pub enum Hook {
 }
 
 /// The line a bundle carries so weed can tell a hook it wrote from one it did
-/// not, and read back the binary that bundle names.
-const BINARY_MARKER: &str = "# weed-guard-binary:";
+/// not, and read back the binary that bundle names. It is public because it is
+/// also how a measurement finds the day a repository installed guard.
+pub const BINARY_MARKER: &str = "# weed-guard-binary:";
 
 impl Hook {
     pub const ALL: [Hook; 3] = [Hook::PreCommit, Hook::PrePush, Hook::PreRebase];
