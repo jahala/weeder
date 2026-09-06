@@ -3,13 +3,13 @@
 //! R1 resolves a cited command against the command's own help, so a scan starts
 //! processes. A document is prose, and prose holds whatever somebody typed into
 //! it: another repository's tool, a line with a semicolon in it, the delete
-//! somebody warns against. None of that is weed's to run. The bound is that
-//! weed runs only a program `[docs] commands` names, only with `--help`, walking
+//! somebody warns against. None of that is weeder's to run. The bound is that
+//! weeder runs only a program `[docs] commands` names, only with `--help`, walking
 //! only the subcommands that help itself printed, and never through a shell.
 //!
 //! Nothing here is mocked: the fixture is a real repository, the binary is the
 //! built one, and PATH is a directory this test owns whose every program writes
-//! down the arguments it was handed. What weed ran is then read off those
+//! down the arguments it was handed. What weeder ran is then read off those
 //! recordings rather than promised. The document in the fixture cites a
 //! subcommand the tool no longer offers, so a scan that quietly skipped the
 //! document would fail here too.
@@ -24,11 +24,11 @@ use tempfile::TempDir;
 /// The one command the fixture's `[docs] commands` names.
 const LISTED: &str = "listed-tool";
 
-/// What weed ran, in order, and all it may run beside git: the listed command
+/// What weeder ran, in order, and all it may run beside git: the listed command
 /// asked for its own help, and the one subcommand that help printed.
 const ALLOWED: &[&str] = &["listed-tool --help", "listed-tool build --help"];
 
-/// Programs the fixture's document names or implies, none of which weed may
+/// Programs the fixture's document names or implies, none of which weeder may
 /// reach for: the tool the config does not list, the shells a command line
 /// would go through, the delete and the touch the prose types out, and the
 /// fetcher that belongs to a refresh nobody asked for.
@@ -43,7 +43,7 @@ const FORBIDDEN: &[&str] = &[
     "curl",
 ];
 
-/// What a shell would leave behind if weed handed it the line the document
+/// What a shell would leave behind if weeder handed it the line the document
 /// carries. The file never appears, because no shell is ever asked.
 const SHELL_LEAVINGS: &str = "pwned";
 
@@ -58,7 +58,7 @@ fn a_scan_runs_the_listed_command_and_nothing_else() {
     }
 
     let repo = fixture("R1", "commands", "fire-bound");
-    let run = repo.weed_with(
+    let run = repo.weeder_with(
         &["scan", "--format", "sarif"],
         &[("PATH", &tools.path().display().to_string())],
     );
@@ -71,7 +71,7 @@ fn a_scan_runs_the_listed_command_and_nothing_else() {
     let ran = ran(&log);
     assert!(
         ran.iter().any(|line| line.starts_with("git ")),
-        "weed asks git what the tree holds before any rule runs, so a log without git is a log nothing was written to: {ran:#?}"
+        "weeder asks git what the tree holds before any rule runs, so a log without git is a log nothing was written to: {ran:#?}"
     );
     let commands: Vec<&String> = ran
         .iter()
@@ -84,7 +84,7 @@ fn a_scan_runs_the_listed_command_and_nothing_else() {
 
     assert!(
         !repo.root().join(SHELL_LEAVINGS).exists() && !tools.path().join(SHELL_LEAVINGS).exists(),
-        "the document's `{LISTED}; touch {SHELL_LEAVINGS}` reached a shell: weed hands a program and an argument array, never a command line"
+        "the document's `{LISTED}; touch {SHELL_LEAVINGS}` reached a shell: weeder hands a program and an argument array, never a command line"
     );
 }
 
@@ -99,7 +99,7 @@ fn the_document_is_still_judged_against_the_help_that_was_read() {
     }
 
     let repo = fixture("R1", "commands", "fire-bound");
-    let run = repo.weed_with(
+    let run = repo.weeder_with(
         &["scan", "--rules", "R1", "--format", "sarif"],
         &[("PATH", &tools.path().display().to_string())],
     );
@@ -114,7 +114,7 @@ fn the_document_is_still_judged_against_the_help_that_was_read() {
         !found
             .iter()
             .any(|finding| message(finding).contains("unlisted-tool")),
-        "a command `[docs] commands` does not name has no authority weed can ask, so weed says nothing about it: {found:#?}"
+        "a command `[docs] commands` does not name has no authority weeder can ask, so weeder says nothing about it: {found:#?}"
     );
     assert!(
         !found
@@ -137,7 +137,7 @@ fn ran(log: &Path) -> Vec<String> {
 /// The line a test-owned program writes about itself before it does anything
 /// else: its own name and the arguments it was handed, one invocation to a
 /// line. This is the whole proof, so it is written by the programs themselves
-/// rather than by anything weed could route around.
+/// rather than by anything weeder could route around.
 fn record(program: &str, log: &Path) -> String {
     format!(
         "{{ printf '%s' {name}; for word in \"$@\"; do printf ' %s' \"$word\"; done; printf '\\n'; }} >> {log}",
@@ -147,13 +147,13 @@ fn record(program: &str, log: &Path) -> String {
 }
 
 /// A program that records being called and does nothing at all. Every program
-/// weed must not reach for is one of these, so reaching for one is a line in
+/// weeder must not reach for is one of these, so reaching for one is a line in
 /// the log rather than a thing that happened.
 fn recorder(program: &str, log: &Path) -> String {
     format!("#!/bin/sh\n{}\nexit 0\n", record(program, log))
 }
 
-/// git, recorded and then run for real. weed asks git what the tree holds
+/// git, recorded and then run for real. weeder asks git what the tree holds
 /// before any rule runs, so a PATH without git is a scan that never starts.
 fn recording_git(log: &Path) -> String {
     let found = which("git").expect("git should be on PATH");
@@ -168,7 +168,7 @@ fn recording_git(log: &Path) -> String {
 /// two flags, which prints its help and refuses anything else the way a real
 /// one does. What the document cites beyond that, `deploy` and `--frobnicate`,
 /// this tool has never heard of. It reaches `cat` by its path, because the PATH
-/// this test hands weed holds nothing but the programs the test wrote.
+/// this test hands weeder holds nothing but the programs the test wrote.
 fn listed_tool(log: &Path) -> String {
     format!(
         r#"#!/bin/sh

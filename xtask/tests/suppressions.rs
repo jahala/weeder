@@ -12,9 +12,9 @@ use common::{workspace, xtask, Bench, Repo};
 
 use serde_json::Value;
 
-/// What `weed guard install` writes into every bundle it creates. The
+/// What `weeder guard install` writes into every bundle it creates. The
 /// measurement finds the install by this line, and so does the suite.
-const MARKER: &str = "# weed-guard-binary:";
+const MARKER: &str = "# weeder-guard-binary:";
 
 fn rates(repo: &Repo) -> Value {
     let bench = Bench::new();
@@ -40,7 +40,7 @@ fn probe() -> Repo {
 
     repo.write(
         ".githooks/pre-commit",
-        &format!("#!/bin/sh\n{MARKER} /usr/local/bin/weed\nexec weed guard pre-commit\n"),
+        &format!("#!/bin/sh\n{MARKER} /usr/local/bin/weeder\nexec weeder guard pre-commit\n"),
     );
     repo.commit("guard is installed");
 

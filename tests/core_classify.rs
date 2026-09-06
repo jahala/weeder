@@ -1,4 +1,4 @@
-use weed::core::{classify_file, FileKind, Lang};
+use weeder::core::{classify_file, FileKind, Lang};
 
 #[test]
 fn classifies_v1_languages_tests_manifests_guardrails_and_generated_files() {
@@ -41,7 +41,7 @@ fn classifies_v1_languages_tests_manifests_guardrails_and_generated_files() {
         ".claude/settings.local.json",
         ".gemini/settings.json",
         ".codex/config.toml",
-        "weed.toml",
+        "weeder.toml",
         ".githooks/pre-commit",
         "AGENTS.md",
         "CLAUDE.md",

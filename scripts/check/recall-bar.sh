@@ -21,10 +21,10 @@ command -v cargo >/dev/null 2>&1 || {
   exit 3
 }
 
-cases="${WEED_RECALL_CASES:-40}"
-commits="${WEED_RECALL_COMMITS:-200}"
+cases="${WEEDER_RECALL_CASES:-40}"
+commits="${WEEDER_RECALL_COMMITS:-200}"
 report="docs/calibration-2026-09.md"
-run="${WEED_RECALL_CACHE:-${TMPDIR:-/tmp}/weed-recall-corpus}"
+run="${WEEDER_RECALL_CACHE:-${TMPDIR:-/tmp}/weeder-recall-corpus}"
 mkdir -p "$run"
 
 if ! cargo xtask mutate \
@@ -54,7 +54,7 @@ LANGUAGES = ["ts", "py", "rs", "go"]
 
 catalogue = json.loads(
     subprocess.run(
-        ["./target/release/weed", "rules", "--format", "json"],
+        ["./target/release/weeder", "rules", "--format", "json"],
         capture_output=True, text=True, check=True,
     ).stdout
 )

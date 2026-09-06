@@ -1,6 +1,6 @@
 # The classifications behind docs/calibration-2026-09.md.
 #
-# weed counts what it blocked; whether a block was right is a person's reading
+# weeder counts what it blocked; whether a block was right is a person's reading
 # of the diff, and this is where that reading is written down. One entry per
 # blocked commit: the repository, the full sha, the class, and one line saying
 # what the finding claims and why that is the answer.

@@ -1,4 +1,4 @@
-//! The exit codes `weed check` leaves with, and what it says when it cannot run.
+//! The exit codes `weeder check` leaves with, and what it says when it cannot run.
 //!
 //! 0 is clean or warnings only, 2 is at least one block-level result, and 3 is a
 //! run that never reached a judgement. A gate that could not run must never look
@@ -7,7 +7,7 @@
 
 mod common;
 
-use common::{conflicted_parser, weed_in, Repo};
+use common::{conflicted_parser, weeder_in, Repo};
 use tempfile::TempDir;
 
 #[test]
@@ -19,7 +19,7 @@ fn a_clean_diff_exits_zero() {
     );
     repo.stage_all();
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert_eq!(run.findings(), Vec::new());
     assert_eq!(run.code, 0);
     assert_eq!(run.stderr, "", "a clean run says nothing");
@@ -31,11 +31,11 @@ fn warnings_alone_exit_zero() {
     // The config file is itself a guardrail, so writing one is a C1 finding.
     // Both rules warn here, which is what makes this a run with warnings and
     // nothing above them.
-    repo.write("weed.toml", "[rules]\nG1 = \"warn\"\nC1 = \"warn\"\n");
+    repo.write("weeder.toml", "[rules]\nG1 = \"warn\"\nC1 = \"warn\"\n");
     repo.write("src/parser.ts", &conflicted_parser(None));
     repo.stage_all();
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     let findings = run.findings();
     assert!(!findings.is_empty(), "the rule still reports");
     assert!(
@@ -54,7 +54,7 @@ fn one_block_level_result_exits_two() {
     repo.write("src/parser.ts", &conflicted_parser(None));
     repo.stage_all();
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert!(run
         .findings()
         .iter()
@@ -63,9 +63,9 @@ fn one_block_level_result_exits_two() {
 }
 
 #[test]
-fn outside_a_git_repository_weed_exits_three() {
+fn outside_a_git_repository_weeder_exits_three() {
     let elsewhere = TempDir::new().expect("a directory that is not a repository");
-    let run = weed_in(elsewhere.path(), &["check"]);
+    let run = weeder_in(elsewhere.path(), &["check"]);
 
     assert_eq!(run.code, 3);
     assert_eq!(run.stderr_lines().len(), 1, "one line, naming the cause");
@@ -77,7 +77,7 @@ fn outside_a_git_repository_weed_exits_three() {
     assert!(
         !run.log()["runs"][0]["invocations"][0]["executionSuccessful"]
             .as_bool()
-            .expect("the invocation says whether weed ran"),
+            .expect("the invocation says whether weeder ran"),
         "the log says the run never judged anything"
     );
 }
@@ -85,7 +85,7 @@ fn outside_a_git_repository_weed_exits_three() {
 #[test]
 fn an_unknown_ref_exits_three() {
     let repo = Repo::init();
-    let run = repo.weed(&["check", "--base", "origin/does-not-exist"]);
+    let run = repo.weeder(&["check", "--base", "origin/does-not-exist"]);
 
     assert_eq!(run.code, 3);
     assert_eq!(run.stderr_lines().len(), 1, "one line, naming the cause");
@@ -97,11 +97,11 @@ fn an_unknown_ref_exits_three() {
 }
 
 #[test]
-fn a_malformed_weed_toml_exits_three() {
+fn a_malformed_weeder_toml_exits_three() {
     let repo = Repo::init();
-    repo.write("weed.toml", "[rules]\nG1 = \"loud\"\n");
+    repo.write("weeder.toml", "[rules]\nG1 = \"loud\"\n");
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert_eq!(run.code, 3);
     assert_eq!(run.stderr_lines().len(), 1, "one line, naming the cause");
     assert!(
@@ -112,14 +112,14 @@ fn a_malformed_weed_toml_exits_three() {
 }
 
 #[test]
-fn a_config_weed_cannot_read_exits_three() {
+fn a_config_weeder_cannot_read_exits_three() {
     let repo = Repo::init();
-    let run = repo.weed(&["check", "--config", "nowhere/weed.toml"]);
+    let run = repo.weeder(&["check", "--config", "nowhere/weeder.toml"]);
 
     assert_eq!(run.code, 3);
     assert_eq!(run.stderr_lines().len(), 1, "one line, naming the cause");
     assert!(
-        run.stderr.contains("nowhere/weed.toml"),
+        run.stderr.contains("nowhere/weeder.toml"),
         "the line names the file it could not read: {}",
         run.stderr
     );

@@ -1,9 +1,9 @@
-//! What `weed check` writes, and to whom.
+//! What `weeder check` writes, and to whom.
 //!
 //! A pipe gets SARIF, because whatever is reading it is a program. A terminal
 //! gets the table, because whatever is reading it is a person. `--format` says
 //! so explicitly and wins over both. The terminal here is a real pseudo-terminal
-//! on the binary's stdout, so weed answers the question rather than being told
+//! on the binary's stdout, so weeder answers the question rather than being told
 //! the answer.
 
 mod common;
@@ -19,7 +19,7 @@ fn conflicted() -> Repo {
 
 #[test]
 fn a_pipe_gets_sarif() {
-    let run = conflicted().weed(&["check"]);
+    let run = conflicted().weeder(&["check"]);
 
     assert_sarif(&run);
     assert_eq!(run.code, 2);
@@ -27,7 +27,7 @@ fn a_pipe_gets_sarif() {
 
 #[test]
 fn a_terminal_gets_a_table() {
-    let run = conflicted().weed_on_a_terminal(&["check"]);
+    let run = conflicted().weeder_on_a_terminal(&["check"]);
 
     assert_table(&run);
     assert_eq!(run.code, 2);
@@ -35,7 +35,7 @@ fn a_terminal_gets_a_table() {
 
 #[test]
 fn format_table_overrides_the_pipe() {
-    let run = conflicted().weed(&["check", "--format", "table"]);
+    let run = conflicted().weeder(&["check", "--format", "table"]);
 
     assert_table(&run);
     assert_eq!(run.code, 2);
@@ -43,7 +43,7 @@ fn format_table_overrides_the_pipe() {
 
 #[test]
 fn format_sarif_overrides_the_terminal() {
-    let run = conflicted().weed_on_a_terminal(&["check", "--format", "sarif"]);
+    let run = conflicted().weeder_on_a_terminal(&["check", "--format", "sarif"]);
 
     assert_sarif(&run);
     assert_eq!(run.code, 2);

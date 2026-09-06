@@ -12,7 +12,7 @@ path = "src/main.rs"
 # The calibration judges with the same code the binary judges with: one core,
 # one diff walk, one set of rules. xtask drives it, and reads back the SARIF
 # every other consumer reads.
-weed = { path = ".." }
+weeder = { path = ".." }
 clap = { version = "4", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

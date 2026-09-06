@@ -1,4 +1,4 @@
-//! `weed hook gemini`, the Gemini CLI hook event, answered in Gemini's shape.
+//! `weeder hook gemini`, the Gemini CLI hook event, answered in Gemini's shape.
 //!
 //! Gemini names the same two moments differently: `BeforeTool` is where a tool
 //! call can still be refused, and `AfterAgent` is where a turn tries to end. Its
@@ -24,7 +24,7 @@ fn a_commit_over_an_index_that_blocks_is_denied_in_geminis_shape() {
     repo.write("src/parser.ts", &conflicted_parser(None));
     repo.stage_all();
 
-    let run = repo.weed_reading(
+    let run = repo.weeder_reading(
         &["hook", "gemini"],
         &tool_event(&repo, "git commit -m 'the merge, half finished'"),
     );
@@ -32,7 +32,7 @@ fn a_commit_over_an_index_that_blocks_is_denied_in_geminis_shape() {
     assert_eq!(
         run.code,
         REFUSED,
-        "weed refuses the commit: {}",
+        "weeder refuses the commit: {}",
         run.output()
     );
     let answer = answer(&run.stdout);
@@ -53,7 +53,7 @@ fn a_commit_over_an_index_that_blocks_is_denied_in_geminis_shape() {
         "the reason names the file:\n{reason}"
     );
     assert!(
-        reason.contains("weed hook refused"),
+        reason.contains("weeder hook refused"),
         "the reason says which gate refused and what to do:\n{reason}"
     );
 }
@@ -64,7 +64,7 @@ fn a_commit_over_a_clean_index_is_not_denied() {
     repo.write("src/parser.ts", RESOLVED);
     repo.stage_all();
 
-    let run = repo.weed_reading(
+    let run = repo.weeder_reading(
         &["hook", "gemini"],
         &tool_event(&repo, "git commit -m 'the merge, finished'"),
     );
@@ -72,7 +72,7 @@ fn a_commit_over_a_clean_index_is_not_denied() {
     assert_eq!(run.code, ALLOWED, "a clean index commits: {}", run.output());
     assert_eq!(
         run.stdout, "",
-        "weed says nothing where it has nothing to say"
+        "weeder says nothing where it has nothing to say"
     );
 }
 
@@ -87,7 +87,7 @@ fn a_commit_that_tells_git_to_skip_its_hooks_is_denied_however_it_is_spelled() {
         "git commit -n -m 'quick'",
         "git -c core.hooksPath=/dev/null commit -m 'quick'",
     ] {
-        let run = repo.weed_reading(&["hook", "gemini"], &tool_event(&repo, command));
+        let run = repo.weeder_reading(&["hook", "gemini"], &tool_event(&repo, command));
         assert_eq!(
             run.code,
             REFUSED,
@@ -106,9 +106,14 @@ fn an_after_agent_over_a_tree_that_blocks_is_blocked_and_a_clean_one_is_allowed(
     // Never staged: a turn ends over the working tree, whatever the index holds.
     repo.write("src/parser.ts", &conflicted_parser(None));
 
-    let run = repo.weed_reading(&["hook", "gemini"], &after_agent_event(&repo, false));
+    let run = repo.weeder_reading(&["hook", "gemini"], &after_agent_event(&repo, false));
 
-    assert_eq!(run.code, REFUSED, "weed blocks the stop: {}", run.output());
+    assert_eq!(
+        run.code,
+        REFUSED,
+        "weeder blocks the stop: {}",
+        run.output()
+    );
     let answer = answer(&run.stdout);
     assert_eq!(answer["decision"], "block");
     let reason = reason(&answer);
@@ -118,12 +123,12 @@ fn an_after_agent_over_a_tree_that_blocks_is_blocked_and_a_clean_one_is_allowed(
         "the reason names the file:\n{reason}"
     );
     assert!(
-        reason.contains("weed hook refused"),
+        reason.contains("weeder hook refused"),
         "the reason says which gate refused and what to do:\n{reason}"
     );
 
     repo.write("src/parser.ts", RESOLVED);
-    let allowed = repo.weed_reading(&["hook", "gemini"], &after_agent_event(&repo, false));
+    let allowed = repo.weeder_reading(&["hook", "gemini"], &after_agent_event(&repo, false));
     assert_eq!(
         allowed.code,
         ALLOWED,
@@ -132,7 +137,7 @@ fn an_after_agent_over_a_tree_that_blocks_is_blocked_and_a_clean_one_is_allowed(
     );
     assert_eq!(
         allowed.stdout, "",
-        "weed lets a clean stop go without a word"
+        "weeder lets a clean stop go without a word"
     );
 }
 
@@ -143,7 +148,7 @@ fn an_after_agent_that_is_already_blocking_blocks_again_over_a_tree_that_still_b
     repo.commit("the parser");
     repo.write("src/parser.ts", &conflicted_parser(None));
 
-    let run = repo.weed_reading(&["hook", "gemini"], &after_agent_event(&repo, true));
+    let run = repo.weeder_reading(&["hook", "gemini"], &after_agent_event(&repo, true));
 
     assert_eq!(
         run.code,
@@ -170,18 +175,18 @@ fn claudes_own_event_names_mean_nothing_to_the_gemini_hook() {
     ] {
         let mut event = event;
         event["cwd"] = json!(repo.root().display().to_string());
-        let run = repo.weed_reading(&["hook", "gemini"], &event.to_string());
+        let run = repo.weeder_reading(&["hook", "gemini"], &event.to_string());
         assert_eq!(
             run.code,
             ALLOWED,
-            "gemini never sends {} to a hook, so weed has no business answering it: {}",
+            "gemini never sends {} to a hook, so weeder has no business answering it: {}",
             event["hook_event_name"],
             run.output()
         );
         assert_eq!(
             run.output(),
             "",
-            "weed says nothing at {}",
+            "weeder says nothing at {}",
             event["hook_event_name"]
         );
     }
@@ -198,7 +203,7 @@ fn the_commit_is_found_wherever_the_command_line_hides_it() {
         "sh -c \"git commit -m 'half finished'\"",
         "git commit --message='half finished' 2>/dev/null",
     ] {
-        let run = repo.weed_reading(&["hook", "gemini"], &tool_event(&repo, command));
+        let run = repo.weeder_reading(&["hook", "gemini"], &tool_event(&repo, command));
         assert_eq!(
             run.code,
             REFUSED,
@@ -208,7 +213,7 @@ fn the_commit_is_found_wherever_the_command_line_hides_it() {
     }
 
     for command in ["git status", "echo 'git commit -m done'"] {
-        let run = repo.weed_reading(&["hook", "gemini"], &tool_event(&repo, command));
+        let run = repo.weeder_reading(&["hook", "gemini"], &tool_event(&repo, command));
         assert_eq!(
             run.code,
             ALLOWED,

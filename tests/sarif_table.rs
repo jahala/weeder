@@ -1,5 +1,5 @@
-use weed::core::sarif::render_table;
-use weed::core::{Finding, Level, Message, Region, Suppression, SuppressionSource};
+use weeder::core::sarif::render_table;
+use weeder::core::{Finding, Level, Message, Region, Suppression, SuppressionSource};
 
 fn finding(rule: &str, level: Level, path: &str, start_line: u32, what: &str) -> Finding {
     Finding {

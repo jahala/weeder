@@ -6,15 +6,15 @@
 //! then the levels every rule ran at, then one table per repository, then the
 //! totals, then precision beside the allowance rate, then the rule-level view. The file carries no date and no
 //! duration: two runs over the same history write the same bytes, so a diff of
-//! this file is a change in weed's judgement and never in the weather.
+//! this file is a change in weeder's judgement and never in the weather.
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 
-use weed::core::catalogue::{self, Face};
-use weed::core::config::Config;
-use weed::core::finding::Level;
-use weed::core::rules::configured_level;
+use weeder::core::catalogue::{self, Face};
+use weeder::core::config::Config;
+use weeder::core::finding::Level;
+use weeder::core::rules::configured_level;
 
 use crate::audit::Audit;
 use crate::calibrate::{RepoMeasurement, REPORTED_ONLY, WINDOW};
@@ -23,7 +23,7 @@ use crate::split::{self, Split};
 use crate::suppressions::RepoRate;
 
 /// The share of judged commits that block-level false positives may take before
-/// weed is not a gate. It is read over the pooled total, not per repository: one
+/// weeder is not a gate. It is read over the pooled total, not per repository: one
 /// small repository having a bad week is not the question a gate answers.
 pub const BAR: f64 = 2.0;
 
@@ -129,7 +129,7 @@ impl<'a> Report<'a> {
     }
 
     /// Whether every rule the kill bar names ran at block level. The run reads
-    /// no `weed.toml` of its own, so this asks the catalogue and the defaults the
+    /// no `weeder.toml` of its own, so this asks the catalogue and the defaults the
     /// binary ships, and the report writes the answer down.
     fn load_bearing_intact(&self) -> bool {
         let config = Config::default();
@@ -185,7 +185,7 @@ impl<'a> Report<'a> {
     pub fn render(&self) -> String {
         let mut out = String::new();
         let outcome = self.outcome();
-        out.push_str("# calibration: weed over real history, 2026-09\n\n");
+        out.push_str("# calibration: weeder over real history, 2026-09\n\n");
         out.push_str(&self.verdict(&outcome));
         out.push_str(&self.method());
         out.push_str(&self.levels());
@@ -214,7 +214,7 @@ impl<'a> Report<'a> {
         if outcome.ships {
             let _ = write!(
                 verdict,
-                "weed ships as a gate{}: over {} commits of real history in {repos} repositories it blocked {}, of which {} were block-level false positives, {share:.2} percent of the commits judged and under the two percent bar, with {} all still at block level{}. {}\n\n",
+                "weeder ships as a gate{}: over {} commits of real history in {repos} repositories it blocked {}, of which {} were block-level false positives, {share:.2} percent of the commits judged and under the two percent bar, with {} all still at block level{}. {}\n\n",
                 if self.audit.confirms() {
                     String::new()
                 } else {
@@ -266,7 +266,7 @@ impl<'a> Report<'a> {
         } else {
             let _ = write!(
                 verdict,
-                "weed does not ship as a gate: over {} commits of real history in {repos} repositories it blocked {}, of which {} were block-level false positives, {share:.2} percent of the commits judged against a two percent bar{}. {}\n\n",
+                "weeder does not ship as a gate: over {} commits of real history in {repos} repositories it blocked {}, of which {} were block-level false positives, {share:.2} percent of the commits judged against a two percent bar{}. {}\n\n",
                 outcome.judged,
                 outcome.blocked,
                 outcome.tally.against_the_bar(),
@@ -282,7 +282,7 @@ impl<'a> Report<'a> {
         if !self.load_bearing_intact() {
             let _ = write!(
                 verdict,
-                "The kill bar was reached: the run did not judge with {} at block level, so whatever the share says, weed does not ship as a gate.\n\n",
+                "The kill bar was reached: the run did not judge with {} at block level, so whatever the share says, weeder does not ship as a gate.\n\n",
                 spell(&LOAD_BEARING)
             );
         }
@@ -330,7 +330,7 @@ impl<'a> Report<'a> {
     fn method(&self) -> String {
         let mut out = String::from("## How this was measured\n\n");
         out.push_str(&format!(
-            "`cargo xtask calibrate` takes the last {WINDOW} commits ending at the commit `docs/calibration/corpus.toml` pins each repository at, and judges each one against its first parent with the same `check` face the binary runs: `weed check --base <parent> --strict`, read back as SARIF. A history with fewer commits contributes all of them, and a repository judged on fewer than {REPORTED_ONLY} commits is reported rather than judged on its own share.\n\n",
+            "`cargo xtask calibrate` takes the last {WINDOW} commits ending at the commit `docs/calibration/corpus.toml` pins each repository at, and judges each one against its first parent with the same `check` face the binary runs: `weeder check --base <parent> --strict`, read back as SARIF. A history with fewer commits contributes all of them, and a repository judged on fewer than {REPORTED_ONLY} commits is reported rather than judged on its own share.\n\n",
         ));
         out.push_str("The corpus names each repository by a source `git fetch` can read and by the full sha its window ends at. The pin is what a reader can hold this file to: a commit pushed to any of these repositories after the pin falls outside the window and cannot move a number here, and the same corpus judges the same history on a machine that has never seen any of these repositories. Moving a pin is an edit to that file, and the run that follows it is a new measurement.\n\n");
         out.push_str("A merge commit is left out of the window. It carries no change of its own, and the commits it brings are in the same window, so judging it as well would weigh one change twice. A root commit is left out too: this measurement judges commits against their parents, and a root has none.\n\n");
@@ -344,7 +344,7 @@ impl<'a> Report<'a> {
     fn levels(&self) -> String {
         let config = Config::default();
         let mut out = String::from("## The rules that ran\n\n");
-        out.push_str("No `weed.toml` was passed and none was read: every rule ran at the level the catalogue ships it at. The four rules the kill bar names are first.\n\n");
+        out.push_str("No `weeder.toml` was passed and none was read: every rule ran at the level the catalogue ships it at. The four rules the kill bar names are first.\n\n");
         out.push_str("| Rule | Level in this run | What it finds |\n|---|---|---|\n");
         let mut rules: Vec<_> = catalogue::rules()
             .iter()
@@ -368,11 +368,11 @@ impl<'a> Report<'a> {
             .map(|repo| format!("{} ({} commits)", repo.name, repo.configured))
             .collect();
         if carried.is_empty() {
-            out.push_str("No commit in the corpus carried a `weed.toml` of its own, so no repository moved a rule off the level above.\n\n");
+            out.push_str("No commit in the corpus carried a `weeder.toml` of its own, so no repository moved a rule off the level above.\n\n");
         } else {
             let _ = writeln!(
                 out,
-                "These commits carried a `weed.toml` of their own, which weed read as the repository's law: {}. Their levels are whatever those files say.\n",
+                "These commits carried a `weeder.toml` of their own, which weeder read as the repository's law: {}. Their levels are whatever those files say.\n",
                 carried.join(", ")
             );
         }
@@ -404,7 +404,7 @@ impl<'a> Report<'a> {
             }
         );
         if !repo.refusals.is_empty() {
-            out.push_str("weed could not judge these commits at all, which is a failure of the run and not a pass:\n\n");
+            out.push_str("weeder could not judge these commits at all, which is a failure of the run and not a pass:\n\n");
             for refusal in &repo.refusals {
                 let _ = writeln!(
                     out,
@@ -475,7 +475,7 @@ impl<'a> Report<'a> {
         out.push('\n');
         let _ = writeln!(
             out,
-            "The bar is a pooled block-level false-positive share under {BAR:.0} percent of the commits judged. This run is at {:.2} percent of {} commits, and {} commits weed could not judge.\n",
+            "The bar is a pooled block-level false-positive share under {BAR:.0} percent of the commits judged. This run is at {:.2} percent of {} commits, and {} commits weeder could not judge.\n",
             share(pooled.against_the_bar(), outcome.judged),
             outcome.judged,
             outcome.refusals,
@@ -581,7 +581,7 @@ impl<'a> Report<'a> {
             return String::new();
         }
         let mut out = String::from("## What the rules moved since the first run\n\n");
-        out.push_str("A rule that splits in two is supposed to take friction off the gate while keeping the finding. Until the same files are read twice that is a claim. Every file whose answer changed is here with the rule that refused it, the kind weed gives the file, and the loudest thing weed says about it now.\n\n");
+        out.push_str("A rule that splits in two is supposed to take friction off the gate while keeping the finding. Until the same files are read twice that is a claim. Every file whose answer changed is here with the rule that refused it, the kind weeder gives the file, and the loudest thing weeder says about it now.\n\n");
         let _ = writeln!(
             out,
             "{} of the first run's block-level findings are refused by the same rule at the same level and are left out of this table; the {} whose answer changed are all in it.\n",
@@ -645,7 +645,7 @@ impl<'a> Report<'a> {
             }
         }
 
-        let mut out = String::from("## Where weed was wrong\n\n");
+        let mut out = String::from("## Where weeder was wrong\n\n");
         if by_rule.is_empty() && unread.is_empty() {
             out.push_str("No block's claim turned out to be untrue.\n\n");
             return out;
@@ -802,7 +802,7 @@ fn spell_level(level: Option<Level>) -> &'static str {
 /// The kinds of file a group of findings sits on, counted.
 fn spell_kinds(kinds: &[(String, usize)]) -> String {
     match kinds {
-        [] => "on no file weed could classify".to_string(),
+        [] => "on no file weeder could classify".to_string(),
         [(kind, _)] => format!("all of them on {kind} files"),
         _ => {
             let spelled: Vec<String> = kinds

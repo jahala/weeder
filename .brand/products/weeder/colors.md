@@ -1,10 +1,10 @@
-# weed — colour delta
+# weeder — colour delta
 
 Inherits the full plotplot palette. One product claim:
 
-- **Accent: bramble `#8E3B5E`** (umbrella Product Accents table). weed uses it for its mark,
-  the bloom dot in the garden row, rule ids and the `[weed]` prefix, and the block-level
-  marker in its table output. It **reads as a word on paper** (6.6:1), so weed needs no
+- **Accent: bramble `#8E3B5E`** (umbrella Product Accents table). weeder uses it for its mark,
+  the bloom dot in the garden row, rule ids and the `[weeder]` prefix, and the block-level
+  marker in its table output. It **reads as a word on paper** (6.6:1), so weeder needs no
   second ink colour there: kickers, labels and inline product mentions set in bramble are
   legible as they are.
 - **On soil-night** bramble stays `#8E3B5E` as a fill and a dot (2.5:1, display class, the
@@ -12,7 +12,7 @@ Inherits the full plotplot palette. One product claim:
   `#B85C82`** (4.2:1 on `#1C1610`, labels class). bramble-night sits 18 ΔE from petal
   `#E588A0`; never set the two as adjacent text on the dark theme.
 - Status stays umbrella: **healthy `#46913C`**, caution `#B0741C`, **error `#BC4126`**.
-  Bramble marks *weed*; error marks a *block-level result*; caution marks a *warning*; healthy
+  Bramble marks *weeder*; error marks a *block-level result*; caution marks a *warning*; healthy
   marks *clean*. Never set a finding in bramble to make it look serious, and never set the
   thorns in error red.
 

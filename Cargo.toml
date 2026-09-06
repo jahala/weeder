@@ -1,19 +1,19 @@
 [workspace]
 # The binary, and the measurements that judge it. xtask is a workspace member
-# rather than a script so calibration runs the same core weed ships.
+# rather than a script so calibration runs the same core weeder ships.
 members = ["xtask"]
 
 [package]
-name = "weed"
+name = "weeder"
 version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "weed"
+name = "weeder"
 path = "src/main.rs"
 
 [dependencies]
-# The parsing substrate, pinned by rev: weed reads code through tilth-core and
+# The parsing substrate, pinned by rev: weeder reads code through tilth-core and
 # parses nothing itself. Upgrades move this one line.
 tilth-core = { git = "https://github.com/jahala/tilth", rev = "7f38db58696e16c2df2be71da985f47097f34920" }
 clap = { version = "4", features = ["derive"] }

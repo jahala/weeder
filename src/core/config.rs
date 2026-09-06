@@ -48,12 +48,12 @@ pub struct Config {
     pub thresholds: Thresholds,
     /// `[docs] commands`: the commands R1 resolves a cited command and flag
     /// against, by reading each one's own `--help`. Empty leaves a cited
-    /// command alone: weed has no authority to resolve it against.
+    /// command alone: weeder has no authority to resolve it against.
     pub doc_commands: Vec<String>,
     /// `[guard] protected`: branches guard refuses to rewrite or push non-fast-forward to.
     pub protected_branches: Vec<String>,
     /// `[guardrails] paths`: the path globs this repository holds at the
-    /// constitution tier. weed ships a set of those it recognises everywhere;
+    /// constitution tier. weeder ships a set of those it recognises everywhere;
     /// this is where a repository names the ones only it can know. C3 reads it.
     pub guardrail_paths: Vec<String>,
 }
@@ -102,7 +102,7 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
         return Ok(Config::default());
     };
     let raw: RawConfig = toml::from_str(input).map_err(|error| ConfigError {
-        key: "weed.toml".to_string(),
+        key: "weeder.toml".to_string(),
         message: error.message().to_string(),
     })?;
     let mut config = Config::default();
@@ -173,7 +173,7 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
                     return Err(ConfigError {
                         key: "docs.commands".to_string(),
                         message: format!(
-                            "`{command}` is not a command weed can run. name the program alone; weed passes its own arguments and never goes through a shell"
+                            "`{command}` is not a command weeder can run. name the program alone; weeder passes its own arguments and never goes through a shell"
                         ),
                     });
                 }

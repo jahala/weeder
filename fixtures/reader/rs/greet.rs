@@ -12,6 +12,6 @@ mod tests {
 
     #[test]
     fn greets_by_name() {
-        assert_eq!(greet("weed"), "hello weed");
+        assert_eq!(greet("weeder"), "hello weeder");
     }
 }

@@ -7,7 +7,7 @@
 //!
 //! It stops being a note when the run named the paths the change was for and the
 //! manifest is not one of them. Then the dependency was never part of what was
-//! asked for, and weed says so at the level that stops the change.
+//! asked for, and weeder says so at the level that stops the change.
 
 use crate::core::change::Change;
 use crate::core::classify::FileKind;

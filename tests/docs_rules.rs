@@ -1,6 +1,6 @@
 //! `docs/rules.md`, the page every SARIF result links back to.
 //!
-//! weed writes a `helpUri` of `docs/rules.md#<id>` for every rule it knows, so
+//! weeder writes a `helpUri` of `docs/rules.md#<id>` for every rule it knows, so
 //! the page has to carry an anchor of that id, and to say about the rule what
 //! the binary says about it. This test reads the catalogue and the page against
 //! each other in both directions: a rule the page does not carry, and an anchor
@@ -8,7 +8,7 @@
 
 use std::path::Path;
 
-use weed::core::catalogue;
+use weeder::core::catalogue;
 
 /// The page the SARIF `helpUri` points at.
 const DOC: &str = "docs/rules.md";
@@ -61,7 +61,7 @@ fn the_page_names_no_rule_the_catalogue_does_not_have() {
     for id in &anchored {
         assert!(
             catalogue::rule(id).is_some(),
-            "{DOC} documents `{id}`, which weed does not have"
+            "{DOC} documents `{id}`, which weeder does not have"
         );
     }
 }

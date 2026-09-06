@@ -12,7 +12,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use common::{fixture, weed_command_in};
+use common::{fixture, weeder_command_in};
 use jsonschema::Validator;
 use serde_json::Value;
 
@@ -72,19 +72,19 @@ fn command_as_declared(declared: &str, directory: &Path) -> Command {
     let mut words = declared.split_whitespace();
     let program = words.next().expect("a command should have a first word");
     assert_eq!(
-        program, "weed",
-        "the check command should be weed's own, not {program}"
+        program, "weeder",
+        "the check command should be weeder's own, not {program}"
     );
     let arguments: Vec<&str> = words.collect();
-    weed_command_in(directory, &arguments)
+    weeder_command_in(directory, &arguments)
 }
 
-/// Every subcommand `weed --help` prints, which is what the binary offers a
-/// caller. clap's own `help` is furniture rather than a face of weed.
+/// Every subcommand `weeder --help` prints, which is what the binary offers a
+/// caller. clap's own `help` is furniture rather than a face of weeder.
 fn subcommands_of_the_binary() -> Vec<String> {
-    let printed = weed_command_in(&root(), &["--help"])
+    let printed = weeder_command_in(&root(), &["--help"])
         .output()
-        .expect("the weed binary should run");
+        .expect("the weeder binary should run");
     let text = String::from_utf8_lossy(&printed.stdout).to_string();
     let mut names: Vec<String> = section(&text, "Commands:")
         .iter()
@@ -95,7 +95,7 @@ fn subcommands_of_the_binary() -> Vec<String> {
     names.sort();
     assert!(
         !names.is_empty(),
-        "weed --help printed no commands:\n{text}"
+        "weeder --help printed no commands:\n{text}"
     );
     names
 }
@@ -126,7 +126,7 @@ fn the_declared_version_is_the_version_cargo_carries() {
     assert_eq!(
         string(&manifest(), "version"),
         cargo_version(),
-        "garden.json and Cargo.toml disagree about which weed this is"
+        "garden.json and Cargo.toml disagree about which weeder this is"
     );
 }
 
@@ -180,7 +180,7 @@ fn the_declared_check_command_emits_sarif_that_validates() {
         .expect("the declared check format should name a standard and its version");
     assert_eq!(
         standard, "sarif",
-        "weed's check face emits SARIF; garden.json declares {standard}"
+        "weeder's check face emits SARIF; garden.json declares {standard}"
     );
     assert_eq!(
         log["version"].as_str(),
@@ -205,6 +205,6 @@ fn the_declared_context_cost_is_zero() {
     assert_eq!(
         manifest()["context_cost"].as_u64(),
         Some(0),
-        "weed is a binary a caller runs; it puts nothing in a session before it is called"
+        "weeder is a binary a caller runs; it puts nothing in a session before it is called"
     );
 }

@@ -2,9 +2,9 @@
 //!
 //! Reading a manifest is parsing, and comparing two versions is arithmetic;
 //! neither needs the network, and a scan never reaches it. What the registries
-//! last said lives in a committed snapshot, so the answer weed gives on a
+//! last said lives in a committed snapshot, so the answer weeder gives on a
 //! developer's machine is the answer it gives in CI six months later.
-//! `weed scan --refresh-snapshot` is the one command that goes and asks, and the
+//! `weeder scan --refresh-snapshot` is the one command that goes and asks, and the
 //! knowledge of where to ask and what to read out of the reply lives here so the
 //! seam that fetches stays a fetch.
 
@@ -13,9 +13,9 @@ use std::collections::BTreeMap;
 use serde::Deserialize;
 
 /// Where the snapshot lives, relative to the repository root.
-pub const SNAPSHOT_PATH: &str = ".weed/registry-snapshot.json";
+pub const SNAPSHOT_PATH: &str = ".weeder/registry-snapshot.json";
 
-/// A registry weed knows how to read a manifest for.
+/// A registry weeder knows how to read a manifest for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Registry {
     Npm,
@@ -92,7 +92,7 @@ fn escape_module(path: &str) -> String {
 }
 
 /// Which registry a manifest's dependencies come from, or `None` where the file
-/// is not a manifest weed reads.
+/// is not a manifest weeder reads.
 #[must_use]
 pub fn registry_of(path: &str) -> Option<Registry> {
     match path.rsplit('/').next().unwrap_or(path) {
@@ -207,7 +207,7 @@ pub struct Pin {
 }
 
 /// Every dependency a manifest pins, in the order the file writes them. A
-/// manifest weed cannot parse pins nothing: a scan reports what a repository
+/// manifest weeder cannot parse pins nothing: a scan reports what a repository
 /// holds, and never reports its own inability to read as the repository's fault.
 #[must_use]
 pub fn pins(registry: Registry, content: &str) -> Vec<Pin> {
@@ -406,7 +406,7 @@ impl std::fmt::Display for SnapshotError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{SNAPSHOT_PATH} is not valid: {}. write it again with weed scan --refresh-snapshot, or delete it.",
+            "{SNAPSHOT_PATH} is not valid: {}. write it again with weeder scan --refresh-snapshot, or delete it.",
             self.message
         )
     }

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Evidence for bite c3, the kill bar: `docs/bite-2026-09.md` shows at least 90
 # percent of the proof repository's phased nodes yielding a clean test commit,
-# or it records the kill and `weed --help` does not print `bite`.
+# or it records the kill and `weeder --help` does not print `bite`.
 #
-# Nothing here trusts a number the file printed. The proof repository is weed
+# Nothing here trusts a number the file printed. The proof repository is weeder
 # itself, built by a conductor node by node, so the ground truth is in two
 # places the file cannot edit: `plans/`, the work orders the conductor was
 # given, which say which nodes asked for phases, and the commits those nodes
@@ -12,8 +12,8 @@
 # from the totals before it is put against the bar.
 #
 # Then the consequence is held to the measurement, in both directions. Over the
-# bar, `bite` has to be a face `weed --help` offers. Under it, the file has to
-# record the kill in its first sentence and `weed --help` must not print `bite`,
+# bar, `bite` has to be a face `weeder --help` offers. Under it, the file has to
+# record the kill in its first sentence and `weeder --help` must not print `bite`,
 # so nobody can ship the face by editing prose, and nobody can leave the face
 # hidden once the measurement says it earned its place.
 #
@@ -24,8 +24,8 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
 
-report="${WEED_BITE_REPORT:-docs/bite-2026-09.md}"
-plans="${WEED_BITE_PLANS:-plans}"
+report="${WEEDER_BITE_REPORT:-docs/bite-2026-09.md}"
+plans="${WEEDER_BITE_PLANS:-plans}"
 
 command -v python3 >/dev/null 2>&1 || {
   echo "python3 is not on PATH, so the report cannot be added up. The check refuses to pass on unchecked arithmetic." >&2
@@ -45,9 +45,9 @@ command -v cargo >/dev/null 2>&1 || {
 }
 
 # The faces are read off the binary this tree builds, never off a file beside
-# it: what weed offers is what weed prints.
+# it: what weeder offers is what weeder prints.
 cargo build --quiet
-printed="$(./target/debug/weed --help)"
+printed="$(./target/debug/weeder --help)"
 
 python3 - "$report" "$plans" "$printed" <<'PY'
 import json
@@ -65,7 +65,7 @@ BAR = 90.0
 LANDED = re.compile(r"^pleach: (?P<node>\S+) (verified|quarantined)")
 # What a path has to look like to be a test, as `src/core/classify.rs` reads
 # one. The measurement asks which commit carried the tests, so it has to answer
-# the same question weed's classifier answers, and this is that question in the
+# the same question weeder's classifier answers, and this is that question in the
 # only form a shell script can ask it.
 TEST_PATH = re.compile(
     r"(^|/)tests?/|(^|/)__tests__/|\.test\.|\.spec\.|(^|/)test_[^/]*\.py$"
@@ -232,7 +232,7 @@ else:
 def commands(text):
     """The subcommands a help listing offers, read the way a person reads them:
     the indented lines under `Commands:`, up to the blank line that ends the
-    section. `help` is the parser's own furniture rather than a face of weed."""
+    section. `help` is the parser's own furniture rather than a face of weeder."""
     listed = []
     inside = False
     for line in text.splitlines():
@@ -256,7 +256,7 @@ if met:
     if not offered:
         complaints.append(
             f"{clean} of {phased} phased nodes yield a clean test commit, at or over the "
-            f"{BAR:.0f}% bar, and `weed --help` does not offer bite. the face was measured "
+            f"{BAR:.0f}% bar, and `weeder --help` does not offer bite. the face was measured "
             "into the release; take the hide off the subcommand."
         )
     if killed:
@@ -272,7 +272,7 @@ else:
         )
     if offered:
         complaints.append(
-            "the measurement does not clear the bar and `weed --help` offers bite. "
+            "the measurement does not clear the bar and `weeder --help` offers bite. "
             "an unshipped face is one the binary does not print."
         )
 
@@ -285,9 +285,9 @@ print(
     f"{clean} of {phased} phased nodes of {nodes} yield a clean test commit"
     + (f" ({share}%)" if share is not None else "")
     + (
-        f", at or over the {BAR:.0f}% bar, and weed --help offers bite"
+        f", at or over the {BAR:.0f}% bar, and weeder --help offers bite"
         if met
-        else f", under the {BAR:.0f}% bar; {report_path} records the kill and weed --help does not offer bite"
+        else f", under the {BAR:.0f}% bar; {report_path} records the kill and weeder --help does not offer bite"
     )
 )
 PY

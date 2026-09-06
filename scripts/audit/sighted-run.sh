@@ -62,9 +62,9 @@ one() {
     sha="$(echo "$case_id" | cut -d: -f5)"
     path="$(echo "$case_id" | cut -d: -f6-)"
     subject="the recall case for rule $rule at \`$path\` in commit $sha, listed under 'Every miss'"
-    verdicts='miss, caught or not-a-case: miss if the rule'"'"'s shape is genuinely present at the planted site and weed did not report it there; caught if weed did report it there; not-a-case if the shape is not genuinely present at that site.'
+    verdicts='miss, caught or not-a-case: miss if the rule'"'"'s shape is genuinely present at the planted site and weeder did not report it there; caught if weeder did report it there; not-a-case if the shape is not genuinely present at that site.'
   fi
-  prompt="You are re-grading one case for a calibration of a diff judge called weed. The calibration report on stdin is your only input; do not run commands, read files or use tools. Its SHA-256 is $hash. Re-grade $subject. Reply with exactly three lines and nothing else:
+  prompt="You are re-grading one case for a calibration of a diff judge called weeder. The calibration report on stdin is your only input; do not run commands, read files or use tools. Its SHA-256 is $hash. Re-grade $subject. Reply with exactly three lines and nothing else:
 Answered report SHA-256: $hash
 Verdict: <one of $verdicts>
 Reasoning: <one sentence, under forty words>"

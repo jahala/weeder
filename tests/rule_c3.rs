@@ -1,7 +1,7 @@
 //! C3, a workflow was changed.
 //!
 //! A workflow is a by-law rather than a constitution. It says how the checks
-//! are run on a server, and it is edited legitimately every week, so weed says
+//! are run on a server, and it is edited legitimately every week, so weeder says
 //! so and lets the change through: C3 warns wherever a file under
 //! `.github/workflows/` is added, edited or taken away, and never blocks on its
 //! own authority.
@@ -11,15 +11,15 @@
 //! called workflows.
 //!
 //! A repository that publishes from a workflow can say so: naming the path
-//! under `[guardrails] paths` in `weed.toml` puts that one file back on the
+//! under `[guardrails] paths` in `weeder.toml` puts that one file back on the
 //! constitution tier, and only that one.
 
 mod common;
 
-use common::{fixture, weed_in, Finding};
+use common::{fixture, weeder_in, Finding};
 use tempfile::TempDir;
-use weed::core::catalogue::{self, Face};
-use weed::core::finding::Level;
+use weeder::core::catalogue::{self, Face};
+use weeder::core::finding::Level;
 
 /// The fixture's languages folder. C3 reads paths, so one repository proves it.
 const CASE: &str = "paths";
@@ -42,7 +42,7 @@ const LEFT_ALONE: &str = ".github/workflows/ci.yml";
 #[test]
 fn c3_warns_on_a_workflow_added_edited_or_taken_away_and_blocks_nothing() {
     let repo = fixture("C3", CASE, "fire");
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
 
     assert_eq!(
         run.code, 0,
@@ -83,7 +83,7 @@ fn c3_stays_silent_on_the_rest_of_github_and_on_a_workflows_directory_elsewhere(
         );
     }
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert_eq!(
         of_rule(&run.findings(), "C3"),
         Vec::new(),
@@ -95,7 +95,7 @@ fn c3_stays_silent_on_the_rest_of_github_and_on_a_workflows_directory_elsewhere(
 #[test]
 fn a_repository_that_names_a_workflow_under_guardrails_paths_gets_it_at_block_level() {
     let repo = fixture("C3", CASE, "promoted");
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
 
     assert_eq!(
         run.code, 2,
@@ -132,19 +132,19 @@ fn the_catalogue_the_page_and_the_binary_all_carry_c3_as_a_warn_rule() {
         "{DOC} says what C3 reports and what it reads to decide"
     );
 
-    // Not a repository: the catalogue is weed's own, not something it reads out
+    // Not a repository: the catalogue is weeder's own, not something it reads out
     // of a working tree.
     let anywhere = TempDir::new().expect("a directory to run in");
-    let printed = weed_in(anywhere.path(), &["rules"]);
+    let printed = weeder_in(anywhere.path(), &["rules"]);
     let row = printed
         .stdout_lines()
         .into_iter()
         .find(|line| line.starts_with("C3 "))
-        .expect("`weed rules` prints C3");
+        .expect("`weeder rules` prints C3");
     let cells: Vec<&str> = row.split_whitespace().collect();
     assert_eq!(
         cells[1], "warn",
-        "the printed level is the level weed applies"
+        "the printed level is the level weeder applies"
     );
     assert_eq!(cells[2], "check", "the printed face");
 }
@@ -152,7 +152,7 @@ fn the_catalogue_the_page_and_the_binary_all_carry_c3_as_a_warn_rule() {
 #[test]
 fn a_c3_result_says_what_was_found_why_it_matters_and_what_to_do() {
     let repo = fixture("C3", CASE, "fire");
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     for finding in of_rule(&run.findings(), "C3") {
         let sentences: Vec<&str> = finding
             .message
@@ -179,7 +179,7 @@ fn a_c3_result_says_what_was_found_why_it_matters_and_what_to_do() {
     }
 }
 
-/// The findings one rule reported, in the order weed reported them.
+/// The findings one rule reported, in the order weeder reported them.
 fn of_rule(findings: &[Finding], rule: &str) -> Vec<Finding> {
     findings
         .iter()

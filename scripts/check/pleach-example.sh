@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Evidence for check-face.tend2.html c7: the example plan gates on
-# `weed check --strict`, pleach accepts it, and docs/pleach.md explains why that
+# `weeder check --strict`, pleach accepts it, and docs/pleach.md explains why that
 # command needs no base argument. Every flag the example cites is checked against
 # the binary's own help, so the example cannot drift away from the CLI.
 set -euo pipefail
@@ -9,7 +9,7 @@ cd "$root"
 
 plan="examples/pleach/plan.json"
 doc="docs/pleach.md"
-gate="weed check --strict"
+gate="weeder check --strict"
 status=0
 
 command -v pleach >/dev/null 2>&1 || {
@@ -27,7 +27,7 @@ if ! pleach validate "$plan" >/dev/null; then
   status=1
 fi
 
-# Every node gates on weed, with the flag that makes a worker's own suppression
+# Every node gates on weeder, with the flag that makes a worker's own suppression
 # stop it, and with no base argument.
 nodes="$(jq -r '.nodes | length' "$plan")"
 [ "$nodes" -gt 0 ] || { echo "$plan declares no nodes" >&2; exit 1; }
@@ -39,33 +39,33 @@ if [ "$gated" -ne "$nodes" ]; then
 fi
 
 if jq -e '[.nodes[].accept.smoke // ""] | map(select(test("--base|--staged"))) | length > 0' "$plan" >/dev/null; then
-  echo "$plan passes a base or a staged argument: the node worktree starts at HEAD, so weed needs neither" >&2
+  echo "$plan passes a base or a staged argument: the node worktree starts at HEAD, so weeder needs neither" >&2
   status=1
 fi
 
 # Every flag the example cites is a flag the binary has.
-cargo build --quiet --bin weed
-binary="target/debug/weed"
+cargo build --quiet --bin weeder
+binary="target/debug/weeder"
 while IFS= read -r smoke; do
   set -- $smoke
   subcommand="$2"
   help="$("$binary" "$subcommand" --help 2>&1)" || {
-    echo "$plan gates on '$smoke', but weed has no '$subcommand' subcommand" >&2
+    echo "$plan gates on '$smoke', but weeder has no '$subcommand' subcommand" >&2
     status=1
     continue
   }
   for flag in $(printf '%s\n' "$smoke" | tr ' ' '\n' | grep '^--' || true); do
     if ! printf '%s\n' "$help" | grep -q -- "$flag"; then
-      echo "$plan gates on '$smoke', but weed $subcommand has no $flag" >&2
+      echo "$plan gates on '$smoke', but weeder $subcommand has no $flag" >&2
       status=1
     fi
   done
-done < <(jq -r '.nodes[].accept.smoke // empty' "$plan" | grep '^weed ' | sort -u)
+done < <(jq -r '.nodes[].accept.smoke // empty' "$plan" | grep '^weeder ' | sort -u)
 
 # The doc explains the gate, and what it compares against.
 grep -qF "$gate" "$doc" || { echo "$doc never names the gate command \`$gate\`" >&2; status=1; }
 grep -qF 'index plus the working tree against `HEAD`' "$doc" || {
-  echo "$doc never says weed judges the index plus the working tree against HEAD" >&2
+  echo "$doc never says weeder judges the index plus the working tree against HEAD" >&2
   status=1
 }
 grep -qiE 'no base argument|needs no base argument|base argument would' "$doc" || {

@@ -10,8 +10,8 @@
 # so that sentence is replaced with the truth before the worker reads it.
 set -euo pipefail
 id="${1:?loop id required}"
-plan="${2:-plans/weed.plan.json}"
-out="plans/weed.$id.plan.json"
+plan="${2:-plans/weeder.plan.json}"
+out="plans/weeder.$id.plan.json"
 python3 - "$id" "$plan" "$out" <<'PY'
 import json, sys
 id, plan, out = sys.argv[1:4]

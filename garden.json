@@ -1,23 +1,23 @@
 {
   "$schema": "schemas/garden.schema.json",
-  "name": "weed",
-  "summary": "weed reads what an agent produced and refuses dishonest growth, as SARIF, in milliseconds.",
+  "name": "weeder",
+  "summary": "weeder reads what an agent produced and refuses dishonest growth, as SARIF, in milliseconds.",
   "kind": [
     "gate",
     "hook"
   ],
   "version": "0.1.0",
   "install": {
-    "npm": "npm install -g @plotplot/weed",
-    "cargo": "cargo install weed",
+    "npm": "npm install -g @plotplot/weeder",
+    "cargo": "cargo install weeder",
     "binary": {
-      "url": "https://github.com/jahala/weed/releases/download/v{version}/{asset}",
+      "url": "https://github.com/jahala/weeder/releases/download/v{version}/{asset}",
       "targets": {
-        "x86_64-unknown-linux-musl": "weed-x86_64-unknown-linux-musl.tar.gz",
-        "aarch64-unknown-linux-musl": "weed-aarch64-unknown-linux-musl.tar.gz",
-        "x86_64-apple-darwin": "weed-x86_64-apple-darwin.tar.gz",
-        "aarch64-apple-darwin": "weed-aarch64-apple-darwin.tar.gz",
-        "x86_64-pc-windows-msvc": "weed-x86_64-pc-windows-msvc.zip"
+        "x86_64-unknown-linux-musl": "weeder-x86_64-unknown-linux-musl.tar.gz",
+        "aarch64-unknown-linux-musl": "weeder-aarch64-unknown-linux-musl.tar.gz",
+        "x86_64-apple-darwin": "weeder-x86_64-apple-darwin.tar.gz",
+        "aarch64-apple-darwin": "weeder-aarch64-apple-darwin.tar.gz",
+        "x86_64-pc-windows-msvc": "weeder-x86_64-pc-windows-msvc.zip"
       }
     }
   },
@@ -30,7 +30,7 @@
   ],
   "skill": "SKILL.md",
   "check": {
-    "command": "weed check --format sarif",
+    "command": "weeder check --format sarif",
     "format": "sarif-2.1.0"
   },
   "metric": {

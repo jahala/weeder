@@ -6,19 +6,19 @@ target/
 .context/
 
 # The umbrella's own brand files arrive with a petals fetch and belong to the
-# umbrella. weed's product layer, .brand/products/weed/, is weed's and is
+# umbrella. weeder's product layer, .brand/products/weeder/, is weeder's and is
 # committed — that is the path F6 verifies.
 /.brand/*
 !/.brand/products/
 /.brand/products/*
-!/.brand/products/weed/
+!/.brand/products/weeder/
 .DS_Store
 .playwright-mcp/
 
 # The dogfood notes and the questions are letters to the maintainers of tend2,
 # pleach and umbel: their defect lists, their unreleased file paths, their
 # version numbers, and this machine's layout. They keep being written here, at
-# the paths AGENTS.md names; they are not weed's record to publish.
+# the paths AGENTS.md names; they are not weeder's record to publish.
 /docs/dogfood.md
 /docs/dogfood/
 /docs/dogfood-report-*.md

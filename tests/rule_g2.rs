@@ -24,7 +24,7 @@ fn big_text() -> String {
 /// A run of bytes no diff can show: a header, and a NUL, which is git's own
 /// test for a blob that is not text.
 fn binary() -> String {
-    let mut bytes = String::from("WEEDFIXTURE\u{0}");
+    let mut bytes = String::from("WEEDERFIXTURE\u{0}");
     for step in 0..512 {
         bytes.push(char::from(u8::try_from(step % 256).unwrap_or_default()));
     }
@@ -46,7 +46,7 @@ fn g2_warns_on_an_added_file_above_a_mebibyte_and_on_an_added_binary() {
     repo.write("assets/mark.bin", &binary());
     repo.stage_all();
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert_eq!(
         run.code, 0,
         "a large file is a warning, and a warning does not block\n{}",
@@ -82,7 +82,7 @@ fn g2_stays_silent_on_a_small_text_file() {
     );
     repo.stage_all();
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert_eq!(
         run.findings(),
         Vec::new(),
@@ -109,7 +109,7 @@ fn g2_stays_silent_on_a_tracked_binary_that_only_changes() {
         "the blob must be in the diff, or the silence proves nothing"
     );
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert_eq!(
         run.findings(),
         Vec::new(),
@@ -121,7 +121,7 @@ fn g2_stays_silent_on_a_tracked_binary_that_only_changes() {
 
 #[test]
 fn a_file_past_the_weight_anyone_reads_is_still_judged_line_by_line() {
-    // Above a mebibyte weed stops handing a file to the parser: an outline of a
+    // Above a mebibyte weeder stops handing a file to the parser: an outline of a
     // blob nobody will open costs more than every rule in the run together. What
     // it does not stop doing is reading the lines, and this is the proof, because
     // a size that took a rule off would be a place to hide a change in.
@@ -141,7 +141,7 @@ fn a_file_past_the_weight_anyone_reads_is_still_judged_line_by_line() {
     repo.write("src/corpus.ts", &format!("{filler}{secret}"));
     repo.stage_all();
 
-    let run = repo.weed(&["check", "--strict"]);
+    let run = repo.weeder(&["check", "--strict"]);
     let rules: Vec<String> = run
         .findings()
         .into_iter()

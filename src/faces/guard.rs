@@ -1,4 +1,4 @@
-//! `weed guard`, weed's judgement put where a harness cannot route around it.
+//! `weeder guard`, weeder's judgement put where a harness cannot route around it.
 //!
 //! `install` writes three POSIX shell hooks that call this binary and points
 //! `core.hooksPath` at the directory holding them, keeping whatever that setting
@@ -23,13 +23,13 @@ const DEFAULT_HOOKS_DIR: &str = ".githooks";
 const HOOKS_PATH_KEY: &str = "core.hooksPath";
 /// Where guard keeps what it must put back. It lives in the git directory, so it
 /// never reaches a commit and never travels with a clone.
-const RECORD_DIR: &str = "weed";
+const RECORD_DIR: &str = "weeder";
 const PREVIOUS_HOOKS_PATH: &str = "previous-hooks-path";
 const INSTALLED_HOOKS: &str = "installed-hooks";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Request {
-    /// Where weed was called from; the repository is found from here.
+    /// Where weeder was called from; the repository is found from here.
     pub cwd: PathBuf,
     pub version: String,
     pub command: Command,
@@ -51,9 +51,9 @@ pub struct Install {
     /// an absolute path.
     pub hooks_dir: Option<PathBuf>,
     /// The branches the installed hooks protect. Empty leaves them reading
-    /// `weed.toml` at the moment git runs them.
+    /// `weeder.toml` at the moment git runs them.
     pub protect: Vec<String>,
-    /// The binary the hooks will name, resolved by the caller: weed's own path.
+    /// The binary the hooks will name, resolved by the caller: weeder's own path.
     pub binary: PathBuf,
 }
 
@@ -103,7 +103,7 @@ fn install(root: &Path, install: &Install) -> Result<Answer, String> {
     let binary = install.binary.display().to_string();
     if binary.contains('\n') {
         return Err(format!(
-            "weed is running from a path that carries a newline ({binary}), and a hook names its binary on one line of a script. move the binary somewhere a line can hold."
+            "weeder is running from a path that carries a newline ({binary}), and a hook names its binary on one line of a script. move the binary somewhere a line can hold."
         ));
     }
 
@@ -140,7 +140,7 @@ fn install(root: &Path, install: &Install) -> Result<Answer, String> {
     .map_err(|error| error.to_string())?;
     git::config_set(root, HOOKS_PATH_KEY, &named).map_err(|error| error.to_string())?;
 
-    let mut stdout = format!("weed guard is installed: git runs its hooks from {named}.\n");
+    let mut stdout = format!("weeder guard is installed: git runs its hooks from {named}.\n");
     for hook in Hook::ALL {
         stdout.push_str(&format!(
             "{:<10}  refuses {}\n",
@@ -159,7 +159,7 @@ fn install(root: &Path, install: &Install) -> Result<Answer, String> {
 fn status(root: &Path) -> Result<Answer, String> {
     let Some(installed) = installed(root)? else {
         return Ok(missing(
-            "weed guard has installed no hooks in this repository, so git runs whatever it finds. run weed guard install.",
+            "weeder guard has installed no hooks in this repository, so git runs whatever it finds. run weeder guard install.",
         ));
     };
 
@@ -169,13 +169,13 @@ fn status(root: &Path) -> Result<Answer, String> {
         let path = root.join(entry);
         let Some(script) = fs::read_if_present(&path).map_err(|error| error.to_string())? else {
             misses.push(format!(
-                "{entry} is missing, so git has no weed hook to run there. run weed guard install."
+                "{entry} is missing, so git has no weeder hook to run there. run weeder guard install."
             ));
             continue;
         };
         let Some(binary) = guard::binary_named(&script) else {
             misses.push(format!(
-                "{entry} is a file weed did not write, so what git runs there is not weed's judgement."
+                "{entry} is a file weeder did not write, so what git runs there is not weeder's judgement."
             ));
             continue;
         };
@@ -187,7 +187,7 @@ fn status(root: &Path) -> Result<Answer, String> {
         }
         if !fs::is_executable(Path::new(binary)) {
             misses.push(format!(
-                "{entry} names the weed binary at {binary}, which is not there to run. run weed guard install again."
+                "{entry} names the weeder binary at {binary}, which is not there to run. run weeder guard install again."
             ));
             continue;
         }
@@ -197,10 +197,10 @@ fn status(root: &Path) -> Result<Answer, String> {
     let directory = directory_of(&installed);
     match git::config_get(root, HOOKS_PATH_KEY).map_err(|error| error.to_string())? {
         None => misses.push(format!(
-            "{HOOKS_PATH_KEY} is not set, so git runs its own hooks and never reaches weed's."
+            "{HOOKS_PATH_KEY} is not set, so git runs its own hooks and never reaches weeder's."
         )),
         Some(setting) if !same_directory(root, &setting, directory) => misses.push(format!(
-            "{HOOKS_PATH_KEY} points at {setting}, not at {directory}, so git runs hooks weed did not write."
+            "{HOOKS_PATH_KEY} points at {setting}, not at {directory}, so git runs hooks weeder did not write."
         )),
         Some(setting) => live.push(format!("{HOOKS_PATH_KEY:<24}  live  {setting}")),
     }
@@ -215,7 +215,7 @@ fn status(root: &Path) -> Result<Answer, String> {
         stdout.push('\n');
     }
     if misses.is_empty() {
-        stdout.push_str("weed guard is live.\n");
+        stdout.push_str("weeder guard is live.\n");
         return Ok(Answer {
             code: EXIT_CLEAN,
             stdout,
@@ -223,7 +223,7 @@ fn status(root: &Path) -> Result<Answer, String> {
         });
     }
     stdout.push_str(&format!(
-        "weed guard is not the law here: {}.\n",
+        "weeder guard is not the law here: {}.\n",
         counted(misses.len())
     ));
     Ok(Answer {
@@ -237,7 +237,7 @@ fn uninstall(root: &Path) -> Result<Answer, String> {
     let Some(installed) = installed(root)? else {
         return Ok(Answer {
             code: EXIT_CLEAN,
-            stdout: "weed guard has installed no hooks in this repository, so there is nothing to take away.\n".to_string(),
+            stdout: "weeder guard has installed no hooks in this repository, so there is nothing to take away.\n".to_string(),
             stderr: Vec::new(),
         });
     };
@@ -247,7 +247,7 @@ fn uninstall(root: &Path) -> Result<Answer, String> {
     for entry in &installed {
         let path = root.join(entry);
         match fs::read_if_present(&path).map_err(|error| error.to_string())? {
-            // Only a file still carrying weed's marker is weed's to remove;
+            // Only a file still carrying weeder's marker is weeder's to remove;
             // whatever someone else put there is theirs.
             Some(script) if guard::binary_named(&script).is_some() => {
                 fs::remove_file(&path).map_err(|error| error.to_string())?;
@@ -275,14 +275,14 @@ fn uninstall(root: &Path) -> Result<Answer, String> {
     fs::remove_dir_if_empty(&records).map_err(|error| error.to_string())?;
 
     let taken = if removed.is_empty() {
-        "no hook weed wrote was still in place".to_string()
+        "no hook weeder wrote was still in place".to_string()
     } else {
         format!("{} removed", removed.join(", "))
     };
-    let mut stdout = format!("weed guard is uninstalled: {taken}, and {restored}.\n");
+    let mut stdout = format!("weeder guard is uninstalled: {taken}, and {restored}.\n");
     for entry in left {
         stdout.push_str(&format!(
-            "{entry} is not the hook weed wrote, so it is still there.\n"
+            "{entry} is not the hook weeder wrote, so it is still there.\n"
         ));
     }
     Ok(Answer {
@@ -319,7 +319,7 @@ fn pre_push(root: &Path, version: &str, request: &PrePush) -> Result<Answer, Str
             if is_protected {
                 refused = true;
                 stdout.push_str(&refused_line(&format!(
-                    "{branch} is protected, and this push would take it off {remote} altogether. take {branch} out of [guard] protected in weed.toml if that is really the intent."
+                    "{branch} is protected, and this push would take it off {remote} altogether. take {branch} out of [guard] protected in weeder.toml if that is really the intent."
                 )));
             }
             continue;
@@ -389,13 +389,13 @@ fn pre_rebase(root: &Path, request: &PreRebase) -> Result<Answer, String> {
     Ok(Answer {
         code: EXIT_BLOCKED,
         stdout: refused_line(&format!(
-            "{branch} is protected{onto}. rebase a branch of your own, or take {branch} out of [guard] protected in weed.toml."
+            "{branch} is protected{onto}. rebase a branch of your own, or take {branch} out of [guard] protected in weeder.toml."
         )),
         stderr: Vec::new(),
     })
 }
 
-/// What a hook asks `weed check`: the index alone at pre-commit time, a range at
+/// What a hook asks `weeder check`: the index alone at pre-commit time, a range at
 /// pre-push time, and always `--strict`, so an allowance an agent wrote for
 /// itself is reported and not honoured. The table is what git prints, because
 /// whoever is being refused is a person.
@@ -437,7 +437,7 @@ fn base_for(root: &Path, pushed: &PushRef) -> Result<String, String> {
 }
 
 /// The branches these hooks protect: what `install --protect` baked into the
-/// bundle, and otherwise what `weed.toml` says at the moment git runs the hook,
+/// bundle, and otherwise what `weeder.toml` says at the moment git runs the hook,
 /// so changing the config takes effect without installing again.
 fn protected(root: &Path, from_the_bundle: &[String]) -> Result<Vec<String>, String> {
     if !from_the_bundle.is_empty() {
@@ -451,7 +451,7 @@ fn protected(root: &Path, from_the_bundle: &[String]) -> Result<Vec<String>, Str
 fn protection(root: &Path, from_the_flag: &[String]) -> Result<String, String> {
     let branches = protected(root, from_the_flag)?;
     let source = if from_the_flag.is_empty() {
-        "as weed.toml has them today"
+        "as weeder.toml has them today"
     } else {
         "as this install named them"
     };
@@ -529,7 +529,7 @@ fn refusal(answer: Answer, hook: &str, what_to_do: &str) -> Answer {
 }
 
 fn refused_line(reason: &str) -> String {
-    format!("weed guard refused: {reason}\n")
+    format!("weeder guard refused: {reason}\n")
 }
 
 fn allowed() -> Answer {

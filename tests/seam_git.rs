@@ -1,4 +1,4 @@
-//! The git seam: the questions weed asks a repository, and the answers it gets.
+//! The git seam: the questions weeder asks a repository, and the answers it gets.
 //!
 //! Every case runs against a real repository in a temp directory. The seam is
 //! not a face, so these tests call it directly; nothing about git is simulated.
@@ -6,7 +6,7 @@
 mod common;
 
 use common::Repo;
-use weed::seams::git::{self, GitError};
+use weeder::seams::git::{self, GitError};
 
 #[test]
 fn the_root_is_the_working_tree_a_path_sits_in() {
@@ -137,7 +137,7 @@ fn a_file_is_read_at_a_ref_and_in_the_tree() {
 fn a_blob_answers_what_it_weighs_and_whether_it_carries_lines() {
     let repo = Repo::init();
     repo.write("notes.txt", "one line\n");
-    repo.write("mark.bin", "WEED\u{0}\u{1}\u{2}");
+    repo.write("mark.bin", "WEEDER\u{0}\u{1}\u{2}");
     repo.commit("a file to read, and a file to weigh");
 
     let text = git::file_in_tree(repo.root(), "notes.txt")

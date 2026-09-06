@@ -1,18 +1,18 @@
-# weed — product identity
+# weeder — product identity
 
 A product layer over the plotplot umbrella. Deltas only; everything absent inherits the umbrella.
 
 | Field | Value |
 |---|---|
-| Product | weed |
+| Product | weeder |
 | Tagline | tests still mean what they meant. |
 | Accent | #8E3B5E bramble, the weed that stops you (from the umbrella Product Accents table) |
-| Faces | `weed check` · `weed guard` · `weed hook` · `weed rules`; `scan` and `bite` join when they land |
-| Commands | `weed check --format sarif` · `weed guard install --protect main` |
+| Faces | `weeder check` · `weeder guard` · `weeder hook` · `weeder rules`; `scan` and `bite` join when they land |
+| Commands | `weeder check --format sarif` · `weeder guard install --protect main` |
 
 ## Positioning
 
-The judge of the diff. Agents produce; weed decides whether what they produced is honest
+The judge of the diff. Agents produce; weeder decides whether what they produced is honest
 work: a test deleted or weakened, a skip added, a stub left in production code, an error
 swallowed, a secret pasted in, a guardrail edited, an import crossing a boundary, a file
 touched outside the agreed scope. It reads the diff and the tree with a parser, never with a
@@ -28,17 +28,17 @@ the pull request, and every allowance a person grants is itself a visible findin
 
 ## Mark
 
-A pair of shears open around a weed's stem, at the height where the cut is made. The plant is
+A pair of shears open around a weeder's stem, at the height where the cut is made. The plant is
 growth green (`#357E2C`): a stem, three leaves, still growing. The shears are bramble
 (`#8E3B5E`): two crossed blades and two open handle loops, the only thing in the mark that is
 not alive. The owner asked for this reading on 2026-09-05, and it is the judgement one moment
 before it lands: the plant is whole, the blades are already around it, and nothing has been cut
-yet. That is what `weed check` is, a verdict delivered before the change goes in rather than a
+yet. That is what `weeder check` is, a verdict delivered before the change goes in rather than a
 report on damage afterwards. Drawn in the garden's diagram language, stroked stems and filled
 accent shapes, so it sits beside umbel's inflorescence and pollen's two leaning stalks as a
 sibling.
 
-Files: `assets/weed-mark.svg` (paper) · `assets/weed-mark-night.svg` (soil-night).
+Files: `assets/weeder-mark.svg` (paper) · `assets/weeder-mark-night.svg` (soil-night).
 
 ## Logo usage
 
@@ -51,6 +51,6 @@ Files: `assets/weed-mark.svg` (paper) · `assets/weed-mark-night.svg` (soil-nigh
   **word** on night lifts to `#B85C82` (the umbrella's night rule). Never recolour outside those
   four values.
 - The blades never touch the leaves, and the stem is never drawn already cut. The shears are
-  open, always. A severed stem is a different claim from the one weed makes.
+  open, always. A severed stem is a different claim from the one weeder makes.
 - Never: colour the plant in bramble, colour the shears green, close the handle loops into
   filled dots, add a hand holding them, set the blades in error red, or outline the wordmark.

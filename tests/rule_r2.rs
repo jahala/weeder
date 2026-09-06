@@ -4,7 +4,7 @@
 //! the repository calls and one nothing calls at all. The `silent/` neighbour
 //! moves the second export into the file its language treats as an entry point ,
 //! a package index, a library root, a test the runner collects, where a caller
-//! weed cannot see is exactly what is expected.
+//! weeder cannot see is exactly what is expected.
 
 mod common;
 
@@ -22,7 +22,7 @@ const LANGUAGES: &[(&str, &str)] = &[
 
 fn findings(lang: &str, case: &str) -> Vec<Finding> {
     let repo = fixture("R2", lang, case);
-    let run = repo.weed(&["scan", "--rules", "R2", "--format", "sarif"]);
+    let run = repo.weeder(&["scan", "--rules", "R2", "--format", "sarif"]);
     assert_eq!(
         run.code, 0,
         "a scan never blocks, and R2/{lang}/{case} left with {}: {}",
@@ -38,7 +38,7 @@ fn an_export_nothing_references_is_reported_in_every_language() {
         assert_eq!(
             found.len(),
             1,
-            "R2/{lang}/fire holds one uncalled export, and weed reported: {found:#?}"
+            "R2/{lang}/fire holds one uncalled export, and weeder reported: {found:#?}"
         );
         let finding = &found[0];
         assert_eq!(finding.rule, "R2");
@@ -61,7 +61,7 @@ fn a_referenced_export_and_an_entry_point_are_left_alone() {
         let found = findings(lang, "silent");
         assert!(
             found.is_empty(),
-            "R2/{lang}/silent exports nothing that is unreachable, and weed reported: {found:#?}"
+            "R2/{lang}/silent exports nothing that is unreachable, and weeder reported: {found:#?}"
         );
     }
 }

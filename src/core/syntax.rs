@@ -3,7 +3,7 @@
 //! A rule that looks for a token has to know whether the token is the program
 //! or something the program merely says: `#[ignore]` in a comment is a note, a
 //! work marker in a string is a message, and either one in code is a finding.
-//! weed parses nothing to decide that. The delimiters each language spells its
+//! weeder parses nothing to decide that. The delimiters each language spells its
 //! comments and its literals with are enough to tell the three apart, and the
 //! scan is total, a file that ends inside a string simply ends there.
 //!
@@ -59,9 +59,9 @@ struct Run {
 }
 
 impl Mask {
-    /// The file scanned as the language it is written in. A language weed has
+    /// The file scanned as the language it is written in. A language weeder has
     /// no delimiters for reads as code throughout, which is the honest answer:
-    /// weed does not know where its strings end.
+    /// weeder does not know where its strings end.
     #[must_use]
     pub fn of(lang: Lang, content: &str) -> Mask {
         let dialect = dialect(lang);
@@ -293,7 +293,7 @@ pub fn words(line: &str) -> Vec<Word<'_>> {
     found
 }
 
-/// Whether a character can sit inside an identifier in the languages weed reads.
+/// Whether a character can sit inside an identifier in the languages weeder reads.
 #[must_use]
 pub fn is_identifier(character: char) -> bool {
     character.is_alphanumeric() || character == '_' || character == '$'

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fetch the umbrella brand the way `.brand/products/weed/petalsrc.example` names
+# Fetch the umbrella brand the way `.brand/products/weeder/petalsrc.example` names
 # it, and print where it landed.
 #
 # The page checks are held to the umbrella's own gate rather than to a copy of
@@ -15,7 +15,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-petalsrc="$root/.brand/products/weed/petalsrc.example"
+petalsrc="$root/.brand/products/weeder/petalsrc.example"
 
 command -v git >/dev/null 2>&1 || { echo "git is not on PATH" >&2; exit 3; }
 [ -f "$petalsrc" ] || {
@@ -52,7 +52,7 @@ fi
   exit 3
 }
 
-checkout="${WEED_UMBRELLA_CACHE:-${TMPDIR:-/tmp}}/weed-umbrella-$sha"
+checkout="${WEEDER_UMBRELLA_CACHE:-${TMPDIR:-/tmp}}/weeder-umbrella-$sha"
 if [ ! -f "$checkout/.brand/identity.md" ]; then
   if [ "$named" -eq 1 ]; then
     git clone -q --depth 1 --branch "$version" "$source_url" "$checkout"

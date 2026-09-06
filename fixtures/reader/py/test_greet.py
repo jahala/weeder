@@ -3,7 +3,7 @@ from greet import greet
 
 class TestGreet:
     def test_greets_by_name(self):
-        assert greet("weed") == "hello weed"
+        assert greet("weeder") == "hello weeder"
 
 
 def test_greets_the_world():

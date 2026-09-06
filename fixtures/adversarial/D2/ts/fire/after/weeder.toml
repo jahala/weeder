@@ -1,4 +1,4 @@
-# weed's own doctrine, written as this repository states it: core computes,
+# weeder's own doctrine, written as this repository states it: core computes,
 # seams reach the world, faces put the two together. The arrows run one way.
 [deps]
 layers = { core = ["src/core/**"], seams = ["src/seams/**"], faces = ["src/faces/**"] }

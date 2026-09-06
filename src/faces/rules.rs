@@ -1,4 +1,4 @@
-//! `weed rules`, the catalogue, as weed will apply it.
+//! `weeder rules`, the catalogue, as weeder will apply it.
 //!
 //! Every rule, its default level, the face it belongs to, and the one line it
 //! reports. The levels are read from `Config::default()`, so this face and the
@@ -53,7 +53,7 @@ fn row(rule: &Rule, defaults: &Config) -> Row {
 }
 
 /// Check rules carry a level, scan rules are on or off. A rule the config never
-/// heard of is off: weed will not run what it cannot configure.
+/// heard of is off: weeder will not run what it cannot configure.
 fn level_word(setting: Option<&RuleSetting>) -> &'static str {
     match setting {
         Some(RuleSetting::Block) => "block",

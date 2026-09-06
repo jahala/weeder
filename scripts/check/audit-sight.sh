@@ -48,8 +48,8 @@ BLIND="The re-grade behind it is blind"
 source="$scratch/source"
 mkdir -p "$source/tests"
 git -C "$source" init --quiet --initial-branch=main
-git -C "$source" config user.name "weed measurements"
-git -C "$source" config user.email "measurements@weed.invalid"
+git -C "$source" config user.name "weeder measurements"
+git -C "$source" config user.email "measurements@weeder.invalid"
 commit() {
   git -C "$source" add -A
   GIT_AUTHOR_DATE="2026-09-06T09:00:00+00:00" GIT_COMMITTER_DATE="2026-09-06T09:00:00+00:00" \
@@ -149,8 +149,8 @@ if caveat not in opening:
     raise SystemExit(1)
 at = opening.index(caveat)
 before = opening[:at]
-if not before.startswith("weed ships as a gate") and not before.startswith(
-    "weed does not ship as a gate"
+if not before.startswith("weeder ships as a gate") and not before.startswith(
+    "weeder does not ship as a gate"
 ):
     print(f"the paragraph does not open with the verdict: {before!r}", file=sys.stderr)
     raise SystemExit(1)
@@ -306,8 +306,8 @@ for phrase in unwanted:
     if phrase in opening:
         complaints.append(f"the opening paragraph should not say {phrase!r}")
 
-if not opening.startswith("weed ships as a gate") and not opening.startswith(
-    "weed does not ship as a gate"
+if not opening.startswith("weeder ships as a gate") and not opening.startswith(
+    "weeder does not ship as a gate"
 ):
     complaints.append(f"the report does not open with a verdict: {opening!r}")
 for phrase in (SIGHTED, BLIND, "No re-grade is recorded"):

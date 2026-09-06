@@ -32,7 +32,7 @@ fn the_pre_push_hook_refuses_a_non_fast_forward_to_a_protected_branch() {
     );
     let said = refused.output();
     assert!(
-        said.contains("weed guard refused"),
+        said.contains("weeder guard refused"),
         "the hook says which gate refused:\n{said}"
     );
     assert!(
@@ -56,7 +56,7 @@ fn the_pre_push_hook_refuses_a_range_that_carries_a_finding_that_blocks() {
     // at all, and exactly the history a push is the last chance to stop.
     repo.write("src/parser.ts", &conflicted_parser(None));
     repo.commit("the merge, half finished");
-    repo.weed(&["guard", "install"]);
+    repo.weeder(&["guard", "install"]);
 
     let refused = repo.try_git(&["push", "origin", "main"]);
 
@@ -73,7 +73,7 @@ fn the_pre_push_hook_refuses_a_range_that_carries_a_finding_that_blocks() {
         "the hook names the file:\n{said}"
     );
     assert!(
-        said.contains("weed guard refused"),
+        said.contains("weeder guard refused"),
         "the hook says which gate refused:\n{said}"
     );
     assert_eq!(
@@ -132,16 +132,16 @@ fn a_branch_that_is_not_protected_is_yours_to_rewrite() {
     );
 }
 
-/// The same repository with weed's own hooks installed and published along with
-/// it, which is the state a project is in once it has adopted weed.
+/// The same repository with weeder's own hooks installed and published along with
+/// it, which is the state a project is in once it has adopted weeder.
 fn guarded() -> (Repo, Repo) {
     let remote = Repo::bare();
     let repo = Repo::init();
-    repo.weed(&["guard", "install"]);
-    // The hooks are guardrail paths, and C1 knows weed's own bundle byte for
+    repo.weeder(&["guard", "install"]);
+    // The hooks are guardrail paths, and C1 knows weeder's own bundle byte for
     // byte, so the commit and the push that first carry them go through the
     // very hooks they install.
-    repo.commit("weed guard installed");
+    repo.commit("weeder guard installed");
     publish(repo, remote)
 }
 

@@ -1,6 +1,6 @@
 //! T3, a skip or a focus marker was added.
 //!
-//! Every runner weed reads has two ways to stop a suite reporting: turn a case
+//! Every runner weeder reads has two ways to stop a suite reporting: turn a case
 //! off, or turn every other case off. Both leave a green run behind, which is
 //! why the marker itself is the finding.
 //!

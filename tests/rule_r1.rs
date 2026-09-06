@@ -4,22 +4,22 @@
 //! the tree for a path, the command's own help for a subcommand and for a flag,
 //! and the code for a symbol. Each fixture is a repository whose documentation
 //! is true about three of them and wrong about one, so a green run here means
-//! weed found that one rather than that it complained about everything.
+//! weeder found that one rather than that it complained about everything.
 //!
-//! The command fixtures cite `weed` itself, and the binary under test is put on
+//! The command fixtures cite `weeder` itself, and the binary under test is put on
 //! PATH in front of everything else, so the help R1 reads is the help this
 //! build prints.
 
 mod common;
 
-use common::{fixture, path_with_weed, Finding};
+use common::{fixture, path_with_weeder, Finding};
 
-/// R1's findings on a fixture, with weed on PATH so a cited command resolves.
+/// R1's findings on a fixture, with weeder on PATH so a cited command resolves.
 fn findings(lang: &str, case: &str) -> Vec<Finding> {
     let repo = fixture("R1", lang, case);
-    let run = repo.weed_with(
+    let run = repo.weeder_with(
         &["scan", "--rules", "R1", "--format", "sarif"],
-        &[("PATH", &path_with_weed())],
+        &[("PATH", &path_with_weeder())],
     );
     assert_eq!(
         run.code, 0,
@@ -90,7 +90,7 @@ fn nothing_is_reported_when_every_citation_still_resolves() {
         let found = findings(lang, "silent");
         assert!(
             found.is_empty(),
-            "R1/{lang}/silent cites nothing that is gone, and weed reported: {found:#?}"
+            "R1/{lang}/silent cites nothing that is gone, and weeder reported: {found:#?}"
         );
     }
 }

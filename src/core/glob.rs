@@ -1,4 +1,4 @@
-//! Path globs, as `weed.toml`'s `[scope] allow` and `--scope` spell them.
+//! Path globs, as `weeder.toml`'s `[scope] allow` and `--scope` spell them.
 //!
 //! `*` matches within one path segment, `**` crosses separators, `?` matches a
 //! single character that is not a separator, and everything else is literal.

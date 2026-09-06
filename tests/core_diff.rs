@@ -1,4 +1,4 @@
-use weed::core::{parse_diff, ChangeKind, LineKind};
+use weeder::core::{parse_diff, ChangeKind, LineKind};
 
 #[test]
 fn parses_git_diff_files_hunks_and_line_numbers() {

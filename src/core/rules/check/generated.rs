@@ -7,7 +7,7 @@
 //! per line. Nothing is covered less afterwards, and a reader that counts
 //! declarations counts the difference as a deletion.
 //!
-//! So weed counts the table instead. A declaration written inside a loop stands
+//! So weeder counts the table instead. A declaration written inside a loop stands
 //! for one case per entry in what the loop runs over; a test that runs subtests
 //! over a table stands for one per entry too; a declaration handed a table by
 //! the decorator above it stands for one per entry; and a macro whose body
@@ -30,7 +30,7 @@ use crate::core::rules::check::idiom::{self, Block};
 use crate::core::rules::check::vocab::Suite;
 use crate::core::syntax::{is_identifier, words, Mask};
 
-/// The keyword every language weed reads opens a loop over a collection with.
+/// The keyword every language weeder reads opens a loop over a collection with.
 const LOOP_KEYWORD: &str = "for";
 
 /// The words a language writes between a loop's binding and what it runs over.

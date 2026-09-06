@@ -8,7 +8,7 @@
         "prompt": "Write the row parser and its tests in src/importer/. A row is valid when every declared column parses; anything else is a refusal carrying the row number and the column that failed. Leave your changes in the working tree."
       },
       "accept": {
-        "smoke": "weed check --strict"
+        "smoke": "weeder check --strict"
       },
       "worker": {
         "provider": "claude",
@@ -22,7 +22,7 @@
         "prompt": "Write the refusal report over the parser's output: one line per refused row, and a count. Leave your changes in the working tree."
       },
       "accept": {
-        "smoke": "weed check --strict"
+        "smoke": "weeder check --strict"
       },
       "worker": {
         "provider": "claude",

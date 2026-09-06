@@ -87,9 +87,9 @@ if not lines or not lines[0].startswith("# calibration"):
 body = [line for line in lines[1:] if line.strip()]
 verdict = body[0] if body else ""
 if not (
-    verdict.startswith("weed ships as a gate:")
-    or verdict.startswith("weed ships as a gate, pending the independent re-grade:")
-    or verdict.startswith("weed does not ship as a gate:")
+    verdict.startswith("weeder ships as a gate:")
+    or verdict.startswith("weeder ships as a gate, pending the independent re-grade:")
+    or verdict.startswith("weeder does not ship as a gate:")
 ):
     complaints.append(f"the first sentence is not the verdict: {verdict!r}")
 

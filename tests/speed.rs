@@ -1,6 +1,6 @@
 //! The latency budget.
 //!
-//! weed sits in front of a commit, so what it costs is what a person waits
+//! weeder sits in front of a commit, so what it costs is what a person waits
 //! before their editor comes back. Two numbers hold that: an ordinary change
 //! answers in under 200 milliseconds, and the worst change anybody plausibly
 //! stages, fifty files with a twenty mebibyte file among them, answers in under
@@ -24,7 +24,7 @@
 //! behind it are on screen when it fails.
 //!
 //! What makes the worst case the worst case is the file nobody should have
-//! staged. Past `core::change::READABLE` weed stops reading a file as code, and
+//! staged. Past `core::change::READABLE` weeder stops reading a file as code, and
 //! the two tests at the bottom hold the two halves of that: the face reads such
 //! a file once, into the mask every rule then reads, so turning the rules on
 //! adds no second pass over its bytes; and a rule that catches something in a
@@ -42,15 +42,15 @@ use std::process::Command;
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
 
-use weed::core::catalogue;
-use weed::core::change::READABLE;
+use weeder::core::catalogue;
+use weeder::core::change::READABLE;
 
-use common::{altered_example, fixture, weed_command_in, Repo};
+use common::{altered_example, fixture, weeder_command_in, Repo};
 
 /// What an ordinary change may take.
 const ORDINARY: Duration = Duration::from_millis(200);
 
-/// What the worst change anybody stages may take. This is the budget weed
+/// What the worst change anybody stages may take. This is the budget weeder
 /// promises, and a GitHub-hosted runner is the machine that has to hold it.
 const WORST: Duration = Duration::from_secs(2);
 
@@ -83,7 +83,7 @@ const WARM_UP_BOUND: usize = 8;
 const SAMPLES: usize = 5;
 
 /// The fixtures an ordinary change is measured on: one per language, each a
-/// real diff weed has to read every rule over.
+/// real diff weeder has to read every rule over.
 const ORDINARY_CASES: [(&str, &str); 4] = [("T1", "ts"), ("S1", "py"), ("G1", "rs"), ("X1", "go")];
 
 /// What a run judges: everything the catalogue carries, or nothing at all.
@@ -132,7 +132,7 @@ fn build_release(target: &Path) {
     let status = Command::new(cargo)
         .current_dir(Path::new(env!("CARGO_MANIFEST_DIR")))
         .env("CARGO_TARGET_DIR", target)
-        .args(["build", "--release", "--bin", "weed"])
+        .args(["build", "--release", "--bin", "weeder"])
         .status()
         .expect("cargo should be on PATH");
     assert!(
@@ -141,17 +141,17 @@ fn build_release(target: &Path) {
     );
 }
 
-/// One timed run of `weed check --staged` in a repository, with everything the
+/// One timed run of `weeder check --staged` in a repository, with everything the
 /// binary writes thrown away: the budget covers the judging, and a terminal on
 /// the other end is not part of it.
 fn once(repo: &Repo, binary: &Path, arguments: &[&str]) -> Duration {
     let mut command = common::command_in(binary, repo.root(), arguments);
     let started = Instant::now();
-    let output = command.output().expect("the weed binary should run");
+    let output = command.output().expect("the weeder binary should run");
     let taken = started.elapsed();
     assert!(
         output.status.code().is_some_and(|code| code != 3),
-        "a run weed could not finish measures nothing: {}",
+        "a run weeder could not finish measures nothing: {}",
         String::from_utf8_lossy(&output.stderr)
     );
     taken
@@ -208,7 +208,7 @@ fn source(seed: usize, lines: usize) -> String {
     text
 }
 
-/// A file of `bytes` or a little more, in a language weed reads, holding
+/// A file of `bytes` or a little more, in a language weeder reads, holding
 /// nothing any rule has anything to say about.
 fn filler(bytes: usize) -> String {
     let row = "the record carries a field, and the field carries a value\n";
@@ -255,7 +255,7 @@ fn one_line_on_an_unreadable_file() -> Repo {
     repo
 }
 
-/// A `weed.toml` that turns off every rule the catalogue carries, so a run
+/// A `weeder.toml` that turns off every rule the catalogue carries, so a run
 /// under it does the reading and none of the judging.
 fn nothing_judged() -> String {
     let mut text = String::from("[rules]\n");
@@ -326,7 +326,7 @@ fn budget() -> (Duration, &'static str) {
     }
 }
 
-/// A file past the size weed reads as code costs one pass over its bytes and no
+/// A file past the size weeder reads as code costs one pass over its bytes and no
 /// more. The face makes that pass; every rule reads what it produced. So a run
 /// with the whole catalogue on may cost more than a run with none of it on,
 /// what it costs is the judging, and it must not cost the reading twice.
@@ -367,13 +367,13 @@ fn nothing_a_rule_catches_in_an_unreadable_file_is_lost() {
     let padded = format!("{judged}{}", filler(READABLE as usize));
     assert!(
         padded.len() as u64 > READABLE,
-        "the padded file has to be past the size weed stops reading as code"
+        "the padded file has to be past the size weeder stops reading as code"
     );
     repo.write("src/small.ts", &judged);
     repo.write("src/big.ts", &padded);
     repo.stage_all();
 
-    let run = repo.weed(&["check", "--staged", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--staged", "--format", "sarif"]);
     let small = reported(&run, "src/small.ts");
     let big = reported(&run, "src/big.ts");
     assert!(
@@ -389,7 +389,7 @@ fn nothing_a_rule_catches_in_an_unreadable_file_is_lost() {
 
 /// A handful of lines a rule catches: a work marker in production code, and a
 /// credential written into it. The credential is one its issuer published, so
-/// this repository carries no key of its own and weed still reads the shape.
+/// this repository carries no key of its own and weeder still reads the shape.
 fn judged_lines() -> String {
     format!(
         "export const opening = 1;\n\
@@ -437,12 +437,12 @@ fn the_evidence_runner_asks_for_the_release_profile() {
     );
 }
 
-/// `weed_command_in` is the harness's way to the debug binary; this suite goes
+/// `weeder_command_in` is the harness's way to the debug binary; this suite goes
 /// through `command_in` with the release one instead, and this holds the two to
 /// the same binary name so a rename cannot leave the budget measuring nothing.
 #[test]
 fn the_binary_measured_is_the_one_the_harness_names() {
-    let harness = weed_command_in(Path::new(env!("CARGO_MANIFEST_DIR")), &[]);
+    let harness = weeder_command_in(Path::new(env!("CARGO_MANIFEST_DIR")), &[]);
     let named = Path::new(harness.get_program())
         .file_name()
         .expect("the harness names a binary");

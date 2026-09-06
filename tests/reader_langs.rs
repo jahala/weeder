@@ -1,4 +1,4 @@
-//! The reader on real files, one small pair per language: what weed sees when
+//! The reader on real files, one small pair per language: what weeder sees when
 //! it reads a module and the test file that exercises it.
 //!
 //! The fixtures live in `fixtures/reader/<lang>/` and every number here is read
@@ -8,9 +8,9 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use weed::core::classify::Lang;
-use weed::core::read::DefinitionKind;
-use weed::seams::reader;
+use weeder::core::classify::Lang;
+use weeder::core::read::DefinitionKind;
+use weeder::seams::reader;
 
 fn fixture(lang: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))

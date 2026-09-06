@@ -50,23 +50,23 @@ Agreement on blocked commits is on the binary question the ruling of 2026-09-06 
 
 | Rule | Language | Repository | Commit | Path | Auditor verdict | Reasoning |
 |---|---|---|---|---|---|---|
-| D2 | go | hcl | `2efc26623` | `hclwrite/ast_body.go:6` | miss | The diff adds an integrationtest import inside hclwrite at the planted site, matching the forbidden-boundary import shape, and weed reported no finding. |
-| D2 | go | hcl | `6bf1a67a9` | `gohcl/decode.go:6` | miss | The diff adds a gohcl import of hcldec at the planted site, matching D2, but weed reported no finding there. |
-| D2 | go | hcl | `9466647a1` | `hclwrite/ast_block.go:6` | miss | The diff adds an integrationtest import in hclwrite/ast_block.go at the planted site, but weed reports only an unrelated workflow warning. |
-| D2 | go | hcl | `ab1acc486` | `hclwrite/tokens.go:6` | miss | The diff adds an integrationtest import inside hclwrite at the planted import block, matching the forbidden-boundary shape, but weed reported no finding there. |
-| D2 | go | hcl | `e73f21667` | `gohcl/schema.go:6` | miss | The diff adds a forbidden gohcl import of hcldec at the planted site, while weed only reports an unrelated workflow warning. |
-| S2 | py | copeca | `387932ad5` | `tests/e2e/fake_agent.py:61` | miss | The added handler catches Exception and only passes, swallowing the error at the planted site, while weed reported no finding. |
-| T1 | go | cobra | `3f3b81882` | `doc/man_examples_test.go` | miss | The diff deletes the ExampleGenManTree test/example function at the planted file, and weed reported no finding there. |
-| T1 | ts | tend2 | `6d9a1cf91` | `test/site-paths.test.ts` | miss | The planted diff deletes the entire `it(...)` test case at `test/site-paths.test.ts`, while weed only reported T2 assertion removal, not T1. |
-| T1 | ts | tend2 | `8d939ec15` | `test/renderer-fresh.test.ts` | miss | The diff deletes the `it(dir, ...)` test case at the planted site, but weed reported only T2 assertion removal, not T1. |
-| T4 | ts | pleach | `3a1306011` | `test/loop/run-work.test.ts:10` | miss | The diff genuinely widens TIMEOUT from 1000 to 10000 at the planted site, and weed reported only an unrelated D1 finding elsewhere. |
-| T6 | ts | tend2 | `044912212` | `test/route.test.ts:143` | miss | The assertion changed from requiring an error matching /sample/ to accepting any thrown error, and weed reported no finding there. |
-| T6 | ts | tend2 | `2a0e93933` | `test/verify.test.ts:176` | miss | The diff weakens toThrow(/description/) to toThrow(), so the error assertion stopped naming the error and weed reported no finding. |
-| T6 | ts | tend2 | `51035a5c8` | `test/verify.test.ts:176` | miss | The diff changes toThrow(/description/) to toThrow(), weakening the error assertion at the planted line, and weed reported no finding. |
-| T6 | ts | tend2 | `56072cdab` | `test/verify.test.ts:176` | miss | The diff weakens a test error assertion from toThrow(/description/) to bare toThrow() at the planted line, and weed reported no T6 finding there. |
-| T6 | ts | tend2 | `6d9a1cf91` | `test/route.test.ts:143` | miss | The assertion was weakened from expecting an error matching /sample/ to any thrown error, and weed reported no finding at the planted site. |
-| T6 | ts | tend2 | `8d939ec15` | `test/route.test.ts:143` | miss | The assertion changed from requiring an error matching /sample/ to only requiring any throw, and weed reported no finding at the planted site. |
-| T6 | ts | tend2 | `99296a937` | `test/verify.test.ts:176` | miss | The diff weakens the assertion from checking /description/ to a bare toThrow(), and weed reported no finding at the planted site. |
-| T6 | ts | tend2 | `ad070a0d4` | `test/verify.test.ts:176` | miss | The assertion changed from expecting an error matching /description/ to any thrown error, and weed reported no T6 finding at test/verify.test.ts:176. |
-| T6 | ts | tend2 | `e2adbab97` | `test/verify.test.ts:176` | miss | The assertion changed from toThrow(/description/) to bare toThrow(), weakening the named error check, and weed reported no finding. |
-| T6 | ts | tend2 | `e9e8387e9` | `test/verify.test.ts:176` | miss | The test changed from asserting a specific /description/ error to any thrown error, and weed did not report T6 at that location. |
+| D2 | go | hcl | `2efc26623` | `hclwrite/ast_body.go:6` | miss | The diff adds an integrationtest import inside hclwrite at the planted site, matching the forbidden-boundary import shape, and weeder reported no finding. |
+| D2 | go | hcl | `6bf1a67a9` | `gohcl/decode.go:6` | miss | The diff adds a gohcl import of hcldec at the planted site, matching D2, but weeder reported no finding there. |
+| D2 | go | hcl | `9466647a1` | `hclwrite/ast_block.go:6` | miss | The diff adds an integrationtest import in hclwrite/ast_block.go at the planted site, but weeder reports only an unrelated workflow warning. |
+| D2 | go | hcl | `ab1acc486` | `hclwrite/tokens.go:6` | miss | The diff adds an integrationtest import inside hclwrite at the planted import block, matching the forbidden-boundary shape, but weeder reported no finding there. |
+| D2 | go | hcl | `e73f21667` | `gohcl/schema.go:6` | miss | The diff adds a forbidden gohcl import of hcldec at the planted site, while weeder only reports an unrelated workflow warning. |
+| S2 | py | copeca | `387932ad5` | `tests/e2e/fake_agent.py:61` | miss | The added handler catches Exception and only passes, swallowing the error at the planted site, while weeder reported no finding. |
+| T1 | go | cobra | `3f3b81882` | `doc/man_examples_test.go` | miss | The diff deletes the ExampleGenManTree test/example function at the planted file, and weeder reported no finding there. |
+| T1 | ts | tend2 | `6d9a1cf91` | `test/site-paths.test.ts` | miss | The planted diff deletes the entire `it(...)` test case at `test/site-paths.test.ts`, while weeder only reported T2 assertion removal, not T1. |
+| T1 | ts | tend2 | `8d939ec15` | `test/renderer-fresh.test.ts` | miss | The diff deletes the `it(dir, ...)` test case at the planted site, but weeder reported only T2 assertion removal, not T1. |
+| T4 | ts | pleach | `3a1306011` | `test/loop/run-work.test.ts:10` | miss | The diff genuinely widens TIMEOUT from 1000 to 10000 at the planted site, and weeder reported only an unrelated D1 finding elsewhere. |
+| T6 | ts | tend2 | `044912212` | `test/route.test.ts:143` | miss | The assertion changed from requiring an error matching /sample/ to accepting any thrown error, and weeder reported no finding there. |
+| T6 | ts | tend2 | `2a0e93933` | `test/verify.test.ts:176` | miss | The diff weakens toThrow(/description/) to toThrow(), so the error assertion stopped naming the error and weeder reported no finding. |
+| T6 | ts | tend2 | `51035a5c8` | `test/verify.test.ts:176` | miss | The diff changes toThrow(/description/) to toThrow(), weakening the error assertion at the planted line, and weeder reported no finding. |
+| T6 | ts | tend2 | `56072cdab` | `test/verify.test.ts:176` | miss | The diff weakens a test error assertion from toThrow(/description/) to bare toThrow() at the planted line, and weeder reported no T6 finding there. |
+| T6 | ts | tend2 | `6d9a1cf91` | `test/route.test.ts:143` | miss | The assertion was weakened from expecting an error matching /sample/ to any thrown error, and weeder reported no finding at the planted site. |
+| T6 | ts | tend2 | `8d939ec15` | `test/route.test.ts:143` | miss | The assertion changed from requiring an error matching /sample/ to only requiring any throw, and weeder reported no finding at the planted site. |
+| T6 | ts | tend2 | `99296a937` | `test/verify.test.ts:176` | miss | The diff weakens the assertion from checking /description/ to a bare toThrow(), and weeder reported no finding at the planted site. |
+| T6 | ts | tend2 | `ad070a0d4` | `test/verify.test.ts:176` | miss | The assertion changed from expecting an error matching /description/ to any thrown error, and weeder reported no T6 finding at test/verify.test.ts:176. |
+| T6 | ts | tend2 | `e2adbab97` | `test/verify.test.ts:176` | miss | The assertion changed from toThrow(/description/) to bare toThrow(), weakening the named error check, and weeder reported no finding. |
+| T6 | ts | tend2 | `e9e8387e9` | `test/verify.test.ts:176` | miss | The test changed from asserting a specific /description/ error to any thrown error, and weeder did not report T6 at that location. |

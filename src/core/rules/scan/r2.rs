@@ -9,7 +9,7 @@
 //! Some exports are referenced from outside the repository by design, and
 //! reporting those would teach a reader to ignore the rule. A program's entry
 //! point, the root of a library, a package index and a test runner's convention
-//! are all called by something weed cannot see, so none of them is reported.
+//! are all called by something weeder cannot see, so none of them is reported.
 
 use std::collections::BTreeMap;
 

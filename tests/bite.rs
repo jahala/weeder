@@ -1,4 +1,4 @@
-//! `weed bite`, the test held to its own failure.
+//! `weeder bite`, the test held to its own failure.
 //!
 //! The fixture is a repository whose history carries the three commits a phased
 //! node leaves: the state the work starts from, the tests alone, the
@@ -8,7 +8,7 @@
 //! B1, at block level, naming the cases the test commit added.
 //!
 //! Nothing here is simulated: the fixture is a Python project, the command is
-//! Python's own runner, and the pass or the failure weed reads is the one the
+//! Python's own runner, and the pass or the failure weeder reads is the one the
 //! interpreter decided. B1 has one language rather than four because it reads no
 //! language-specific shape of its own, it runs whatever command the caller
 //! named; the case names it prints come from the reader, which `tests/reader_langs.rs`
@@ -34,7 +34,7 @@ fn interpreter() {
 fn bite(repo: &Repo, arguments: &[&str]) -> Run {
     let mut all = vec!["bite", "--test", SUITE];
     all.extend_from_slice(arguments);
-    repo.weed(&all)
+    repo.weeder(&all)
 }
 
 /// How many sentences a message carries. A finding says what was found, why it
@@ -148,7 +148,7 @@ fn a_history_with_no_phase_pair_in_it_is_a_run_that_never_happened() {
     assert_eq!(run.stderr.lines().count(), 1, "one line saying why");
     assert!(
         run.stderr.contains("HEAD~2"),
-        "the ref weed could not resolve is named: {}",
+        "the ref weeder could not resolve is named: {}",
         run.stderr
     );
 }

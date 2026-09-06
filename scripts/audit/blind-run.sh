@@ -23,14 +23,14 @@ jobs="${2:-4}"
 base="fixtures/adversarial/calibration-audit/blind-2026-09"
 cases="$base/cases"
 sessions="$base/sessions"
-only="${WEED_AUDIT_ONLY:-}"
+only="${WEEDER_AUDIT_ONLY:-}"
 
 command -v codex >/dev/null 2>&1 || { echo "codex is not on PATH" >&2; exit 3; }
 command -v trash >/dev/null 2>&1 || { echo "trash is not on PATH; nothing here deletes with rm" >&2; exit 3; }
 
-# WEED_AUDIT_ASSEMBLE_ONLY=1 rebuilds the audit file from the sessions already
+# WEEDER_AUDIT_ASSEMBLE_ONLY=1 rebuilds the audit file from the sessions already
 # kept, for a change in how agreement is read, without a single new session.
-if [ -z "${WEED_AUDIT_ASSEMBLE_ONLY:-}" ]; then
+if [ -z "${WEEDER_AUDIT_ASSEMBLE_ONLY:-}" ]; then
   [ -d "$cases" ] && trash "$cases"
   [ -d "$sessions" ] && trash "$sessions"
   mkdir -p "$cases" "$sessions"
@@ -49,11 +49,11 @@ one() {
   events="$sessions/$stem.events.jsonl"
   empty="$(mktemp -d)"
   if grep -q '^Case: blocked:' "$case_path"; then
-    verdicts='true-positive, acceptable or false-positive: true-positive if the rule'"'"'s claim is true and the change really weakened something; acceptable if the claim is true and the change was fine anyway, so the block is friction the rule was designed to create; false-positive if the claim is not true of this change. Judge whether the rule'"'"'s claim, as printed in the weed finding, is true of the change, not whether the change is bad.'
+    verdicts='true-positive, acceptable or false-positive: true-positive if the rule'"'"'s claim is true and the change really weakened something; acceptable if the claim is true and the change was fine anyway, so the block is friction the rule was designed to create; false-positive if the claim is not true of this change. Judge whether the rule'"'"'s claim, as printed in the weeder finding, is true of the change, not whether the change is bad.'
   else
-    verdicts='miss, caught or not-a-case: miss if the rule'"'"'s shape is genuinely present at the planted site and the weed findings do not report it there; caught if the weed findings do report it there; not-a-case if the shape is not genuinely present at that site.'
+    verdicts='miss, caught or not-a-case: miss if the rule'"'"'s shape is genuinely present at the planted site and the weeder findings do not report it there; caught if the weeder findings do report it there; not-a-case if the shape is not genuinely present at that site.'
   fi
-  prompt="You are re-grading one case for a calibration of a diff judge called weed. The packet on stdin is your only input; do not run commands, read files or use tools. Its SHA-256 is $hash. Reply with exactly three lines and nothing else:
+  prompt="You are re-grading one case for a calibration of a diff judge called weeder. The packet on stdin is your only input; do not run commands, read files or use tools. Its SHA-256 is $hash. Reply with exactly three lines and nothing else:
 Answered packet SHA-256: $hash
 Verdict: <one of $verdicts>
 Reasoning: <one sentence, under forty words>"
@@ -89,7 +89,7 @@ if [ -n "$only" ]; then
   one "$cases/$only.md"
   exit 0
 fi
-if [ -z "${WEED_AUDIT_ASSEMBLE_ONLY:-}" ]; then
+if [ -z "${WEEDER_AUDIT_ASSEMBLE_ONLY:-}" ]; then
   ls "$cases"/*.md | xargs -P "$jobs" -I{} bash -c 'one "$@"' _ {}
 fi
 

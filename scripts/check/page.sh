@@ -3,9 +3,9 @@
 # umbrella's own brand gate with nothing to fix and nothing to review.
 #
 # The gate is the umbrella's, not a copy of it kept here. `scripts/umbrella-brand.sh`
-# fetches the umbrella at the version `.brand/products/weed/petalsrc.example`
+# fetches the umbrella at the version `.brand/products/weeder/petalsrc.example`
 # names, and this script stages that fetch the way a petals working copy is
-# laid out: the umbrella's .brand, with weed's canonical product layer written
+# laid out: the umbrella's .brand, with weeder's canonical product layer written
 # over the umbrella's staging copy of it, and the page beside them. Then it runs
 # `petals/scripts/check.sh` from the same fetch.
 #
@@ -40,7 +40,7 @@ key="$( { echo "$sha"
           find "$layer" -type f -print0 | sort -z | xargs -0 shasum
           shasum "$page"
           shasum "$checkout/petals/scripts/check.sh"; } | shasum | cut -d' ' -f1 )"
-stage="${WEED_UMBRELLA_CACHE:-${TMPDIR:-/tmp}}/weed-page-$key"
+stage="${WEEDER_UMBRELLA_CACHE:-${TMPDIR:-/tmp}}/weeder-page-$key"
 if [ ! -f "$stage/.staged" ]; then
   mkdir -p "$stage/.brand" "$stage/petals"
   cp -R "$checkout/.brand/." "$stage/.brand/"

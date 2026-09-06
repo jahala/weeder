@@ -5,11 +5,11 @@
 //! the other side of it. What "far enough" means is the repository's call,
 //! through `[thresholds] dependency_lag`.
 //!
-//! The comparison is against `.weed/registry-snapshot.json`, a file the
+//! The comparison is against `.weeder/registry-snapshot.json`, a file the
 //! repository commits, and never against a registry. A scan that reached the
 //! network would answer differently on every machine and would fail in CI on a
 //! Monday morning for reasons that have nothing to do with the change under
-//! review. `weed scan --refresh-snapshot` is the one command that goes and asks.
+//! review. `weeder scan --refresh-snapshot` is the one command that goes and asks.
 
 use crate::core::config::Config;
 use crate::core::finding::{Finding, Level, Message, Region};

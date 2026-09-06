@@ -173,18 +173,18 @@ impl Scratch {
         git(&self.path, &["log", "-1", "--format=%s", sha])
     }
 
-    /// Put the working tree at a commit, which is the state `weed check --base
+    /// Put the working tree at a commit, which is the state `weeder check --base
     /// <parent>` judges.
     pub fn checkout(&self, sha: &str) -> Result<(), GitError> {
         git(&self.path, &["checkout", "--quiet", "--detach", sha])?;
         Ok(())
     }
 
-    /// Whether the checkout carries a `weed.toml`, and what it says. A
+    /// Whether the checkout carries a `weeder.toml`, and what it says. A
     /// repository that states its own law would be judged under it, and the
     /// report has to say so rather than let a reader assume the defaults.
     pub fn config_file(&self) -> Option<String> {
-        std::fs::read_to_string(self.path.join("weed.toml")).ok()
+        std::fs::read_to_string(self.path.join("weeder.toml")).ok()
     }
 }
 

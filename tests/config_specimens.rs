@@ -1,4 +1,4 @@
-//! `[scope] specimens`, the paths weed is told not to judge.
+//! `[scope] specimens`, the paths weeder is told not to judge.
 //!
 //! An adversarial fixture is written to look dishonest: that is what makes it a
 //! fixture. A repository that keeps such files has to be able to say so, and
@@ -45,7 +45,7 @@ fn dishonest_test() -> String {
 }
 
 /// A repository holding that file in both places, staged and unjudged, with
-/// whatever `weed.toml` the test wants it to state.
+/// whatever `weeder.toml` the test wants it to state.
 fn repository(config: Option<&str>) -> Repo {
     let repo = Repo::init();
     repo.write(
@@ -54,7 +54,7 @@ fn repository(config: Option<&str>) -> Repo {
     );
     repo.commit("the state the change starts from");
     if let Some(config) = config {
-        repo.write("weed.toml", config);
+        repo.write("weeder.toml", config);
     }
     repo.write(SPECIMEN, &dishonest_test());
     repo.write(SOURCE, &dishonest_test());
@@ -62,7 +62,7 @@ fn repository(config: Option<&str>) -> Repo {
     repo
 }
 
-/// A `weed.toml` stating one specimen entry and nothing else.
+/// A `weeder.toml` stating one specimen entry and nothing else.
 fn stating(entry: &str) -> String {
     format!("[scope]\nspecimens = [\"{entry}\"]\n")
 }
@@ -85,7 +85,7 @@ fn rules(found: &[Finding]) -> Vec<String> {
 #[test]
 fn without_an_exclusion_the_specimen_is_judged_like_anything_else() {
     let repo = repository(None);
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
 
     assert_eq!(run.code, 2, "the file blocks: {}", run.stderr);
     let found = run.findings();
@@ -103,7 +103,7 @@ fn without_an_exclusion_the_specimen_is_judged_like_anything_else() {
 #[test]
 fn a_specimen_is_skipped_by_every_rule_and_reported_once_at_note_level() {
     let repo = repository(Some(&stating("fixtures/adversarial/X1")));
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
     let found = run.findings();
 
     let specimen = on(&found, SPECIMEN);
@@ -136,7 +136,7 @@ fn a_specimen_is_skipped_by_every_rule_and_reported_once_at_note_level() {
 #[test]
 fn a_directory_under_the_entry_is_covered_and_a_sibling_is_not() {
     let repo = repository(Some(&stating("fixtures/adversarial/X1/ts")));
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
     assert_eq!(
         on(&run.findings(), SPECIMEN).len(),
         1,
@@ -144,7 +144,7 @@ fn a_directory_under_the_entry_is_covered_and_a_sibling_is_not() {
     );
 
     let repo = repository(Some(&stating("fixtures/adversarial/T3")));
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
     let specimen = on(&run.findings(), SPECIMEN);
     assert!(
         rules(&specimen).len() > 1,
@@ -155,7 +155,7 @@ fn a_directory_under_the_entry_is_covered_and_a_sibling_is_not() {
 #[test]
 fn an_entry_that_covers_nothing_reports_nothing() {
     let repo = repository(Some(&stating("fixtures/adversarial/nothing-is-here")));
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
     let notes: Vec<Finding> = run
         .findings()
         .into_iter()
@@ -163,7 +163,7 @@ fn an_entry_that_covers_nothing_reports_nothing() {
         .collect();
     assert!(
         notes.is_empty(),
-        "weed reports the paths an exclusion covered, and this one covered none: {notes:#?}"
+        "weeder reports the paths an exclusion covered, and this one covered none: {notes:#?}"
     );
 }
 
@@ -177,17 +177,17 @@ fn an_excluded_path_is_not_evidence_a_rule_reads_about_another_file() {
         repo.write(SPECIMEN, &dishonest_test());
         repo.commit("the specimen is in the repository");
         if let Some(config) = config {
-            repo.write("weed.toml", config);
+            repo.write("weeder.toml", config);
         }
         repo.write(".gitignore", "fixtures/\n");
         repo.stage_all();
-        let run = repo.weed(&["check", "--format", "sarif"]);
+        let run = repo.weeder(&["check", "--format", "sarif"]);
         rules(&on(&run.findings(), ".gitignore"))
     };
 
     assert!(
         ignoring(None).contains(&"C2".to_string()),
-        "the pattern hides a test file, and weed says so"
+        "the pattern hides a test file, and weeder says so"
     );
     assert!(
         !ignoring(Some(&stating("fixtures/adversarial/X1"))).contains(&"C2".to_string()),
@@ -201,7 +201,7 @@ fn scan_skips_the_same_paths_and_says_so_once() {
     // wherever it sits, and the exclusion is the only reason one of them is quiet.
     let repo = Repo::init();
     let marked = "// TODO: split the record on the separator the header names\nexport const parse = (line: string) => line.split(\",\");\n";
-    repo.write("weed.toml", &stating("fixtures/adversarial/R3"));
+    repo.write("weeder.toml", &stating("fixtures/adversarial/R3"));
     repo.write("src/parse.ts", marked);
     repo.write(
         "fixtures/adversarial/R3/ts/fire/before/src/parse.ts",
@@ -209,7 +209,7 @@ fn scan_skips_the_same_paths_and_says_so_once() {
     );
     repo.commit_dated("the markers are written", "@1600000000 +0000");
 
-    let run = repo.weed(&["scan", "--format", "sarif"]);
+    let run = repo.weeder(&["scan", "--format", "sarif"]);
     assert_eq!(run.code, 0, "a scan never blocks: {}", run.stderr);
     let found = run.findings();
 
@@ -235,14 +235,14 @@ fn scan_skips_the_same_paths_and_says_so_once() {
 fn an_entry_outside_the_fixture_root_is_refused() {
     for entry in ["src/core", "docs", "/etc"] {
         let repo = repository(Some(&stating(entry)));
-        let run = repo.weed(&["check", "--format", "sarif"]);
+        let run = repo.weeder(&["check", "--format", "sarif"]);
         assert_eq!(
             run.code, 3,
-            "an exclusion weed cannot allow is a run that never happened: {entry}"
+            "an exclusion weeder cannot allow is a run that never happened: {entry}"
         );
         assert!(
             run.stderr.contains(entry),
-            "the refusal names the entry it refused: {entry}, and weed said: {}",
+            "the refusal names the entry it refused: {entry}, and weeder said: {}",
             run.stderr
         );
         assert!(
@@ -262,14 +262,14 @@ fn a_glob_that_reaches_past_the_root_is_refused() {
         "**/*.ts",
     ] {
         let repo = repository(Some(&stating(entry)));
-        let run = repo.weed(&["check", "--format", "sarif"]);
+        let run = repo.weeder(&["check", "--format", "sarif"]);
         assert_eq!(
             run.code, 3,
             "a glob that can name a file outside the fixture root is refused: {entry}"
         );
         assert!(
             run.stderr.contains(entry),
-            "the refusal names the glob it refused: {entry}, and weed said: {}",
+            "the refusal names the glob it refused: {entry}, and weeder said: {}",
             run.stderr
         );
     }
@@ -279,14 +279,14 @@ fn a_glob_that_reaches_past_the_root_is_refused() {
 fn a_rule_name_in_the_list_is_refused_as_the_rule_it_is() {
     for entry in ["T3", "x1"] {
         let repo = repository(Some(&stating(entry)));
-        let run = repo.weed(&["check", "--format", "sarif"]);
+        let run = repo.weeder(&["check", "--format", "sarif"]);
         assert_eq!(
             run.code, 3,
             "specimens excludes paths; a rule turned off there would be a rule turned off in the dark: {entry}"
         );
         assert!(
             run.stderr.contains(entry),
-            "the refusal names what was written: {entry}, and weed said: {}",
+            "the refusal names what was written: {entry}, and weeder said: {}",
             run.stderr
         );
         assert!(
@@ -300,7 +300,7 @@ fn a_rule_name_in_the_list_is_refused_as_the_rule_it_is() {
 #[test]
 fn a_glob_inside_the_root_is_allowed() {
     let repo = repository(Some(&stating("fixtures/adversarial/**/after")));
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
     let specimen = on(&run.findings(), SPECIMEN);
     assert_eq!(
         specimen.len(),
@@ -313,7 +313,7 @@ fn a_glob_inside_the_root_is_allowed() {
 #[test]
 fn scan_refuses_the_same_config_check_refuses() {
     let repo = repository(Some(&stating("src/**")));
-    let run = repo.weed(&["scan", "--format", "sarif"]);
+    let run = repo.weeder(&["scan", "--format", "sarif"]);
     assert_eq!(
         run.code, 3,
         "a scan that could not read the config never ran, and says so"

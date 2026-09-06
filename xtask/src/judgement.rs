@@ -1,6 +1,6 @@
 //! The classifications, which are a person's judgement and not a measurement.
 //!
-//! weed counts what it blocked; whether a block was right is read by whoever ran
+//! weeder counts what it blocked; whether a block was right is read by whoever ran
 //! the calibration, one line per commit, and written down here. The report puts
 //! the two together, and the bar checks the arithmetic over them. Nothing in
 //! this file decides a classification, and nothing outside it may invent one: a

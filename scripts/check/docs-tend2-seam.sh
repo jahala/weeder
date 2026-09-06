@@ -3,8 +3,8 @@
 # checked rather than believed.
 #
 # Three things are asked of the document. It shows a tend2 check whose evidence
-# is built on `weed scan --format sarif`. It says how tend2's verifier could call
-# `weed check` where it now calls its own `mock.ts`. And every command in its
+# is built on `weeder scan --format sarif`. It says how tend2's verifier could call
+# `weeder check` where it now calls its own `mock.ts`. And every command in its
 # table is run here, in the place the table names, and compared against the exit
 # code the table claims — so a line in the doc cannot outlive the binary.
 set -euo pipefail
@@ -21,15 +21,15 @@ if ! grep -qE '^- \[[ x!~]\] \(code\) .+ · .+$' "$doc"; then
   echo "$doc shows no tend2 check line, so it proposes no evidence" >&2
   status=1
 fi
-for phrase in "weed scan --format sarif" "mock.ts" "weed check --strict --format sarif"; do
+for phrase in "weeder scan --format sarif" "mock.ts" "weeder check --strict --format sarif"; do
   if ! grep -qF "$phrase" "$doc"; then
     echo "$doc never names \`$phrase\`" >&2
     status=1
   fi
 done
 
-cargo build --quiet --bin weed
-binary="$root/target/debug/weed"
+cargo build --quiet --bin weeder
+binary="$root/target/debug/weeder"
 
 # A repository with nothing to judge, and one whose change deletes a test. Both
 # are real git repositories built here, because the exit code the doc claims has
@@ -40,7 +40,7 @@ scratch="$(mktemp -d)"
 trap 'command -v trash >/dev/null 2>&1 && trash "$scratch"' EXIT
 
 git_quiet() {
-  git -c user.name="weed evidence" -c user.email="evidence@weed.invalid" \
+  git -c user.name="weeder evidence" -c user.email="evidence@weeder.invalid" \
       -c commit.gpgsign=false -C "$1" "${@:2}" >/dev/null 2>&1
 }
 
@@ -87,7 +87,7 @@ while IFS='|' read -r _ command place expected _; do
   command="$(trim "$(printf '%s' "$command" | tr -d '`')")"
   place="$(trim "$place")"
   expected="$(trim "$expected")"
-  case "$command" in weed\ *) ;; *) continue ;; esac
+  case "$command" in weeder\ *) ;; *) continue ;; esac
   case "$expected" in ''|*[!0-9]*) continue ;; esac
 
   directory="$(where "$place")"
@@ -101,7 +101,7 @@ while IFS='|' read -r _ command place expected _; do
   # The doc names the binary the way an operator types it; the first word is
   # swapped for the build under test and the rest is passed through untouched.
   set +e
-  (cd "$directory" && "$binary" ${command#weed }) >/dev/null 2>&1
+  (cd "$directory" && "$binary" ${command#weeder }) >/dev/null 2>&1
   code=$?
   set -e
   if [ "$code" -ne "$expected" ]; then

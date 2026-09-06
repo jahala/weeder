@@ -8,7 +8,7 @@
 //! Which tests those are is read from the test shape of each side of the change,
 //! never from the runner's output: a runner prints what it likes, and the cases
 //! a commit added are a property of the files it changed. A file whose language
-//! weed reads no tests in is still reported, by the file rather than by the
+//! weeder reads no tests in is still reported, by the file rather than by the
 //! case, because the command passed over it all the same.
 
 use std::collections::BTreeSet;
@@ -29,7 +29,7 @@ pub fn evaluate(trial: &Trial) -> Vec<Finding> {
 }
 
 /// The files a finding is written against. A test commit carries tests, so
-/// those are what is reported; where it carries none weed can read, every file
+/// those are what is reported; where it carries none weeder can read, every file
 /// it changed is named instead, because the command passed over all of them and
 /// none of it was the implementation.
 fn subject(tested: &[Change]) -> Vec<&Change> {
@@ -45,7 +45,7 @@ fn subject(tested: &[Change]) -> Vec<&Change> {
 }
 
 /// What one file has to answer for: a finding per case the commit added, or one
-/// for the file where weed can name no case in it.
+/// for the file where weeder can name no case in it.
 fn reported(change: &Change) -> Vec<Finding> {
     let Some(path) = change.path() else {
         return Vec::new();

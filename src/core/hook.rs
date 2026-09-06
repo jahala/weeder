@@ -1,11 +1,11 @@
-//! The harness hook: what an event asks of weed, and how each harness is
+//! The harness hook: what an event asks of weeder, and how each harness is
 //! answered in its own shape.
 //!
-//! `weed guard` is the law in git, and a git hook sees a commit that reaches
+//! `weeder guard` is the law in git, and a git hook sees a commit that reaches
 //! git. This is the line before that one: it sees the command an agent is about
 //! to run, so it can refuse the commit that asks git to walk past its hooks, and
 //! it sees a turn trying to end, which git never hears about at all. An agent
-//! cannot declare itself done over a tree weed refuses.
+//! cannot declare itself done over a tree weeder refuses.
 //!
 //! Three harnesses, two moments, one judgement. Claude Code calls them
 //! `PreToolUse` and `Stop`, Gemini CLI calls them `BeforeTool` and `AfterAgent`,
@@ -16,7 +16,7 @@ use serde_json::{json, Value};
 
 use crate::core::shell;
 
-/// The agent harnesses weed answers.
+/// The agent harnesses weeder answers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Harness {
     Claude,
@@ -28,13 +28,13 @@ pub enum Harness {
 /// hook event's output inside its own binary, and these four carry no `decision`
 /// and no `permissionDecision`: a hook wired to one of them is heard and cannot
 /// refuse. Claude Code and Gemini CLI publish no such machine-readable contract,
-/// so weed states nothing about them rather than guessing at another tool's
+/// so weeder states nothing about them rather than guessing at another tool's
 /// behaviour on its user's behalf.
 const CODEX_DEAF: [&str; 4] = ["PreCompact", "PostCompact", "SessionStart", "SubagentStart"];
 
 impl Harness {
     /// What the harness calls itself on the command line, which is also the
-    /// word `weed hook` takes.
+    /// word `weeder hook` takes.
     pub fn name(self) -> &'static str {
         match self {
             Harness::Claude => "claude",
@@ -67,7 +67,7 @@ impl Harness {
     }
 }
 
-/// What an event asks of weed.
+/// What an event asks of weeder.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ask {
     /// A commit is about to be made. The directories are what the command line
@@ -78,7 +78,7 @@ pub enum Ask {
     Bypass { flag: String },
     /// The turn is trying to end.
     Stop,
-    /// Nothing here weed has anything to say about.
+    /// Nothing here weeder has anything to say about.
     Pass,
     /// The harness takes no decision from a hook at this event.
     Deaf { event: String },
@@ -93,7 +93,7 @@ pub enum Refusal {
     Turn,
 }
 
-/// What the event asks of weed. An event weed knows nothing about is passed
+/// What the event asks of weeder. An event weeder knows nothing about is passed
 /// through: a hook that answers where it was not asked is a hook in the way.
 pub fn read(harness: Harness, event: &Value) -> Ask {
     let name = event
@@ -116,12 +116,12 @@ pub fn read(harness: Harness, event: &Value) -> Ask {
 }
 
 /// Where the harness says it is working. An event that names no directory
-/// leaves weed where it was started from.
+/// leaves weeder where it was started from.
 pub fn working_directory(event: &Value) -> Option<&str> {
     event.get("cwd").and_then(Value::as_str)
 }
 
-/// weed's answer, in the shape the harness reads it in.
+/// weeder's answer, in the shape the harness reads it in.
 pub fn answer(harness: Harness, refusal: Refusal, reason: &str) -> Value {
     match refusal {
         // Every one of the three refuses the end of a turn the same way.
@@ -141,13 +141,13 @@ pub fn answer(harness: Harness, refusal: Refusal, reason: &str) -> Value {
     }
 }
 
-/// The one line weed prints at an event its harness takes no decision from. It
+/// The one line weeder prints at an event its harness takes no decision from. It
 /// is not an answer, there is nowhere to put one, so it says where a hook that
 /// is meant to refuse belongs instead.
 pub fn note(harness: Harness, event: &str) -> String {
     let cli = harness.name();
     format!(
-        "{cli} takes no decision from a {event} hook, so weed judged nothing here. wire weed hook {cli} to {} and {}, the events {cli} lets a hook refuse.",
+        "{cli} takes no decision from a {event} hook, so weeder judged nothing here. wire weeder hook {cli} to {} and {}, the events {cli} lets a hook refuse.",
         harness.tool_event(),
         harness.stop_event(),
     )
@@ -157,7 +157,7 @@ pub fn note(harness: Harness, event: &str) -> String {
 /// what to do about it.
 pub fn commit_refused(table: &str) -> String {
     format!(
-        "{table}weed hook refused: the index carries a finding that blocks, and a commit made over it puts the finding in the history. repair what the table names and commit again, or take that change back out of the index.\n"
+        "{table}weeder hook refused: the index carries a finding that blocks, and a commit made over it puts the finding in the history. repair what the table names and commit again, or take that change back out of the index.\n"
     )
 }
 
@@ -165,22 +165,22 @@ pub fn commit_refused(table: &str) -> String {
 /// no table: nothing was judged, because the command asked for nothing to be.
 pub fn bypass_refused(flag: &str) -> String {
     format!(
-        "weed hook refused: this commit carries {flag}, which tells git to walk past the hooks that judge it, and a change that needs the judgement skipped is the change the judgement is for. commit without it.\n"
+        "weeder hook refused: this commit carries {flag}, which tells git to walk past the hooks that judge it, and a change that needs the judgement skipped is the change the judgement is for. commit without it.\n"
     )
 }
 
 /// The reason a turn that ends over a tree that blocks is refused.
 pub fn stop_refused(table: &str) -> String {
     format!(
-        "{table}weed hook refused: the working tree carries a finding that blocks, and a turn that ends here ends over it. repair what the table names, then say the work is done.\n"
+        "{table}weeder hook refused: the working tree carries a finding that blocks, and a turn that ends here ends over it. repair what the table names, then say the work is done.\n"
     )
 }
 
-/// The reason a run weed could not finish is refused rather than waved through.
+/// The reason a run weeder could not finish is refused rather than waved through.
 /// A harness reads only a refusal or silence from a hook, so a gate that could
 /// not judge has to refuse to stay a gate.
 pub fn unjudged(reason: &str) -> String {
-    format!("weed hook refused: {reason} a gate that could not judge refuses rather than letting the change past.\n")
+    format!("weeder hook refused: {reason} a gate that could not judge refuses rather than letting the change past.\n")
 }
 
 /// What a tool call is asking for: the commands the harness is about to run,

@@ -85,7 +85,7 @@ fn t7_fires_at_block_level_on_a_file_renamed_out_of_the_runner() {
             "{name}: the fixture is a rename and nothing else"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.code, 2,
             "{name}: an uncollected test blocks\n{}",
@@ -123,7 +123,7 @@ fn t7_stays_silent_on_a_rename_that_stays_inside_the_convention() {
             "{name}: the neighbour renames the same file to a name the runner still collects"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.findings(),
             Vec::new(),
@@ -139,7 +139,7 @@ fn t7_fires_at_block_level_on_a_case_renamed_out_of_the_runner() {
         let repo = fixture("T7", language.name, "fire-case");
         let name = language.name;
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.code, 2,
             "{name}: an uncollected case blocks\n{}",
@@ -175,7 +175,7 @@ fn t7_stays_silent_on_a_case_rename_that_stays_inside_the_convention() {
             "{name}: the neighbour must be in the diff, or the silence proves nothing"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.findings(),
             Vec::new(),

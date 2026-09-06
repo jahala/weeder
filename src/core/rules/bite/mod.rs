@@ -15,7 +15,7 @@ pub mod b1;
 
 type Detector = fn(&Trial) -> Vec<Finding>;
 
-/// The detectors weed has on this face.
+/// The detectors weeder has on this face.
 const DETECTORS: &[(&str, Detector)] = &[("B1", b1::evaluate)];
 
 /// Every enabled detector's findings, at the configured level.

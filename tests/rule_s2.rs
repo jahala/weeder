@@ -41,7 +41,7 @@ const SHAPES: [(&str, &str, &[&str]); 4] = [
 fn s2_warns_on_every_swallowed_error_shape_in_every_language() {
     for (lang, path, shapes) in SHAPES {
         let repo = fixture("S2", lang, "fire");
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
 
         assert_eq!(
             run.code, 0,
@@ -87,7 +87,7 @@ fn s2_stays_silent_when_the_failure_is_logged_wrapped_raised_on_or_explained() {
             "{lang}: the silent neighbour must be in the diff, or the silence proves nothing"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.findings(),
             Vec::new(),

@@ -23,7 +23,7 @@ fn the_pre_rebase_hook_refuses_rewriting_the_branch_that_is_checked_out() {
     );
     let said = refused.output();
     assert!(
-        said.contains("weed guard refused"),
+        said.contains("weeder guard refused"),
         "the hook says which gate refused:\n{said}"
     );
     assert!(said.contains("main"), "the hook names the branch:\n{said}");
@@ -52,7 +52,7 @@ fn the_pre_rebase_hook_refuses_a_protected_branch_named_on_the_command_line() {
         refused.output()
     );
     assert!(
-        refused.output().contains("weed guard refused"),
+        refused.output().contains("weeder guard refused"),
         "the hook says which gate refused:\n{}",
         refused.output()
     );
@@ -100,6 +100,6 @@ fn branched() -> Repo {
     repo.write("src/reader.ts", "export const reader = 1;\n");
     repo.commit("the reader");
 
-    repo.weed(&["guard", "install"]);
+    repo.weeder(&["guard", "install"]);
     repo
 }

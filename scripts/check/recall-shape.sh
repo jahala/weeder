@@ -35,7 +35,7 @@ status=0
 
 # ------------------------------------------------------------ the scanners --
 # The injector's own suites first: what it reads a site out of, and what it
-# reads back afterwards, are the whole measurement's independence from weed.
+# reads back afterwards, are the whole measurement's independence from weeder.
 cargo test --release --quiet -p xtask --bins
 cargo test --release --quiet -p xtask --test shape
 
@@ -46,8 +46,8 @@ build() { # <root> <kind>
   local repo="$1" kind="$2"
   mkdir -p "$repo/probe" "$repo/tests" "$repo/shape"
   git -C "$repo" init --quiet --initial-branch=main
-  git -C "$repo" config user.name "weed measurements"
-  git -C "$repo" config user.email "measurements@weed.invalid"
+  git -C "$repo" config user.name "weeder measurements"
+  git -C "$repo" config user.email "measurements@weeder.invalid"
 
   cat > "$repo/probe/loader.py" <<'PY'
 def load(text):
@@ -204,7 +204,7 @@ build "$scratch/flat" flat
     "$scratch/flat" "$(git -C "$scratch/flat" rev-parse main)"
 } > "$scratch/corpus.toml"
 
-if ! WEED_RECALL_CACHE="$scratch/cache" cargo run -q -p xtask -- mutate \
+if ! WEEDER_RECALL_CACHE="$scratch/cache" cargo run -q -p xtask -- mutate \
   --corpus "$scratch/corpus.toml" \
   --rule D1 --rule T6 --rule T3 \
   --language py --language go \
@@ -310,8 +310,8 @@ go="docs/calibration/corpus-go.toml"
 [ -f "$corpus" ] || { echo "$corpus is missing: the campaign names no repositories to walk" >&2; exit 1; }
 [ -f "$go" ] || { echo "$go is missing: the Go column has no history to be measured on" >&2; exit 1; }
 
-cases="${WEED_SHAPE_CASES:-6}"
-commits="${WEED_SHAPE_COMMITS:-60}"
+cases="${WEEDER_SHAPE_CASES:-6}"
+commits="${WEEDER_SHAPE_COMMITS:-60}"
 if ! cargo run -q -p xtask -- mutate \
   --cases "$cases" \
   --commits "$commits" \

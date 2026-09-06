@@ -1,6 +1,6 @@
 //! What one trial learned, and nothing about how it learned it.
 //!
-//! `bite` is the one dynamic judgement weed makes: it builds two states of a
+//! `bite` is the one dynamic judgement weeder makes: it builds two states of a
 //! repository and runs somebody else's test command over each. All of that is
 //! I/O, and none of it belongs here. What arrives here is what came back, the
 //! command's verdict on the test commit alone, and the change that commit
@@ -17,7 +17,7 @@ pub enum Verdict {
 }
 
 impl Verdict {
-    /// A command's exit code read as a verdict. Every runner weed knows agrees
+    /// A command's exit code read as a verdict. Every runner weeder knows agrees
     /// on the one thing that matters: zero is a suite that passed.
     #[must_use]
     pub fn of(code: i32) -> Verdict {

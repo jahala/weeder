@@ -7,17 +7,17 @@
 //! file in the same commit, and at what level.
 //!
 //! Nothing here knows which rule split into which. It reads the rule that
-//! blocked then, the rule that speaks now, and the kind weed gives the file, and
+//! blocked then, the rule that speaks now, and the kind weeder gives the file, and
 //! the report writes down whatever pairs it finds.
 
 use std::collections::BTreeMap;
 
-use weed::core::classify::{classify_file, FileKind};
+use weeder::core::classify::{classify_file, FileKind};
 
 use crate::calibrate::RepoMeasurement;
 use crate::first_run::FirstRun;
 
-/// What weed says about a file now, in the words the report uses.
+/// What weeder says about a file now, in the words the report uses.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Level {
     /// Nothing at all is reported on the file.
@@ -54,7 +54,7 @@ pub struct Row {
     pub repo: String,
     pub commit: String,
     pub path: String,
-    /// The kind weed gives the file, which is what a rule keys on.
+    /// The kind weeder gives the file, which is what a rule keys on.
     pub kind: String,
     /// The rule that blocked this file in the earlier run.
     pub then: String,
@@ -203,7 +203,7 @@ impl Split {
     }
 }
 
-/// The kind weed gives a path, in the word the report prints. The classifier is
+/// The kind weeder gives a path, in the word the report prints. The classifier is
 /// asked rather than the path read, so the report and the rules agree about what
 /// a workflow is.
 fn kind_of(path: &str) -> &'static str {

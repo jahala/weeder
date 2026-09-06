@@ -19,7 +19,7 @@
 //! signature and no body, so the methods of a protocol and of an abstract base
 //! are types rather than work left over: there is nothing there to finish, and
 //! writing something would be putting an implementation where a declaration
-//! belongs. weed reads the class the method is written in and lets those be.
+//! belongs. weeder reads the class the method is written in and lets those be.
 
 use crate::core::change::Change;
 use crate::core::classify::{FileKind, Lang};
@@ -31,7 +31,7 @@ use crate::core::syntax::{words, Mask};
 
 /// The words that mark work left for later, written as they are meant to be
 /// found: in capitals, so the same word in a sentence is prose and the shouted
-/// one is a marker. weed does not carry what it refuses, which is why these
+/// one is a marker. weeder does not carry what it refuses, which is why these
 /// three are written here and nowhere else in this repository.
 const WORK_MARKERS: &[&str] = &["TODO", "FIXME", "XXX"];
 

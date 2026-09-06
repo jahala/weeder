@@ -1,7 +1,7 @@
 Formats
-{{weed:separator}}
+{{weeder:separator}}
 
-weed reads these separators.
+weeder reads these separators.
 
 | format | separator |
 | ------ | --------- |

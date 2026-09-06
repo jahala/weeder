@@ -15,13 +15,13 @@ use crate::core::read::{DefinitionKind, Import, Outline, TestShape};
 use crate::core::syntax::Mask;
 
 /// The weight above which a file stops being something anyone reads. G2 reports
-/// a file this large as the finding itself, and weed asks the parser nothing
+/// a file this large as the finding itself, and weeder asks the parser nothing
 /// about one: outlining a file no reviewer will open is the most expensive
 /// question a run can ask and it answers none anybody had. The lines are still
 /// read, so a rule that judges a line judges every line of a file this size too.
 pub const READABLE: u64 = 1024 * 1024;
 
-/// Whether a file of this weight is one weed reads as code rather than one it
+/// Whether a file of this weight is one weeder reads as code rather than one it
 /// can only weigh and count the lines of. A side with no file at all reads as
 /// code: there is nothing there to be too large.
 #[must_use]
@@ -34,7 +34,7 @@ pub fn reads_as_code(size: Option<u64>) -> bool {
 pub struct Side {
     /// The file's text. `None` where this side has no such file, an added file
     /// has no before, a deleted one has no after, and where what it carries is
-    /// not text, because weed judges lines and bytes carry none.
+    /// not text, because weeder judges lines and bytes carry none.
     pub content: Option<String>,
     /// What the path is, or `None` where this side has no file at all.
     pub classification: Option<Classification>,
@@ -46,13 +46,13 @@ pub struct Side {
     pub imports: Vec<Import>,
     /// What the file weighs, or `None` where this side has no file at all. A
     /// side whose bytes are not text still weighs something, which is how a
-    /// rule tells "there is no file here" from "there is a file weed cannot
+    /// rule tells "there is no file here" from "there is a file weeder cannot
     /// read a line of".
     pub size: Option<u64>,
     /// Whether this side's bytes carry no lines to judge.
     pub binary: bool,
     /// The file read once as code, comment and literal. The face makes that
-    /// pass on the way in and hands the result to every rule, so a file weed
+    /// pass on the way in and hands the result to every rule, so a file weeder
     /// cannot parse, and one it can, is passed over once however many rules
     /// ask what a line of it is made of.
     pub syntax: Mask,
@@ -97,7 +97,7 @@ impl Side {
     }
 
     /// The language this side's file is written in, or `Lang::Other` where the
-    /// side has no file or weed reads none.
+    /// side has no file or weeder reads none.
     #[must_use]
     pub fn lang(&self) -> Lang {
         self.classification
@@ -193,7 +193,7 @@ impl Change {
     /// took its place.
     ///
     /// git writes a rewrite as a run of removals followed by a run of
-    /// additions, and pairs nothing itself. weed pairs them by their order
+    /// additions, and pairs nothing itself. weeder pairs them by their order
     /// inside the run, which is the order an editor made them in: the first
     /// line out is the one the first line in replaced. A run whose two sides
     /// are of different lengths pairs as far as the shorter one goes, and the

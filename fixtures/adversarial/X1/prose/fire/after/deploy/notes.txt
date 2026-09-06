@@ -1,2 +1,2 @@
 The runner reads everything it needs from the environment.
-The model endpoint was reached with {{weed:model-key}} while the vault was down.
+The model endpoint was reached with {{weeder:model-key}} while the vault was down.

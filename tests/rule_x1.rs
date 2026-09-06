@@ -2,7 +2,7 @@
 //!
 //! The fire fixture assigns one credential per line: every prefix an issuer
 //! stamps, a private key block, a signed token, and a value that is secret by
-//! its name and its disorder rather than by any prefix at all. The lines weed
+//! its name and its disorder rather than by any prefix at all. The lines weeder
 //! must report are read off the fixture here by the shapes this file planted.
 //!
 //! The neighbour is the three ways a line looks like this and is not: a short
@@ -11,14 +11,14 @@
 //!
 //! The two paths reach different files. A stamped token is a credential
 //! wherever it lands, a note, a page, a log, so the prefix path reads every
-//! file. Reading a name and a value apart takes a language weed knows the
+//! file. Reading a name and a value apart takes a language weeder knows the
 //! grammar of, and outside one, `name = value` is a css class, an attribute or
 //! a sentence with a colon in it, so the second path reads source alone.
 //!
 //! Both paths make one exception, and it is a list of exact strings rather than
 //! a shape: the credentials vendors print in their own documentation. Those are
 //! quotations, no issuer honours one, and the fixtures at the foot of this file
-//! hold weed to reporting each as a note, to blocking the same string with one
+//! hold weeder to reporting each as a note, to blocking the same string with one
 //! character changed, and to blocking a line that quotes an example with a real
 //! credential behind it.
 
@@ -56,7 +56,7 @@ const LOCKFILE: &str = "package-lock.json";
 fn x1_fires_at_block_level_on_every_prefix_and_on_a_disordered_value() {
     for (name, path) in LANGUAGES {
         let repo = fixture("X1", name, "fire");
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
 
         assert_eq!(run.code, 2, "{name}: a credential blocks\n{}", run.stderr);
         let findings = run.findings();
@@ -116,7 +116,7 @@ fn x1_stays_silent_on_a_short_value_a_placeholder_and_a_lockfile_digest() {
         // The lockfile has to be in the diff for the digest to be judged at
         // all, and a changed lockfile is D1's business (rules-prod). What this
         // case is about is that none of the three is read as a credential.
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         let credentials: Vec<Finding> = run
             .findings()
             .into_iter()
@@ -157,11 +157,11 @@ fn quoted(line: &str) -> Option<&str> {
     Some(&line[opened..opened + closed])
 }
 
-/// The prose fixture's languages folder: the files weed has no grammar for.
+/// The prose fixture's languages folder: the files weeder has no grammar for.
 const PROSE: &str = "prose";
 
 /// What the prose fire fixture plants, one stamped token per file, in the order
-/// weed reports them.
+/// weeder reports them.
 const PLANTED: [(&str, &str); 3] = [
     ("deploy/notes.txt", "sk-"),
     ("docs/incident.md", "ghp_"),
@@ -176,9 +176,9 @@ const NEIGHBOURS: [&str; 2] = ["docs/rotating.md", "web/index.html"];
 const DISORDERED: &str = "9f3Kx2Qv";
 
 #[test]
-fn x1_fires_on_a_stamped_token_in_a_file_weed_has_no_grammar_for() {
+fn x1_fires_on_a_stamped_token_in_a_file_weeder_has_no_grammar_for() {
     let repo = fixture("X1", PROSE, "fire");
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
 
     assert_eq!(
         run.code, 2,
@@ -224,7 +224,7 @@ fn x1_stays_silent_on_a_markup_attribute_and_on_prose_about_credentials() {
         );
     }
 
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert_eq!(
         run.findings(),
         Vec::new(),
@@ -243,7 +243,7 @@ fn the_name_and_disorder_path_still_reads_source_in_every_language() {
             .map(|index| index as u64 + 1)
             .unwrap_or_else(|| panic!("{name}: the fixture assigns a disordered value"));
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         let finding = run
             .findings()
             .into_iter()
@@ -329,7 +329,7 @@ fn entropy(value: &str) -> f64 {
 /// follow the page, and those strings travel: into a sample, a test, a README.
 /// They are quotations. No issuer honours one, so a commit carrying one has
 /// nothing to rotate, and blocking it teaches an agent that the gate is noise.
-/// weed says what it found and stands aside.
+/// weeder says what it found and stands aside.
 ///
 /// The allowance is exact, which is why each example gets a fixture of its own:
 /// the published string is a note, and the same string with one character
@@ -358,7 +358,7 @@ fn a_credential_a_vendor_published_is_reported_at_note_level_and_never_blocks() 
 
     for (name, path) in EXAMPLES {
         let repo = fixture("X1", &format!("example-{name}"), "published");
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
 
         let value = common::published_example(name);
         let planted = planted(name, "published", path, &value);
@@ -420,7 +420,7 @@ fn the_same_example_with_one_character_changed_blocks() {
         );
 
         let repo = fixture("X1", &format!("example-{name}"), "altered");
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
 
         let planted = planted(name, "altered", path, &altered);
         let findings: Vec<Finding> = run
@@ -464,7 +464,7 @@ fn no_file_in_this_repository_spells_a_published_example_whole() {
                 }
                 continue;
             }
-            // A file weed's own tree holds that is not text holds no string
+            // A file weeder's own tree holds that is not text holds no string
             // either, and there is nothing here to read in it.
             let Ok(contents) = std::fs::read_to_string(&path) else {
                 continue;
@@ -473,9 +473,9 @@ fn no_file_in_this_repository_spells_a_published_example_whole() {
             for name in common::examples() {
                 assert!(
                     !contents.contains(&common::published_example(name)),
-                    "{} spells the {name} example whole. weed does not carry what it reports, \
+                    "{} spells the {name} example whole. weeder does not carry what it reports, \
                      so an example belongs in the harness, written as its stamp and its tail \
-                     apart, and a fixture writes {{{{weed:example-{name}}}}} for it",
+                     apart, and a fixture writes {{{{weeder:example-{name}}}}} for it",
                     path.display()
                 );
             }
@@ -518,14 +518,14 @@ fn planted(name: &str, case: &str, path: &str, value: &str) -> u64 {
 }
 
 /// The example the crowded fixture quotes, and the credential it hides behind
-/// it. Both land on one line, and weed reports one finding a line.
+/// it. Both land on one line, and weeder reports one finding a line.
 const CROWDED: (&str, &str) = ("cloud-id", "src/config.ts");
 
 #[test]
 fn a_line_that_quotes_an_example_and_carries_a_credential_still_blocks() {
     let (name, path) = CROWDED;
     let repo = fixture("X1", &format!("example-{name}"), "crowded");
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
 
     let findings: Vec<Finding> = run
         .findings()

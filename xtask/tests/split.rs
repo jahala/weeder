@@ -2,7 +2,7 @@
 //!
 //! Splitting a rule in two is meant to take friction off the gate without taking
 //! the finding away. The claim is cheap; the measurement is holding the same
-//! files up twice and reading what weed says each time. These suites build a
+//! files up twice and reading what weeder says each time. These suites build a
 //! history where the answer is known, hand the calibration a record of what an
 //! earlier run refused, and read the paragraph and the table it writes.
 

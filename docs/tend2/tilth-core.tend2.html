@@ -2,19 +2,19 @@
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>tilth-core · weed</title>
+<title>tilth-core · weeder</title>
 <link rel="stylesheet" href="loop.css">
 <body>
 <noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
 <script type="text/markdown" id="loop">
 # tilth-core — the parsing substrate, and the one seam that touches it
-**Goal.** weed reads code through `tilth-core`, a library crate extracted from tilth that owns tree-sitter outlines, file-type and language detection, test-file classification, import extraction and resolution, and caller search across fourteen languages. weed does not parse anything itself. All of that reading sits behind one seam module, `src/seams/reader.rs`, so the core stays pure and the dependency can be swapped or upgraded mechanically.
+**Goal.** weeder reads code through `tilth-core`, a library crate extracted from tilth that owns tree-sitter outlines, file-type and language detection, test-file classification, import extraction and resolution, and caller search across fourteen languages. weeder does not parse anything itself. All of that reading sits behind one seam module, `src/seams/reader.rs`, so the core stays pure and the dependency can be swapped or upgraded mechanically.
 
 ## The extraction lives in tilth
 
-The crate did not exist when this loop was shaped. almaty, the tilth agent, landed it on 2026-09-05 as branch `garden/tilth-core` at commit 7f38db58696e16c2df2be71da985f47097f34920 (PR #210 on github.com/jahala/tilth): a Cargo workspace whose root package stays `tilth` and whose member `crates/tilth-core` holds the parsing substrate, version 0.10.1 in lockstep with tilth, with tilth's CI trio green, 654 of 654 old tests passing and output parity proven against the v0.10.1 binary. Weed pins that commit as a git dependency; the worktree at `.context/tilth-core` checks out the same commit so the evidence script can run the crate's own suite here.
+The crate did not exist when this loop was shaped. almaty, the tilth agent, landed it on 2026-09-05 as branch `garden/tilth-core` at commit 7f38db58696e16c2df2be71da985f47097f34920 (PR #210 on github.com/jahala/tilth): a Cargo workspace whose root package stays `tilth` and whose member `crates/tilth-core` holds the parsing substrate, version 0.10.1 in lockstep with tilth, with tilth's CI trio green, 654 of 654 old tests passing and output parity proven against the v0.10.1 binary. Weeder pins that commit as a git dependency; the worktree at `.context/tilth-core` checks out the same commit so the evidence script can run the crate's own suite here.
 
-## What weed asks of the crate
+## What weeder asks of the crate
 
 - file-type and language detection for a path (`detect_file_type`, `Lang`, `FileType`)
 - outline entries for a file's content and language: name, kind, line range, children (`get_outline_entries`)
@@ -25,11 +25,11 @@ The crate did not exist when this loop was shaped. almaty, the tilth agent, land
 
 ## The seam
 
-`src/seams/reader.rs` is the only module in weed that names `tilth_core`. It exposes plain data to the core, `Outline`, `TestShape`, `Import`, `CallerSite`, `FileKind` hints, and nothing tree-sitter-shaped leaks past it. Core rules take those values as arguments; faces call the seam and hand the values in. A test reads the source tree and refuses any other `tilth_core` reference.
+`src/seams/reader.rs` is the only module in weeder that names `tilth_core`. It exposes plain data to the core, `Outline`, `TestShape`, `Import`, `CallerSite`, `FileKind` hints, and nothing tree-sitter-shaped leaks past it. Core rules take those values as arguments; faces call the seam and hand the values in. A test reads the source tree and refuses any other `tilth_core` reference.
 
 ## Tests
-- [x] (code) the tilth worktree at `.context/tilth-core` is at the commit weed pins, holds `crates/tilth-core` exposing detection, outline entries, test-file classification, test structure, imports and callers, tilth's binary consumes it, and tilth's CI trio plus the crate's acceptance test are green there · scripts/check/tilth-core.sh @dcfe820 · by cli
-- [x] (code) weed's `Cargo.toml` depends on `tilth-core` as a git dependency on `https://github.com/jahala/tilth` pinned to rev `7f38db58696e16c2df2be71da985f47097f34920`, with no local patch anywhere, and `cargo build` succeeds · scripts/check/tilth-core-dep.sh @7014021 · by cli
+- [x] (code) the tilth worktree at `.context/tilth-core` is at the commit weeder pins, holds `crates/tilth-core` exposing detection, outline entries, test-file classification, test structure, imports and callers, tilth's binary consumes it, and tilth's CI trio plus the crate's acceptance test are green there · scripts/check/tilth-core.sh @dcfe820 · by cli
+- [x] (code) weeder's `Cargo.toml` depends on `tilth-core` as a git dependency on `https://github.com/jahala/tilth` pinned to rev `7f38db58696e16c2df2be71da985f47097f34920`, with no local patch anywhere, and `cargo build` succeeds · scripts/check/tilth-core-dep.sh @7014021 · by cli
 - [x] (code) `src/seams/reader.rs` is the only file in `src/` that references `tilth_core`, and `src/core/` compiles with the reader's data types only · tests/reader_seam.rs @d4ddb50 · by cli
 - [x] (code) the reader returns outline entries, test shape, imports and callers for one small file in each of ts, py, rs and go, asserted against the fixture's known contents · tests/reader_langs.rs @7c3a32d · by cli
 
@@ -38,9 +38,9 @@ The crate did not exist when this loop was shaped. almaty, the tilth agent, land
 ## Tried
 - 2026-09-05 the brief named the modules on an older branch of tilth (`src/read/outline/`, `src/search/symbol.rs`, `src/search/deps.rs`, `src/types.rs::is_test_file`, `src/search/blast.rs`); on main the shared language infrastructure has since moved to `src/lang/`, so the extraction follows main's layout, not the brief's file list
 - 2026-09-05 tilth's `main` trips one clippy lint on rustc 1.98 (`manual_is_variant_and` in `src/overview.rs:693`) that its CI toolchain did not know; the extraction plan fixes that one line so the CI trio can be the gate
-- 2026-09-05 decided: weed does not fork or vendor any tilth parsing code; if the crate is not green, weed waits, and the reader seam is the only place the wait is felt
+- 2026-09-05 decided: weeder does not fork or vendor any tilth parsing code; if the crate is not green, weeder waits, and the reader seam is the only place the wait is felt
 - 2026-09-05 base corrected: the worktree was cut from a stale local `main` (v0.9.0); origin/main is v0.10.1 (f5c0afa), 132 commits and 74 source files later, with per-language modules under `src/lang/`. The branch was fast-forwarded before any work landed on it
-- 2026-09-05 division settled on the channel with cape-town and almaty (the tilth agent): almaty implements and lands the workspace split in tilth with zero behaviour change; weed sends the exact API surface and the acceptance test `crates/tilth-core/tests/api.rs` as the spec; the pleach plan in `plans/tilth-core.plan.json` is kept as the record of the surface and is not run. Two agents on one crate was the failure mode being avoided
+- 2026-09-05 division settled on the channel with cape-town and almaty (the tilth agent): almaty implements and lands the workspace split in tilth with zero behaviour change; weeder sends the exact API surface and the acceptance test `crates/tilth-core/tests/api.rs` as the spec; the pleach plan in `plans/tilth-core.plan.json` is kept as the record of the surface and is not run. Two agents on one crate was the failure mode being avoided
 - 2026-09-05 the first check's evidence will track the branch and commit almaty names, not this worktree's own history
 - 2026-09-05 almaty landed the crate and pushed it, so the git dependency resolves from GitHub by rev and the `.cargo/config.toml` bridge this map planned for is never written. Surface notes from almaty, all accepted: `TestEntry` carries an extra `callee` field; `#[test]` attributes are not visible through `OutlineEntry` (the seam reads the lines above `start_line`); `test_entries` is empty for Rust, Python and Go; `analyze_deps` drops single-character symbol names and wants a canonical scope; `find_callers_batch` keeps its signature and `BloomFilterCache::new()` is pub; `TilthError` is `Error + Send + Sync + 'static`
 - 2026-09-05 built by pleach node `tilth-core` (claude/opus, codex audit) in one attempt, 20 minutes, landed as cb97c18. `src/core/read.rs` holds the plain data (Outline, TestShape, Import, CallerSite), `src/seams/reader.rs` is the one module that names tilth-core; Rust tests are read from the attributes above a declaration and Go tests from the `*testing.` handle in the signature; callers are sorted by file and line before they leave the seam. Conductor review found nothing to fix

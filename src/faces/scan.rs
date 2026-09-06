@@ -1,4 +1,4 @@
-//! `weed scan`, the tree judged.
+//! `weeder scan`, the tree judged.
 //!
 //! `check` asks what a change did. `scan` asks what the repository has become:
 //! documentation that cites what is gone, exports nothing calls, work markers
@@ -29,35 +29,35 @@ use crate::core::tree::{CommandListing, Tree, TreeFile};
 use crate::faces::{read_config, Answer, Format};
 use crate::seams::{exec, fs, git, reader};
 
-/// How long weed waits for a command whose help it was told to read. A help
+/// How long weeder waits for a command whose help it was told to read. A help
 /// listing is printed and gone; anything slower is a command that is doing
 /// something else.
 const HELP_TIMEOUT: Duration = Duration::from_secs(5);
 
-/// How long weed waits for a registry to answer during a refresh.
+/// How long weeder waits for a registry to answer during a refresh.
 const FETCH_TIMEOUT: Duration = Duration::from_secs(20);
 
 /// How deep the walk of a command's own help goes. Three levels reach
-/// `weed guard install`, and a fourth is there so a deeper CLI is read whole
+/// `weeder guard install`, and a fourth is there so a deeper CLI is read whole
 /// rather than reported as though its subcommands had gone.
 const HELP_DEPTH: usize = 4;
 
-/// The program a refresh fetches through. weed shells out to git already; a
+/// The program a refresh fetches through. weeder shells out to git already; a
 /// fetch is the same kind of question asked of a different tool, and keeping it
 /// out of the binary is what keeps the binary a judge rather than a client.
 const FETCH_PROGRAM: &str = "curl";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Request {
-    /// Where weed was called from; the repository is found from here.
+    /// Where weeder was called from; the repository is found from here.
     pub cwd: PathBuf,
     /// The rule ids to run. Empty runs every scan rule the config leaves on.
     pub rules: Vec<String>,
     pub format: Format,
-    /// Read `weed.toml` from here instead of the repository root.
+    /// Read `weeder.toml` from here instead of the repository root.
     pub config: Option<PathBuf>,
     /// Ask the registries for the latest release of everything the manifests
-    /// pin, write `.weed/registry-snapshot.json`, and scan against it.
+    /// pin, write `.weeder/registry-snapshot.json`, and scan against it.
     pub refresh_snapshot: bool,
     pub version: String,
 }
@@ -101,8 +101,8 @@ fn judge(request: &Request) -> Result<Answer, String> {
     })
 }
 
-/// The rule ids this run is narrowed to. An id weed does not know, and a check
-/// rule asked of the scan face, are both a run that never happened: weed will
+/// The rule ids this run is narrowed to. An id weeder does not know, and a check
+/// rule asked of the scan face, are both a run that never happened: weeder will
 /// not quietly report on a smaller question than it was asked.
 fn wanted_rules(asked: &[String]) -> Result<Vec<String>, String> {
     let mut wanted = Vec::new();
@@ -115,12 +115,12 @@ fn wanted_rules(asked: &[String]) -> Result<Vec<String>, String> {
             Some(rule) if rule.face == Face::Scan => wanted.push(id),
             Some(_) => {
                 return Err(format!(
-                    "{id} is a check rule, and weed scan runs the scan rules. run it with weed check, or pass --rules a scan rule."
+                    "{id} is a check rule, and weeder scan runs the scan rules. run it with weeder check, or pass --rules a scan rule."
                 ))
             }
             None => {
                 return Err(format!(
-                    "weed knows no rule called {id}. run weed rules to see the catalogue."
+                    "weeder knows no rule called {id}. run weeder rules to see the catalogue."
                 ))
             }
         }
@@ -179,7 +179,7 @@ fn read_file(root: &Path, path: String) -> Result<TreeFile, String> {
     let classification = content
         .as_deref()
         .map(|content| classify_file(&path, content));
-    // Only a file in a language weed reads has anything to outline, and the
+    // Only a file in a language weeder reads has anything to outline, and the
     // outline is the expensive half of reading a tree. A file past the weight
     // anyone reads is left unparsed for the same reason `check` leaves one: its
     // lines are still here for a rule that judges lines.
@@ -209,7 +209,7 @@ fn read_file(root: &Path, path: String) -> Result<TreeFile, String> {
 }
 
 /// The committed snapshot, read from disk rather than from the listing: a
-/// repository is free to keep `.weed/` out of git, and the file is still the
+/// repository is free to keep `.weeder/` out of git, and the file is still the
 /// answer R4 measures against.
 fn read_snapshot(root: &Path) -> Result<Snapshot, String> {
     let text = fs::read_if_present(&root.join(SNAPSHOT_PATH)).map_err(|error| error.to_string())?;
@@ -217,7 +217,7 @@ fn read_snapshot(root: &Path) -> Result<Snapshot, String> {
 }
 
 /// The moment the scan started, seconds since the epoch. A clock before the
-/// epoch is a machine weed has nothing sensible to say about, and reads as the
+/// epoch is a machine weeder has nothing sensible to say about, and reads as the
 /// epoch itself rather than as a failure.
 fn now() -> i64 {
     SystemTime::now()
@@ -263,7 +263,7 @@ fn walk(root: &Path, path: &[String], into: &mut Vec<CommandListing>) -> Result<
 }
 
 /// Ask each registry what its latest release is, and write the snapshot the
-/// repository commits. One line comes back for every package weed could not get
+/// repository commits. One line comes back for every package weeder could not get
 /// a fresh answer about, and the snapshot keeps what it already held for those;
 /// a scan then runs against the result. A refresh that reached no registry at
 /// all is a failure rather than a snapshot.
@@ -287,7 +287,7 @@ fn refresh(root: &Path, version: &str) -> Result<Vec<String>, String> {
         }
     }
 
-    let agent = format!("weed/{version}");
+    let agent = format!("weeder/{version}");
     let committed = read_snapshot(root)?;
     let mut snapshot = Snapshot::default();
     let mut said = Vec::new();
@@ -309,7 +309,7 @@ fn refresh(root: &Path, version: &str) -> Result<Vec<String>, String> {
             }
             Reply::Unreachable(why) => {
                 unreachable.push(format!(
-                    "weed could not reach {} for {package}: {why}.",
+                    "weeder could not reach {} for {package}: {why}.",
                     registry.name()
                 ));
                 carry_over(&committed, &mut snapshot, *registry, package);
@@ -323,7 +323,7 @@ fn refresh(root: &Path, version: &str) -> Result<Vec<String>, String> {
     // current forever after.
     if answered == 0 && !unreachable.is_empty() {
         return Err(format!(
-            "{} {FETCH_PROGRAM} is how weed asks a registry, and every ask failed, so {SNAPSHOT_PATH} is left as the repository committed it. run --refresh-snapshot where the machine can reach the registries, or scan without it and judge against the snapshot you have.",
+            "{} {FETCH_PROGRAM} is how weeder asks a registry, and every ask failed, so {SNAPSHOT_PATH} is left as the repository committed it. run --refresh-snapshot where the machine can reach the registries, or scan without it and judge against the snapshot you have.",
             unreachable.join(" ")
         ));
     }
@@ -337,7 +337,7 @@ fn refresh(root: &Path, version: &str) -> Result<Vec<String>, String> {
     Ok(said)
 }
 
-/// What the committed snapshot held for a package weed could not get a fresh
+/// What the committed snapshot held for a package weeder could not get a fresh
 /// answer about, kept in the new one.
 fn carry_over(committed: &Snapshot, into: &mut Snapshot, registry: Registry, package: &str) {
     if let Some(recorded) = committed.recorded(registry, package) {
@@ -349,11 +349,11 @@ fn carry_over(committed: &Snapshot, into: &mut Snapshot, registry: Registry, pac
 enum Reply {
     /// The latest release it named.
     Latest(String),
-    /// It answered, and its answer held no release weed could read: a package
+    /// It answered, and its answer held no release weeder could read: a package
     /// that has been yanked, a reply in a shape this registry did not use to
     /// write.
     Unreadable,
-    /// weed never got to it, and this is what the fetcher said about that.
+    /// weeder never got to it, and this is what the fetcher said about that.
     Unreachable(String),
 }
 
@@ -376,7 +376,7 @@ fn fetch(root: &Path, registry: Registry, package: &str, agent: &str) -> Result<
         &url,
     ];
     let answer = exec::run(root, FETCH_PROGRAM, &arguments, FETCH_TIMEOUT)
-        .map_err(|error| format!("{error} --refresh-snapshot is the one thing weed does over the network, and it asks {FETCH_PROGRAM} to do it."))?;
+        .map_err(|error| format!("{error} --refresh-snapshot is the one thing weeder does over the network, and it asks {FETCH_PROGRAM} to do it."))?;
     if answer.code != 0 {
         return Ok(Reply::Unreachable(refusal(&answer)));
     }
@@ -412,7 +412,7 @@ fn write(findings: &[Finding], request: &Request, root: &Path) -> String {
 }
 
 /// The rules a scan log declares: the ones this face can report. A consumer
-/// reading the tool component learns what weed was looking for, and a check
+/// reading the tool component learns what weeder was looking for, and a check
 /// rule was never among them.
 fn scan_catalogue() -> Vec<catalogue::Rule> {
     catalogue::rules()

@@ -15,7 +15,7 @@
 //! point is the program talking to whoever started it. And a module the
 //! repository's own `[entrypoints] cli` names is the command line itself, where
 //! printing is the product. The last of those is the repository's statement,
-//! not a folder name weed has heard of.
+//! not a folder name weeder has heard of.
 
 use std::ops::RangeInclusive;
 
@@ -27,7 +27,7 @@ use crate::core::rules::check::vocab::{holds_word, names, Name};
 use crate::core::rules::check::Judgement;
 use crate::core::syntax::{words, Mask};
 
-/// The name a program's entry point carries in every language weed reads.
+/// The name a program's entry point carries in every language weeder reads.
 const ENTRY: &str = "main";
 
 /// A receiver that writes to a stream, and the members of it that do. A

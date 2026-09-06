@@ -10,7 +10,7 @@
 //! definitions in it, so the callers the face found are named here, up to a few,
 //! with a count of the rest.
 //!
-//! A run that was given no scope at all reports nothing. weed will not invent
+//! A run that was given no scope at all reports nothing. weeder will not invent
 //! the sentence a change was supposed to be held to.
 
 use crate::core::change::Change;

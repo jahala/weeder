@@ -2,7 +2,7 @@
 //!
 //! Each language gets two shapes: an assertion that named the message the code
 //! raises, and one that named the kind. Both come back from the change saying
-//! only that something failed. The lines weed must report are read off the
+//! only that something failed. The lines weeder must report are read off the
 //! fixture by comparing its two sides, so the expectation follows the change
 //! rather than the detector.
 //!
@@ -51,7 +51,7 @@ fn t6_warns_on_every_error_assertion_a_change_loosened() {
             "{name}: the fixture loosens the message and the kind, and touches nothing else"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         let findings = reported(&run.findings());
         assert_eq!(
             findings
@@ -83,7 +83,7 @@ fn t6_stays_silent_when_an_assertion_arrives_naming_what_it_accepts() {
             "{name}: the neighbour rewrites the same two assertions the other way round"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             reported(&run.findings()),
             Vec::new(),

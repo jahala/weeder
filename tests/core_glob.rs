@@ -1,6 +1,6 @@
 //! The globs `[scope] allow` and `--scope` are written in.
 
-use weed::core::glob::{matches, matches_any};
+use weeder::core::glob::{matches, matches_any};
 
 #[test]
 fn a_single_star_stops_at_a_separator() {

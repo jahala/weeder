@@ -95,7 +95,7 @@ fn is_workflow(path: &str) -> bool {
 }
 
 fn is_guardrail(path: &str) -> bool {
-    path == "weed.toml"
+    path == "weeder.toml"
         || path == "AGENTS.md"
         || path == "CLAUDE.md"
         || path.starts_with(".codex/")

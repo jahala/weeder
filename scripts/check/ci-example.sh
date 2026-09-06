@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Evidence for garden-fit: the GitHub Action example is weed's first
+# Evidence for garden-fit: the GitHub Action example is weeder's first
 # distribution, so it is read as a contract rather than as documentation.
 #
-# What it has to do is one sentence: run weed against the pull request's base,
+# What it has to do is one sentence: run weeder against the pull request's base,
 # write SARIF, and hand that file to GitHub's code scanning so every finding
 # lands on the diff a reviewer is already looking at. Each half of that is
 # checked here, and the whole file is put through actionlint, because an example
@@ -12,7 +12,7 @@ root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
 
 example="examples/ci/github.yml"
-[ -f "$example" ] || { echo "$example is missing: weed ships no way to run it in CI" >&2; exit 1; }
+[ -f "$example" ] || { echo "$example is missing: weeder ships no way to run it in CI" >&2; exit 1; }
 
 status=0
 
@@ -58,11 +58,11 @@ checks = []
 for job, step in run_steps:
     for line in step["run"].splitlines():
         line = line.strip()
-        if re.match(r"^(\S*/)?weed\s+check\b", line):
+        if re.match(r"^(\S*/)?weeder\s+check\b", line):
             checks.append((job, line))
 
 if not checks:
-    complaints.append(f"{path} never runs `weed check`")
+    complaints.append(f"{path} never runs `weeder check`")
 
 for job, line in checks:
     # The redirection is the point: the SARIF has to reach a file the upload
@@ -106,10 +106,10 @@ for job, step in uploads:
         complaints.append(f"{path}: the upload step names no sarif_file")
     elif written and named not in written:
         complaints.append(
-            f"{path}: the upload reads {named}, and weed wrote {' '.join(sorted(written))}"
+            f"{path}: the upload reads {named}, and weeder wrote {' '.join(sorted(written))}"
         )
 
-# weed leaves with 2 when it blocks. If the upload is to happen at all, the run
+# weeder leaves with 2 when it blocks. If the upload is to happen at all, the run
 # has to reach it, so the upload step says so outright.
 for job, step in uploads:
     condition = str(step.get("if") or "")
@@ -148,7 +148,7 @@ for complaint in complaints:
     print(complaint, file=sys.stderr)
 if complaints:
     raise SystemExit(1)
-print(f"{len(checks)} weed check run, {len(uploads)} SARIF upload")
+print(f"{len(checks)} weeder check run, {len(uploads)} SARIF upload")
 PY
 
 if [ "$status" -eq 0 ]; then

@@ -1,7 +1,7 @@
 //! The same answer every time.
 //!
 //! A gate that answers differently on two runs is a hole: a change lands
-//! because the second run happened to sort a finding away. weed's output is
+//! because the second run happened to sort a finding away. weeder's output is
 //! byte-identical across runs for the same diff, tree and config, whatever the
 //! locale, the time zone or the order a hash map happened to hand its keys back
 //! in this process.
@@ -12,7 +12,7 @@
 //! maps are seeded differently every time, a map iterated into the log would
 //! come apart here on its own.
 //!
-//! weed writes no timestamp. If a later loop adds one, this is the test that
+//! weeder writes no timestamp. If a later loop adds one, this is the test that
 //! strips it, and the reason belongs in the comment that does the stripping.
 
 mod common;
@@ -58,7 +58,10 @@ fn every_fixture_answers_the_same_bytes_in_every_locale_and_time_zone() {
     let mut reported = 0;
     for case in &cases {
         let repo = fixture(&case.rule, &case.lang, &case.case);
-        reported += repo.weed(&["check", "--format", "sarif"]).findings().len();
+        reported += repo
+            .weeder(&["check", "--format", "sarif"])
+            .findings()
+            .len();
         for arguments in [
             vec!["check", "--format", "sarif"],
             vec!["check", "--format", "table"],
@@ -73,19 +76,19 @@ fn every_fixture_answers_the_same_bytes_in_every_locale_and_time_zone() {
                 assert_eq!(
                     replay.stdout,
                     first.stdout,
-                    "{case} judged by `weed {}` wrote different bytes under LANG={locale} TZ={zone}",
+                    "{case} judged by `weeder {}` wrote different bytes under LANG={locale} TZ={zone}",
                     arguments.join(" ")
                 );
                 assert_eq!(
                     replay.stderr,
                     first.stderr,
-                    "{case} judged by `weed {}` complained differently under LANG={locale} TZ={zone}",
+                    "{case} judged by `weeder {}` complained differently under LANG={locale} TZ={zone}",
                     arguments.join(" ")
                 );
                 assert_eq!(
                     replay.code,
                     first.code,
-                    "{case} judged by `weed {}` left with a different code under LANG={locale} TZ={zone}",
+                    "{case} judged by `weeder {}` left with a different code under LANG={locale} TZ={zone}",
                     arguments.join(" ")
                 );
             }
@@ -117,7 +120,7 @@ fn the_rule_catalogue_prints_the_same_bytes_in_every_locale() {
             assert_eq!(
                 replay.stdout,
                 replays[0].stdout,
-                "`weed {}` wrote different bytes in another locale",
+                "`weeder {}` wrote different bytes in another locale",
                 arguments.join(" ")
             );
         }
@@ -125,12 +128,12 @@ fn the_rule_catalogue_prints_the_same_bytes_in_every_locale() {
 }
 
 /// A log carrying a timestamp cannot be compared byte for byte, and a gate
-/// whose output nobody can compare is a gate nobody can trust twice. weed writes
+/// whose output nobody can compare is a gate nobody can trust twice. weeder writes
 /// none; this is the test that would have to start stripping one.
 #[test]
 fn the_log_carries_no_timestamp() {
     let repo = fixture("G1", "ts", "fire");
-    let log = repo.weed(&["check", "--format", "sarif"]).stdout;
+    let log = repo.weeder(&["check", "--format", "sarif"]).stdout;
     for word in [
         "startTimeUtc",
         "endTimeUtc",
@@ -176,12 +179,15 @@ fn every_hash_container_in_core_says_why_its_order_never_reaches_the_output() {
 /// The built binary in this repository, in a locale and a time zone of the
 /// caller's choosing. Everything else about the two runs is the same.
 fn run(repo: &Repo, arguments: &[&str], locale: &str, zone: &str) -> Run {
-    let mut command = repo.weed_command(arguments);
+    let mut command = repo.weeder_command(arguments);
     let output = with_locale(&mut command, locale, zone)
         .output()
-        .expect("the weed binary should run");
+        .expect("the weeder binary should run");
     Run {
-        code: output.status.code().expect("weed should leave with a code"),
+        code: output
+            .status
+            .code()
+            .expect("weeder should leave with a code"),
         stdout: String::from_utf8_lossy(&output.stdout).to_string(),
         stderr: String::from_utf8_lossy(&output.stderr).to_string(),
     }

@@ -88,7 +88,7 @@ with tempfile.TemporaryDirectory() as tmp:
                 complaints.append(f"{kept_path} is capped without saying why the full diff is absent")
             if re.search(r"(?im)^Case: blocked:", kept_text):
                 if not re.search(r"(?m)^\| [A-Z][0-9] \| error \| `[^`]+` \| [0-9]+ \| .+ \|$", kept_text):
-                    complaints.append(f"{kept_path} has no printed weed finding row")
+                    complaints.append(f"{kept_path} has no printed weeder finding row")
             if re.search(r"(?im)^Case: recall:", kept_text):
                 for required in ("Planted site:", "Question:", "genuinely present at that planted site"):
                     if required not in kept_text:

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Emit weed's pleach plan from the map, the way this repo runs it:
+# Emit weeder's pleach plan from the map, the way this repo runs it:
 # tend2 on PATH as the verifier (out of tree, LAW 1), scripts/check/run.sh as
 # the evidence runner, casts and audits from plans/. Then patch the one thing
 # tend2 emit-plan gets wrong today: the audit command omits the --runner
@@ -8,7 +8,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 runner='bash scripts/check/run.sh {evidence}'
-out="${1:-plans/weed.plan.json}"
+out="${1:-plans/weeder.plan.json}"
 tend2 emit-plan docs/tend2 --repo-root . --verify-bin tend2 --runner "$runner" \
   --cast-file plans/cast.json --audit-file plans/audit.json --node-timeout-ms 5400000 --out "$out"
 jq --arg r "--runner '$runner'" \

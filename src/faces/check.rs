@@ -1,13 +1,13 @@
-//! `weed check`, the diff judged.
+//! `weeder check`, the diff judged.
 //!
-//! With no flags weed judges the index plus the working tree against `HEAD`:
+//! With no flags weeder judges the index plus the working tree against `HEAD`:
 //! everything a worker changed, staged or not, which is what pleach's smoke gate
 //! sees after it stages a node's files. `--staged` judges the index alone, the
 //! view a pre-commit hook has. `--base <ref>` judges the tree against a ref, the
 //! view CI has of a branch.
 //!
 //! A run that cannot reach a judgement, no repository, an unreadable ref, a
-//! config weed cannot parse, leaves with exit 3 and says why on stderr. A gate
+//! config weeder cannot parse, leaves with exit 3 and says why on stderr. A gate
 //! that could not run must never look like a gate that passed.
 
 use std::collections::BTreeSet;
@@ -31,7 +31,7 @@ use crate::seams::{fs, git, reader};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Request {
-    /// Where weed was called from; the repository is found from here.
+    /// Where weeder was called from; the repository is found from here.
     pub cwd: PathBuf,
     /// Judge the tree against this ref instead of `HEAD`.
     pub base: Option<String>,
@@ -42,12 +42,12 @@ pub struct Request {
     /// Judge the index alone.
     pub staged: bool,
     /// The paths a change may touch. Every file is judged whatever the scope;
-    /// X2 (rules-prod) reports a file outside it. Empty leaves `weed.toml` in charge.
+    /// X2 (rules-prod) reports a file outside it. Empty leaves `weeder.toml` in charge.
     pub scope: Vec<String>,
     /// Report suppressed findings at their own level, and refuse to guess.
     pub strict: bool,
     pub format: Format,
-    /// Read `weed.toml` from here instead of the repository root.
+    /// Read `weeder.toml` from here instead of the repository root.
     pub config: Option<PathBuf>,
     /// The message of the commit being prepared, for its `Weed-allow:` trailers.
     /// A pre-commit gate has no commit to read, so a hook hands the message in.
@@ -68,7 +68,7 @@ fn judge(request: &Request) -> Result<Answer, String> {
     let range = range(request)?;
     let diff = read_diff(&root, &range)?;
     let judged: Vec<FileDiff> = parse_diff(&diff).map_err(|error| {
-        format!("weed could not read the diff git produced: {error}. report it with the change that caused it.")
+        format!("weeder could not read the diff git produced: {error}. report it with the change that caused it.")
     })?;
     // The specimens leave here, before anything reads them: a file no rule
     // judges has no suppression to honour and no malformed one to complain
@@ -136,25 +136,26 @@ fn judge(request: &Request) -> Result<Answer, String> {
 
 /// The two states a run compares. The state a change starts from is always a
 /// commit, git has nothing else to compare against, and what it ends in is
-/// whichever of the three places the caller asked weed to judge.
+/// whichever of the three places the caller asked weeder to judge.
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Range {
     base: String,
     after: Source,
 }
 
-/// What this run compares against what. A run that names two states weed cannot
+/// What this run compares against what. A run that names two states weeder cannot
 /// judge together stops here rather than guessing which one was meant.
 fn range(request: &Request) -> Result<Range, String> {
     if request.staged && (request.base.is_some() || request.tip.is_some()) {
         return Err(
-            "--base judges the tree against a ref and --staged judges the index, so weed cannot do both. pass one."
+            "--base judges the tree against a ref and --staged judges the index, so weeder cannot do both. pass one."
                 .to_string(),
         );
     }
     if request.base.is_none() && request.tip.is_some() {
         return Err(
-            "a tip with no base names no range to judge, and weed will not guess one.".to_string(),
+            "a tip with no base names no range to judge, and weeder will not guess one."
+                .to_string(),
         );
     }
     let base = request.base.clone().unwrap_or_else(|| "HEAD".to_string());
@@ -179,7 +180,7 @@ fn read_diff(root: &Path, range: &Range) -> Result<String, String> {
     diff.map_err(|error| error.to_string())
 }
 
-/// The changed files weed judges, and the paths it was told to leave alone.
+/// The changed files weeder judges, and the paths it was told to leave alone.
 /// A specimen is skipped by every rule at once: the file never reaches a
 /// detector, so no rule can be the one that read it anyway.
 fn set_aside(judged: Vec<FileDiff>, specimens: &[String]) -> (Vec<FileDiff>, Vec<String>) {
@@ -198,7 +199,7 @@ fn set_aside(judged: Vec<FileDiff>, specimens: &[String]) -> (Vec<FileDiff>, Vec
 }
 
 /// The paths this run allows the change to touch. `--scope` is what the caller
-/// asked for on this run; with no flag, whatever `weed.toml` states, which is
+/// asked for on this run; with no flag, whatever `weeder.toml` states, which is
 /// everything until a repository says otherwise.
 fn scope(request: &Request, config: &Config) -> Vec<String> {
     if request.scope.is_empty() {
@@ -231,11 +232,9 @@ fn callers(root: &Path, changes: &[Change], scope: &[String]) -> Result<Vec<Call
 fn trailers(request: &Request, root: &Path) -> Result<Vec<Suppression>, String> {
     let mut messages = Vec::new();
     if let Some(path) = &request.message_file {
-        messages.push(
-            fs::read(path).map_err(|error| {
-                format!("{error} --message-file must name a file weed can read.")
-            })?,
-        );
+        messages.push(fs::read(path).map_err(|error| {
+            format!("{error} --message-file must name a file weeder can read.")
+        })?);
     }
     if let Some(base) = &request.base {
         let tip = request.tip.as_deref().unwrap_or("HEAD");
@@ -274,18 +273,18 @@ fn could_not_run(request: &Request, reason: &str) -> Answer {
     }
 }
 
-/// A `weed-allow` with no reason gives weed nothing to allow it against, so
+/// A `weed-allow` with no reason gives weeder nothing to allow it against, so
 /// under `--strict` the file goes unjudged rather than judged on a guess.
 fn refusal(unreadable: &InlineSuppressionError) -> String {
     format!(
-        "{} under --strict weed will not judge a file whose suppression it cannot read.",
+        "{} under --strict weeder will not judge a file whose suppression it cannot read.",
         complaint(unreadable)
     )
 }
 
 fn complaint(error: &InlineSuppressionError) -> String {
     format!(
-        "{}:{} carries a weed-allow weed cannot read: {}. write it as `weed-allow {}: the reason`.",
+        "{}:{} carries a weed-allow weeder cannot read: {}. write it as `weed-allow {}: the reason`.",
         error.path,
         error.line,
         error.message,

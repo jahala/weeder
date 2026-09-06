@@ -15,21 +15,21 @@
 //! short readable string under a key name is a setting, and the digests filling
 //! a lockfile are named for what they are and never for a credential.
 //!
-//! That second path only runs where weed knows the grammar. Telling a name from
+//! That second path only runs where weeder knows the grammar. Telling a name from
 //! a value takes a language that has assignments in it; a page, a stylesheet and
 //! a paragraph are full of `name = value` that assigns nothing, a class called
 //! `detail-meta__key`, an attribute, a sentence with a colon in the middle of
-//! it. So the prefix path reads every file weed is handed and the name path
+//! it. So the prefix path reads every file weeder is handed and the name path
 //! reads source alone, which is the only place a name means what it says.
 //!
 //! One list of exact strings stands beside the two shapes: the credentials a
 //! vendor prints in its own documentation so a reader can follow the page.
 //! Those travel into samples and tests and READMEs, no issuer honours one, and
-//! a commit carrying one has nothing to rotate. weed names it a published
+//! a commit carrying one has nothing to rotate. weeder names it a published
 //! example and stands aside, because a gate that stops a manual is a gate an
 //! agent learns to walk past. The allowance is the string and not a vendor, so
 //! one character away from it is a credential like any other, and the note is
-//! what is left when nothing else on the line is one: weed reports a finding a
+//! what is left when nothing else on the line is one: weeder reports a finding a
 //! line, and a note reached first would make the line that quotes a manual the
 //! place to hide a key.
 
@@ -39,7 +39,7 @@ use crate::core::finding::{Finding, Level, Message, Region};
 use crate::core::rules::check::Judgement;
 
 /// The prefixes an issuer stamps on a credential, and how much opaque tail one
-/// carries before weed will call it a credential rather than a coincidence.
+/// carries before weeder will call it a credential rather than a coincidence.
 const PREFIXES: &[&str] = &[
     "AKIA",
     "ASIA",
@@ -89,7 +89,7 @@ const KEY_WORDS: &[&str] = &[
 
 /// The credentials vendors publish in their own documentation, each written as
 /// the stamp an issuer puts on the front and the tail behind it. Joined, they
-/// are the strings weed refuses to carry, so this file carries neither whole and
+/// are the strings weeder refuses to carry, so this file carries neither whole and
 /// compares against the halves.
 ///
 /// An entry earns its place by being printed in a vendor's own manual, where
@@ -143,7 +143,7 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
                     continue;
                 }
             }
-            // Last, and only where the two paths above found nothing. weed
+            // Last, and only where the two paths above found nothing. weeder
             // reports one finding a line, so a note reached before them would
             // be a place to hide a credential: on the line that quotes a manual.
             if quotes_an_example(text) {
@@ -154,7 +154,7 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
     findings
 }
 
-/// Whether the file is written in a language weed reads. Outside one, weed has
+/// Whether the file is written in a language weeder reads. Outside one, weeder has
 /// no grammar to tell an assignment from a class name or a colon in a sentence.
 fn is_source(change: &Change) -> bool {
     change
@@ -400,7 +400,7 @@ fn entropy(value: &str) -> f64 {
 }
 
 /// A credential shape, named without its value ever being repeated, and the
-/// level weed reports that shape at.
+/// level weeder reports that shape at.
 struct Shape {
     level: Level,
     message: Message,
@@ -449,7 +449,7 @@ impl Shape {
             level: Level::Note,
             message: Message {
                 what: "a published example credential was added: the string a vendor prints in its own documentation.".to_string(),
-                why: "an example is a quotation rather than a key, so there is nothing to rotate and nothing to block, and weed names it here so a reader is not left wondering whether it was read.".to_string(),
+                why: "an example is a quotation rather than a key, so there is nothing to rotate and nothing to block, and weeder names it here so a reader is not left wondering whether it was read.".to_string(),
                 next: "leave it where the documentation is being quoted; anywhere else, take it out, since a value no issuer honours will not work either.".to_string(),
             },
         }

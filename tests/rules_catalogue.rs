@@ -1,23 +1,23 @@
-//! `weed rules`, the catalogue, as weed will apply it.
+//! `weeder rules`, the catalogue, as weeder will apply it.
 //!
 //! The face and the judgement read the same catalogue and the same defaults, so
 //! this test compares what the binary printed against `Config::default()` rather
 //! than against a list written out here. A rule whose printed level drifts from
-//! the level weed would apply is the drift this test exists to catch.
+//! the level weeder would apply is the drift this test exists to catch.
 
 mod common;
 
-use common::weed_in;
+use common::weeder_in;
 use tempfile::TempDir;
-use weed::core::catalogue::{self, Face, Rule};
-use weed::core::config::{Config, RuleSetting};
+use weeder::core::catalogue::{self, Face, Rule};
+use weeder::core::config::{Config, RuleSetting};
 
 #[test]
 fn rules_prints_every_rule_with_its_id_level_face_and_finding() {
-    // Not a repository: the catalogue is weed's own, not something it reads
+    // Not a repository: the catalogue is weeder's own, not something it reads
     // out of a working tree.
     let anywhere = TempDir::new().expect("a directory to run in");
-    let run = weed_in(anywhere.path(), &["rules"]);
+    let run = weeder_in(anywhere.path(), &["rules"]);
     assert_eq!(run.code, 0);
     assert_eq!(run.stderr, "");
 
@@ -35,7 +35,7 @@ fn rules_prints_every_rule_with_its_id_level_face_and_finding() {
         assert_eq!(
             cells[1],
             expected_level(rule, &defaults),
-            "{}: the printed level is the level weed would apply",
+            "{}: the printed level is the level weeder would apply",
             rule.id
         );
         assert_eq!(cells[2], expected_face(rule), "{}: the face", rule.id);
@@ -50,7 +50,7 @@ fn rules_prints_every_rule_with_its_id_level_face_and_finding() {
 #[test]
 fn rules_as_json_carries_the_same_catalogue() {
     let anywhere = TempDir::new().expect("a directory to run in");
-    let run = weed_in(anywhere.path(), &["rules", "--format", "json"]);
+    let run = weeder_in(anywhere.path(), &["rules", "--format", "json"]);
     assert_eq!(run.code, 0);
 
     let entries: Vec<serde_json::Value> = serde_json::from_str(&run.stdout).expect("json is json");
@@ -66,7 +66,7 @@ fn rules_as_json_carries_the_same_catalogue() {
     }
 }
 
-/// What `Config::default()` says this rule's level is, in the word `weed rules`
+/// What `Config::default()` says this rule's level is, in the word `weeder rules`
 /// should have printed for it.
 fn expected_level(rule: &Rule, defaults: &Config) -> &'static str {
     match defaults.rules.get(rule.id) {

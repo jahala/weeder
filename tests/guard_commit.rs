@@ -1,6 +1,6 @@
 //! The installed pre-commit hook, refusing an index that blocks.
 //!
-//! Nothing here calls weed directly once the hooks are in: the test runs
+//! Nothing here calls weeder directly once the hooks are in: the test runs
 //! `git commit` and reads what git did, which is the only proof that the law is
 //! in git rather than in a wrapper somebody can decline to call.
 
@@ -11,13 +11,13 @@ use common::{conflicted_parser, Repo};
 /// A repository with the hooks installed and already committed.
 ///
 /// `install` writes the hooks into the working tree so a clone gets them. A
-/// hook is a guardrail path, but C1 knows the bundle weed writes byte for byte,
+/// hook is a guardrail path, but C1 knows the bundle weeder writes byte for byte,
 /// so the commit that first carries the hooks goes through the gate the hooks
-/// themselves run: adopting weed is an ordinary commit.
+/// themselves run: adopting weeder is an ordinary commit.
 fn guarded() -> Repo {
     let repo = Repo::init();
-    repo.weed(&["guard", "install"]);
-    repo.commit("weed guard installed");
+    repo.weeder(&["guard", "install"]);
+    repo.commit("weeder guard installed");
     repo
 }
 
@@ -47,7 +47,7 @@ fn the_pre_commit_hook_refuses_an_index_that_blocks_and_lets_a_clean_one_through
         "the hook names the file:\n{said}"
     );
     assert!(
-        said.contains("weed guard refused"),
+        said.contains("weeder guard refused"),
         "the hook says which gate refused and what to do:\n{said}"
     );
     assert_eq!(

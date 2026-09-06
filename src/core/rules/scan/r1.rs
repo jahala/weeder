@@ -4,7 +4,7 @@
 //! cites is one of four things, and each has an authority: a path resolves
 //! against the tree, a command and its flags resolve against the command's own
 //! help, and a symbol resolves against everything the repository carries outside
-//! its own prose. weed reports a citation only where it can name the authority
+//! its own prose. weeder reports a citation only where it can name the authority
 //! that refused it.
 //!
 //! Precision is the whole game here. Prose is full of words that would look like
@@ -15,7 +15,7 @@
 //! change or a call's parentheses. Everything else is prose, and prose is not
 //! this rule's business.
 //!
-//! One thing weed cannot see: which repository a sentence is about. A document
+//! One thing weeder cannot see: which repository a sentence is about. A document
 //! describing another tool cites that tool's files and names, and they resolve
 //! against this tree and fail. The shape tests above cut most of it, a
 //! placeholder, an elision, a directory this tree has never had, and what is
@@ -137,7 +137,7 @@ fn finding(path: &str, line: u32, complaint: &Complaint) -> Finding {
 /// full of `and/or`, of branch names and of another tool's directories, so one
 /// of those is resolved only when its first segment is something this tree has.
 /// A path with a glob in it resolves on the directory it starts from, because
-/// weed matches globs against paths and a pattern that matches nothing today may
+/// weeder matches globs against paths and a pattern that matches nothing today may
 /// be the point of the sentence.
 fn path_complaint(tree: &Tree, cited: &str, extensions: &BTreeSet<String>) -> Vec<Complaint> {
     let cited = &normalize(cited);
@@ -270,7 +270,7 @@ fn command_complaint(tree: &Tree, cited: &str) -> Vec<Complaint> {
             None => {
                 // A command that offers subcommands and does not offer this one
                 // is being cited as something it is not. A command that offers
-                // none at all is being given an argument, which is not weed's
+                // none at all is being given an argument, which is not weeder's
                 // to judge.
                 if !listing.subcommands.is_empty() {
                     complaints.push(Complaint {
@@ -442,7 +442,7 @@ fn closing(characters: &[char], from: usize, width: usize) -> Option<usize> {
     None
 }
 
-/// What a code span cites, and under which authority. A span cites nothing weed
+/// What a code span cites, and under which authority. A span cites nothing weeder
 /// can resolve more often than it cites something, and an empty answer is the
 /// common one.
 fn span_citations(span: &str) -> Vec<(Kind, String)> {
@@ -507,7 +507,7 @@ fn looks_like_path(span: &str) -> bool {
 
 /// Whether a single-word span names a symbol.
 ///
-/// Every language weed reads spells an identifier the same way, and prose does
+/// Every language weeder reads spells an identifier the same way, and prose does
 /// too: `check`, `warn` and `off` are words in a sentence as often as they are
 /// names in a program. What prose does not write is an underscore inside a
 /// word, a capital in the middle of one, or a pair of parentheses on the end,

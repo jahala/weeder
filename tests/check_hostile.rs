@@ -9,8 +9,8 @@
 //! 3 could not run, and a 3 has to say why on one line. A status of 101 is a
 //! Rust panic, and a panic is a gate that stopped judging without saying so.
 //!
-//! Where weed can judge, this file also says what it must find. A test that only
-//! watched for exit 101 would go on passing after weed started refusing every
+//! Where weeder can judge, this file also says what it must find. A test that only
+//! watched for exit 101 would go on passing after weeder started refusing every
 //! one of these repositories, which is a different way of not judging them.
 
 mod common;
@@ -19,7 +19,7 @@ use std::path::Path;
 
 use common::{ours, separator, theirs, Repo, Run, BRANCH};
 
-/// The codes weed's contract names. Anything else, above all 101, which is what
+/// The codes weeder's contract names. Anything else, above all 101, which is what
 /// a panicking Rust binary leaves with, is a run nobody can read.
 const ALLOWED: [i32; 3] = [0, 2, 3];
 
@@ -30,7 +30,7 @@ const ALLOWED: [i32; 3] = [0, 2, 3];
 fn survives(run: &Run, what: &str) {
     assert!(
         ALLOWED.contains(&run.code),
-        "{what}: weed left with {}, which its contract does not name{}\n{}\n{}",
+        "{what}: weeder left with {}, which its contract does not name{}\n{}\n{}",
         run.code,
         if run.code == 101 {
             ", 101 is a panic"
@@ -56,12 +56,12 @@ fn survives(run: &Run, what: &str) {
 }
 
 /// A run that reached a judgement wrote one: the SARIF a machine reads has to
-/// parse, whatever was in the repository. Without this a repository weed had
+/// parse, whatever was in the repository. Without this a repository weeder had
 /// quietly started refusing would still pass every test in this file.
 #[track_caller]
 fn judged_in_sarif(run: &Run, what: &str) {
     survives(run, what);
-    assert_ne!(run.code, 3, "{what}: weed could not run: {}", run.stderr);
+    assert_ne!(run.code, 3, "{what}: weeder could not run: {}", run.stderr);
     let log = run.log();
     assert!(
         log["runs"][0]["results"].is_array(),
@@ -86,8 +86,8 @@ fn every_view(repo: &Repo, base: &str, what: &str) {
         vec!["check", "--format", "sarif", "--base", base],
         vec!["check", "--format", "table", "--base", base],
     ] {
-        let run = repo.weed(&arguments);
-        let what = format!("{what} judged by `weed {}`", arguments.join(" "));
+        let run = repo.weeder(&arguments);
+        let what = format!("{what} judged by `weeder {}`", arguments.join(" "));
         if arguments.contains(&"sarif") {
             judged_in_sarif(&run, &what);
         } else {
@@ -97,7 +97,7 @@ fn every_view(repo: &Repo, base: &str, what: &str) {
 }
 
 /// A file git could not merge, with both sides still in it. Every repository
-/// here carries one, so weed has something to find and the test can tell
+/// here carries one, so weeder has something to find and the test can tell
 /// judging from refusing.
 fn conflicted(language: &str) -> String {
     format!(
@@ -136,11 +136,11 @@ fn a_symlink_to_a_file_and_to_a_directory_are_judged() {
     );
 
     every_view(&repo, &base, "a repository with symlinks");
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
     assert_eq!(run.code, 2, "the conflict is still found: {}", run.stderr);
     assert!(
         run.paths().contains(&"src/conflicted.ts".to_string()),
-        "a symlink beside a file does not stop weed reading the file: {:?}",
+        "a symlink beside a file does not stop weeder reading the file: {:?}",
         run.paths()
     );
 }
@@ -172,11 +172,11 @@ fn a_submodule_is_judged() {
     );
 
     every_view(&repo, &base, "a repository with a submodule");
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
     assert_eq!(run.code, 2, "the conflict is still found: {}", run.stderr);
     assert!(
         run.paths().contains(&"src/conflicted.ts".to_string()),
-        "a gitlink in the diff does not stop weed reading the rest: {:?}",
+        "a gitlink in the diff does not stop weeder reading the rest: {:?}",
         run.paths()
     );
 }
@@ -216,7 +216,7 @@ fn a_merge_commit_with_two_parents_is_judged_against_a_base() {
     repo.stage_all();
 
     every_view(&repo, &base, "a repository with a merge commit");
-    let run = repo.weed(&["check", "--format", "sarif", "--base", &base]);
+    let run = repo.weeder(&["check", "--format", "sarif", "--base", &base]);
     assert_eq!(
         run.code, 2,
         "a range spanning a merge is still judged: {}",
@@ -243,7 +243,7 @@ fn a_commit_that_changed_nothing_is_judged() {
     ]);
 
     every_view(&repo, &base, "a repository with an empty commit");
-    let run = repo.weed(&["check", "--format", "sarif", "--base", &base]);
+    let run = repo.weeder(&["check", "--format", "sarif", "--base", &base]);
     assert_eq!(
         run.code, 0,
         "a range that changed nothing is clean, not broken: {}",
@@ -278,17 +278,17 @@ fn a_twenty_mebibyte_file_is_judged() {
     );
     assert!(
         !diff.contains("Binary files"),
-        "git reads the big file as text, so weed has twenty mebibytes of lines to parse"
+        "git reads the big file as text, so weeder has twenty mebibytes of lines to parse"
     );
 
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
     survives(&run, "a repository with a twenty mebibyte file");
     assert_eq!(
         run.code, 2,
         "the conflict beside the big file is still found: {}",
         run.stderr
     );
-    let base_run = repo.weed(&["check", "--format", "table", "--base", &base]);
+    let base_run = repo.weeder(&["check", "--format", "table", "--base", &base]);
     survives(&base_run, "a twenty mebibyte file judged against a base");
 }
 
@@ -303,7 +303,7 @@ fn crlf_line_ends_are_judged_and_the_conflict_in_them_is_found() {
     repo.stage_all();
 
     every_view(&repo, &base, "a repository with CRLF line ends");
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
     assert_eq!(
         run.code, 2,
         "a conflict marker is a conflict marker whatever ends the line: {}",
@@ -342,7 +342,7 @@ fn a_binary_file_is_judged() {
     );
 
     every_view(&repo, &base, "a repository with a binary file");
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
     assert_eq!(run.code, 2, "the conflict is still found: {}", run.stderr);
     let blob: Vec<String> = run
         .findings()
@@ -353,7 +353,7 @@ fn a_binary_file_is_judged() {
     assert_eq!(
         blob,
         vec!["G2".to_string()],
-        "a binary file has no lines, so the only thing weed says about it is that it arrived"
+        "a binary file has no lines, so the only thing weeder says about it is that it arrived"
     );
 }
 
@@ -375,14 +375,14 @@ fn text_that_is_not_utf_eight_is_judged() {
     let diff = staged_diff(&repo, &base);
     assert!(
         !diff.contains("Binary files a/src/latin.ts"),
-        "git reads the latin-1 file as text, so its bytes reach weed"
+        "git reads the latin-1 file as text, so its bytes reach weeder"
     );
 
     every_view(&repo, &base, "a repository with text that is not utf-8");
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
     assert_eq!(
         run.code, 2,
-        "a byte weed cannot read does not stop it judging the rest: {}",
+        "a byte weeder cannot read does not stop it judging the rest: {}",
         run.stderr
     );
     assert!(
@@ -413,13 +413,13 @@ fn paths_with_spaces_and_quotes_are_judged_and_named_as_they_are_spelled() {
     repo.stage_all();
 
     every_view(&repo, &base, "a repository with awkward paths");
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
     assert_eq!(run.code, 2, "the conflicts are found: {}", run.stderr);
     let reported = run.paths();
     for path in awkward {
         assert!(
             reported.contains(&path.to_string()),
-            "weed names {path} the way the repository spells it, and reported {reported:?}"
+            "weeder names {path} the way the repository spells it, and reported {reported:?}"
         );
     }
 }
@@ -437,7 +437,7 @@ fn a_rename_is_judged() {
     repo.stage_all();
 
     every_view(&repo, &base, "a repository with renames");
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
     survives(&run, "a rename judged");
 }
 
@@ -497,7 +497,7 @@ fn everything_at_once_is_judged() {
     repo.stage_all();
 
     every_view(&repo, &base, "a repository carrying everything at once");
-    let run = repo.weed(&["check", "--format", "sarif"]);
+    let run = repo.weeder(&["check", "--format", "sarif"]);
     assert_eq!(
         run.code, 2,
         "the conflicts in it are still found: {}",
@@ -512,12 +512,12 @@ fn everything_at_once_is_judged() {
     }
 }
 
-/// A directory that is not a repository at all. weed cannot judge a diff that
+/// A directory that is not a repository at all. weeder cannot judge a diff that
 /// does not exist, and says so on one line rather than reporting a clean tree.
 #[test]
 fn a_directory_that_is_not_a_repository_leaves_with_a_reason() {
     let directory = tempfile::tempdir().expect("a temp directory");
-    let run = common::weed_in(directory.path(), &["check", "--format", "sarif"]);
+    let run = common::weeder_in(directory.path(), &["check", "--format", "sarif"]);
     survives(&run, "a directory that is not a repository");
     assert_eq!(run.code, 3, "no repository, no judgement: {}", run.stdout);
 }

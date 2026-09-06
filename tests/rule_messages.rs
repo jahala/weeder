@@ -10,7 +10,7 @@ mod common;
 
 use common::{fixture, Repo};
 
-/// The words weed's voice does not use, whatever a rule has found.
+/// The words weeder's voice does not use, whatever a rule has found.
 const NEVER: [&str; 12] = [
     "supercharge",
     "unlock",
@@ -85,7 +85,7 @@ fn every_block_level_result_says_what_why_and_next() {
                 for word in NEVER {
                     assert!(
                         !lowered.contains(word),
-                        "{rule}/{case}: weed does not say `{word}`: {message}"
+                        "{rule}/{case}: weeder does not say `{word}`: {message}"
                     );
                 }
             }
@@ -143,7 +143,7 @@ fn fire(rule: &str, case: &str) -> Repo {
 }
 
 fn results(repo: &Repo) -> Vec<serde_json::Value> {
-    let run = repo.weed(&["check"]);
+    let run = repo.weeder(&["check"]);
     assert_eq!(run.code, 2, "a fire fixture blocks\n{}", run.stderr);
     run.log()["runs"][0]["results"]
         .as_array()
@@ -151,7 +151,7 @@ fn results(repo: &Repo) -> Vec<serde_json::Value> {
         .clone()
 }
 
-/// A message split back into the sentences it was written from. weed joins what,
+/// A message split back into the sentences it was written from. weeder joins what,
 /// why and next with a space, and each one ends with a full stop.
 fn sentences(message: &str) -> Vec<String> {
     message

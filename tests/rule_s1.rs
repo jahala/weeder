@@ -2,7 +2,7 @@
 //!
 //! The fire fixture writes every stub form the rule names into a production
 //! file: the work markers, the language's own word for a body nobody wrote, and
-//! a body whose only statement does nothing. The lines weed must report are read
+//! a body whose only statement does nothing. The lines weeder must report are read
 //! off the fixture here by looking for those forms, so the expectation is
 //! written independently of how the detector finds them.
 //!
@@ -66,7 +66,7 @@ const NEIGHBOURS: [(&str, &str, &str); 4] = [
 fn s1_fires_at_block_level_on_every_stub_form_in_production_code() {
     for language in LANGUAGES {
         let repo = fixture("S1", language.name, "fire");
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         let name = language.name;
 
         assert_eq!(run.code, 2, "{name}: a stub blocks\n{}", run.stderr);
@@ -113,7 +113,7 @@ fn s1_stays_silent_in_a_test_file_and_on_a_marker_inside_a_string() {
             "{name}: the production file has to hold a marker inside a string"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             run.findings(),
             Vec::new(),
@@ -157,7 +157,7 @@ fn s1_stays_silent_on_an_ellipsis_that_declares_a_type_and_fires_on_one_that_def
         );
     }
 
-    let run = fixture("S1", "py", "silent").weed(&["check"]);
+    let run = fixture("S1", "py", "silent").weeder(&["check"]);
     assert_eq!(
         run.findings(),
         Vec::new(),
@@ -166,7 +166,7 @@ fn s1_stays_silent_on_an_ellipsis_that_declares_a_type_and_fires_on_one_that_def
     assert_eq!(run.code, 0, "nothing found, nothing blocked");
 
     let source = fixture_file("S1", "py", "fire/after", "src/client.py");
-    let reported = fixture("S1", "py", "fire").weed(&["check"]);
+    let reported = fixture("S1", "py", "fire").weeder(&["check"]);
     let lines: Vec<u64> = reported
         .findings()
         .into_iter()

@@ -2,7 +2,7 @@
 //!
 //! Each fire fixture rewrites two lines and nothing else: the number that says
 //! how close a value has to be, and the number that says how long the test will
-//! wait. The lines weed must report are worked out here by comparing the two
+//! wait. The lines weeder must report are worked out here by comparing the two
 //! sides of the fixture, so the expectation is "wherever the change is" rather
 //! than a list copied out of the detector.
 //!
@@ -51,7 +51,7 @@ fn t4_warns_on_every_line_a_change_loosened() {
             "{name}: the fixture loosens a tolerance and a wait, and touches nothing else"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         let findings = reported(&run.findings(), "T4");
         assert_eq!(
             findings
@@ -83,7 +83,7 @@ fn t4_stays_silent_when_the_number_tightens_or_belongs_to_nobody() {
             "{name}: the neighbour tightens two numbers and moves an expected value"
         );
 
-        let run = repo.weed(&["check"]);
+        let run = repo.weeder(&["check"]);
         assert_eq!(
             reported(&run.findings(), "T4"),
             Vec::new(),

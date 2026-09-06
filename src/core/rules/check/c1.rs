@@ -2,17 +2,17 @@
 //!
 //! A guardrail is a file that decides what the other checks do: the workflow
 //! that runs them, the settings an agent harness reads, the hook git calls,
-//! weed's own law. A change there can turn every gate off without touching a
+//! weeder's own law. A change there can turn every gate off without touching a
 //! single test, which is why any change to one is the finding, added, edited or
 //! taken away, and whatever it says.
 //!
-//! One file under `.githooks/` is not an edit: the bundle weed itself writes,
-//! byte for byte, for the binary and the branches it names. Adopting weed is a
-//! change the gate lets through, because weed can tell its own hook from one
+//! One file under `.githooks/` is not an edit: the bundle weeder itself writes,
+//! byte for byte, for the binary and the branches it names. Adopting weeder is a
+//! change the gate lets through, because weeder can tell its own hook from one
 //! somebody rewrote; a hook that differs by one byte is a guardrail edit again.
 //!
 //! The two markdown files are different. `AGENTS.md` and `CLAUDE.md` are mostly
-//! prose that wants editing, and one section of them is law. So weed reads the
+//! prose that wants editing, and one section of them is law. So weeder reads the
 //! headings, finds the section that states the hard limits, and reports only a
 //! hunk that lands inside it. A paragraph rewritten three sections down is
 //! writing; a line changed under the limits is a rule being rewritten.
@@ -50,7 +50,7 @@ fn edit(change: &Change) -> Option<Finding> {
     limits_line(change).map(|line| limits(path, line))
 }
 
-/// Whether a path is one of the files weed reads section by section.
+/// Whether a path is one of the files weeder reads section by section.
 fn is_instructions(path: &str) -> bool {
     let name = path.rsplit('/').next().unwrap_or(path);
     INSTRUCTIONS.contains(&name)

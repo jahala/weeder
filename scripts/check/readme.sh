@@ -3,8 +3,8 @@
 #
 # LICENSE is compared against the MIT text word for word, so a paraphrase or a
 # quietly altered clause cannot pass as MIT. README.md is read the way a
-# newcomer reads it, the first paragraph has to say what weed is, and then the
-# way a machine reads it: every path it cites exists, and every weed command it
+# newcomer reads it, the first paragraph has to say what weeder is, and then the
+# way a machine reads it: every path it cites exists, and every weeder command it
 # cites is a command the binary answers, with flags the binary prints. A readme
 # that names a file nobody wrote is the first lie a reader is told.
 set -euo pipefail
@@ -22,8 +22,8 @@ command -v python3 >/dev/null 2>&1 || {
   exit 3
 }
 
-cargo build --quiet --bin weed
-binary="target/debug/weed"
+cargo build --quiet --bin weeder
+binary="target/debug/weeder"
 
 python3 - "$binary" <<'PY' || status=1
 import os
@@ -85,15 +85,15 @@ else:
 readme = open("README.md", encoding="utf-8").read()
 lines = readme.splitlines()
 
-if not lines or lines[0].strip() != "# weed":
-    complaints.append("README.md does not open with the title `# weed`")
+if not lines or lines[0].strip() != "# weeder":
+    complaints.append("README.md does not open with the title `# weeder`")
 else:
     after = [line for line in lines[1:] if line.strip()]
     opening = after[0] if after else ""
     if opening.startswith(("#", "-", "*", "|", "```", ">", "[!")):
         complaints.append(
             f"README.md's first line after the title is `{opening[:60]}`, and a reader who wants "
-            "to know what weed is has to read past it"
+            "to know what weeder is has to read past it"
         )
     else:
         paragraph = []
@@ -103,10 +103,10 @@ else:
             elif paragraph:
                 break
         paragraph = " ".join(paragraph)
-        if "weed" not in paragraph:
-            complaints.append("README.md's opening paragraph never names weed")
+        if "weeder" not in paragraph:
+            complaints.append("README.md's opening paragraph never names weeder")
         if paragraph.count(".") < 1 or len(paragraph) < 80:
-            complaints.append(f"README.md's opening paragraph is too thin to say what weed is: `{paragraph}`")
+            complaints.append(f"README.md's opening paragraph is too thin to say what weeder is: `{paragraph}`")
 
 # The claims the owner has not settled, each marked where it is made. A mark
 # belongs to the block it sits in, a bullet with its continuation lines, or a
@@ -159,9 +159,9 @@ if len(cited) < 5:
         "to mean anything; point a reader at the files"
     )
 
-# --- every weed command the readme cites -------------------------------------
+# --- every weeder command the readme cites -------------------------------------
 
-# The binary's own help is the only list of what weed answers. A cited command
+# The binary's own help is the only list of what weeder answers. A cited command
 # is walked against it: the subcommands have to exist, the flags have to be
 # printed at the node they are passed to, and where clap prints the values a
 # flag or an argument accepts, the cited value has to be one of them.
@@ -220,7 +220,7 @@ for block in re.findall(r"```[a-z]*\n(.*?)```", readme, re.S):
     commands += [line.strip() for line in block.splitlines()]
 commands += [span.strip() for span in spans]
 
-cited_commands = sorted({c for c in commands if re.match(r"^weed( |$)", c)})
+cited_commands = sorted({c for c in commands if re.match(r"^weeder( |$)", c)})
 for command in cited_commands:
     # A shell line, with redirections and anything downstream of a pipe left out.
     tokens = re.split(r"[|>]", command)[0].split()[1:]
@@ -230,7 +230,7 @@ for command in cited_commands:
         step = tokens[0]
         if step not in node.commands:
             complaints.append(
-                f"README.md cites `{command}`, and `weed {' '.join(walked)}`".rstrip()
+                f"README.md cites `{command}`, and `weeder {' '.join(walked)}`".rstrip()
                 + f" has no `{step}` command"
             )
             node = None
@@ -243,7 +243,7 @@ for command in cited_commands:
     if node is None:
         continue
 
-    where = ("weed " + " ".join(walked)).strip()
+    where = ("weeder " + " ".join(walked)).strip()
     positional = 0
     while tokens:
         token = tokens.pop(0)
@@ -272,21 +272,21 @@ for command in cited_commands:
             )
         positional += 1
 
-# The garden footer, until weed has a page of its own to carry it.
+# The garden footer, until weeder has a page of its own to carry it.
 if "a plotplot garden tool" not in readme:
     complaints.append(
         "README.md carries no garden footer: every bed names the garden it belongs to, and "
-        "weed has no page yet for it to sit on"
+        "weeder has no page yet for it to sit on"
     )
 
 for complaint in complaints:
     print(complaint, file=sys.stderr)
 if complaints:
     raise SystemExit(1)
-print(f"MIT, {len(cited)} paths cited and present, {len(cited_commands)} weed commands answered")
+print(f"MIT, {len(cited)} paths cited and present, {len(cited_commands)} weeder commands answered")
 PY
 
 if [ "$status" -eq 0 ]; then
-  echo "LICENSE is MIT; README.md says what weed is, flags what the owner has not settled, and cites nothing that does not exist"
+  echo "LICENSE is MIT; README.md says what weeder is, flags what the owner has not settled, and cites nothing that does not exist"
 fi
 exit "$status"

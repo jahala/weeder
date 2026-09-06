@@ -12,7 +12,7 @@
 //! its name where the language has no other way to mark one, and a rename that
 //! leaves that convention is the same finding one level down. Where a case is
 //! marked rather than named, an attribute above it, a title handed to a call ,
-//! renaming it collects the test as before, and weed says nothing.
+//! renaming it collects the test as before, and weeder says nothing.
 
 use crate::core::change::{Change, Side};
 use crate::core::classify::Lang;
@@ -80,7 +80,7 @@ fn uncollected_cases(change: &Change) -> Vec<Finding> {
             .filter(|definition| !collects_case(lang, &definition.name))
             .filter(|definition| !was.iter().any(|kept| kept.name == definition.name))
             // The same body under another name is the same test: a case that
-            // was rewritten as well as renamed is a case weed will not claim to
+            // was rewritten as well as renamed is a case weeder will not claim to
             // have followed.
             .find(|definition| body(after, definition) == held)
         else {

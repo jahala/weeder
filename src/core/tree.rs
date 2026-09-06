@@ -19,11 +19,11 @@ use crate::core::syntax::Mask;
 pub struct TreeFile {
     /// Repository-relative, separated by `/`.
     pub path: String,
-    /// The file's text, or `None` where what it holds is not text. weed judges
+    /// The file's text, or `None` where what it holds is not text. weeder judges
     /// lines, and bytes that are not text carry none.
     pub content: Option<String>,
     pub classification: Option<Classification>,
-    /// What the file defines, empty where it defines nothing or where weed has
+    /// What the file defines, empty where it defines nothing or where weeder has
     /// no grammar for it.
     pub outline: Outline,
     /// The file read once as code, comment and literal. The face makes that
@@ -53,7 +53,7 @@ impl TreeFile {
             .map_or(FileKind::Other, |classification| classification.kind)
     }
 
-    /// Whether the file is written in a language weed reads.
+    /// Whether the file is written in a language weeder reads.
     #[must_use]
     pub fn is_code(&self) -> bool {
         self.lang() != Lang::Other
@@ -90,7 +90,7 @@ impl TreeFile {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CommandListing {
     /// The command and the subcommands that reach this listing, in order:
-    /// `["weed"]`, then `["weed", "guard"]`, then `["weed", "guard", "install"]`.
+    /// `["weeder"]`, then `["weeder", "guard"]`, then `["weeder", "guard", "install"]`.
     pub path: Vec<String>,
     /// The subcommands this listing offers, by name.
     pub subcommands: Vec<String>,
@@ -139,7 +139,7 @@ impl Tree {
         self.files.iter().any(|file| file.name() == name)
     }
 
-    /// Every extension the tree actually uses. A doc citing `weed.toml` is
+    /// Every extension the tree actually uses. A doc citing `weeder.toml` is
     /// citing a file when the repository is written in files like it, and is
     /// citing something else, a member, a marker, when it is not. The
     /// vocabulary comes from the tree so no list of known extensions has to be
@@ -149,7 +149,7 @@ impl Tree {
         self.files.iter().filter_map(TreeFile::extension).collect()
     }
 
-    /// The files written in a language weed reads.
+    /// The files written in a language weeder reads.
     pub fn code(&self) -> impl Iterator<Item = &TreeFile> {
         self.files.iter().filter(|file| file.is_code())
     }

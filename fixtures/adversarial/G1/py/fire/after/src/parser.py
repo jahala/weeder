@@ -1,6 +1,6 @@
 def parse(text: str) -> list[str]:
-{{weed:ours}} HEAD
+{{weeder:ours}} HEAD
     return text.split(",")
-{{weed:separator}}
+{{weeder:separator}}
     return text.split(";")
-{{weed:theirs}} feature/split-on-semicolons
+{{weeder:theirs}} feature/split-on-semicolons

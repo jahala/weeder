@@ -1,4 +1,4 @@
-//! weed's own measurements, run from the workspace: `cargo xtask calibrate`
+//! weeder's own measurements, run from the workspace: `cargo xtask calibrate`
 //! judges real history and writes the calibration file, `cargo xtask
 //! suppressions` counts the allowances each repository wrote against its gate,
 //! and `cargo xtask mutate` plants one anti-pattern per case in that same
@@ -32,7 +32,7 @@ use crate::report::Report;
 use crate::split::Split;
 
 #[derive(Debug, Parser)]
-#[command(name = "xtask", about = "weed's own measurements")]
+#[command(name = "xtask", about = "weeder's own measurements")]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -47,7 +47,7 @@ enum Command {
     /// commits, from the day it installed guard.
     Suppressions(SuppressionsArgs),
     /// Inject one anti-pattern per case into real commits of the corpus and
-    /// write down what weed caught.
+    /// write down what weeder caught.
     Mutate(mutate::Request),
     /// Write a blind audit packet from pinned corpus diffs and rule ids.
     AuditPacket(audit_packet::Request),
@@ -294,7 +294,7 @@ fn write(path: &Path, content: &str) -> Result<(), Box<dyn Error>> {
 }
 
 /// Every finding of every blocked commit, as json, so a classification is
-/// written from what weed actually said rather than from the rule id alone.
+/// written from what weeder actually said rather than from the rule id alone.
 fn findings_json(measurements: &[calibrate::RepoMeasurement]) -> String {
     let repos: Vec<serde_json::Value> = measurements
         .iter()

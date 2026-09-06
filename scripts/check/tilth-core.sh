@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Evidence for tilth-core.tend2.html c1: the crate weed pins is green.
+# Evidence for tilth-core.tend2.html c1: the crate weeder pins is green.
 # The pinned commit comes from Cargo.toml's `rev` (or garden/tilth-core before
 # the pin exists). It is used at .context/tilth-core when that worktree is
 # present and at the commit (the conductor's machine), otherwise cloned from
@@ -16,7 +16,7 @@ wt="$root/.context/tilth-core"
 if [ -d "$wt" ] && [ "$(git -C "$wt" rev-parse HEAD)" = "$(git -C "$wt" rev-parse "$want^{commit}" 2>/dev/null || echo)" ]; then
   tree="$wt"
 else
-  tree="${TMPDIR:-/tmp}/weed-tilth-core-$want"
+  tree="${TMPDIR:-/tmp}/weeder-tilth-core-$want"
   if [ ! -f "$tree/Cargo.toml" ]; then
     git clone -q "$repo" "$tree"
     git -C "$tree" checkout -q "$want"

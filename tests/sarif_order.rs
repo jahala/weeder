@@ -3,8 +3,8 @@
 //! results by file, then by line, then by rule id. These tests hand `render`
 //! findings in orders no caller would ever produce and read the log back.
 
-use weed::core::sarif::{render, Context};
-use weed::core::{Finding, Level, Message, Region};
+use weeder::core::sarif::{render, Context};
+use weeder::core::{Finding, Level, Message, Region};
 
 fn context() -> Context {
     Context::new("0.1.0")
@@ -140,10 +140,10 @@ fn every_input_order_of_the_same_findings_writes_the_same_log() {
     let permutations = every_permutation(&findings);
     assert_eq!(permutations.len(), 120, "five findings permute 120 ways");
 
-    let first = weed::core::sarif::to_json(&render(&permutations[0], &context()));
+    let first = weeder::core::sarif::to_json(&render(&permutations[0], &context()));
     for permutation in &permutations {
         assert_eq!(
-            weed::core::sarif::to_json(&render(permutation, &context())),
+            weeder::core::sarif::to_json(&render(permutation, &context())),
             first,
             "the log must not depend on the order the findings arrived in"
         );
@@ -161,8 +161,8 @@ fn two_findings_alike_in_file_line_and_rule_are_still_ordered() {
     second.message.what = "a merge conflict marker (=======) was added.".to_string();
 
     let forwards =
-        weed::core::sarif::to_json(&render(&[first.clone(), second.clone()], &context()));
-    let backwards = weed::core::sarif::to_json(&render(&[second, first], &context()));
+        weeder::core::sarif::to_json(&render(&[first.clone(), second.clone()], &context()));
+    let backwards = weeder::core::sarif::to_json(&render(&[second, first], &context()));
     assert_eq!(
         forwards, backwards,
         "the message closes the order where file, line and rule tie"
@@ -179,7 +179,7 @@ fn the_table_keeps_its_level_first_order() {
         },
     ];
 
-    let table = weed::core::sarif::render_table(&findings);
+    let table = weeder::core::sarif::render_table(&findings);
     let first = table.lines().next().expect("the table has a first row");
     assert!(
         first.starts_with("error"),

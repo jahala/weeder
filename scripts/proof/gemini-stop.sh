@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Evidence for hooks.tend2.html c5: a real Gemini CLI session, with weed on the
-# AfterAgent hook, refuses a premature done and says why in weed's own words,
+# Evidence for hooks.tend2.html c5: a real Gemini CLI session, with weeder on the
+# AfterAgent hook, refuses a premature done and says why in weeder's own words,
 # and ends on its own once the tree is clean.
 #
 # This is the owner's to run. Gemini CLI on this machine has no auth method set,
@@ -16,9 +16,9 @@ root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
 
 doc="docs/proof-2026-09.md"
-heading="## gemini cli, the after-agent hook, run for real"
-limit="${WEED_PROOF_LIMIT:-90}"
-marker="weed hook refused"
+heading="## gemini cli: the after-agent hook, run for real"
+limit="${WEEDER_PROOF_LIMIT:-90}"
+marker="weeder hook refused"
 
 for tool in gemini git jq; do
   command -v "$tool" >/dev/null 2>&1 || {
@@ -40,13 +40,13 @@ if ! gemini -p "Reply with exactly: ready." -o json --skip-trust > "$probe" 2>&1
   exit 3
 fi
 
-cargo build --quiet --bin weed
-weed="$root/target/debug/weed"
+cargo build --quiet --bin weeder
+weeder="$root/target/debug/weeder"
 
 work="$(mktemp -d)"
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 git -C "$work" init -q --initial-branch=main
-git -C "$work" -c user.name="weed proof" -c user.email="proof@weed.invalid" \
+git -C "$work" -c user.name="weeder proof" -c user.email="proof@weeder.invalid" \
   commit -q --allow-empty -m "the repository begins"
 
 resolved() {
@@ -68,11 +68,11 @@ conflicted() {
 mkdir -p "$work/src"
 resolved > "$work/src/parser.ts"
 git -C "$work" add -A
-git -C "$work" -c user.name="weed proof" -c user.email="proof@weed.invalid" \
+git -C "$work" -c user.name="weeder proof" -c user.email="proof@weeder.invalid" \
   commit -q -m "the parser"
 
 cat > "$work/settings.json" <<JSON
-{"hooks": {"AfterAgent": [{"matcher": "", "hooks": [{"name": "weed", "type": "command", "command": "$weed hook gemini"}]}]}}
+{"hooks": {"AfterAgent": [{"matcher": "", "hooks": [{"name": "weeder", "type": "command", "command": "$weeder hook gemini"}]}]}}
 JSON
 
 session() { # $1 transcript, $2 seconds before it is stopped, $3 whether to wait for the marker
@@ -100,11 +100,11 @@ status=0
 
 # The refused half: the tree carries a half-finished merge.
 conflicted > "$work/src/parser.ts"
-refused_table="$( (cd "$work" && "$weed" check --strict --format table) || true )"
+refused_table="$( (cd "$work" && "$weeder" check --strict --format table) || true )"
 session "$work/refused.jsonl" "$limit" blocked || true
 
 if ! grep -q "$marker" "$work/refused.jsonl"; then
-  echo "the session ended over a tree weed refuses, and said nothing about it" >&2
+  echo "the session ended over a tree weeder refuses, and said nothing about it" >&2
   status=1
 fi
 if ! grep -q 'G1' "$work/refused.jsonl"; then
@@ -115,7 +115,7 @@ feedback="$(grep -o "[^\"]*${marker}[^\"]*" "$work/refused.jsonl" | head -1 || t
 
 # The allowed half: the merge is finished.
 resolved > "$work/src/parser.ts"
-allowed_table="$( (cd "$work" && "$weed" check --strict --format table) || true )"
+allowed_table="$( (cd "$work" && "$weeder" check --strict --format table) || true )"
 allowed_code=0
 session "$work/allowed.jsonl" "$limit" ends || allowed_code=$?
 
@@ -124,7 +124,7 @@ if [ "$allowed_code" -ne 0 ]; then
   status=1
 fi
 if grep -q "$marker" "$work/allowed.jsonl"; then
-  echo "weed blocked a stop over a tree it has nothing against" >&2
+  echo "weeder blocked a stop over a tree it has nothing against" >&2
   status=1
 fi
 
@@ -135,7 +135,7 @@ fi
 
 capture="$work/capture.md"
 {
-  echo "### $(date +%Y-%m-%d), gemini-cli $(gemini --version | head -1), $("$weed" --version)"
+  echo "### $(date +%Y-%m-%d), gemini-cli $(gemini --version | head -1), $("$weeder" --version)"
   echo
   echo "Both halves ran \`gemini -p\` in a temporary repository, with the AfterAgent"
   echo "hook handed over through \`GEMINI_CLI_SYSTEM_SETTINGS_PATH\`."
@@ -146,14 +146,14 @@ capture="$work/capture.md"
   printf '%s\n' "$refused_table"
   echo '```'
   echo
-  echo "The session tried to end and was sent back with weed's reason as its next"
+  echo "The session tried to end and was sent back with weeder's reason as its next"
   echo "request, which is what gemini does with a blocking AfterAgent decision:"
   echo
   echo '```'
   printf '%s\n' "$feedback"
   echo '```'
   echo
-  echo "**Allowed.** The merge finished, and weed had nothing to say:"
+  echo "**Allowed.** The merge finished, and weeder had nothing to say:"
   echo
   echo '```'
   printf '%s\n' "$allowed_table"
@@ -161,6 +161,17 @@ capture="$work/capture.md"
   echo
   echo "The session ended on its own, exit 0, with no block at all."
 } > "$capture"
+
+# The heading has to be in the file before anything is written under it. An awk
+# that matches nothing writes the document back unchanged and says nothing about
+# it, which is how this script ran a real session, asserted on it and reported
+# success while the capture went nowhere: a prose pass had moved the heading's
+# comma to a colon and the string here was never followed. A capture that cannot
+# land is a failure, not a quiet no-op.
+grep -qxF "$heading" "$doc" || {
+  echo "$doc carries no heading '$heading', so the capture has nowhere to land. the section was renamed; name it here too." >&2
+  exit 3
+}
 
 awk -v heading="$heading" -v body="$capture" '
   $0 == heading {
@@ -173,6 +184,15 @@ awk -v heading="$heading" -v body="$capture" '
   !skipping { print }
 ' "$doc" > "$doc.written"
 mv "$doc.written" "$doc"
+
+# And the write is read back: the dated line the capture opens with has to be in
+# the document now, or the replacement did not take.
+stamp="$(head -1 "$capture")"
+grep -qxF "$stamp" "$doc" || {
+  echo "$doc does not carry '$stamp' after the write: the capture did not land." >&2
+  exit 3
+}
+
 
 command -v trash >/dev/null 2>&1 && trash "$work" || echo "the transcripts are at $work"
 
