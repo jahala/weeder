@@ -1,2 +1,2 @@
-{"type": "input", "case": "blocked:copeca:70d669542a", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
-{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: false-positive\nReasoning: X1 flagged a local variable named key holding a loaded public key object, not an added secret or credential, so the rule's claim is not true."}
+{"type": "input", "case": "blocked:copeca:70d669542a", "sha256": "c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119"}
+{"type": "answer", "answer": "Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: false-positive\nReasoning: X1 mistook a local variable named key holding a loaded public key for a published secret, but no secret value or credential was added."}

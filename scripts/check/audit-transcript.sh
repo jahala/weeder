@@ -12,6 +12,8 @@ import sys
 
 CASE_DIR = pathlib.Path("fixtures/adversarial/calibration-audit/blind-2026-09/cases")
 SESSION_DIR = pathlib.Path("fixtures/adversarial/calibration-audit/blind-2026-09/sessions")
+SIGHTED_DIR = pathlib.Path("fixtures/adversarial/calibration-audit/sighted-2026-09/sessions")
+REPORT = pathlib.Path("docs/calibration-2026-09.md")
 complaints = []
 
 
@@ -124,10 +126,35 @@ case_stems = {path.stem for path in case_paths}
 if session_stems - case_stems:
     complaints.append(f"{SESSION_DIR} carries session records without case packets")
 
+# The sighted half is anchored the same way, to the report rather than to a
+# packet. Its answers open with the SHA-256 of the file they were given, and
+# nothing used to read that back: the report's recall section was regenerated,
+# every sighted answer went on naming a revision that no longer existed, and no
+# check said so. A re-grade of a document is worth what the document was.
+sighted = sorted(SIGHTED_DIR.glob("*.events.jsonl")) if SIGHTED_DIR.is_dir() else []
+if not sighted:
+    complaints.append(f"{SIGHTED_DIR} carries no session records")
+else:
+    report_hash = hashlib.sha256(read(REPORT).encode("utf-8")).hexdigest()
+    for path in sighted:
+        events = [json.loads(line) for line in read(path).splitlines() if line.strip()]
+        answer = next((e.get("answer", "") for e in events if e.get("type") == "answer"), "")
+        named = re.match(r"Answered report SHA-256: ([0-9a-f]{64})", answer)
+        if named is None:
+            complaints.append(f"{path} answer does not open by naming the report it read")
+        elif named.group(1) != report_hash:
+            complaints.append(
+                f"{path} was answered against report {named.group(1)[:12]} and {REPORT} is now "
+                f"{report_hash[:12]}: the re-grade is of a document that has changed under it"
+            )
+
 if complaints:
     for complaint in complaints:
         print(complaint, file=sys.stderr)
     sys.exit(1)
 
-print(f"blind audit transcripts are packet-only: {len(case_paths)} sessions")
+print(
+    f"blind audit transcripts are packet-only: {len(case_paths)} sessions; "
+    f"{len(sighted)} sighted sessions name the report as it stands"
+)
 PY
