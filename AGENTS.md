@@ -2,7 +2,7 @@
 
 weed is a static binary that reads what an agent produced and refuses dishonest growth: deleted or weakened tests, skips, stubs, swallowed errors, secrets, guardrail edits, dependency-direction violations. Milliseconds, zero tokens, every finding as SARIF 2.1.0. Three faces on one core: `weed check` judges a diff and may block; `weed scan` judges the tree and never blocks; `weed guard` is the law in git through hooks. `weed bite` proves a test fails without its change. Agents produce; weed decides.
 
-The map in `docs/tend2/` is the plan and the proof. Read the project loop (`docs/tend2/weed.tend2.html`) and then the loop you are working. The governing documents live in the umbrella workspace and are read-only for this repo: `/Users/jahala/conductor/workspaces/plotplot-ai/cape-town-v1/docs/building-the-garden.md` (the law), `.../docs/tend2/weed.tend2.html` (the fit loop), `.../docs/prompts/weed-build-2026-09.md` (the build brief). Where they disagree, the loop beats the brief and the law beats both.
+The map in `docs/tend2/` is the plan and the proof. Read the project loop (`docs/tend2/weed.tend2.html`) and then the loop you are working. The governing documents live in the umbrella's workspace (plotplot's cape-town bed) and are read-only for this repo: `docs/building-the-garden.md` (the law), `docs/tend2/weed.tend2.html` (the fit loop) and `docs/prompts/weed-build-2026-09.md` (the build brief), all under that bed's own `docs/`. Where they disagree, the loop beats the brief and the law beats both.
 
 ## Layout
 

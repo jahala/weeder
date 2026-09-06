@@ -10,3 +10,4 @@ target/
 !/.brand/products/
 /.brand/products/*
 !/.brand/products/weed/
+.DS_Store
