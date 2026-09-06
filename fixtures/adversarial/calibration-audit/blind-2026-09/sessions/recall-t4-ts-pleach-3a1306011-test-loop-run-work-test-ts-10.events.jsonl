@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t4-ts-pleach-3a1306011-test-loop-run-work-test-ts-10.md", "sha256": "f1d3eadd0ca9f1a52b30ac66e801fb9d5ec73a288aca12b92d0b07f6b7702859"}
+{"type": "answer", "answer": "Answered packet SHA-256: f1d3eadd0ca9f1a52b30ac66e801fb9d5ec73a288aca12b92d0b07f6b7702859\nVerdict: miss\nReasoning: The diff genuinely widens TIMEOUT from 1000 to 10000 at the planted site, and weed reported only an unrelated D1 finding elsewhere."}

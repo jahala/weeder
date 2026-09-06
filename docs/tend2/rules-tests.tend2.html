@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rules-tests · weed</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# rules-tests — how a test suite gets quietly weaker
+**Goal.** The rules that read the change to a test suite and name each way it can become weaker without anyone deleting a test: assertions dropped, a tolerance widened, expected values regenerated, an error assertion loosened, a test uncollected by rename, and a mock placed over the very unit under change. T2 blocks by default; the rest warn, for the human at the pull request. Each lands as a failing fixture first in TypeScript/JavaScript, Python, Rust and Go, with a silent neighbour.
+
+## The rules
+
+| Id | Finding | Default | Detection |
+|---|---|---|---|
+| T2 | assertions dropped in a changed test file with no allowance | block | assertion count HEAD against tree per test file: `expect(`, `assert`, `assert.*`, `should`, `assert_eq!`, `assert_ne!`, `assert!`, `t.Error`, `t.Fatal`, `require.`, `assert.` (testify), `self.assert*` |
+| T4 | tolerance widened: a numeric literal in an approximate assertion or a timeout increased | warn | paired removed/added lines within a hunk, the same assertion shape with a larger number: `toBeCloseTo`, `approx`, `pytest.approx`, `abs_diff`, `assert!((a - b).abs() < x)`, `math.Abs`, `timeout`, `setTimeout`, `time.sleep`, `Duration::from_` |
+| T5 | expected values regenerated: snapshot, golden or fixture files changed alongside production code | warn | `__snapshots__/`, `*.snap`, `testdata/`, `golden/`, `fixtures/`, `*.golden`, `*.approved.*` changed in a diff that also changes a prod file |
+| T6 | error assertion weakened: a specific message or type became any error | warn | paired lines: `toThrow('x')` → `toThrow()`, `pytest.raises(X, match=)` → `pytest.raises(Exception)`, `assert_eq!(err, X)` → `is_err()`, `errors.Is(err, X)` → `err != nil` |
+| T7 | test uncollected by rename: a test file or case renamed so the runner no longer collects it | block | rename detection plus naming conventions: `*.test.ts`/`*.spec.ts`, `test_*.py`/`*_test.py`, `#[test]` kept, `*_test.go` and `TestXxx` |
+| M1 | mock over the unit under change: a test in the diff mocks a module whose production file is also in the diff | warn | mock specifiers (`vi.mock`, `jest.mock`, `unittest.mock.patch`, `mockall`, `gomock`) resolved against the diff's prod paths through the reader's import resolution |
+
+tend2's `src/verify/mock.ts` (in `/Users/jahala/conductor/workspaces/feature-map/missoula/`) is prior art for M1 on TypeScript: read it for the shapes it catches, do not port it.
+
+## Tests
+- [x] (code) T2 fires at block level when a changed test file's assertion count drops, per language, and stays silent when assertions move between cases with the count unchanged or a `Weed-allow: T2` trailer carries a reason · tests/rule_t2.rs @a1956d1 · by cli
+- [x] (code) T4 warns when a paired removed/added line widens an approximate assertion or a timeout, per language, and stays silent when the number tightens or an unrelated literal changes · tests/rule_t4.rs @987be18 · by cli
+- [x] (code) T5 warns when a snapshot, golden or fixture file changes alongside a prod file, and stays silent when only the snapshot changes or only prod changes · tests/rule_t5.rs @10f4021 · by cli
+- [x] (code) T6 warns on each weakened error assertion shape per language and stays silent when the assertion becomes more specific · tests/rule_t6.rs @0ee6d46 · by cli
+- [x] (code) T7 fires at block level when a rename takes a test file or case out of the runner's naming convention, per language, and stays silent on a rename that stays inside it · tests/rule_t7.rs @db42b55 · by cli
+- [x] (code) M1 warns when a test in the diff mocks a module whose prod file is also in the diff, per language, and stays silent when the mocked module is outside the diff · tests/rule_m1.rs @fd0dec7 · by cli
+- [x] (code) T1 recognises a test case that moved within the diff, by the same name in another test file or the same body under a rename, and does not count it as a deletion; a case that left the diff altogether still counts; and T1's message says a case is covered by nobody only when no case in the diff covers it, naming where the moved cases went otherwise, in ts, py, rs and go · tests/rule_t1.rs @766c55c · by cli
+- [x] (code) T2 follows an assertion that left a changed test file into the rest of the diff, by the case it sat in or the same line under a rename, counts only what did not arrive anywhere, and its message says behaviour is held by nobody only when none of the lost assertions arrived, naming the files they moved into otherwise, in ts, py, rs and go · tests/rule_t2.rs @e470192 · by cli
+
+## Needs #rules-block
+
+## Tried
+- 2026-09-05 assertion counting is a vocabulary per language and framework; the vocabulary lives in one table in `src/core/rules/check/vocab.rs` so T2, T4 and T6 share it and `weed rules` can print it
+- 2026-09-05 T7 blocks because an uncollected test is a deleted test that still looks present; the fixture's neighbour is the same rename kept collectable
+- 2026-09-05 built by pleach node `rules-tests` (claude/opus, codex audit) in one attempt, 45 minutes, landed through `pleach land` as a14eebe with no conflict. T2 counts each side whole through the vocabulary; T4 pairs a removed line with the added line that replaced it, compares their skeletons, and attributes a number to the last slack word before it (or the first after, for a unit written behind); T6 compares failure qualifiers as sets and leaves a changed claim alone; T7 follows a renamed case by its body; M1 resolves a double by module path or by the symbol it wears against the changed production files. Conductor review found nothing to fix
+- 2026-09-05 the substrate's Go outline carries no type declarations, so `MockFormatter` could not be resolved against `type Formatter interface`; the reader seam now reads Go type declarations itself, single and parenthesised, the way it already reads Rust attributes. Reported to almaty as a gap in tilth-core's outline, not as a workaround
+- 2026-09-05 known and deferred to calibration: T5 names `fixtures/` among the expectation directories and reports one finding per expectation file, so weed judging its own tree warns 285 times on its specimens; the specimen exclusion cape-town ruled on closes it, and whether T5 should collapse to one finding per change is a calibration question
+- 2026-09-06 cape-town, from the fair blind re-grade: six of its eleven disagreements were T1 findings whose own sentence, `covered by nobody`, was untrue because the deleted cases had moved to another file in the same diff. An overclaim in the rule, not a classification error. Shaped above; calibration runs again after it lands so the sharpened rule and the redone ledger are measured together
+- 2026-09-06 built by pleach node `rules-tests` (claude/opus, codex audit), the moved-case check stamped and landed through `pleach land`. T1 follows a lost case into the rest of the diff by name, or by body under a rename, counts only what did not arrive anywhere, and its message says a case is covered by nobody only when none of them did, naming the files the others moved into otherwise; a `moved` fixture set in ts, py, rs and go holds it. Calibration runs again on this rule
+- 2026-09-06 the blind re-grade's last three disagreements are T2 saying the suite reports green over behaviour nobody is holding when the assertions had moved to sibling modules in the same diff: the same overclaim T1 had, in T2's message. Shaped above; the ledger reads those three as claim-true under the audit ruling of the same day
+- 2026-09-06 built by pleach node `rules-tests` (claude/opus, codex audit), the T2 moved-assertion check stamped and landed through `pleach land`. T2 follows a lost assertion into the rest of the diff by the case it sat in or the same line under a rename, counts only what did not arrive anywhere, and names the files the others moved into; a `moved` fixture set in ts, py, rs and go holds it. On the corpus three relocations stop blocking, 23 blocked commits become 20, and the blind sample is redrawn and re-run
+</script>
+<script src="loop.js"></script>

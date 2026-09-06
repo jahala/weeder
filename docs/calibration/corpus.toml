@@ -1,0 +1,38 @@
+# The history calibration judges: the five garden repositories, each named by a
+# source `git fetch` can read and by the full sha its window ends at.
+#
+# The pin is what makes the report a measurement. A default branch moves, and a
+# report taken against "whatever it says today" is a different report tomorrow;
+# a report taken against a sha is the same report until somebody edits this file.
+# Moving a pin is a deliberate edit, and the run after it is a new measurement
+# whose newly blocked commits have to be classified before the bar can be read.
+#
+# No entry names a directory on any one machine, so the corpus is judgeable
+# wherever these sources are reachable. `cargo xtask calibrate --repo
+# <name>=<source>@<sha>` points an entry somewhere else, which is how the suites
+# run against a history they built themselves.
+
+[[repo]]
+name = "tilth"
+source = "https://github.com/jahala/tilth.git"
+tip = "f5c0afa97c6666a3d68dcbd965a4db5a44bc0905"
+
+[[repo]]
+name = "pleach"
+source = "https://github.com/jahala/pleach.git"
+tip = "49c9177c01bef7b51aa74c05ef5a1e514b3a93f9"
+
+[[repo]]
+name = "tend2"
+source = "https://github.com/jahala/tend.git"
+tip = "51035a5c827b1a8c2f49049f07487dcfac9036c6"
+
+[[repo]]
+name = "copeca"
+source = "https://github.com/jahala/copeca.git"
+tip = "fc9c5b9e5f34085755c10746f1d46fd46edf2945"
+
+[[repo]]
+name = "umbel"
+source = "https://github.com/jahala/umbel.git"
+tip = "b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d"

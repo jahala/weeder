@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07671-6ab6-7891-8ec7-23b57ad6f7eb"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 3fd78292a83e812d29a649313b4f9dd1198507d757d98920058fb8694c90d3c6\nVerdict: acceptable\nReasoning: The test file really lost one assert, but the remaining checks still cover the regression by requiring both a truncation marker and surviving body content."}}
+{"type":"turn.completed","usage":{"input_tokens":22531,"cached_input_tokens":20864,"output_tokens":415,"reasoning_output_tokens":329}}

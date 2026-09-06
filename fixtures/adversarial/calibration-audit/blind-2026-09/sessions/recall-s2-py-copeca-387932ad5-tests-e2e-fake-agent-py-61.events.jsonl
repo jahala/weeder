@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-s2-py-copeca-387932ad5-tests-e2e-fake-agent-py-61.md", "sha256": "b121e5f59bc13952e9723fefd26ebd58283d808101faefe1f05d0fcd55f0db07"}
+{"type": "answer", "answer": "Answered packet SHA-256: b121e5f59bc13952e9723fefd26ebd58283d808101faefe1f05d0fcd55f0db07\nVerdict: miss\nReasoning: The added handler catches Exception and only passes, swallowing the error at the planted site, while weed reported no finding."}

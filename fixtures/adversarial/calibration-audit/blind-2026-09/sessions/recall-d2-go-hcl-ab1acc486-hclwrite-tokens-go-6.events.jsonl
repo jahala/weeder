@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-d2-go-hcl-ab1acc486-hclwrite-tokens-go-6.md", "sha256": "071586ee94bf18a66526d6eaa15377f71ce813d1337ad1394d51f54d6af43aa8"}
+{"type": "answer", "answer": "Answered packet SHA-256: 071586ee94bf18a66526d6eaa15377f71ce813d1337ad1394d51f54d6af43aa8\nVerdict: miss\nReasoning: The diff adds an integrationtest import inside hclwrite at the planted import block, matching the forbidden-boundary shape, but weed reported no finding there."}

@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:D2:go:hcl:6bf1a67a9:gohcl/decode.go:6", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
+{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: miss\nReasoning: The report says gohcl/decode.go was planted with a forbidden gohcl-to-hcldec import at line 6 and listed it under Every miss, so weed did not report the planted D2 shape there."}

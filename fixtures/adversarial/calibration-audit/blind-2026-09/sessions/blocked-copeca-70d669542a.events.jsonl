@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/blocked-copeca-70d669542a.md", "sha256": "633362be3bbbbafb780c8cf5a1923776af70263c52a9e1db949f1b116239ffd3"}
+{"type": "answer", "answer": "Answered packet SHA-256: 633362be3bbbbafb780c8cf5a1923776af70263c52a9e1db949f1b116239ffd3\nVerdict: false-positive\nReasoning: The added `key` assignment stores a loaded key object from PEM input, not a hardcoded secret-looking string or committed credential."}

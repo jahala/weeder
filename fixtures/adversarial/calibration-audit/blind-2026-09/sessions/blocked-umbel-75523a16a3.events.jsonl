@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/blocked-umbel-75523a16a3.md", "sha256": "a63b0cff80a82047726fcc5aa71e0407a4d300d0335c3629bd874bfeb3505a13"}
+{"type": "answer", "answer": "Answered packet SHA-256: a63b0cff80a82047726fcc5aa71e0407a4d300d0335c3629bd874bfeb3505a13\nVerdict: true-positive\nReasoning: The added production provider contains a TODO marker explicitly saying transcript tool-call shape still needs verification, so the rule\u2019s claim is true and it flags unfinished production behavior."}

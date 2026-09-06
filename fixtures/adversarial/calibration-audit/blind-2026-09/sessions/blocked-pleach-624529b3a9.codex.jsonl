@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07671-05dd-75a2-a6fd-0dd61da67c5a"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: b42f91b23c7fd457df2c269ddf51799cff6c81c13b0b4e006365760fadf38189\nVerdict: acceptable\nReasoning: The added strings intentionally include private-key-looking markers in detector code and tests, so the claim is true, but they are fixtures/patterns rather than live credentials."}}
+{"type":"turn.completed","usage":{"input_tokens":28092,"cached_input_tokens":20864,"output_tokens":418,"reasoning_output_tokens":328}}

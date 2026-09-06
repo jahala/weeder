@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t6-ts-tend2-6d9a1cf91-test-route-test-ts-143.md", "sha256": "c3731b65b475678443ae3fbc54bc5921be736a11e5219683167541437fa19312"}
+{"type": "answer", "answer": "Answered packet SHA-256: c3731b65b475678443ae3fbc54bc5921be736a11e5219683167541437fa19312\nVerdict: miss\nReasoning: The assertion was weakened from expecting an error matching /sample/ to any thrown error, and weed reported no finding at the planted site."}

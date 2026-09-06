@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07671-0627-7020-84ac-c8ad250c2f02"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 630b3807eeeecb4113b4ecf6d6d1e5b35c50404c57404b2a82fb4432da7ce3b6\nVerdict: true-positive\nReasoning: The changed test file drops an assertion comparing dist/loop.js with dist/loop.global.js, reducing coverage from five assertions to four and weakening a checked behavior."}}
+{"type":"turn.completed","usage":{"input_tokens":23940,"cached_input_tokens":20864,"output_tokens":94,"reasoning_output_tokens":0}}

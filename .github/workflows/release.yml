@@ -1,0 +1,144 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Fail before anything is published if the tag, the crate and the npm wrapper
+  # disagree about which weed this is.
+  version-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v6
+      - name: The tag, Cargo.toml and npm/package.json name one version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          CARGO_VER=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          NPM_VER=$(node -p "require('./npm/package.json').version")
+          GARDEN_VER=$(node -p "require('./garden.json').version")
+          echo "Tag: $TAG  Cargo: $CARGO_VER  npm: $NPM_VER  garden: $GARDEN_VER"
+          if [ "$CARGO_VER" != "$TAG" ]; then
+            echo "::error::Cargo.toml is $CARGO_VER and the tag is $TAG"
+            exit 1
+          fi
+          if [ "$NPM_VER" != "$TAG" ]; then
+            echo "::error::npm/package.json is $NPM_VER and the tag is $TAG, the wrapper would fetch a release that is not this one"
+            exit 1
+          fi
+          if [ "$GARDEN_VER" != "$TAG" ]; then
+            echo "::error::garden.json is $GARDEN_VER and the tag is $TAG, the umbrella reads the manifest to know what it verified"
+            exit 1
+          fi
+
+  build:
+    needs: version-check
+    permissions:
+      contents: write # softprops/action-gh-release uploads release assets
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            cross: true
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+            cross: true
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            cross: false
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            cross: false
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            cross: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # ratchet:dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # ratchet:Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      # cross builds the linux targets in docker, so the musl binaries are
+      # static wherever this runs.
+      - name: Install cross
+        if: matrix.cross
+        run: cargo install cross --locked
+
+      - name: Build
+        run: |
+          if [ "${{ matrix.cross }}" = "true" ]; then
+            cross build --release --locked --target ${{ matrix.target }}
+          else
+            cargo build --release --locked --target ${{ matrix.target }}
+          fi
+        shell: bash
+
+      - name: Package (unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar czf ../../../weed-${{ matrix.target }}.tar.gz weed
+          cd ../../..
+
+      - name: Package (windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          cd target/${{ matrix.target }}/release
+          7z a ../../../weed-${{ matrix.target }}.zip weed.exe
+          cd ../../..
+
+      - uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # ratchet:softprops/action-gh-release@v3
+        with:
+          files: |
+            weed-*.tar.gz
+            weed-*.zip
+          # Notes on one leg only. When the release already exists the action
+          # appends freshly generated notes to the body, so every extra matrix
+          # leg would add another copy of what changed.
+          generate_release_notes: ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
+
+  publish-crate:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # ratchet:dtolnay/rust-toolchain@stable
+      - name: Publish weed
+        run: cargo publish --locked
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    # Trusted publishing (OIDC): no token to leak, and provenance is automatic.
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # ratchet:actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm >= 11.5.1, and `latest` moved to npm 12,
+      # which wants a newer node than the runner guarantees.
+      - run: npm install -g npm@11
+      - run: npm publish ./npm

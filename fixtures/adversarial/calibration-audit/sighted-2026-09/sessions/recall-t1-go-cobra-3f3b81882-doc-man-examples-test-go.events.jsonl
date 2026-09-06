@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T1:go:cobra:3f3b81882:doc/man_examples_test.go", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
+{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: miss\nReasoning: The report states the T1 mutation deleted Go test example `ExampleGenManTree` in `doc/man_examples_test.go` and weed did not report that planted deletion."}

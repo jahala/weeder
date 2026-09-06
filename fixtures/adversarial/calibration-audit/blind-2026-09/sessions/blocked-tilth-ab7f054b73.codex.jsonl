@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07671-7a79-7002-bc52-861a04871c22"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 61b99a1fd81f2ec041a65589f58a09662a741d75185f5963c696904bbb92a733\nVerdict: true-positive\nReasoning: The diff deletes tilth_read_schema_is_paths_only, including three assertions enforcing paths-only schema behavior, while reintroducing singular path support."}}
+{"type":"turn.completed","usage":{"input_tokens":25516,"cached_input_tokens":20864,"output_tokens":158,"reasoning_output_tokens":73}}

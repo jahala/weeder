@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/blocked-umbel-059b4c4677.md", "sha256": "9e0e2255c290a571759565737ebb40905ee95a7b8a25427bc31653259b726f02"}
+{"type": "answer", "answer": "Answered packet SHA-256: 9e0e2255c290a571759565737ebb40905ee95a7b8a25427bc31653259b726f02\nVerdict: acceptable\nReasoning: The assertion count in the changed codex unit test did drop, but the removed checks target obsolete cwd hook behavior and are replaced by focused checks for the new shared CODEX_HOME design."}

@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07671-ff09-7021-8875-bd4e25dbb3d9"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: f1d3eadd0ca9f1a52b30ac66e801fb9d5ec73a288aca12b92d0b07f6b7702859\nVerdict: miss\nReasoning: The diff genuinely widens TIMEOUT from 1000 to 10000 at the planted site, and weed reported only an unrelated D1 finding elsewhere."}}
+{"type":"turn.completed","usage":{"input_tokens":22235,"cached_input_tokens":20864,"output_tokens":133,"reasoning_output_tokens":40}}

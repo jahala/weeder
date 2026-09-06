@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07672-11e3-7ec3-b433-d4a2823ba738"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 148c9f9fcda43a1a491a0d01c129470388997eb5fe7d1f9ae8c5b463c0957b6e\nVerdict: miss\nReasoning: The diff weakens toThrow(/description/) to toThrow(), so the error assertion stopped naming the error and weed reported no finding."}}
+{"type":"turn.completed","usage":{"input_tokens":22225,"cached_input_tokens":20864,"output_tokens":88,"reasoning_output_tokens":0}}

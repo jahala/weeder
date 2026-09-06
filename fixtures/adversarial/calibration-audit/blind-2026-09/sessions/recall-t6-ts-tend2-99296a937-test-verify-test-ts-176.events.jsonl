@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t6-ts-tend2-99296a937-test-verify-test-ts-176.md", "sha256": "3629239d814b259559d529b7f94dd7277eaad408b55b42672980b984706fa9e7"}
+{"type": "answer", "answer": "Answered packet SHA-256: 3629239d814b259559d529b7f94dd7277eaad408b55b42672980b984706fa9e7\nVerdict: miss\nReasoning: The diff weakens the assertion from checking /description/ to a bare toThrow(), and weed reported no finding at the planted site."}

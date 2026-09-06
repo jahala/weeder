@@ -1,0 +1,31 @@
+{
+  "name": "@plotplot/weed",
+  "version": "0.1.0",
+  "description": "The judge of the diff, refuses deleted tests, skips, stubs, swallowed errors and secrets, as SARIF",
+  "bin": {
+    "weed": "run.js"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "files": [
+    "install.js",
+    "run.js",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jahala/weed.git"
+  },
+  "keywords": [
+    "sarif",
+    "code-review",
+    "git-hooks",
+    "static-analysis",
+    "ai-agents"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}

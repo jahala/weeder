@@ -1,0 +1,2 @@
+{"type": "input", "case": "blocked:umbel:059b4c4677", "sha256": "4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb"}
+{"type": "answer", "answer": "Answered report SHA-256: 4c1201aa6175e4ae57482967cabf0f1a635aaa28ff05959f1d33653c8ac004bb\nVerdict: acceptable\nReasoning: T2 correctly caught three dropped assertions, but they pinned the superseded per-worker hooks path while the shared CODEX_HOME design gained replacement coverage in the same and added test files."}

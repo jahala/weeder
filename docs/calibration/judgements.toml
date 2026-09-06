@@ -1,0 +1,143 @@
+# The classifications behind docs/calibration-2026-09.md.
+#
+# weed counts what it blocked; whether a block was right is a person's reading
+# of the diff, and this is where that reading is written down. One entry per
+# blocked commit: the repository, the full sha, the class, and one line saying
+# what the finding claims and why that is the answer.
+#
+# The class follows the finding's own sentence, and nothing else:
+#
+#   false-positive  what the finding says is untrue of this change
+#   acceptable      what it says is true and the change was fine anyway, so the
+#                   block is friction the rule was designed to create
+#   true-positive   what it says is true and something really was weakened
+#
+# A finding says more than a count. `21 assertions went out of this file ... so
+# the suite reports green over behaviour nobody is holding` claims a count and a
+# consequence, and where the same change puts those assertions in another file
+# the consequence is untrue, whatever the count says. That is a false positive
+# here, and how welcome the change was never enters it.
+#
+# A blocked commit with no entry here counts as a false positive, so the bar can
+# only be met by reading the diffs. `[commit.rules.<RULE>]` gives one rule of a
+# multi-rule block its own class and its own line, where it deserves one.
+
+[[commit]]
+repo = "tilth"
+sha = "11aef933c92ce44b878356619d918a8893e72444"
+classification = "acceptable"
+reasoning = "T1 says src/mcp/tools/files.rs went with 8 cases and whatever it covered is now covered by nobody. The same commit adds src/mcp/tools/list.rs with 8 cases over the same ground, tool_files_empty_patterns_errors reappearing as tool_list_empty_patterns_errors and so on down the file. The count is right and the sentence under it is not. Under the ruling of 2026-09-06 the claim is the drop itself, which is true of this change, so this is claim-true; the sentence about what is held is the rule's own overclaim and is on rules-tests to fix."
+
+[[commit]]
+repo = "tilth"
+sha = "10bec56a41d9440f159340f99aca01a9dd2d5d85"
+classification = "acceptable"
+reasoning = "T2 says src/mcp/tools/search.rs went from 3 assertions to 2, and it did. What went was a substring match on real search output, which the commit says flakes when search surfaces its own source text; resolve_scope's own unit tests still pin the refusal-versus-default behaviour, and the case still pins that tool_search propagates success. A test losing a check is worth a person's eye, and this one survives it."
+
+[[commit]]
+repo = "tilth"
+sha = "7684e99e86c744747d9868009700617c4e079487"
+classification = "acceptable"
+reasoning = "T2 says src/budget.rs went from 10 assertions to 9, and it did: the cherry-picked case called apply_with_info, which exists only in the fork, and the assertion on where the cut landed went with the call. The regression it guards is still guarded, because a cut at zero leaves no x in the output and the case still demands one."
+
+[[commit]]
+repo = "tilth"
+sha = "ab7f054b737958b4fc98401ad411c6861c39a03f"
+classification = "true-positive"
+reasoning = "T1 says a case left src/mcp/tools/definitions.rs, 3 down to 2, and T2 says 3 assertions went with it, 9 down to 6. Both are true, nothing in the change picks them up, and what they held was the paths-only tilth_read schema, which this commit reopens to a singular path. The schema is now pinned by nobody."
+
+[[commit]]
+repo = "tilth"
+sha = "3ff87caf55335a6e7bc937884f80105e7c55508c"
+classification = "acceptable"
+reasoning = "T1 and T2 say src/index/bloom.rs lost a case and 6 assertions, and it did. They exercised private fields of the hand-written BloomFilter this commit replaces with fastbloom, so there is nothing left for them to hold. A suite shrinking under a swapped implementation is exactly what a person should see."
+
+[[commit]]
+repo = "tilth"
+sha = "59c87110abe9880e63d22fddfd5e515ce35a976d"
+classification = "acceptable"
+reasoning = "T1 and T2 say src/mcp.rs lost a case and 4 assertions, 17 down to 16 and 31 down to 27, and it did. They pinned a hand-rolled percent decoder that this commit hands to the percent-encoding crate, so the behaviour they held is now the library's."
+
+[[commit]]
+repo = "tilth"
+sha = "d422a325fc69ce56bc2aaac6c973015ea0463097"
+classification = "acceptable"
+reasoning = "T2 says src/install.rs went from 66 assertions to 65, and it did. The one that went checked the entry_style field this commit folds into ConfigFormat, and the JsonLocal match that replaces it is asserted in the same case."
+
+[[commit]]
+repo = "tilth"
+sha = "bd36a436379f864ff3ff21268053d898ff5a0bf2"
+classification = "acceptable"
+reasoning = "T1 says src/index/symbol.rs went with 6 cases, and it did. SymbolIndex was allocated and threaded through the searches and never consulted, and this commit deletes the type; the cases exercised the dead allocator, so what they covered stopped existing in the same breath. A file of tests leaving the tree is worth reading either way."
+
+[[commit]]
+repo = "pleach"
+sha = "624529b3a972db597b3a8843c7723c667cfe2da5"
+classification = "false-positive"
+reasoning = "X1 says a private key block was added to src/core/hygiene.ts and to test/unit/hygiene.test.ts, and that a credential in a commit is a credential published. Both hits are the regular expression that pleach's own secret detector matches a private key header with, and its fixture. There is no credential to rotate."
+
+[[commit]]
+repo = "tend2"
+sha = "067730ddd0c737150fd26df604d06b10fb0deeb4"
+classification = "acceptable"
+reasoning = "T2 says test/renderer-fresh.test.ts went from 5 assertions to 4, and it did. The one that went demanded dist/loop.js and dist/loop.global.js be byte-identical, and this commit stops emitting the second file; the case still demands the GENERATED banner and the css header. An assertion cannot hold a file that is no longer built."
+
+[[commit]]
+repo = "tend2"
+sha = "3adc642ce1dff47cd24b397f2988a05749d716de"
+classification = "false-positive"
+reasoning = "T1 says a case disappeared from test/renderer-fresh.test.ts, 2 declared down to 1, and that the behaviour it held is unwatched. The case was not deleted: it became a loop over the sibling directories, so the file runs one it() declaration over several inputs. The declaration count fell and the coverage did not."
+
+[[commit]]
+repo = "tend2"
+sha = "bf2754689c6bf7615b3e99570ca3b585ec8f94d7"
+classification = "acceptable"
+reasoning = "T1 says test/season.test.ts went with 4 cases, and it did. The season command it tested is removed by the same commit, which folds orientation into one command with its own tests, so the cases went where the feature went. A suite leaving the tree is worth a person's eye."
+
+[[commit]]
+repo = "tend2"
+sha = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
+classification = "acceptable"
+reasoning = "T1 says forty-odd test files went with thousands of cases, and they did. This is the v1 sunset: 240 files and 94763 lines out, the adapters, the CLI and the core they tested leaving in the same commit and recoverable at the v1-final tag. Nothing is less covered afterwards because nothing they covered is still shipped, and a deletion this size is what a gate should stop a reader on."
+
+[[commit]]
+repo = "tend2"
+sha = "78fed73b0c24080221ebbe6f06a17b1495be7376"
+classification = "acceptable"
+reasoning = "T1 says the spikes/loop-hole test files went with their cases, and they did. The spike was killed: 50 of its non-test files go in the same commit, so the code under those cases left with them."
+
+[[commit]]
+repo = "tend2"
+sha = "52b97e43ced4160b09f1e85be25f82b87a0595ae"
+classification = "false-positive"
+reasoning = "X1 says a secret-looking value was added, assigned to `detail-meta__key` and to `journey-row__key`. Both hits are class attributes in the renderer's html builder, and X1 read `class=\"...__key\">` as an assignment. The value is markup."
+
+[[commit]]
+repo = "copeca"
+sha = "70d669542aa6b6a59837fc5cb536363dbd02a445"
+classification = "false-positive"
+reasoning = "X1 says a secret-looking value was added, assigned to `key`, in src/copeca/results/signing.py. The line is `key = serialization.load_pem_public_key(pem)`: a local holding the result of a call inside a public-key loader. Nothing was published and there is nothing to rotate."
+
+[[commit]]
+repo = "umbel"
+sha = "89c088bc0881ee5de3e77adfb1720d95cd8f4c4e"
+classification = "acceptable"
+reasoning = "T2 says test/integration/tmux.test.ts went from 18 assertions to 17, and it did. The one that went was `expect(Array.isArray(sessions)).toBe(true)` beside a `toEqual([])` that already implies it; the case now runs the adapter in a child process against an empty socket directory rather than killing every tmux server on the machine. It checks the same thing and destroys less."
+
+[[commit]]
+repo = "umbel"
+sha = "059b4c46770a07b03116df2e70fb3d3f9788c332"
+classification = "acceptable"
+reasoning = "T2 says test/unit/providers/codex.test.ts went from 33 assertions to 30, and it did. The ones that went pinned hooks.json in the worker's own cwd, which this commit replaces with a shared CODEX_HOME, and the replacement design is asserted in the same file and in two more test files the commit adds."
+
+[[commit]]
+repo = "umbel"
+sha = "75523a16a3f241de2064b623d3d3035398715e9b"
+classification = "true-positive"
+reasoning = "S1 says a TODO reached production code at src/core/providers/opencode.ts. It is there, it reads `verify tool-call part shape against a real tool-using transcript and refine field extraction`, and the comment above it says the shapes are inferred. Unfinished parsing shipped as behaviour, which is what S1 is for."
+
+[[commit]]
+repo = "umbel"
+sha = "cc3cc0c37ca221f101ae39ebea2f2b5fc1cb031c"
+classification = "true-positive"
+reasoning = "S1 says a TODO reached production code at src/core/providers/codex.ts and at src/core/providers/gemini.ts. Both are there, and both say the tool-call event shape is unverified against a real transcript; the file's own comment admits tool extraction may be partial. The markers name work that did not happen before the code shipped."

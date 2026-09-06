@@ -1,0 +1,6 @@
+name: Set the toolchain up
+runs:
+  using: composite
+  steps:
+    - run: go mod download -x
+      shell: bash
