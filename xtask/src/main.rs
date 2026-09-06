@@ -77,10 +77,11 @@ struct CalibrateArgs {
     /// docs/calibration/first-run.toml.
     #[arg(long, value_name = "path")]
     first_run: Option<PathBuf>,
-    /// Read the independent re-grade from here instead of
-    /// docs/calibration-audit-2026-09.md.
+    /// Read the independent re-grade from here instead of every
+    /// docs/calibration-audit*.md the repository carries. Repeat it to name
+    /// more than one.
     #[arg(long, value_name = "path")]
-    audit: Option<PathBuf>,
+    audit: Vec<PathBuf>,
     /// Write the report here instead of docs/calibration-2026-09.md.
     #[arg(long, value_name = "path")]
     out: Option<PathBuf>,
@@ -137,11 +138,17 @@ fn run_calibrate(args: &CalibrateArgs) -> Result<(), Box<dyn Error>> {
         .clone()
         .unwrap_or_else(|| root().join(first_run::DEFAULT_PATH));
     let first = first_run::read(&first_path, &labelled(&first_path))?;
-    // One named file when the caller points at it, which is how the suites
-    // probe the wording; otherwise every audit the repository carries.
-    let audit = match &args.audit {
-        Some(path) => audit::read(path, &labelled(path)),
-        None => audit::read_all(&root()),
+    // The files a caller points at, which is how the suites probe the wording;
+    // otherwise every audit the repository carries.
+    let audit = if args.audit.is_empty() {
+        audit::read_all(&root())
+    } else {
+        let named: Vec<(PathBuf, String)> = args
+            .audit
+            .iter()
+            .map(|path| (path.clone(), labelled(path)))
+            .collect();
+        audit::read_many(&named)
     };
     let scratch = tempfile::tempdir()?;
 
