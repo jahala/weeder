@@ -26,6 +26,10 @@ pub struct TreeFile {
     /// What the file defines, empty where it defines nothing or where weed has
     /// no grammar for it.
     pub outline: Outline,
+    /// The file read once as code, comment and literal. The face makes that
+    /// pass on the way in, so a rule that asks what a line is made of reads the
+    /// one scan and no rule makes a second.
+    pub syntax: Mask,
 }
 
 impl TreeFile {
@@ -55,11 +59,11 @@ impl TreeFile {
         self.lang() != Lang::Other
     }
 
-    /// The file read as the language it is written in, so a rule can tell the
-    /// program from what the program merely says.
+    /// The file read as the language it is written in, as the face scanned it,
+    /// so a rule can tell the program from what the program merely says.
     #[must_use]
-    pub fn mask(&self) -> Mask {
-        Mask::of(self.lang(), self.text())
+    pub fn mask(&self) -> &Mask {
+        &self.syntax
     }
 
     /// The last segment of the path.

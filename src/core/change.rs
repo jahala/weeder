@@ -51,6 +51,11 @@ pub struct Side {
     pub size: Option<u64>,
     /// Whether this side's bytes carry no lines to judge.
     pub binary: bool,
+    /// The file read once as code, comment and literal. The face makes that
+    /// pass on the way in and hands the result to every rule, so a file weed
+    /// cannot parse, and one it can, is passed over once however many rules
+    /// ask what a line of it is made of.
+    pub syntax: Mask,
 }
 
 impl Side {
@@ -85,10 +90,10 @@ impl Side {
         self.tests.cases().count()
     }
 
-    /// The file read as the language it is written in.
+    /// The file read as the language it is written in, as the face scanned it.
     #[must_use]
-    pub fn mask(&self) -> Mask {
-        Mask::of(self.lang(), self.text())
+    pub fn mask(&self) -> &Mask {
+        &self.syntax
     }
 
     /// The language this side's file is written in, or `Lang::Other` where the
