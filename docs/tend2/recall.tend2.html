@@ -15,8 +15,8 @@
 One mutation per case so a hit is unambiguous. Per rule, the injector finds a site in a real commit's tree where the shape can be planted (a test file with two or more cases for T1, an `expect` for T2, a production function body for S1, a config assignment for X1, a workflow file for C1, any text file for G1) and plants exactly one instance; a commit with no site for a rule contributes no case for that rule and is counted as such. The corpus is up to the last 200 commits on each repo's default branch, the same commits calibration reads. Cases are written under a temp dir as `before/` and `after/` pairs so a missed case can be replayed by hand with the fixture harness. `docs/calibration-2026-09.md` gains a recall section: per rule, per language, cases, hits, misses, recall, and every miss named by repo, commit and site.
 
 ## Tests
-- [ ] (code) `cargo xtask mutate` injects one anti-pattern per case for every check rule in each of ts, py, rs and go from the calibration corpus, runs weed on each, and writes the recall section of `docs/calibration-2026-09.md` with every miss named · scripts/check/recall.sh
-- [ ] (code) recall for T1, T3, S1, X1, C1 and G1 is at or above 95 percent per language, and every warn-level rule's recall is reported · scripts/check/recall-bar.sh
+- [x] (code) `cargo xtask mutate` injects one anti-pattern per case for every check rule in each of ts, py, rs and go from the calibration corpus, runs weed on each, and writes the recall section of `docs/calibration-2026-09.md` with every miss named · scripts/check/recall.sh @901b405 · by cli
+- [x] (code) recall for T1, T3, S1, X1, C1 and G1 is at or above 95 percent per language, and every warn-level rule's recall is reported · scripts/check/recall-bar.sh @4d5a277 · by cli
 
 ## Needs #rules-prod
 
