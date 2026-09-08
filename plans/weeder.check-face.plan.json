@@ -1,0 +1,95 @@
+{
+  "goal": "A static Rust binary that reads what an agent produced and refuses the growth that should not be there, deleted or weakened tests, skips, stubs, swallowed errors, secrets, guardrail edits, dependency-direction violations, in milliseconds, with zero tokens, every finding as SARIF 2.1.0. `weeder check` judges a diff and may block; `weeder scan` judges the tree and never blocks; `weeder guard` is the law in git through hooks; `weeder bite` proves a test fails without its change. For maintainers drowning in agent-authored pull requests who need a deterministic gate before they read, for teams running agents on several harnesses who want one law, and for the garden's own fleets through pleach.",
+  "source": "docs/tend2#check-face",
+  "nodes": [
+    {
+      "id": "check-face",
+      "work": {
+        "prompt": "You are a worker in a build loop. Make the checks below pass, honestly.\nNobody reviews your prose \u2014 only the verifier's verdict counts, so put all effort into the work itself.\n\n## The goal\n`weeder check` is the primary face: it judges the index plus the working tree against HEAD by default (what pleach's smoke gate sees after it stages a worker's files), `--staged` judges the index alone (the pre-commit face), `--base <ref>` judges the tree against a ref (CI). It prints SARIF when stdout is not a terminal and a table when it is, `--format` overrides, and it exits 0, 2 or 3 as the contract says. `weeder rules` prints the catalogue. The git seam lives here, and the first rule runs end to end: G1, conflict markers.\n\n## Your environment\n- You are at the repository root of an isolated git worktree. Work here directly.\n- Leave your changes in the working tree; do not create branches, commit, or push.\n- The loop file (docs/tend2/check-face.tend2.html) is your full context \u2014 read it, including its narrative. It is READ-ONLY for you.\n\n## Checks to close\n- (code) the suppression tokens are `Weeder-allow:` in a commit message and `weeder-allow <RULE>:` on a line, and the gate honours only those: a `Weed-allow:` trailer neither suppresses nor draws a complaint; every finding's next sentence, `SKILL.md`, `docs/rules.md`, the README and every fixture that carries a trailer teach the new token; the reason written beside the parser in `src/core/suppress.rs` is rewritten to say what the re-seal cost and that the seal no longer covers wording \u00b7 evidence expected at: tests/suppress_token.rs\n- (code) `cargo xtask suppressions` counts both spellings of the trailer in history, since a history read is not the gate, and reports them as one rate \u00b7 evidence expected at: xtask/tests/suppressions.rs\n- (code) with no flags `weeder check` includes every untracked, not-ignored file as an added file (before side absent, after side read from the working tree, listed as `tree_files` lists them so the log stays deterministic), and `weeder hook <harness>` at the stop event does the same, while `--staged`, `--base` and the pre-push range keep their meaning; `--untracked <include|exclude>` defaults to include in those two modes and to exclude elsewhere, `SKILL.md` names it and `tests/skill_md.rs` holds it to `--help`; a repository whose only change is an untracked test file carrying a skip marker reports T3 plainly, nothing with `--staged`, nothing with `--untracked exclude`, byte-identical across two runs; G2 weighs an untracked blob under the mebibyte cap and X2 reports an untracked file outside the scope \u00b7 evidence expected at: tests/check_untracked.rs\n\n## Definition of done \u2014 verify yourself before finishing\nYou are done when this exact command exits 0 (it is the gate the conductor will run):\n\n    tend2 verify docs/tend2/check-face.tend2.html --repo-root . --force --expect-payload 8e22d0c43cc7 --runner 'bash scripts/check/run.sh {evidence}'\n\nRun it yourself. If it does not exit 0, you are not done. Do not declare success in prose that a command disagrees with.\n\n## Already tried (do not repeat)\n- 2026-09-05 default mode chosen from pleach's own gate: `accept.smoke` runs in the node worktree after scoped staging, exit-code gated, no arguments passed (pleach 0.0.1's `src/loop/run-node.ts`, the smoke block)\n- 2026-09-05 G1 lands here, not in rules-block, so the pipeline is proven end to end by the simplest rule before the catalogue is built on it\n- 2026-09-05 the CLI is `clap` with derive; subcommands for scan, guard, bite and hook are added by their own loops, each in its own file under `src/faces/`\n- 2026-09-05 the fixture harness moved here from core's Tried: core delivered no `tests/common/mod.rs`, and this is the first loop that needs one\n- 2026-09-05 built by pleach node `check-face` (claude/opus, codex audit) in two attempts, 27 minutes; the first attempt was refused by pleach's own marker gate because the G1 fixtures carried real conflict markers, so the worker invented `{{weeder:ours}}` placeholders the harness expands on the way into the temp repo. Landed by `pleach land` as a merge commit 6537357\n- 2026-09-05 conductor review, fixed inline and re-verified: `--scope` had become a filter that dropped out-of-scope files from the judgement, which would have made X2 impossible; my own loop wording (\"restricts the judged paths\") caused it. Every file is judged now and the scope is carried for X2. And trailers were read from git's `COMMIT_EDITMSG`, which at pre-commit time holds the previous commit's message and lingers after it, so a `Weed-allow` could silence an unrelated later change; the pending message now arrives only through `--message-file`, and a test pins that the old message never counts\n- 2026-09-05 refined with the umbrella's reading of `--strict`: a suppressed finding keeps its `suppressions` entry in the SARIF and gets its rule's level back, reported, not honoured, instead of being dropped from the log; the renderer no longer forces `note` on a suppressed finding, the face decides\n- 2026-09-05 the second half of `--strict` (a file a rule cannot evaluate fails closed) has nothing to act on until the reader seam lands; the loop that lands it owns that clause\n- 2026-09-08 cape-town, deciding the trailer for the tool's life rather than for today's evidence: the tokens rename with the tool before any release, `Weeder-allow:` and `weeder-allow <RULE>:`; the price is forty fresh auditor reads, cheapest now before an external commit carries the old token, and the seal moves off the wording so it is paid once (calibration-audit's Tried). Both spellings are counted in history because a history read is not the gate; honouring both in the gate would be the shim weeder does not ship\n- 2026-09-08 owner's issue 11, from an audit of a 151-file agent tree: 131 of the changed files were untracked, plain `check` saw 3 errors and the staged tree 20, because `git diff HEAD` never lists a file that was never added; the stop event is the moment weeder exists for. Shaped above; the pre-commit hook keeps judging the index alone, because a commit carries the index\n\n## Rules\n- Write the failing test first where it does not exist; then make it pass.\n- You must not edit the loop file \u2014 check states belong to the verifier.\n- You must not weaken, skip, or mock the unit under test to force a green; mocked-unit evidence is detected and refused.\n- Solve the CLASS of problem the claim names, not the test's example inputs. Hardcoding fixture strings, phrases, or patterns from the check or its tests into source (lookup tables, regex lists, phrase maps) is refused work even when the test goes green \u2014 it is an answer key, not a product.\n- If the claim cannot be met generically with what you have, that is a real finding: write BLOCKED.md naming the missing capability (a model, a library, a redesign, a split of the check into honest tiers) instead of faking generality.\n- Production quality only: no stubs, no TODOs, no placeholder implementations; match the style of the surrounding code.\n- Scratch (probes, experiments, packets, session logs) goes under `$TMPDIR`, written through the shell only, never with the Write or Edit tool, and never under `.loop-scratch/` or anywhere in this worktree: the collector stages every path the editor touched, a path outside the worktree kills the delivery, and the hygiene gate judges whatever is left in the tree, including its secret scan.\n- If you are genuinely blocked, write BLOCKED.md at the repo root \u2014 what you tried, what stopped you, what a fix needs. An honest BLOCKED.md is a good outcome; a faked green is the worst possible one."
+      },
+      "accept": {
+        "smoke": "tend2 verify docs/tend2/check-face.tend2.html --repo-root . --force --expect-payload 8e22d0c43cc7 --runner 'bash scripts/check/run.sh {evidence}'",
+        "audit": {
+          "command": "tend2 verify docs/tend2/check-face.tend2.html --repo-root . --force --expect-payload 8e22d0c43cc7 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
+          "provider": "codex",
+          "selfIntegrity": true
+        }
+      },
+      "policy": {
+        "timeoutMs": 5400000
+      },
+      "worker": {
+        "provider": "claude",
+        "model": "opus"
+      },
+      "needs": []
+    }
+  ],
+  "warnings": [
+    {
+      "loopId": "calibration-audit",
+      "code": "unwired-modules",
+      "message": "10 checks cite 9 src modules (plans/cast.json, scripts/check/calibration-agreement.sh, docs/calibration-audit-2026-09.md, docs/calibration-audit-blind-2026-09.md, docs/calibration/refused/blind-2026-09-first/, docs/calibration/refused/, fixtures/adversarial/calibration-audit/, scripts/audit/blind-run.sh, scripts/audit/sighted-run.sh), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "calibration",
+      "code": "unwired-modules",
+      "message": "11 checks cite 6 src modules (docs/calibration-2026-09.md, garden.json, scripts/check/calibration-bar.sh, docs/calibration/corpus.toml, docs/calibration-audit-2026-09.md, docs/calibration/ruling-2026-09-06.toml), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "core",
+      "code": "unwired-modules",
+      "message": "5 checks cite 5 src modules (Cargo.toml, weeder.toml, AGENTS.md, CLAUDE.md, src/core/), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "garden-fit",
+      "code": "unwired-modules",
+      "message": "7 checks cite 13 src modules (Cargo.toml, schemas/garden.schema.json, .brand/products/weeder/identity.md, .github/workflows/ci.yml, .github/workflows/release.yml, npm/package.json, npm/, garden.json, scripts/check/calibration-bar.sh, SKILL.md, .brand/products/weeder/, examples/ci/github.yml, README.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "hardening",
+      "code": "unwired-modules",
+      "message": "5 checks cite 6 src modules (tests/determinism.rs, fixtures/adversarial/, tests/sarif_order.rs, src/core/, tests/core_hostile.rs, tests/check_hostile.rs), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "hidden-tests",
+      "code": "unwired-modules",
+      "message": "4 checks cite 4 src modules (tests/, fixtures/, docs/rules.md, SKILL.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "hooks",
+      "code": "unwired-modules",
+      "message": "5 checks cite 3 src modules (docs/proof-2026-09.md, scripts/proof/claude-stop.sh, scripts/proof/gemini-stop.sh), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "recall",
+      "code": "unwired-modules",
+      "message": "4 checks cite 2 src modules (docs/calibration-2026-09.md, docs/calibration/corpus.toml), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "rules-block",
+      "code": "unwired-modules",
+      "message": "12 checks cite 5 src modules (weeder.toml, AGENTS.md, CLAUDE.md, .github/workflows/, docs/rules.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "rules-prod",
+      "code": "unwired-modules",
+      "message": "8 checks cite 3 src modules (Cargo.toml, .gitignore, weeder.toml), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "sarif",
+      "code": "unwired-modules",
+      "message": "4 checks cite 2 src modules (schemas/sarif-schema-2.1.0.json, docs/sarif.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "scan",
+      "code": "unwired-modules",
+      "message": "9 checks cite 5 src modules (CLAUDE.md, AGENTS.md, README.md, /, Cargo.toml), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "tilth-core",
+      "code": "unwired-modules",
+      "message": "4 checks cite 5 src modules (.context/tilth-core, src/seams/reader.rs, Cargo.toml, src/, src/core/), but no single check's evidence spans 2+ of them"
+    }
+  ]
+}

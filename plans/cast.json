@@ -65,5 +65,9 @@
   },
   "calibration-audit": {
     "provider": "codex"
+  },
+  "hidden-tests": {
+    "provider": "claude",
+    "model": "opus"
   }
 }

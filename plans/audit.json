@@ -49,5 +49,8 @@
   },
   "calibration-audit": {
     "provider": "claude"
+  },
+  "hidden-tests": {
+    "provider": "codex"
   }
 }
