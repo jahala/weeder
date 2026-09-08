@@ -2,7 +2,7 @@
 brand:
   # plotplot is the umbrella brand and the brand repo.
   source: https://github.com/jahala/plotplot-ai.git
-  version: v2.0.0
+  version: v2.1.0
   # weeder's product layer is canonical in the weeder repo at .brand/products/weeder/;
   # the umbrella holds a staging copy. Commit the layer here; ignore the rest of .brand/.
   product: weeder

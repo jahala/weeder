@@ -39,9 +39,14 @@ done
 
 # The version is a name at the source when the source carries it as a tag or a
 # branch, and the brand's own version field is what settles it either way.
-sha="$(git ls-remote "$source_url" \
-  "refs/tags/$version^{}" "refs/tags/$version" "refs/heads/$version" 2>/dev/null |
-  head -1 | cut -f1 || true)"
+# An annotated tag answers twice, once as the tag object and once peeled to the
+# commit it names, and ls-remote lists them by name, tag object first. The
+# peeled line is the commit, so it is taken first; a lightweight tag or a branch
+# answers once and is taken as it is.
+answers="$(git ls-remote "$source_url" \
+  "refs/tags/$version^{}" "refs/tags/$version" "refs/heads/$version" 2>/dev/null || true)"
+sha="$(printf '%s\n' "$answers" | awk -v peeled="refs/tags/$version^{}" '$2 == peeled {print $1; exit}')"
+[ -n "$sha" ] || sha="$(printf '%s\n' "$answers" | head -1 | cut -f1)"
 named=1
 if [ -z "$sha" ]; then
   named=0

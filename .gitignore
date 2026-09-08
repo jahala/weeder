@@ -23,3 +23,5 @@ target/
 /docs/dogfood/
 /docs/dogfood-report-*.md
 /docs/questions-tend2-pleach-*.md
+# The MCP wiring names a path on one machine and is the conductor's, never the repository's.
+.mcp.json
