@@ -73,10 +73,21 @@ have="$(git -C "$checkout" rev-parse HEAD)"
 
 declared="$(sed -n 's/^|[[:space:]]*Brand Version[[:space:]]*|[[:space:]]*\([^|]*[^| ]\)[[:space:]]*|.*$/\1/p' \
   "$checkout/.brand/identity.md" | head -1)"
-[ "$declared" = "$version" ] || {
-  echo "the umbrella at $sha declares brand version '$declared', and petalsrc asks for '$version'" >&2
-  exit 3
+# The tag is the pin and the declared Brand Version is the brand's own fact,
+# moving only when the brand moves: the umbrella is one tag series over brand,
+# contracts and the gate (cape-town, 2026-09-08, shape 2). The checkout is held
+# to the tag's peeled commit above; the declared version is printed beside it.
+# One refusal stays: a tree declaring a brand version newer than its own tag is
+# a mis-tag, which is the case this guard caught for real.
+newer() {
+  # 0 when $1 is a newer version than $2, both as v<major>.<minor>.<patch>.
+  printf '%s\n%s\n' "${1#v}" "${2#v}" | sort -t. -k1,1n -k2,2n -k3,3n | tail -1 | grep -qx "${1#v}" && [ "${1#v}" != "${2#v}" ]
 }
+if [ -n "$declared" ] && newer "$declared" "$version"; then
+  echo "the umbrella at $sha declares brand version '$declared', newer than the tag '$version' it was fetched at: a mis-tag" >&2
+  exit 3
+fi
+echo "umbrella $version at $sha declares brand version '${declared:-none}'" >&2
 [ -f "$checkout/petals/scripts/check.sh" ] || {
   echo "$checkout carries no petals/scripts/check.sh: the gate is not in this fetch" >&2
   exit 3
