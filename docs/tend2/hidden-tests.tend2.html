@@ -28,5 +28,6 @@ T8, block by default where the line names a file the tree holds or a glob that m
 
 ## Tried
 - 2026-09-08 shaped from the owner's issue 10 (jahala/weeder#10), filed from an audit of a private agent-authored repository judged with weeder 0.1.0 at 0e1138d. The most damaging act in that repository was two `collect_ignore` lists, and weeder read the conftests as test files and found no marker, because there is none
+- 2026-09-09 the first node (claude/opus) ran 77 minutes and hit the owner's session limit with the collector, T8, R5, their suites and fixtures in four languages written and passing; pleach then tried to quarantine and failed on a git lock another process held, so the tree was gone. Replayed from the transcript at the node's base and committed unfinished on the working branch (bb92934): what remains is `docs/rules.md`, the matrix, one unused import in xtask, and the calibration and recall re-runs with judgements. The next node continues from there rather than from nothing
 </script>
 <script src="loop.js"></script>
