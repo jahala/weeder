@@ -24,3 +24,11 @@ def label(kind):
 
 def version():
     return "1.4.0"
+
+
+class Strategy:
+    def send(self, payload):
+        return send(payload)
+
+    def retry(self, payload):
+        raise NotImplementedError

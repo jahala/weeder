@@ -20,3 +20,8 @@ def flush():
 class Buffer:
     def flush(self):
         ...
+
+
+class Strategy:
+    def retry(self, payload):
+        raise NotImplementedError

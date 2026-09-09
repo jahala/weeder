@@ -16,3 +16,9 @@ export function receive(): string {
 export function drain(): string | null {
   return null;
 }
+
+export class Strategy {
+  retry(payload: string): string {
+    throw new Error("not implemented");
+  }
+}

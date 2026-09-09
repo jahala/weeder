@@ -20,10 +20,25 @@
 //! are types rather than work left over: there is nothing there to finish, and
 //! writing something would be putting an implementation where a declaration
 //! belongs. weeder reads the class the method is written in and lets those be.
+//!
+//! An unfinished signal written inside a type is the same sentence about two
+//! different things. In a leaf it is a stub, and a caller reaching it gets the
+//! failure. In a base it is the contract, and what fills it in is somewhere else
+//! in the tree: the six strategy classes an audit reported were six bases, each
+//! written out by a subclass in another file. So weeder asks the repository
+//! before it reports one. A type built on that base which writes the method is
+//! the answer, and the finding never happens; a subclass a suite wrote is not,
+//! because it stands in for nothing a caller reaches. Where nothing writes it
+//! the finding stands and says what was looked for, and where the base is
+//! stated through an entry file it warns instead, because a contract a package
+//! exports is one another repository may be filling in.
+
+use std::collections::BTreeSet;
 
 use crate::core::change::Change;
 use crate::core::classify::{FileKind, Lang};
 use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::hierarchy::{self, Hierarchy};
 use crate::core::read::{Definition, DefinitionKind, Outline};
 use crate::core::rules::check::idiom;
 use crate::core::rules::check::Judgement;
@@ -55,41 +70,101 @@ const UNFINISHED_PHRASES: &[&str] = &["notimplemented", "notyetimplemented", "un
 const DECLARING_BASES: &[&str] = &["Protocol", "ABC", "ABCMeta"];
 
 pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
-    let changes = judged.changes;
     let mut findings = Vec::new();
-    for change in changes {
+    for change in judged.changes {
         let Some(path) = change.diff.new_path.as_deref() else {
             continue;
         };
-        if !change.after.is(FileKind::Prod) {
-            continue;
-        }
-        let lang = change
-            .after
-            .classification
-            .as_ref()
-            .map_or(Lang::Other, |classification| classification.lang);
-        let mask = change.after.mask();
-        let mut stubs: Vec<(u32, Stub)> = change
-            .added()
-            .filter_map(|(line, _)| Some((line, stub_on(mask, line)?)))
-            .collect();
-        // A body that does nothing is found through the outline rather than
-        // line by line, so it arrives out of order and may land on a line a
-        // marker already spoke for.
-        for (line, stub) in empty_bodies(lang, mask, change) {
-            if !stubs.iter().any(|(reported, _)| *reported == line) {
-                stubs.push((line, stub));
+        for found in stubs(change) {
+            if let Some(contract) = &found.contract {
+                if judged.hierarchy.overrides(&contract.base, &contract.method) {
+                    continue;
+                }
             }
+            findings.push(finding(path, &found, judged.hierarchy));
         }
-        stubs.sort_by_key(|(line, _)| *line);
-        findings.extend(
-            stubs
-                .into_iter()
-                .map(|(line, stub)| finding(path, line, &stub)),
-        );
     }
     findings
+}
+
+/// The types this change leaves an unfinished signal inside.
+///
+/// The face reads the tree for these and for nothing else. Walking a repository
+/// is the one expensive thing a check can do, and a change that leaves no
+/// unfinished signal in a method has nothing to ask it.
+#[must_use]
+pub fn types_in_question(changes: &[Change]) -> BTreeSet<String> {
+    changes
+        .iter()
+        .flat_map(stubs)
+        .filter_map(|found| found.contract.map(|contract| contract.base))
+        .collect()
+}
+
+/// One stub a change added, and the contract it sits in where it sits in one.
+struct Found {
+    line: u32,
+    stub: Stub,
+    contract: Option<Contract>,
+}
+
+/// A method another type could write, named by the type that states it. This is
+/// the question weeder takes to the tree.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Contract {
+    base: String,
+    method: String,
+}
+
+/// Every stub one changed file added, in line order and one to a line.
+fn stubs(change: &Change) -> Vec<Found> {
+    if !change.after.is(FileKind::Prod) {
+        return Vec::new();
+    }
+    let lang = change.after.lang();
+    let mask = change.after.mask();
+    let mut found: Vec<(u32, Stub)> = change
+        .added()
+        .filter_map(|(line, _)| Some((line, stub_on(mask, line)?)))
+        .collect();
+    // A body that does nothing is found through the outline rather than line by
+    // line, so it arrives out of order and may land on a line a marker already
+    // spoke for.
+    for (line, stub) in empty_bodies(lang, mask, change) {
+        if !found.iter().any(|(reported, _)| *reported == line) {
+            found.push((line, stub));
+        }
+    }
+    found.sort_by_key(|(line, _)| *line);
+    found
+        .into_iter()
+        .map(|(line, stub)| Found {
+            contract: stub
+                .signal
+                .then(|| contract_at(&change.after.outline, line))
+                .flatten(),
+            line,
+            stub,
+        })
+        .collect()
+}
+
+/// The contract a line sits in: the method it is written in and the type that
+/// states it, where the line is written inside both.
+///
+/// The method has to be the type's own. A function written inside a method is
+/// nobody's contract, and naming the type it happens to sit in would be weeder
+/// answering a question it was never asked.
+fn contract_at(outline: &Outline, line: u32) -> Option<Contract> {
+    let method = hierarchy::enclosing_function(outline, line)?;
+    let base = hierarchy::enclosing_type(outline, method)?;
+    base.children
+        .iter()
+        .any(|child| child.start_line == method.start_line && child.name == method.name)
+        .then(|| Contract {
+            base: base.name.clone(),
+            method: method.name.clone(),
+        })
 }
 
 /// The stub an added line carries on its own, without the outline's help.
@@ -190,51 +265,22 @@ fn declares_a_type(lang: Lang, mask: &Mask, outline: &Outline, definition: &Defi
     if lang != Lang::Python {
         return false;
     }
-    let Some(class) = enclosing_class(outline, definition) else {
+    let Some(class) = hierarchy::enclosing_type(outline, definition) else {
         return false;
     };
-    bases(&mask.code(class.start_line))
+    hierarchy::bases(lang, &mask.code(class.start_line))
         .iter()
-        .any(|base| DECLARING_BASES.contains(base))
-}
-
-/// The class a definition is written inside, the innermost one where they nest.
-fn enclosing_class<'a>(outline: &'a Outline, definition: &Definition) -> Option<&'a Definition> {
-    outline
-        .flatten()
-        .into_iter()
-        .filter(|candidate| {
-            candidate.kind == DefinitionKind::Class
-                && candidate.start_line <= definition.start_line
-                && definition.end_line <= candidate.end_line
-        })
-        .max_by_key(|candidate| candidate.start_line)
-}
-
-/// What a class declaration says it is built on, each base named by its last
-/// segment, so a base reached through its module answers for itself. A base
-/// given as a keyword argument, the metaclass, is read from the value it names.
-fn bases(declaration: &str) -> Vec<&str> {
-    let Some(open) = declaration.find('(') else {
-        return Vec::new();
-    };
-    let close = declaration[open..]
-        .rfind(')')
-        .map_or(declaration.len(), |end| open + end);
-    declaration[open + 1..close]
-        .split(',')
-        .map(|base| {
-            let named = base.rsplit('=').next().unwrap_or(base).trim();
-            named.rsplit('.').next().unwrap_or(named)
-        })
-        .filter(|base| !base.is_empty())
-        .collect()
+        .any(|base| DECLARING_BASES.contains(&base.as_str()))
 }
 
 /// A stub, as it will be quoted back to the reader.
 struct Stub {
     what: String,
     why: &'static str,
+    /// Whether this is the shape another type could write out: the language's
+    /// word for a body nobody wrote, or a raise that says as much. A marker and
+    /// an empty body are neither, whatever they are written inside.
+    signal: bool,
 }
 
 impl Stub {
@@ -242,6 +288,7 @@ impl Stub {
         Stub {
             what: format!("a work marker reached production code: `{word}`."),
             why: "a marker is a note to the author, and it ships as behaviour nobody wrote.",
+            signal: false,
         }
     }
 
@@ -249,6 +296,7 @@ impl Stub {
         Stub {
             what: format!("an unwritten body reached production code: `{word}`."),
             why: "the line compiles and fails at the moment a caller reaches it.",
+            signal: true,
         }
     }
 
@@ -256,6 +304,7 @@ impl Stub {
         Stub {
             what: "production code was added that raises to say it is not implemented.".to_string(),
             why: "the line compiles and fails at the moment a caller reaches it.",
+            signal: true,
         }
     }
 
@@ -263,25 +312,64 @@ impl Stub {
         Stub {
             what: format!("`{name}` was added with a body that does nothing: `{statement}`."),
             why: "a function that answers without working is a promise the caller cannot tell from a result.",
+            signal: false,
         }
     }
 }
 
-fn finding(path: &str, line: u32, stub: &Stub) -> Finding {
+/// What weeder says about one stub, once the tree has answered for it.
+///
+/// A signal in a base that nothing writes out is still the block it always was,
+/// and the message says what was looked for, so a reader who knows better than
+/// weeder can see which question it asked. A base an entry file states is the
+/// one case weeder will not settle: the package hands the contract out, and the
+/// type that fills it in may be in a repository this run cannot read. That is a
+/// warning for the person at the pull request rather than a stopped commit.
+fn finding(path: &str, found: &Found, tree: &Hierarchy) -> Finding {
+    let exported = found
+        .contract
+        .as_ref()
+        .and_then(|contract| tree.exported_through(&contract.base));
+    let (level, why, next) = match (&found.contract, exported) {
+        (Some(contract), Some(entry)) => (
+            Level::Warn,
+            format!(
+                "`{}` is declared on `{}` and nothing in the repository overrides it, and `{entry}` states `{}` to whatever reads this package, so the override may live in another repository.",
+                contract.method, contract.base, contract.base
+            ),
+            "write it here, or allow the line with `weeder-allow S1:` naming the implementation that fills it in.".to_string(),
+        ),
+        (Some(contract), None) => (
+            Level::Block,
+            format!(
+                "`{}` is declared on `{}` and nothing in the repository overrides it, so the failure is what every caller gets.",
+                contract.method, contract.base
+            ),
+            TAKE_IT_BACK.to_string(),
+        ),
+        (None, _) => (
+            Level::Block,
+            found.stub.why.to_string(),
+            TAKE_IT_BACK.to_string(),
+        ),
+    };
     Finding {
         rule: "S1".to_string(),
-        level: Level::Block,
+        level,
         path: path.to_string(),
         region: Some(Region {
-            start_line: line,
-            end_line: line,
+            start_line: found.line,
+            end_line: found.line,
         }),
         message: Message {
-            what: stub.what.clone(),
-            why: stub.why.to_string(),
-            next: "finish the work, or take the line back out of the change.".to_string(),
+            what: found.stub.what.clone(),
+            why,
+            next,
         },
         fix: None,
         suppressed: None,
     }
 }
+
+/// What a reader is asked to do about a stub weeder will not settle for them.
+const TAKE_IT_BACK: &str = "finish the work, or take the line back out of the change.";

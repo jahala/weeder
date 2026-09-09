@@ -8,6 +8,7 @@ pub mod finding;
 pub mod glob;
 pub mod guard;
 pub mod help;
+pub mod hierarchy;
 pub mod hook;
 pub mod read;
 pub mod registry;

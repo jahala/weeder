@@ -19,11 +19,13 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use crate::core::change::{Change, Side};
+use crate::core::change::{self, Change, Side};
+use crate::core::classify::{classify_file, FileKind};
 use crate::core::config::Config;
 use crate::core::diff::{added_file, parse_diff, FileDiff};
 use crate::core::finding::{Finding, Level};
 use crate::core::glob;
+use crate::core::hierarchy::{self, Hierarchy};
 use crate::core::read::CallerSite;
 use crate::core::rules;
 use crate::core::rules::check::collect;
@@ -33,7 +35,8 @@ use crate::core::suppress::{
     apply_suppressions, parse_commit_suppressions, parse_inline_suppressions,
     InlineSuppressionError, Suppression, MARKER,
 };
-use crate::faces::{gather, read_config, side, Answer, Format, Source, Untracked};
+use crate::core::syntax::Mask;
+use crate::faces::{blobs, gather, read_config, side, Answer, Format, Source, Untracked};
 use crate::seams::{fs, git, reader};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -108,6 +111,7 @@ fn judge(request: &Request) -> Result<Answer, String> {
         .filter(|path| !specimen::skipped(&config.specimens, path))
         .collect();
     let callers = callers(&root, &changes, &scope)?;
+    let hierarchy = hierarchy(&root, &range.after, &changes, &paths)?;
     // The settings are read once, here: the rule that judges what a line hides
     // and the refusal below both need the same reading, and reading them twice
     // would be two answers to one question.
@@ -118,6 +122,7 @@ fn judge(request: &Request) -> Result<Answer, String> {
         scope: &scope,
         paths: &paths,
         callers: &callers,
+        hierarchy: &hierarchy,
         collection: &collection,
     });
     findings.extend(excluded.iter().map(|path| specimen::notice(path)));
@@ -338,6 +343,76 @@ fn callers(root: &Path, changes: &[Change], scope: &[String]) -> Result<Vec<Call
         .flat_map(Change::changed_definitions)
         .collect();
     reader::callers(&symbols, root).map_err(|error| error.to_string())
+}
+
+/// What the tree is built out of, for the types the change left an unfinished
+/// signal inside.
+///
+/// Reading a repository is the one expensive thing a check can do, so it happens
+/// only where a rule has a question for it: a change that leaves no unfinished
+/// signal inside a method reads nothing here at all. What is read is read from
+/// where the change is being judged, so an override weeder credits is one the
+/// same state carries, and only from the files written in a language whose
+/// declarations say what a type is built on. A file whose bytes do not spell one
+/// of the names asked about is passed over before the parser is asked anything,
+/// which is what keeps the walk to the handful of files that can answer.
+fn hierarchy(
+    root: &Path,
+    after: &Source,
+    changes: &[Change],
+    paths: &[String],
+) -> Result<Hierarchy, String> {
+    let wanted = rules::check::types_in_question(changes);
+    if wanted.is_empty() {
+        return Ok(Hierarchy::default());
+    }
+    // The index lists what a commit would carry; a file this run judges and git
+    // has never been told about is in no listing and is read here all the same.
+    let mut named: BTreeSet<&str> = paths.iter().map(String::as_str).collect();
+    named.extend(
+        changes
+            .iter()
+            .filter_map(|change| change.diff.new_path.as_deref()),
+    );
+    let named: Vec<&str> = named
+        .into_iter()
+        .filter(|path| hierarchy::states_its_bases(reader::language(Path::new(path))))
+        .collect();
+
+    let mut tree = Hierarchy::default();
+    for (path, blob) in named.iter().zip(blobs(root, after, &named)?) {
+        let Some(content) = blob.and_then(|blob| blob.text()) else {
+            continue;
+        };
+        if !change::reads_as_code(Some(content.len() as u64))
+            || !wanted.iter().any(|name| content.contains(name.as_str()))
+        {
+            continue;
+        }
+        let classification = classify_file(path, &content);
+        let mask = Mask::of(classification.lang, &content);
+        if hierarchy::is_entry(path) {
+            for stated in hierarchy::stated_in(&wanted, &mask) {
+                tree.exported
+                    .entry(stated)
+                    .or_insert_with(|| (*path).to_string());
+            }
+        }
+        let outline = reader::outline(Path::new(path), &content);
+        // A test file's own subclasses fill no contract in. A production file
+        // that carries an inline test module is still a production file, and
+        // what it declares is what the program is built out of; discounting the
+        // whole of it for the module at the bottom would be the false block this
+        // reading was written to take away.
+        tree.derived.extend(hierarchy::derived_in(
+            &wanted,
+            classification.lang,
+            classification.kind == FileKind::Test,
+            &outline,
+            &mask,
+        ));
+    }
+    Ok(tree)
 }
 
 /// The `Weeder-allow:` trailers travelling with the change: the message handed in

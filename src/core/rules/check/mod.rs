@@ -4,10 +4,13 @@
 //! findings carrying the rule's catalogue default level. `evaluate` replaces
 //! that level with the one the config sets, and drops the rules it turns off.
 
+use std::collections::BTreeSet;
+
 use crate::core::catalogue::{self, Rule};
 use crate::core::change::Change;
 use crate::core::config::Config;
 use crate::core::finding::{Finding, Level};
+use crate::core::hierarchy::Hierarchy;
 use crate::core::read::CallerSite;
 use crate::core::rules::configured_level;
 
@@ -54,11 +57,27 @@ pub struct Judgement<'a> {
     pub paths: &'a [String],
     /// Where the definitions the change touched are called from, sorted.
     pub callers: &'a [CallerSite],
+    /// What the tree is built out of, for the types this change left an
+    /// unfinished signal inside. Empty where the change left none: reading a
+    /// repository is expensive, so the face reads one only where a rule has a
+    /// question for it.
+    pub hierarchy: &'a Hierarchy,
     /// What the change's own lines do to what the runner collects: the suites
     /// they take out of the run, and the settings they wrote that weeder cannot
     /// read. The face reads the settings once, so the rule that judges them and
     /// the face that refuses a run it could not read see the same collection.
     pub collection: &'a collect::Collection,
+}
+
+/// The types the detectors need the tree read for before they run.
+///
+/// Walking a repository is the one expensive thing a check can do, so the face
+/// does it only where a rule has a question for it. A rule with one answers here
+/// from the change alone, and a change nothing asks about is judged without the
+/// tree being opened at all.
+#[must_use]
+pub fn types_in_question(changes: &[Change]) -> BTreeSet<String> {
+    s1::types_in_question(changes)
 }
 
 type Detector = fn(&Judgement) -> Vec<Finding>;

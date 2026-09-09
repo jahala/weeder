@@ -13,3 +13,11 @@ pub fn label(kind: &str) -> &'static str {
 pub fn version() -> &'static str {
     "1.4.0"
 }
+
+pub trait Sink {
+    fn send(&self, payload: &str) -> String;
+
+    fn retry(&self, payload: &str) -> String {
+        todo!()
+    }
+}
