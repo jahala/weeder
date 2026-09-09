@@ -1,2 +1,2 @@
-{"type": "input", "case": "recall:T1:ts:tend2:6d9a1cf91:test/site-paths.test.ts", "sha256": "c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119"}
-{"type": "answer", "answer": "Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: miss\nReasoning: The report says the planted deletion removed a real test case in `test/site-paths.test.ts` and weeder did not report T1 at that planted site."}
+{"type": "input", "case": "recall:T1:ts:tend2:6d9a1cf91:test/site-paths.test.ts", "sha256": "83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829\nVerdict: miss\nReasoning: The site is a test file and a test case was genuinely deleted, which is exactly T1's shape, and weeder reported nothing there."}

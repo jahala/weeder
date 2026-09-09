@@ -370,12 +370,24 @@ def samples(text):
     return found
 
 
+def declares_blind(text):
+    for line in text.splitlines():
+        stripped = line.strip().lower()
+        if stripped.startswith("blind:"):
+            answer = stripped[len("blind:"):].split(";")[0].split(",")[0].split(".")[0].strip()
+            return answer == "yes"
+    return False
+
+
+# Ruling of 2026-09-06: the bar is read on the blind re-grade alone. The
+# sighted one is recorded beside it, checked for its arithmetic by
+# calibration-agreement.sh, and never decides.
 drawn = []
 for path in [one for one in audit_path.split(":") if one and os.path.exists(one)]:
-    drawn.extend(
-        (f"{name} in {path}", regraded, agreed)
-        for name, regraded, agreed in samples(open(path, encoding="utf-8").read())
-    )
+    text = open(path, encoding="utf-8").read()
+    if not declares_blind(text):
+        continue
+    drawn.extend((f"{name} in {path}", regraded, agreed) for name, regraded, agreed in samples(text))
 
 stands = bool(drawn) and all(
     regraded >= SAMPLE_FLOOR and agreed <= regraded and agreed * 100.0 / regraded >= AGREEMENT_BAR

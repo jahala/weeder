@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07671-28bf-7493-b47d-8b48a94882ee"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 4d1633e57201616edae5adff7def4db905d1f4bd5f175cf93164c62eadfc6dd5\nVerdict: acceptable\nReasoning: The named test files really were deleted with their cases, but the table shows the whole loop-hole spike implementation and related artifacts were removed too, so this looks like intentional retirement rather than orphaned coverage loss."}}
-{"type":"turn.completed","usage":{"input_tokens":32482,"cached_input_tokens":20864,"output_tokens":300,"reasoning_output_tokens":201}}

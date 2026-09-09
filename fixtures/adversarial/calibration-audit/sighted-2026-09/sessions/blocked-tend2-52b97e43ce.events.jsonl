@@ -1,2 +1,2 @@
-{"type": "input", "case": "blocked:tend2:52b97e43ce", "sha256": "c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119"}
-{"type": "answer", "answer": "Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: false-positive\nReasoning: X1 mistook HTML class names `detail-meta__key` and `journey-row__key` for assigned secret values; the reported values are markup, not credentials."}
+{"type": "input", "case": "blocked:tend2:52b97e43ce", "sha256": "83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829\nVerdict: false-positive\nReasoning: X1's claim is not true: `detail-meta__key` and `journey-row__key` are CSS class names in the renderer's HTML markup, not secret values added to the change."}

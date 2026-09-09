@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a077cf-ac3c-7a22-8035-c0dcefe52917"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: miss\nReasoning: The report says T6 was planted at test/verify.test.ts:176 in e2adbab97, the error assertion stopped naming the error, and it was not reported."}}
-{"type":"turn.completed","usage":{"input_tokens":36945,"cached_input_tokens":20864,"output_tokens":193,"reasoning_output_tokens":98}}

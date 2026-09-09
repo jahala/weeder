@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-d2-go-hcl-92f12c4e5-hcldec-gob-go-6.md", "sha256": "275670f1a8ea2a84a305296ebf9ccd962c6c5ae1a73bc038dda8b5128f0c4162", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered packet SHA-256: 275670f1a8ea2a84a305296ebf9ccd962c6c5ae1a73bc038dda8b5128f0c4162\nVerdict: miss\nReasoning: The diff adds an `hcled` import to `hcldec/gob.go`, matching rule D2's forbidden-boundary import shape, but weeder reported no finding there."}

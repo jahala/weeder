@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-d2-go-hcl-6a91a7547-gohcl-types-go-6.md", "sha256": "3bc149288e9673230e2394e120fba8fd7cc6f19c737939bf14fbd563e9978a76", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered packet SHA-256: 3bc149288e9673230e2394e120fba8fd7cc6f19c737939bf14fbd563e9978a76\nVerdict: miss\nReasoning: The diff adds `hcldec` to gohcl/types.go's imports, so an import crossing a boundary is present, but weeder reported no findings there."}

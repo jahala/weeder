@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07671-6560-7113-a7b8-58ae7bc70cc1"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 84d5aaa5e5ba70dc818a78b6fe81eb66b8a0eed9c9fa8873990baec823a98869\nVerdict: true-positive\nReasoning: The changed test file did drop the percent_decode_basic test and its four assertions, reducing direct coverage of decoding behavior now delegated to the new crate."}}
-{"type":"turn.completed","usage":{"input_tokens":23243,"cached_input_tokens":20864,"output_tokens":87,"reasoning_output_tokens":0}}

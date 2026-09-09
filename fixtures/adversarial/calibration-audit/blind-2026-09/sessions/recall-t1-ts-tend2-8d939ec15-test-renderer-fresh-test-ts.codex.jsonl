@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07671-fa63-7200-862f-7ed9523e0b24"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 08b96cbf873ec8d6949676991781d0f81c002b149268940b953af4b7b82f9238\nVerdict: miss\nReasoning: The diff deletes the `it(dir, ...)` test case at the planted site, but weed reported only T2 assertion removal, not T1."}}
-{"type":"turn.completed","usage":{"input_tokens":22257,"cached_input_tokens":20864,"output_tokens":135,"reasoning_output_tokens":48}}

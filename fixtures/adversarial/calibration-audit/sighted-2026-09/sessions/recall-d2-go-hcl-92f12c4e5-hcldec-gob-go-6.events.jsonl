@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:D2:go:hcl:92f12c4e5:hcldec/gob.go:6", "sha256": "83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829\nVerdict: not-a-case\nReasoning: The planted import target is `hcled`, a misspelling of `hcldec` naming no real package in the hcl repo, so no forbidden boundary was actually crossed."}

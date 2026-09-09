@@ -1,2 +1,2 @@
-{"type": "input", "case": "blocked:copeca:70d669542a", "sha256": "c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119"}
-{"type": "answer", "answer": "Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: false-positive\nReasoning: X1 mistook a local variable named key holding a loaded public key for a published secret, but no secret value or credential was added."}
+{"type": "input", "case": "blocked:copeca:70d669542a", "sha256": "83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829\nVerdict: false-positive\nReasoning: X1 flags `key` as a secret, but the line is a local holding a loaded public key, not a published credential, so the claim is not true of this change."}

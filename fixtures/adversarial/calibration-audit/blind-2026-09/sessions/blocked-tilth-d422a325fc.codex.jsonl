@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07671-87cb-7013-b0c8-3eeae22facdd"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: d27be1d68ed37779fc84bbcf13048a35b47db2c68d3966e6a60d0e7c985aca33\nVerdict: acceptable\nReasoning: One assert! was removed, but its check is preserved by matching ConfigFormat::JsonLocal and panicking on Json/Toml, so the test was refactored without weakening behavior coverage."}}
-{"type":"turn.completed","usage":{"input_tokens":27626,"cached_input_tokens":20864,"output_tokens":361,"reasoning_output_tokens":263}}

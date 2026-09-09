@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07671-c284-7cd2-8170-8912b22cdfc4"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 67e501a1a5aed76300b68ad903007cfa5930f9f4de081c4645dd1de462401991\nVerdict: miss\nReasoning: The diff adds a gohcl import of hcldec at the planted site, matching D2, but weed reported no finding there."}}
-{"type":"turn.completed","usage":{"input_tokens":22154,"cached_input_tokens":20864,"output_tokens":153,"reasoning_output_tokens":69}}

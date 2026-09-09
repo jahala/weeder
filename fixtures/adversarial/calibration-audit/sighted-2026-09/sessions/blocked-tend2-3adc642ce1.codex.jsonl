@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a077ce-7f36-7cf0-99cf-14ee7a7ea20c"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: false-positive\nReasoning: T1 counted fewer it() declarations, but the test case was converted into a loop over sibling directories, so the behavior remained covered rather than unwatched."}}
-{"type":"turn.completed","usage":{"input_tokens":36948,"cached_input_tokens":17792,"output_tokens":204,"reasoning_output_tokens":113}}

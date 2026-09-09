@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T4:rs:tilth:5b0539e6a:src/mcp/write.rs:148", "sha256": "83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829\nVerdict: miss\nReasoning: A wait widened from 1 to 10 is a timeout widened, which is T4's shape, genuinely present at that site, and weeder did not report it there."}

@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a077ce-e22d-7082-bf37-50ba218312b5"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: acceptable\nReasoning: T2 correctly saw one assertion removed, but it was redundant with `toEqual([])` and the rewritten test preserves coverage while avoiding destructive tmux cleanup."}}
-{"type":"turn.completed","usage":{"input_tokens":36950,"cached_input_tokens":20864,"output_tokens":160,"reasoning_output_tokens":70}}

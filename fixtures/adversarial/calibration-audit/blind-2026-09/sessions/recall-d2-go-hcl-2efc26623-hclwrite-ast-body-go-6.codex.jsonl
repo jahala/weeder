@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07671-ba6d-7383-bffc-a85a58cb1144"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: 1e521cd4076bbbfe80296c72d5d08661ac68838699632370110576a84604d727\nVerdict: miss\nReasoning: The diff adds an integrationtest import inside hclwrite at the planted site, matching the forbidden-boundary import shape, and weed reported no finding."}}
-{"type":"turn.completed","usage":{"input_tokens":22153,"cached_input_tokens":20864,"output_tokens":129,"reasoning_output_tokens":47}}

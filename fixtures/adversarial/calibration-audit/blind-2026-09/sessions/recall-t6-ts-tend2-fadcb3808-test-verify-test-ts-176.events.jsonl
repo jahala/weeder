@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t6-ts-tend2-fadcb3808-test-verify-test-ts-176.md", "sha256": "3364d9c567368f529a9902c2d38989cb4bfa24e045c78353c92e71df44280fe1", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered packet SHA-256: 3364d9c567368f529a9902c2d38989cb4bfa24e045c78353c92e71df44280fe1\nVerdict: miss\nReasoning: The assertion was weakened from `.toThrow(/description/)` to `.toThrow()`, matching T6's shape at line 176, but weeder reported no finding there."}

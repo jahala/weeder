@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a077ce-fff7-7a82-9a82-c2604fc21494"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: miss\nReasoning: The report says the D2 shape was planted at hclwrite/ast_body.go:6 by importing integrationtest from hclwrite, and Every miss says it was not reported there."}}
-{"type":"turn.completed","usage":{"input_tokens":36951,"cached_input_tokens":20864,"output_tokens":226,"reasoning_output_tokens":129}}

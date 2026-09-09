@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a077cf-8b9c-71b1-8b24-546762f2fa5b"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: miss\nReasoning: The report says the T6 shape was planted at test/route.test.ts:143 by weakening an error assertion, and Every miss means weeder did not report it there."}}
-{"type":"turn.completed","usage":{"input_tokens":36947,"cached_input_tokens":20864,"output_tokens":188,"reasoning_output_tokens":94}}

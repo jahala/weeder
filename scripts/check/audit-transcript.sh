@@ -14,6 +14,8 @@ CASE_DIR = pathlib.Path("fixtures/adversarial/calibration-audit/blind-2026-09/ca
 SESSION_DIR = pathlib.Path("fixtures/adversarial/calibration-audit/blind-2026-09/sessions")
 SIGHTED_DIR = pathlib.Path("fixtures/adversarial/calibration-audit/sighted-2026-09/sessions")
 REPORT = pathlib.Path("docs/calibration-2026-09.md")
+BLIND_AUDIT = pathlib.Path("docs/calibration-audit-blind-2026-09.md")
+SIGHTED_AUDIT = pathlib.Path("docs/calibration-audit-2026-09.md")
 complaints = []
 
 
@@ -27,6 +29,86 @@ def read(path):
 
 def packet_hash(path):
     return hashlib.sha256(read(path).encode("utf-8")).hexdigest()
+
+
+def audit_field(path, name):
+    match = re.search(rf"(?im)^{re.escape(name)}:\s*(.+?)\s*$", read(path))
+    if not match:
+        complaints.append(f"{path} has no {name} line")
+        return ""
+    return match.group(1).strip().strip("`")
+
+
+BLIND_MODEL = audit_field(BLIND_AUDIT, "Model")
+SIGHTED_MODEL = audit_field(SIGHTED_AUDIT, "Model")
+
+
+def named(path, input_event):
+    """Every session record names the provider and the model that answered it.
+
+    The seal is a population as much as a sample: an agreement number taken
+    from one model says nothing about another, and this run is neither the
+    provider nor the model the earlier seals were taken with.
+    """
+    provider = str(input_event.get("provider", "")).strip()
+    model = str(input_event.get("model", "")).strip()
+    expected = SIGHTED_MODEL if str(path).startswith(str(SIGHTED_DIR)) else BLIND_MODEL
+    if not provider:
+        complaints.append(f"{path} does not name the provider that answered it")
+    if not model:
+        complaints.append(f"{path} does not name the model that answered it")
+    elif expected and model != expected:
+        complaints.append(f"{path} names model {model}, and its audit file names {expected}")
+
+
+def session_record(session_path, answer):
+    """The provider's own event stream, beside the two-line summary.
+
+    opencode prints one json event per line: a step start, the text parts the
+    model wrote, and a step finish carrying the token counts. A part of any
+    other kind is a tool, which is how a session reaches past its packet, and
+    it is refused. The text parts joined are the answer the summary kept, so a
+    summary cannot say something the session did not.
+    """
+    raw_path = session_path.with_name(
+        session_path.name.replace(".events.jsonl", ".opencode.jsonl")
+    )
+    raw_text = read(raw_path)
+    raw_events = []
+    for raw_line in raw_text.splitlines():
+        raw_line = raw_line.strip()
+        if not raw_line:
+            continue
+        try:
+            raw_events.append(json.loads(raw_line))
+        except json.JSONDecodeError:
+            complaints.append(f"{raw_path} carries a line that is not json")
+            return
+    kinds = [event.get("type") for event in raw_events]
+    if "step_start" not in kinds or "step_finish" not in kinds:
+        complaints.append(f"{raw_path} is not an opencode session record: no step_start and step_finish")
+    sessions = {event.get("sessionID") for event in raw_events}
+    if len(sessions) != 1 or not next(iter(sessions), None):
+        complaints.append(f"{raw_path} does not carry one session id: {sorted(str(s) for s in sessions)}")
+    part_kinds = sorted({(event.get("part") or {}).get("type") for event in raw_events})
+    tools = [kind for kind in part_kinds if kind and "tool" in kind]
+    if tools:
+        complaints.append(f"{raw_path} shows tool parts, so the session reached past its packet: {tools}")
+    if [kind for kind in part_kinds if kind not in ("step-start", "step-finish", "text", "reasoning")]:
+        complaints.append(f"{raw_path} shows parts other than the auditor's answer: {part_kinds}")
+    finishes = [event for event in raw_events if event.get("type") == "step_finish"]
+    tokens = ((finishes[-1].get("part") or {}).get("tokens") or {}) if finishes else {}
+    if not tokens.get("input"):
+        complaints.append(f"{raw_path} records a step with no input tokens, so no packet was read")
+    text = "".join(
+        (event.get("part") or {}).get("text", "")
+        for event in raw_events
+        if event.get("type") == "text" and (event.get("part") or {}).get("type") == "text"
+    ).strip()
+    if not text:
+        complaints.append(f"{raw_path} carries no answer text")
+    elif text != answer:
+        complaints.append(f"{raw_path} text differs from the recorded answer")
 
 
 for directory in (CASE_DIR, SESSION_DIR):
@@ -73,7 +155,7 @@ for case_path in case_paths:
         complaints.append(f"{session_path} has {len(events)} events, not one input and one answer")
         continue
     input_event, answer_event = events
-    allowed_input = {"type", "packet", "sha256"}
+    allowed_input = {"type", "packet", "sha256", "provider", "model"}
     allowed_answer = {"type", "answer"}
     if set(input_event) - allowed_input:
         complaints.append(f"{session_path} input event has extra keys {sorted(set(input_event) - allowed_input)}")
@@ -87,39 +169,18 @@ for case_path in case_paths:
         complaints.append(f"{session_path} input names {input_event.get('packet')}, not {case_path}")
     if input_event.get("sha256") != expected_hash:
         complaints.append(f"{session_path} input hash is {input_event.get('sha256')}, not {expected_hash}")
+    # This population was read by a different provider and a different model
+    # from the ones the earlier seals were taken with, so the record says which
+    # rather than leaving a reader to assume the run before it.
+    named(session_path, input_event)
     answer = str(answer_event.get("answer", ""))
     if not answer.startswith(f"Answered packet SHA-256: {expected_hash}\n"):
         complaints.append(f"{session_path} answer does not open with the packet hash")
     # The two-line record is a summary; the session's own record is the raw
-    # event stream codex printed, kept beside it. A summary without a stream
-    # behind it is a note, and a stream with a command in it was not blind.
-    raw_path = session_path.with_name(session_path.name.replace(".events.jsonl", ".codex.jsonl"))
-    raw_text = read(raw_path)
-    raw_events = []
-    for raw_line in raw_text.splitlines():
-        raw_line = raw_line.strip()
-        if not raw_line:
-            continue
-        try:
-            raw_events.append(json.loads(raw_line))
-        except json.JSONDecodeError:
-            complaints.append(f"{raw_path} carries a line that is not json")
-            break
-    kinds = [event.get("type") for event in raw_events]
-    if "thread.started" not in kinds or "turn.completed" not in kinds:
-        complaints.append(f"{raw_path} is not a codex session record: no thread.started and turn.completed")
-    completed = [event for event in raw_events if event.get("type") == "turn.completed"]
-    if completed and not (completed[-1].get("usage") or {}).get("input_tokens"):
-        complaints.append(f"{raw_path} records a turn with no input tokens, so no packet was read")
-    items = [event.get("item") or {} for event in raw_events if event.get("type") == "item.completed"]
-    item_kinds = sorted({item.get("type") for item in items})
-    messages = [item for item in items if item.get("type") == "agent_message"]
-    if [kind for kind in item_kinds if kind not in ("agent_message", "reasoning")]:
-        complaints.append(f"{raw_path} shows items other than the auditor's message: {item_kinds}")
-    if len(messages) != 1:
-        complaints.append(f"{raw_path} carries {len(messages)} agent messages, not one")
-    elif messages[0].get("text", "") != answer:
-        complaints.append(f"{raw_path} message differs from the recorded answer")
+    # event stream the provider printed, kept beside it. A summary without a
+    # stream behind it is a note, and a stream with a tool part in it was not
+    # blind: a tool is how a session reaches past its packet.
+    session_record(session_path, answer)
 
 session_stems = {path.stem.removesuffix(".events") for path in SESSION_DIR.glob("*.events.jsonl")} if SESSION_DIR.is_dir() else set()
 case_stems = {path.stem for path in case_paths}
@@ -139,14 +200,17 @@ else:
     for path in sighted:
         events = [json.loads(line) for line in read(path).splitlines() if line.strip()]
         answer = next((e.get("answer", "") for e in events if e.get("type") == "answer"), "")
-        named = re.match(r"Answered report SHA-256: ([0-9a-f]{64})", answer)
-        if named is None:
+        input_event = next((e for e in events if e.get("type") == "input"), {})
+        named_hash = re.match(r"Answered report SHA-256: ([0-9a-f]{64})", answer)
+        if named_hash is None:
             complaints.append(f"{path} answer does not open by naming the report it read")
-        elif named.group(1) != report_hash:
+        elif named_hash.group(1) != report_hash:
             complaints.append(
-                f"{path} was answered against report {named.group(1)[:12]} and {REPORT} is now "
+                f"{path} was answered against report {named_hash.group(1)[:12]} and {REPORT} is now "
                 f"{report_hash[:12]}: the re-grade is of a document that has changed under it"
             )
+        named(path, input_event)
+        session_record(path, answer)
 
 if complaints:
     for complaint in complaints:

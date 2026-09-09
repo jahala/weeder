@@ -1,2 +1,0 @@
-{"type": "input", "case": "recall:D2:go:hcl:2efc26623:hclwrite/ast_body.go:6", "sha256": "c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119"}
-{"type": "answer", "answer": "Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: miss\nReasoning: The report says the D2 shape was planted at hclwrite/ast_body.go:6 by importing integrationtest from hclwrite, and Every miss says it was not reported there."}

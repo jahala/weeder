@@ -1,2 +1,0 @@
-{"type": "input", "case": "recall:D2:go:hcl:9466647a1:hclwrite/ast_block.go:6", "sha256": "c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119"}
-{"type": "answer", "answer": "Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: miss\nReasoning: The report says hclwrite was mutated to import integrationtest at that file and line, a forbidden-boundary import, and lists it under planted cases not reported."}

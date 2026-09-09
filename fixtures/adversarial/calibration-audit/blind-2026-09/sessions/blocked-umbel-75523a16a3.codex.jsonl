@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07671-9c63-76c0-b3a2-3a17dba82350"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: a63b0cff80a82047726fcc5aa71e0407a4d300d0335c3629bd874bfeb3505a13\nVerdict: true-positive\nReasoning: The added production provider contains a TODO marker explicitly saying transcript tool-call shape still needs verification, so the rule’s claim is true and it flags unfinished production behavior."}}
-{"type":"turn.completed","usage":{"input_tokens":25622,"cached_input_tokens":2432,"output_tokens":87,"reasoning_output_tokens":0}}

@@ -1,2 +1,2 @@
-{"type": "input", "case": "blocked:tend2:3adc642ce1", "sha256": "c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119"}
-{"type": "answer", "answer": "Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: false-positive\nReasoning: T1 counted fewer it() declarations, but the test case was converted into a loop over sibling directories, so the behavior remained covered rather than unwatched."}
+{"type": "input", "case": "blocked:tend2:3adc642ce1", "sha256": "83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829\nVerdict: false-positive\nReasoning: The case was not deleted but refactored into a loop over sibling directories, so the single it() still covers all inputs and no behaviour lost coverage."}
