@@ -24,7 +24,7 @@ mod shape;
 mod source;
 mod tree;
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use clap::Args;
