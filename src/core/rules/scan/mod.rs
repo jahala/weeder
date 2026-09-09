@@ -19,6 +19,7 @@ pub mod r1;
 pub mod r2;
 pub mod r3;
 pub mod r4;
+pub mod r5;
 
 type Detector = fn(&Tree, &Config) -> Vec<Finding>;
 
@@ -28,6 +29,7 @@ const DETECTORS: &[(&str, Detector)] = &[
     ("R2", r2::evaluate),
     ("R3", r3::evaluate),
     ("R4", r4::evaluate),
+    ("R5", r5::evaluate),
 ];
 
 /// Every enabled detector's findings, in catalogue order, at the configured
