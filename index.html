@@ -476,15 +476,15 @@ protected: main, master (as weeder.toml has them today).
         <div class="rise">
           <p class="kicker">start</p>
           <h2 id="start-heading">install it, then put it inside git</h2>
-          <p class="lede">the binary is static and the install is one line. release binaries are built for linux and macos on x86_64 and aarch64, and for windows on x86_64. the second line is the one that matters: after <code>guard install</code> the gate runs whether anyone remembers it or not.</p>
+          <p class="lede">the binary is static and the install is a tarball with its digest beside it. release binaries are built for linux and macos on x86_64 and aarch64; windows is on its way, and the crate and the npm wrapper publish from the same workflow once the registries are set up. the last line is the one that matters: after <code>guard install</code> the gate runs whether anyone remembers it or not.</p>
           <div class="cta">
             <a class="btn primary" href="https://github.com/jahala/weeder">weeder on github</a>
             <a class="btn ghost" href="https://github.com/jahala/weeder/releases">release binaries</a>
           </div>
         </div>
         <div class="snips rise">
-          <div class="snip"><span class="t-dim">from crates.io</span>cargo install weeder</div>
-          <div class="snip"><span class="t-dim">or the npm wrapper, which fetches the binary for your platform</span>npm install -g @plotplot/weeder</div>
+          <div class="snip"><span class="t-dim">fetch the release for your platform with its digest, and check it (aarch64-apple-darwin, x86_64-apple-darwin, x86_64-unknown-linux-musl or aarch64-unknown-linux-musl)</span>t=aarch64-apple-darwin; b=https://github.com/jahala/weeder/releases/latest/download; curl -fsSLO "$b/weeder-$t.tar.gz" -O "$b/weeder-$t.tar.gz.sha256" &amp;&amp; shasum -a 256 -c "weeder-$t.tar.gz.sha256"</div>
+          <div class="snip"><span class="t-dim">unpack the executable and put it on your path</span>tar xzf "weeder-$t.tar.gz" weeder &amp;&amp; install -m 755 weeder ~/.local/bin/weeder</div>
           <div class="snip"><span class="t-dim">then put the judgement inside git</span>weeder guard install --protect main</div>
         </div>
       </div>

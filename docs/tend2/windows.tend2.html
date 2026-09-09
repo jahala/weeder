@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>windows · weeder</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# windows — weeder builds and guards on x86_64-pc-windows-msvc
+**Goal.** The release contract names five platforms and v0.1.0 shipped four: the `x86_64-pc-windows-msvc` leg of the release run failed to compile, and `publish-crate` and `publish-npm` were skipped behind it (issue #30, run 34405728874). weeder's library imports `std::os::unix::fs::PermissionsExt` with no platform gate in `src/seams/fs.rs`, for the two helpers `guard` uses to install a hook and to say whether git will run it, and CI builds on ubuntu alone, so the tag was the first time anything compiled for Windows. This loop makes Windows a platform weeder is held to on every pull request, not a leg that fails at the tag.
+
+## What the helpers mean on Windows
+
+Git settles it, not us. NTFS keeps no mode bits, and Git for Windows strips `X_OK` from its `access` check before it looks for a hook, so any hook file that exists is a hook git runs, through the `sh` Git for Windows ships, which reads the `#!/bin/sh` line `weeder guard install` writes. `is_executable` there asks whether a file is there; `make_executable` has nothing to write and says so. The reason is written beside each gate, and the unix half keeps the mode bits it has, because a hook git cannot execute on unix is a hook git walks past without a word.
+
+The tests carry the same shape: a test that sets or reads a mode, or creates a symlink, is a unix test and is gated as one with a line beside the gate saying what Windows lacks, and a test with a Windows meaning of its own (a hook file that exists is installed and runs) is written for Windows rather than skipped there. `bite` runs a test command through `sh`; it is unshipped and its tests may be unix until it ships.
+
+## Tests
+- [ ] (code) every `std::os::unix` use in `src/`, `xtask/` and `tests/` sits behind `cfg(unix)` with a `cfg(windows)` twin or a gate reason beside it, `is_executable` and `make_executable` carry both platform meanings and the reason above, and the host suite is green · scripts/check/platform-gates.sh
+- [ ] (code) `ci.yml` builds and runs the suite on `windows-latest` beside ubuntu, on the same push and pull request events, and the latest CI run on `master` has that job green; the evidence reads the run from GitHub and refuses when the job is missing, skipped or red · scripts/check/windows-ci.sh
+- [ ] (human) the owner pushes the next tag and its release run publishes `weeder-x86_64-pc-windows-msvc.tar.gz` with its `.sha256` beside the four assets v0.1.0 shipped, with `publish-crate` and `publish-npm` reached rather than skipped
+
+## Needs #garden-fit #guard
+
+## Tried
+- 2026-09-09 shaped from cape-town's report of the v0.1.0 release run: four assets published, the Windows leg red on four compile errors in `src/seams/fs.rs` (two `cannot find unix in os`, `mode` and `from_mode` not found), the publish jobs skipped behind it. A cross-check from macOS (`cargo check --target x86_64-pc-windows-msvc`) does not reach weeder's code: every tree-sitter grammar's build script needs the MSVC C compiler, so the compile can only be proven on a Windows runner, and the first check is the static shape while the second is the compile. Dispatch waits on cape-town's resume; the stem runs alone
+</script>
+<script src="loop.js"></script>
