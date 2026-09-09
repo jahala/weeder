@@ -19,14 +19,20 @@ files pleach just produced, together with anything the worker left unstaged, whi
 node is asking to land. The node's worktree starts at `HEAD`, so everything past it belongs to this
 node and a base argument would name the commit weeder already compares against.
 
+The files the worker wrote outside the paths its node was allowed to touch are in that judgement too.
+pleach stages the scoped paths, and `git diff` lists nothing else; weeder reads the untracked,
+not-ignored files off the working tree itself, so a node that wrote its way around its own scope is
+judged on what it wrote rather than on what it staged. `--untracked exclude` puts the narrower view
+back for a caller who wants it.
+
 `--base <ref>` is for CI, where a branch has commits of its own and the interesting comparison is
 against where it left the trunk. `--staged` is for a pre-commit hook, which judges what the commit
 would carry and nothing else.
 
 ## Why strict
 
-A worker that cannot make the gate pass can write its own way past it: a `Weed-allow:` trailer on the
-commit message it is preparing, or an inline `weed-allow` comment beside the line weeder objected to.
+A worker that cannot make the gate pass can write its own way past it: a `Weeder-allow:` trailer on the
+commit message it is preparing, or an inline `weeder-allow` comment beside the line weeder objected to.
 Under `--strict` weeder reports those findings at the level their rule carries, so a suppression the
 worker wrote for itself still stops the node. `--strict` also refuses to judge a suppression it
 cannot read, and leaves with exit 3 rather than guessing what was meant.

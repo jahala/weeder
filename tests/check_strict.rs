@@ -1,7 +1,7 @@
 //! `--strict`, suppressions visible, and not honoured.
 //!
-//! A suppression travels with the change: a `Weed-allow:` trailer on the commit
-//! being prepared, or an inline `weed-allow` comment beside the line. Both turn
+//! A suppression travels with the change: a `Weeder-allow:` trailer on the commit
+//! being prepared, or an inline `weeder-allow` comment beside the line. Both turn
 //! a block-level finding into a note that stops nobody, and `--strict` hands the
 //! finding back its own level so a reviewer sees what the pile is really made of.
 
@@ -14,7 +14,9 @@ const REASON: &str = "the merge finishes in the follow-up commit";
 #[test]
 fn a_commit_trailer_makes_a_block_finding_a_note_and_strict_gives_it_back() {
     let repo = fixture("G1", "ts", "fire");
-    repo.pending_message(&format!("Split on semicolons\n\nWeed-allow: G1 {REASON}\n"));
+    repo.pending_message(&format!(
+        "Split on semicolons\n\nWeeder-allow: G1 {REASON}\n"
+    ));
 
     let honoured = repo.weeder(&["check"]);
     let findings = honoured.findings();
@@ -50,7 +52,7 @@ fn a_trailer_on_a_commit_in_the_base_range_counts_and_git_s_own_editmsg_never_do
     repo.commit(&format!(
         "Split on semicolons
 
-Weed-allow: G1 {REASON}
+Weeder-allow: G1 {REASON}
 "
     ));
 
@@ -78,7 +80,7 @@ fn an_inline_comment_makes_a_block_finding_a_note_and_strict_gives_it_back() {
     let repo = Repo::init();
     repo.write(
         "src/parser.ts",
-        &conflicted_parser(Some(&format!("// weed-allow G1: {REASON}"))),
+        &conflicted_parser(Some(&format!("// weeder-allow G1: {REASON}"))),
     );
     repo.stage_all();
 
@@ -106,7 +108,7 @@ fn a_weeder_allow_with_no_reason_is_a_complaint_and_strict_refuses_to_run() {
         "src/parser.ts",
         &format!(
             "export function parse(input: string): string[] {{\n\
-             \x20 // weed-allow G1\n\
+             \x20 // weeder-allow G1\n\
              {opener}\n  return input.split(\",\");\n\
              {separator}\n  return input.split(\";\");\n\
              {closer}\n}}\n",

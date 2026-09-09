@@ -103,6 +103,10 @@ fn judge(
         tip: None,
         staged,
         scope: Vec::new(),
+        // At the end of a turn this is the working tree against HEAD, so the
+        // files the agent wrote and never staged come with it; at a commit it
+        // is the index, which holds what it holds.
+        untracked: None,
         strict: true,
         format: crate::faces::Format::Table,
         config: None,

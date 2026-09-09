@@ -379,7 +379,7 @@ pub fn commit_messages(root: &Path, base: &str, tip: &str) -> Result<Vec<String>
 /// a worker wrote and never staged counts, and a file the ignore rules hide is
 /// not part of the tree at all.
 pub fn tree_files(root: &Path) -> Result<Vec<String>, GitError> {
-    let listed = run_lossy(
+    listing(
         root,
         &[
             "ls-files",
@@ -388,10 +388,22 @@ pub fn tree_files(root: &Path) -> Result<Vec<String>, GitError> {
             "--others",
             "--exclude-standard",
         ],
-    )?;
-    // `-z` so a path with a newline or a quote in it arrives whole. git lists
-    // a path once per index entry, and a file staged in more than one is still
-    // one file.
+    )
+}
+
+/// The half of that the repository has never been told about: what a worker
+/// wrote and never staged, with the ignore rules still keeping out what they
+/// keep out. It is listed the way `tree_files` lists the whole tree, so a run
+/// that judges these files judges them in the same order every time.
+pub fn untracked_files(root: &Path) -> Result<Vec<String>, GitError> {
+    listing(root, &["ls-files", "-z", "--others", "--exclude-standard"])
+}
+
+/// One `ls-files` listing, read as the paths it names. `-z` so a path with a
+/// newline or a quote in it arrives whole. git lists a path once per index
+/// entry, and a file staged in more than one is still one file.
+fn listing(root: &Path, arguments: &[&str]) -> Result<Vec<String>, GitError> {
+    let listed = run_lossy(root, arguments)?;
     let mut paths: Vec<String> = listed
         .split('\u{0}')
         .filter(|path| !path.is_empty())

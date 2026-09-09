@@ -66,6 +66,68 @@ impl std::fmt::Display for DiffError {
 
 impl std::error::Error for DiffError {}
 
+/// The diff of a file that arrives whole: no side before it, every line added.
+///
+/// git writes one of these for a file it has been told about, and will not write
+/// one for a file nobody staged however it is asked, so a face that judges the
+/// working tree writes it here instead. What this is handed is the file's text,
+/// or nothing at all where the bytes carry no lines, which is the answer git
+/// gives when it writes `Binary files differ` and no hunk under it.
+#[must_use]
+pub fn added_file(path: &str, text: Option<&str>) -> FileDiff {
+    let (change, hunks) = match text {
+        None => (ChangeKind::Binary, Vec::new()),
+        Some("") => (ChangeKind::Added, Vec::new()),
+        Some(text) => (ChangeKind::Added, vec![whole_file(text)]),
+    };
+    FileDiff {
+        old_path: None,
+        new_path: Some(path.to_string()),
+        change,
+        hunks,
+        // The mode is what the filesystem says rather than what git recorded,
+        // and no rule asks; a stat for an answer nobody reads is a stat weeder
+        // does not make.
+        old_mode: None,
+        new_mode: None,
+    }
+}
+
+/// One hunk covering the whole of a file that was not there before.
+fn whole_file(text: &str) -> Hunk {
+    let ends_open = !text.ends_with('\n');
+    // Counted the way the parser counts the hunks git writes: a line past what
+    // a line number can hold stays at the last number there is, so a finding
+    // still points somewhere in a file nobody could open anyway.
+    let mut number: u32 = 0;
+    let mut lines: Vec<HunkLine> = text
+        .lines()
+        .map(|line| {
+            number = number.saturating_add(1);
+            HunkLine {
+                kind: LineKind::Added,
+                old_line: None,
+                new_line: Some(number),
+                text: line.to_string(),
+                no_newline: false,
+            }
+        })
+        .collect();
+    if ends_open {
+        if let Some(last) = lines.last_mut() {
+            last.no_newline = true;
+        }
+    }
+    Hunk {
+        old_start: 0,
+        old_count: 0,
+        new_start: 1,
+        new_count: u32::try_from(lines.len()).unwrap_or(u32::MAX),
+        section: None,
+        lines,
+    }
+}
+
 pub fn parse_diff(input: &str) -> Result<Vec<FileDiff>, DiffError> {
     let lines: Vec<&str> = input.lines().collect();
     let mut files = Vec::new();

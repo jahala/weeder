@@ -253,7 +253,7 @@ fn finding(
                 counted(remaining)
             ),
             why: "a case that checks nothing passes whatever the code does, so the suite reports green over behaviour held by nobody.".to_string(),
-            next: "put the checks back, or carry a `Weed-allow: T2` trailer saying which claim stopped being worth making.".to_string(),
+            next: "put the checks back, or carry a `Weeder-allow: T2` trailer saying which claim stopped being worth making.".to_string(),
         }
     } else {
         Message {
@@ -264,7 +264,7 @@ fn finding(
                 named(&moved.into)
             ),
             why: "the claims that moved are still made where they landed; the ones left behind are made nowhere, so that much of the behaviour is unwatched.".to_string(),
-            next: "make the rest again where they belong, or carry a `Weed-allow: T2` trailer saying which claim stopped being worth making.".to_string(),
+            next: "make the rest again where they belong, or carry a `Weeder-allow: T2` trailer saying which claim stopped being worth making.".to_string(),
         }
     };
     Finding {

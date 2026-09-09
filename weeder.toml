@@ -5,7 +5,7 @@
 # no gate here to loosen: the root commit holds a single empty file. The
 # allowance says so once, and the finding is reported as a note rather than
 # hidden.
-# weed-allow C1: the root commit carries no earlier weeder.toml for this one to loosen
+# weeder-allow C1: the root commit carries no earlier weeder.toml for this one to loosen
 #
 # The layers below are this repository's own doctrine, and D2 is what holds
 # them: core computes and reaches nothing, the seams reach the world, the faces

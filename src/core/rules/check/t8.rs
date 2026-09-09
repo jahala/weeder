@@ -53,7 +53,7 @@ fn finding(hidden: &Hidden) -> Finding {
         message: Message {
             what,
             why: "the file still looks present and no longer runs, so the suite reads as larger than it is.".to_string(),
-            next: "collect the test again, delete it, or write why it is left out in a Weed-allow trailer.".to_string(),
+            next: "collect the test again, delete it, or write why it is left out in a `Weeder-allow: T8` trailer.".to_string(),
         },
         fix: None,
         suppressed: None,

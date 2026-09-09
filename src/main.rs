@@ -9,7 +9,7 @@ use std::process::ExitCode;
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use weeder::core::hook::Harness;
 use weeder::core::sarif::EXIT_COULD_NOT_RUN;
-use weeder::faces::{bite, check, format_for, guard, hook, rules, scan, Answer, Format};
+use weeder::faces::{bite, check, format_for, guard, hook, rules, scan, Answer, Format, Untracked};
 
 #[derive(Debug, Parser)]
 #[command(name = "weeder", version, about = "the judge of the diff")]
@@ -142,6 +142,11 @@ struct CheckArgs {
     /// The paths the change may touch; every file is still judged.
     #[arg(long, value_name = "glob")]
     scope: Vec<String>,
+    /// Judge the files git has never been told about, or leave them out.
+    /// Included by default when the working tree is judged against HEAD, and
+    /// left out with --staged and --base.
+    #[arg(long, value_enum, value_name = "untracked")]
+    untracked: Option<UntrackedFiles>,
     /// Report suppressed findings at their own level, and refuse to guess.
     #[arg(long)]
     strict: bool,
@@ -151,7 +156,7 @@ struct CheckArgs {
     /// Read weeder.toml from here instead of the repository root.
     #[arg(long, value_name = "path")]
     config: Option<PathBuf>,
-    /// The message of the commit being prepared, for its Weed-allow trailers.
+    /// The message of the commit being prepared, for its Weeder-allow trailers.
     #[arg(long, value_name = "path")]
     message_file: Option<PathBuf>,
 }
@@ -179,6 +184,12 @@ struct RulesArgs {
     /// Print the catalogue as a table or as json.
     #[arg(long, value_enum, value_name = "format", default_value_t = RulesFormat::Table)]
     format: RulesFormat,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum UntrackedFiles {
+    Include,
+    Exclude,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -242,6 +253,10 @@ fn run_check(args: CheckArgs) -> Answer {
         tip: None,
         staged: args.staged,
         scope: args.scope,
+        untracked: args.untracked.map(|untracked| match untracked {
+            UntrackedFiles::Include => Untracked::Include,
+            UntrackedFiles::Exclude => Untracked::Exclude,
+        }),
         strict: args.strict,
         format,
         config: args.config,
