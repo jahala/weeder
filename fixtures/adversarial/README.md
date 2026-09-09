@@ -20,6 +20,10 @@ languages whose runners collect a case by the name it is declared under, T1 has
 table and the one that leaves a case behind while it does, C3 has a `promoted/`
 whose `weeder.toml` names a workflow under `[guardrails] paths`, and R1 has a
 `fire-bound/` whose document cites the commands a scan must refuse to run.
+R1 keeps one folder per authority a citation is answered by: `paths/`,
+`commands/`, `flags/` and `symbols/` for the four, `lines/` for a citation that
+names a line the file is not long enough to have, and `anchors/` and
+`directory/` for the file and the directory a paragraph pins a name to.
 Every directory holding a `before/` and an `after/` is a fixture, whatever it is
 called, and `tests/determinism.rs` replays all of them.
 

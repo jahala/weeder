@@ -242,6 +242,8 @@ The cases are named from the test shape of each side of the test commit, so what
 
 A path, command, flag or symbol cited in the repository's markdown does not resolve against the tree.
 
+A citation carries the line it names. A path that resolves is still wrong when the line is past the end of the file, and the finding says how long the file is. A bare name is answered by whatever the paragraph pinned it to: a path or a directory cited on the same line, or the last one that resolved under the same heading. That place is asked first, the rest of the tree second, and what neither answered is a warning naming the place, because a reader can go there and see. A name with nothing beside it is asked of the tree alone and reported as a note: prose is full of words that are nobody's symbol, and the loud half of this rule is the half a document vouched for.
+
 <a id="R2"></a>
 ## R2: A public symbol has no references
 

@@ -6,13 +6,13 @@
 
 use std::collections::BTreeSet;
 
-use crate::core::catalogue::{self, Rule};
+use crate::core::catalogue;
 use crate::core::change::Change;
 use crate::core::config::Config;
-use crate::core::finding::{Finding, Level};
+use crate::core::finding::Finding;
 use crate::core::hierarchy::Hierarchy;
 use crate::core::read::CallerSite;
-use crate::core::rules::configured_level;
+use crate::core::rules::{configured_level, reported_at};
 
 pub mod c1;
 pub mod c2;
@@ -124,20 +124,4 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
         }
     }
     findings
-}
-
-/// The level one finding is reported at.
-///
-/// A detector stamps its rule's catalogue default on an ordinary finding, and
-/// the config's setting takes its place: that is what `[rules]` is for. A
-/// detector that reported something worse than its rule's usual case keeps the
-/// level it chose, because it knows something the config does not, D1 on a
-/// manifest the run was never scoped for. Turning the rule off is still how a
-/// repository says it does not want to hear about it at all.
-fn reported_at(finding: &Finding, rule: &Rule, configured: Level) -> Level {
-    if finding.level == rule.default_level {
-        configured
-    } else {
-        finding.level
-    }
 }
