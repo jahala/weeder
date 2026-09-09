@@ -20,7 +20,8 @@
         "timeoutMs": 5400000
       },
       "worker": {
-        "provider": "codex"
+        "provider": "claude",
+        "model": "opus"
       },
       "needs": []
     }
