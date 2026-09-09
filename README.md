@@ -113,8 +113,10 @@ name on 2026-09-06: `weed` was taken on the one namespace that binds, the execut
 SeaweedFS has shipped `weed` through Homebrew for years. One claim is still open, marked
 **[flagged]** where it is made:
 
-- **The manifest schema.** `schemas/garden.schema.json` is a vendored proposal. The real one
-  belongs to a contracts repository that does not exist yet. **[flagged]**
+- **The manifest schema.** `schemas/garden.schema.json` is the umbrella's manifest contract,
+  vendored whole at plotplot v1.3.0. That contract moved twice in the week weeder was fitted to
+  it, so the copy is a pin rather than a settled shape: re-fetch it with
+  `scripts/umbrella-brand.sh` and read the two against each other before a release. **[flagged]**
 
 ## Building
 

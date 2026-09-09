@@ -89,26 +89,19 @@ jobs:
           fi
         shell: bash
 
-      - name: Package (unix)
-        if: matrix.os != 'windows-latest'
-        run: |
-          cd target/${{ matrix.target }}/release
-          tar czf ../../../weeder-${{ matrix.target }}.tar.gz weeder
-          cd ../../..
-
-      - name: Package (windows)
-        if: matrix.os == 'windows-latest'
+      # One artifact shape on every platform, named and filled from garden.json:
+      # the executable, the manifest and the skill, with the digest the garden's
+      # lockfile pins written beside the tarball. The same script is what
+      # scripts/check/release.sh runs to prove the shape on a developer machine.
+      - name: Package
         shell: bash
-        run: |
-          cd target/${{ matrix.target }}/release
-          7z a ../../../weeder-${{ matrix.target }}.zip weeder.exe
-          cd ../../..
+        run: bash scripts/package-release.sh "${{ matrix.target }}" "target/${{ matrix.target }}/release" .
 
       - uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # ratchet:softprops/action-gh-release@v3
         with:
           files: |
             weeder-*.tar.gz
-            weeder-*.zip
+            weeder-*.tar.gz.sha256
           # Notes on one leg only. When the release already exists the action
           # appends freshly generated notes to the body, so every extra matrix
           # leg would add another copy of what changed.
