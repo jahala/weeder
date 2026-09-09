@@ -1,2 +1,2 @@
-{"type": "input", "case": "blocked:umbel:75523a16a3", "sha256": "c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119"}
-{"type": "answer", "answer": "Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: true-positive\nReasoning: S1's claim is true: a production TODO admits unverified inferred tool-call parsing, so the new provider shipped incomplete behavior that could mishandle real transcripts."}
+{"type": "input", "case": "blocked:umbel:75523a16a3", "sha256": "83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829\nVerdict: true-positive\nReasoning: S1's claim is accurate: the TODO in opencode.ts admitting unverified, inferred tool-call parsing shipped as production behaviour, which genuinely weakens the provider."}

@@ -1,2 +1,2 @@
-{"type": "input", "case": "recall:T1:go:cobra:3f3b81882:doc/man_examples_test.go", "sha256": "c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119"}
-{"type": "answer", "answer": "Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: miss\nReasoning: ExampleGenManTree is a Go example test in a _test.go file, so deleting it is genuinely a T1 test deletion, and the report says weeder did not report it."}
+{"type": "input", "case": "recall:T1:go:cobra:3f3b81882:doc/man_examples_test.go", "sha256": "83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829\nVerdict: miss\nReasoning: `ExampleGenManTree` is a Go example function inside a `_test.go` file, so deleting it is a test deleted and T1's shape is present but unreported."}

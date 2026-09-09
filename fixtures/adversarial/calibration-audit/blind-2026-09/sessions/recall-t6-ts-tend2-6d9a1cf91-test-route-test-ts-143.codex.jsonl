@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07672-2443-77f1-90d2-e6196e7ae80f"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: c3731b65b475678443ae3fbc54bc5921be736a11e5219683167541437fa19312\nVerdict: miss\nReasoning: The assertion was weakened from expecting an error matching /sample/ to any thrown error, and weed reported no finding at the planted site."}}
-{"type":"turn.completed","usage":{"input_tokens":22165,"cached_input_tokens":20864,"output_tokens":77,"reasoning_output_tokens":0}}

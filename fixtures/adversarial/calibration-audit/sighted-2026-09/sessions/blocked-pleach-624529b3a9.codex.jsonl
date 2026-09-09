@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a077ce-6156-7100-ac77-1de3f7917e86"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: false-positive\nReasoning: X1 matched a private-key regex and fixture used to test pleach's own secret detector, not an actual credential published in the commit."}}
-{"type":"turn.completed","usage":{"input_tokens":36947,"cached_input_tokens":17792,"output_tokens":122,"reasoning_output_tokens":34}}

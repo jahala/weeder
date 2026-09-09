@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a077ce-9c71-7182-b1fd-4301b042ef54"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: acceptable\nReasoning: T2 correctly saw an assertion count drop, but the removed substring check was flaky search-output coupling while behavior remained pinned elsewhere and success propagation stayed tested."}}
-{"type":"turn.completed","usage":{"input_tokens":36947,"cached_input_tokens":20864,"output_tokens":161,"reasoning_output_tokens":72}}

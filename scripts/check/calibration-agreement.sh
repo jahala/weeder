@@ -219,7 +219,12 @@ def check_sample(audit, name, sample, audit_rows):
         # (true-positive or acceptable, a label the audit never counts). A
         # recall case agrees on miss against miss, as before.
         if name == "blocked":
-            if (row["verdict"] == "false-positive") == (item["original"] == "false-positive"):
+            # A verdict outside the vocabulary is not an answer, and a binary
+            # read would score a silent session as agreeing whenever the ledger
+            # says claim-true.
+            if row["verdict"] in CLASSIFICATIONS.values() and (
+                (row["verdict"] == "false-positive") == (item["original"] == "false-positive")
+            ):
                 agreed += 1
         elif row["verdict"] == item["original"]:
             agreed += 1

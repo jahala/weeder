@@ -24,8 +24,10 @@ jobs="${2:-4}"
 report="docs/calibration-2026-09.md"
 base="fixtures/adversarial/calibration-audit/sighted-2026-09"
 sessions="$base/sessions"
+provider="opencode"
+model="deepseek/deepseek-v4-pro"
 
-command -v codex >/dev/null 2>&1 || { echo "codex is not on PATH" >&2; exit 3; }
+command -v opencode >/dev/null 2>&1 || { echo "opencode is not on PATH" >&2; exit 3; }
 command -v trash >/dev/null 2>&1 || { echo "trash is not on PATH; nothing here deletes with rm" >&2; exit 3; }
 [ -f "$report" ] || { echo "$report is missing: there is nothing for a sighted auditor to read" >&2; exit 3; }
 
@@ -41,7 +43,7 @@ count="$(ls "$scratch/cases"/*.md | wc -l | tr -d ' ')"
 echo "$count sampled cases for seed $seed"
 
 hash="$(shasum -a 256 "$report" | cut -d' ' -f1)"
-export report sessions hash
+export report sessions hash provider model
 
 # One session. Its whole input is the report, which carries the builder's class
 # and reasoning beside each case, and the case it is asked about.
@@ -49,7 +51,7 @@ one() {
   case_path="$1"
   stem="$(basename "$case_path" .md)"
   case_id="$(grep -m1 '^Case: ' "$case_path" | sed 's/^Case: //')"
-  raw="$sessions/$stem.codex.jsonl"
+  raw="$sessions/$stem.opencode.jsonl"
   events="$sessions/$stem.events.jsonl"
   empty="$(mktemp -d)"
   if [ "${case_id#blocked:}" != "$case_id" ]; then
@@ -64,18 +66,30 @@ one() {
     subject="the recall case for rule $rule at \`$path\` in commit $sha, listed under 'Every miss'"
     verdicts='miss, caught or not-a-case: miss if the rule'"'"'s shape is genuinely present at the planted site and weeder did not report it there; caught if weeder did report it there; not-a-case if the shape is not genuinely present at that site.'
   fi
-  prompt="You are re-grading one case for a calibration of a diff judge called weeder. The calibration report on stdin is your only input; do not run commands, read files or use tools. Its SHA-256 is $hash. Re-grade $subject. Reply with exactly three lines and nothing else:
+  prompt="You are re-grading one case for a calibration of a diff judge called weeder. The calibration report comes with this message and is your only input; do not run commands, read files or use tools. Its SHA-256 is $hash. Re-grade $subject. Reply with exactly three lines and nothing else:
 Answered report SHA-256: $hash
 Verdict: <one of $verdicts>
 Reasoning: <one sentence, under forty words>"
-  if ! codex exec --json --ephemeral --skip-git-repo-check --ignore-user-config --ignore-rules -s read-only -C "$empty" "$prompt" < "$report" > "$raw" 2> "$sessions/$stem.stderr.txt"; then
-    echo "codex exec failed on $stem" >&2
-  fi
+  # opencode keeps its sessions in one database, and parallel runs meet in it:
+  # a session that dies on a locked database has answered nothing, so it is
+  # asked again rather than recorded as a verdict nobody gave.
+  attempt=1
+  while :; do
+    if opencode run --model "$model" --format json --pure --dir "$empty" "$prompt" < "$report" > "$raw" 2> "$sessions/$stem.stderr.txt"; then
+      break
+    fi
+    if [ "$attempt" -ge 3 ]; then
+      echo "opencode run failed on $stem after $attempt attempts" >&2
+      break
+    fi
+    attempt=$((attempt + 1))
+    sleep 5
+  done
   trash "$empty" >/dev/null 2>&1 || true
-  python3 - "$raw" "$events" "$case_id" "$hash" <<'PY'
+  python3 - "$raw" "$events" "$case_id" "$hash" "$provider" "$model" <<'PY'
 import json, sys
-raw, events, case_id, hash = sys.argv[1:5]
-answer = ""
+raw, events, case_id, hash, provider, model = sys.argv[1:7]
+answer = []
 for line in open(raw, encoding="utf-8"):
     line = line.strip()
     if not line:
@@ -84,11 +98,12 @@ for line in open(raw, encoding="utf-8"):
         event = json.loads(line)
     except json.JSONDecodeError:
         continue
-    item = event.get("item") or {}
-    if event.get("type") == "item.completed" and item.get("type") == "agent_message":
-        answer = item.get("text", "")
+    part = event.get("part") or {}
+    if event.get("type") == "text" and part.get("type") == "text":
+        answer.append(part.get("text", ""))
+answer = "".join(answer).strip()
 with open(events, "w", encoding="utf-8") as out:
-    out.write(json.dumps({"type": "input", "case": case_id, "sha256": hash}) + "\n")
+    out.write(json.dumps({"type": "input", "case": case_id, "sha256": hash, "provider": provider, "model": model}) + "\n")
     out.write(json.dumps({"type": "answer", "answer": answer}) + "\n")
 print(("answered " if answer.startswith(f"Answered report SHA-256: {hash}") else "NO ANSWER ") + case_id)
 PY
@@ -98,9 +113,9 @@ export -f one
 ls "$scratch/cases"/*.md | xargs -P "$jobs" -I{} bash -c 'one "$@"' _ {}
 
 # The audit file, from the answers and the report's own tables.
-python3 - "$seed" "$base" "$scratch/cases" <<'PY'
+python3 - "$seed" "$base" "$scratch/cases" "$provider" "$model" <<'PY'
 import json, re, sys, pathlib
-seed, base, cases = sys.argv[1:4]
+seed, base, cases, provider, model = sys.argv[1:6]
 base = pathlib.Path(base)
 cases = pathlib.Path(cases)
 report = open("docs/calibration-2026-09.md", encoding="utf-8").read()
@@ -129,11 +144,12 @@ r_agreed = sum(1 for row in recall if row[5] == "miss")
 def pct(a, n): return f"{(a * 100.0 / n) if n else 0.0:.1f}%"
 out = [
     "# calibration audit, 2026-09", "",
-    "Provider: codex, OpenAI GPT-5 Codex (`codex exec`, one fresh session per case)", "",
+    f"Provider: {provider} (`opencode run --model {model} --format json`, one fresh session per case)", "",
+    f"Model: {model}", "",
     "Blind: no; the auditor could read the builder's classification and reasoning in docs/calibration-2026-09.md before judging.", "",
     f"Seed: {seed}", "",
     f"Sessions: {base}/sessions", "",
-    f"The sample is the seeded one `cargo xtask audit-packet --seed {seed}` draws from the report, so this re-grade and the blind one beside it sample the same cases and differ only in what the auditor could see. `scripts/audit/sighted-run.sh` handed each case to a fresh `codex exec` session in an empty directory, with the user's configuration and rules ignored and the sandbox read-only, and the report itself as the session's only input. Each answer opens with the SHA-256 of the report it was given, and the raw event stream is kept beside it. The agreement below is recomputed by `scripts/check/calibration-agreement.sh` from these tables and the report's own.", "",
+    f"The sample is the seeded one `cargo xtask audit-packet --seed {seed}` draws from the report, so this re-grade and the blind one beside it sample the same cases and differ only in what the auditor could see. `scripts/audit/sighted-run.sh` handed each case to a fresh `{provider}` session running `{model}`, in an empty directory with plugins off, and the report itself on stdin as the session's only input. Each session record names the provider and the model, each answer opens with the SHA-256 of the report it was given, and the raw event stream is kept beside it. The agreement below is recomputed by `scripts/check/calibration-agreement.sh` from these tables and the report's own.", "",
     "## Agreement", "",
     "| Sample | Re-graded | Agreed | Agreement |", "|---|---:|---:|---:|",
     f"| blocked commits | {len(blocked)} | {b_agreed} | {pct(b_agreed, len(blocked))} |",

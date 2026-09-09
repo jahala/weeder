@@ -14,10 +14,25 @@ import sys
 import tempfile
 
 AUDIT = pathlib.Path("docs/calibration-audit-blind-2026-09.md")
+SIGHTED_AUDIT = pathlib.Path("docs/calibration-audit-2026-09.md")
 REPORT = pathlib.Path("docs/calibration-2026-09.md")
 CASE_DIR = pathlib.Path("fixtures/adversarial/calibration-audit/blind-2026-09/cases")
 SESSION_DIR = pathlib.Path("fixtures/adversarial/calibration-audit/blind-2026-09/sessions")
-SPENT_SEEDS = {"calibration-audit-blind-2026-09-47"}
+# Every seed that has been answered. A re-grade re-runs on a seed nobody has
+# seen, so an answer cannot be a memory of the run before it.
+SPENT_SEEDS = {
+    "calibration-audit-blind-2026-09-47",
+    "calibration-audit-blind-2026-09-fair-1",
+    "calibration-audit-blind-2026-09-redo-2",
+    "calibration-audit-blind-2026-09-t2-1",
+}
+# The findings table is the judged content and nothing else: a rule id, a
+# level, a path and a line. A fifth cell would be the finding's sentence, and a
+# sentence in the sealed bytes is what made a rename cost forty sessions.
+FINDINGS_HEADER = "| Rule | Level | Path | Line |"
+FINDING_ROW = re.compile(
+    r"^\| (?:none|[A-Z][0-9]) \| (?:none|error|warning|note) \| (?:`[^`]*`)? \| [0-9]+ \|$"
+)
 complaints = []
 
 
@@ -48,12 +63,48 @@ def sha256_text(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def judged_content_only(path, text):
+    """The findings a packet carries, read as a table of judged content.
+
+    A finding is a rule id, a level, a path and a line. Its sentence says the
+    same thing for a person, and it is left out of the packet, because the seal
+    the auditors' answers hang on is the sha256 of these bytes: a message
+    reworded, or a token respelled inside one, would move every hash and buy
+    forty sessions again. What the auditor judges the change against is the
+    rule's own catalogue line, which is printed above the table.
+    """
+    complaints = []
+    body = re.split(r"(?m)^```", text)[::2]
+    for section in body:
+        match = re.search(r"(?m)^Weeder findings:\n\n(.*?)(?:\n\n|\Z)", section, re.S)
+        if match is None:
+            continue
+        rows = match.group(1).splitlines()
+        if not rows or rows[0].strip() != FINDINGS_HEADER:
+            complaints.append(f"{path} findings table is not {FINDINGS_HEADER}: {rows[:1]}")
+            continue
+        for row in rows[2:]:
+            if not FINDING_ROW.match(row.strip()):
+                complaints.append(f"{path} findings row carries more than the judged content: {row}")
+    if re.search(r"(?m)^\| Rule \| Level \| Path \| Line \| Message \|", text):
+        complaints.append(f"{path} prints a finding message column")
+    return complaints
+
+
 audit = read(AUDIT)
 report = read(REPORT)
 seed = field(audit, "Seed")
+model = field(audit, "Model")
+# The agreement is a number about a population: this one was read by a provider
+# and a model neither earlier seal used, so both audit files say which.
+for path in (AUDIT, SIGHTED_AUDIT):
+    text = read(path)
+    for name in ("Provider", "Model"):
+        if not re.search(rf"(?im)^{name}:\s*\S", text):
+            complaints.append(f"{path} does not name the {name.lower()} that produced it")
 
-if seed in SPENT_SEEDS and "untrusted" not in first_prose_sentence(report).lower():
-    complaints.append(f"{AUDIT} uses spent seed {seed} without an untrusted calibration verdict")
+if seed in SPENT_SEEDS:
+    complaints.append(f"{AUDIT} re-uses seed {seed}, which has been answered already")
 
 with tempfile.TemporaryDirectory() as tmp:
     regenerated_dir = pathlib.Path(tmp) / "cases"
@@ -79,7 +130,7 @@ with tempfile.TemporaryDirectory() as tmp:
             if kept_text != fresh_text:
                 complaints.append(f"{kept_path} differs from regenerated {fresh_path.name}")
                 continue
-            for required in ("Catalogue:", "Weed findings:", "Diff cap bytes:", "Diff bytes:", "Diff capped:"):
+            for required in ("Catalogue:", "Weeder findings:", "Diff cap bytes:", "Diff bytes:", "Diff capped:"):
                 if required not in kept_text:
                     complaints.append(f"{kept_path} is missing {required}")
             if "Diff capped: no" in kept_text and "```diff" not in kept_text:
@@ -87,8 +138,9 @@ with tempfile.TemporaryDirectory() as tmp:
             if "Diff capped: yes" in kept_text and "exceeds the stated cap" not in kept_text:
                 complaints.append(f"{kept_path} is capped without saying why the full diff is absent")
             if re.search(r"(?im)^Case: blocked:", kept_text):
-                if not re.search(r"(?m)^\| [A-Z][0-9] \| error \| `[^`]+` \| [0-9]+ \| .+ \|$", kept_text):
+                if not re.search(r"(?m)^\| [A-Z][0-9] \| error \| `[^`]+` \| [0-9]+ \|$", kept_text):
                     complaints.append(f"{kept_path} has no printed weeder finding row")
+            complaints.extend(judged_content_only(kept_path, kept_text))
             if re.search(r"(?im)^Case: recall:", kept_text):
                 for required in ("Planted site:", "Question:", "genuinely present at that planted site"):
                     if required not in kept_text:
@@ -126,6 +178,12 @@ if CASE_DIR.exists():
             complaints.append(f"{session_path} input names {input_event.get('packet')}, not {case_path}")
         if input_event.get("sha256") != expected_hash:
             complaints.append(f"{session_path} input hash is not {expected_hash}")
+        if not str(input_event.get("provider", "")).strip():
+            complaints.append(f"{session_path} does not name the provider that answered it")
+        if str(input_event.get("model", "")).strip() != model:
+            complaints.append(
+                f"{session_path} names model {input_event.get('model')}, and {AUDIT} names {model}"
+            )
         answer = str(answer_event.get("answer", ""))
         if not answer.startswith(f"Answered packet SHA-256: {expected_hash}\n"):
             complaints.append(f"{session_path} answer does not open with {expected_hash}")
@@ -142,10 +200,26 @@ stands = bool(rows) and all(int(n) >= 20 and int(a) * 100 >= 90 * int(n) for _, 
 if not stands and "untrusted" not in first_prose_sentence(report).lower():
     complaints.append(f"{REPORT}'s first prose sentence must say the classification is untrusted while the fair blind audit is under the bar")
 
+# The packet's shape is held above on the packets in the tree; the property
+# behind it is held at the function that writes the table, where a message
+# rewritten between two runs has to leave the bytes where they were.
+unit = subprocess.run(
+    ["cargo", "test", "--quiet", "--package", "xtask", "--bin", "xtask", "audit_packet::"],
+    check=False,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
+    text=True,
+)
+if unit.returncode != 0:
+    complaints.append(
+        "the packet's seal is not held at the generator: "
+        + (unit.stdout + unit.stderr).strip().splitlines()[-1]
+    )
+
 if complaints:
     for complaint in complaints:
         print(complaint, file=sys.stderr)
     sys.exit(1)
 
-print(f"fair blind case packets stand for seed {seed}")
+print(f"fair blind case packets stand for seed {seed}, answered on {model}")
 PY

@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a077cf-3c95-7ae1-9beb-6b1432e11598"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: miss\nReasoning: The report says the planted deletion removed a real test case in `test/site-paths.test.ts` and weeder did not report T1 at that planted site."}}
-{"type":"turn.completed","usage":{"input_tokens":36946,"cached_input_tokens":20864,"output_tokens":374,"reasoning_output_tokens":282}}

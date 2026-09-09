@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T6:ts:tend2:32df8ddd1:test/verify.test.ts:176", "sha256": "83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829\nVerdict: miss\nReasoning: T6 flags weakened error assertions; removing the error name at test/verify.test.ts:176 is exactly that shape, and weeder did not report it at the site."}

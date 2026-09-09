@@ -1,2 +1,2 @@
-{"type": "input", "case": "recall:T2:py:copeca:70d669542:tests/config/test_mode_models.py", "sha256": "c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119"}
-{"type": "answer", "answer": "Answered report SHA-256: c73d1ca711b4974a9dff6c5559657f6d60311e0713d8a2c45620fa1925420119\nVerdict: miss\nReasoning: The report lists this planted T2 case as an assertion deletion in a test file and says it was planted but not reported."}
+{"type": "input", "case": "recall:T2:py:copeca:70d669542:tests/config/test_mode_models.py", "sha256": "83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829\nVerdict: miss\nReasoning: Deleting the assertion on line 66 of a changed test file is exactly T2's shape, and weeder reported nothing at that site."}

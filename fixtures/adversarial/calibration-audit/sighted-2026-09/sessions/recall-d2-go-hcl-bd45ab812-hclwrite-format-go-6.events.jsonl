@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:D2:go:hcl:bd45ab812:hclwrite/format.go:6", "sha256": "83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829\nVerdict: miss\nReasoning: hclwrite importing the test-only integrationtest package is a genuine forbidden boundary crossing D2 exists to catch, and weeder reported nothing at that site."}

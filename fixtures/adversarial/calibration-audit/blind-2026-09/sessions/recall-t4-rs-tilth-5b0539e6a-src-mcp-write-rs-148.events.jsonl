@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t4-rs-tilth-5b0539e6a-src-mcp-write-rs-148.md", "sha256": "a82e32ca525ed3d5e82941497417782185fdde589a62ea86fe82b996618536b5", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered packet SHA-256: a82e32ca525ed3d5e82941497417782185fdde589a62ea86fe82b996618536b5\nVerdict: not-a-case\nReasoning: The diff introduces a fresh 10-second deadline but no wait is widened from 1 to 10, so T4's shape is absent at the planted site."}

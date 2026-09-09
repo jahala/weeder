@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a07671-ac80-7c01-9562-96917e451efb"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Answered packet SHA-256: b1caf7274dc3447faaae113493d410ba42deab3b72ca988ebad2781d94395bdc\nVerdict: acceptable\nReasoning: One assertion count dropped, but the removed Array.isArray check was redundant with toEqual([]), and the rewritten test still verifies the behavior while avoiding unsafe shared tmux server mutation."}}
-{"type":"turn.completed","usage":{"input_tokens":22990,"cached_input_tokens":20864,"output_tokens":242,"reasoning_output_tokens":153}}
