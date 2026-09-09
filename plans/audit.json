@@ -1,56 +1,74 @@
 {
   "tilth-core": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "core": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "sarif": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "check-face": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "rules-block": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "rules-tests": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "rules-prod": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "guard": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "hooks": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "scan": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "calibration": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "bite": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "garden-fit": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "weed": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "hardening": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "recall": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "calibration-audit": {
-    "provider": "claude"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   },
   "hidden-tests": {
-    "provider": "codex"
+    "provider": "opencode",
+    "model": "deepseek/deepseek-v4-pro"
   }
 }
