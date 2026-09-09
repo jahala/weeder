@@ -1,0 +1,96 @@
+{
+  "goal": "A static Rust binary that reads what an agent produced and refuses the growth that should not be there, deleted or weakened tests, skips, stubs, swallowed errors, secrets, guardrail edits, dependency-direction violations, in milliseconds, with zero tokens, every finding as SARIF 2.1.0. `weeder check` judges a diff and may block; `weeder scan` judges the tree and never blocks; `weeder guard` is the law in git through hooks; `weeder bite` proves a test fails without its change. For maintainers drowning in agent-authored pull requests who need a deterministic gate before they read, for teams running agents on several harnesses who want one law, and for the garden's own fleets through pleach.",
+  "source": "docs/tend2#hooks",
+  "nodes": [
+    {
+      "id": "hooks",
+      "work": {
+        "prompt": "You are a worker in a build loop. Make the checks below pass, honestly.\nNobody reviews your prose \u2014 only the verifier's verdict counts, so put all effort into the work itself.\n\n## The goal\n`weeder hook <claude|gemini|codex>` reads a harness hook event as JSON on stdin and answers in the harness's own shape. For a tool call that runs `git commit`, it judges the index and denies with the findings as the reason; for the end of a turn (Stop on Claude Code, AfterAgent on Gemini CLI), it judges the working tree and blocks the stop with the findings, so an agent cannot declare done over a dishonest tree. Codex gets whatever its hook events can deny, and the rest is written down. Every hook is proven with a real harness run recorded in `docs/proof-2026-09.md`.\n\n## Your environment\n- You are at the repository root of an isolated git worktree. Work here directly.\n- Leave your changes in the working tree; do not create branches, commit, or push.\n- The loop file (docs/tend2/hooks.tend2.html) is your full context \u2014 read it, including its narrative. It is READ-ONLY for you.\n\n## Checks to close\n- (code) at the stop event over a tree whose only change is an untracked production file carrying a stub, `weeder hook claude` blocks with the table as the reason, and the pre-commit hook `guard` installs still judges the index alone \u00b7 evidence expected at: tests/hook_untracked.rs\n\n## Definition of done \u2014 verify yourself before finishing\nYou are done when this exact command exits 0 (it is the gate the conductor will run):\n\n    tend2 verify docs/tend2/hooks.tend2.html --repo-root . --force --expect-payload ccc3a22fbfb1 --runner 'bash scripts/check/run.sh {evidence}'\n\nRun it yourself. If it does not exit 0, you are not done. Do not declare success in prose that a command disagrees with.\n\n## Already tried (do not repeat)\n- 2026-09-05 the harness hook is the second line, not the first: `guard` is the law in git; the hook denies the bypass (`--no-verify`) and blocks a premature stop, which git hooks cannot see\n- 2026-09-05 the proof scripts run real harness sessions and are cited as evidence rather than folded into `cargo test`, so the Rust suite stays runnable on a machine with no agent CLI\n- 2026-09-05 re-pointed from rules-block to check-face for the same reason as guard: a red index or tree is red by G1 today; the hook does not care which rule made it so\n- 2026-09-05 the pending commit message reaches `weeder check` through `--message-file` (check-face); the claude hook can extract `-m` text from the `git commit` command it sees and hand it over, which is the only way a `Weed-allow:` trailer counts before the commit exists\n- 2026-09-05 first pleach attempt lost: the worker wrote `BLOCKED.md` (the honest path), the repo's `.gitignore` ignored that name, and pleach's scoped `git add` of an ignored path failed catastrophically, disposing the tree and the reason with it. `BLOCKED.md` is no longer ignored; the defect is reported to pleach as P7\n- 2026-09-05 the Gemini proof is a human check until the owner signs in: `~/.gemini/settings.json` carries no auth type on this machine, so no worker can run a real Gemini session here. The script is still built here; the owner runs it\n- 2026-09-05 a Claude Code session started from inside another one refuses to run while the `CLAUDECODE` environment variable is set; the proof script must start `claude` with that variable unset (`env -u CLAUDECODE claude -p ...`) and pass the Stop hook through `--settings`. tilth's benchmark runner does the same\n- 2026-09-05 a worker's dogfood notes go in `docs/dogfood/hooks.md`, not `docs/dogfood.md` (AGENTS.md); neither is tracked\n- 2026-09-05 built by pleach node `hooks` (claude/opus, codex audit) in one attempt on the retry, 28 minutes, landed through `pleach land`. `src/core/shell.rs` reads a command line the way a shell would (quotes, `&&`, pipes, `cd`, `sh -c` to eight levels) so `git commit` is found wherever it hides and left alone inside an `echo`; codex's decision table is read from the JSON schemas inside its binary and pinned by a test that reads `docs/proof-2026-09.md` back; the real Claude Code Stop run is captured there verbatim on 2.1.261\n- 2026-09-05 decided by the worker and kept: `weeder hook` refuses at exit 2 when it could not judge, never 3, because Claude Code reads a hook's exit 3 as a non-blocking error and would let the commit through; the reason goes on both stdout (the harness's JSON) and stderr. The 0/2/3 contract stays whole for `check`; the hook face is a different caller with a different protocol, and docs/proof-2026-09.md says so\n- 2026-09-05 superseded: the Tried line above about `--message-file` being how a trailer counts before the commit exists. The hooks judge with `--strict`, under which a trailer changes nothing, so the hook lifts no message off the command line; plumbing whose effect no test can observe was left out on purpose\n- 2026-09-06 agent-drafted from the run journal: failed after 0 attempts\n- 2026-09-06 the owner refuted the Gemini live proof: Google retired the personal sign-in Gemini CLI 0.46.0 uses (`IneligibleTierError`, migrate to Antigravity, which is an IDE agent with a language server and no hook surface), so the proof cannot start on this machine, and the owner's call is that the Claude Code live proof and the Codex note are enough for now. `tests/hook_gemini.rs` still proves the JSON shapes. A Gemini API key in the environment would let `scripts/proof/gemini-stop.sh` run the day it is wanted\n- 2026-09-06 c4's evidence had been passing without landing anything since the prose pass moved this section's heading from a comma to a colon: `scripts/proof/claude-stop.sh` ran a real session, asserted on the transcript, then handed a heading no line in the document matched to an awk that copied the file back unchanged and reported success. The capture in `docs/proof-2026-09.md` had been frozen at 2026-09-05 ever since. Both proof scripts now refuse before they write if the heading is not in the document, and read the dated line back after they write; the claude capture is a fresh session under the new name. An awk that matches nothing is the same shape as an awk that matched, which is why the script had to be made to say which\n\n## Rules\n- Write the failing test first where it does not exist; then make it pass.\n- You must not edit the loop file \u2014 check states belong to the verifier.\n- You must not weaken, skip, or mock the unit under test to force a green; mocked-unit evidence is detected and refused.\n- Solve the CLASS of problem the claim names, not the test's example inputs. Hardcoding fixture strings, phrases, or patterns from the check or its tests into source (lookup tables, regex lists, phrase maps) is refused work even when the test goes green \u2014 it is an answer key, not a product.\n- If the claim cannot be met generically with what you have, that is a real finding: write BLOCKED.md naming the missing capability (a model, a library, a redesign, a split of the check into honest tiers) instead of faking generality.\n- Production quality only: no stubs, no TODOs, no placeholder implementations; match the style of the surrounding code.\n- Scratch (probes, experiments, packets, session logs) goes under `$TMPDIR`, written through the shell only, never with the Write or Edit tool, and never under `.loop-scratch/` or anywhere in this worktree: the collector stages every path the editor touched, a path outside the worktree kills the delivery, and the hygiene gate judges whatever is left in the tree, including its secret scan.\n- If you are genuinely blocked, write BLOCKED.md at the repo root \u2014 what you tried, what stopped you, what a fix needs. An honest BLOCKED.md is a good outcome; a faked green is the worst possible one."
+      },
+      "accept": {
+        "smoke": "tend2 verify docs/tend2/hooks.tend2.html --repo-root . --force --expect-payload ccc3a22fbfb1 --runner 'bash scripts/check/run.sh {evidence}'",
+        "audit": {
+          "command": "tend2 verify docs/tend2/hooks.tend2.html --repo-root . --force --expect-payload ccc3a22fbfb1 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
+          "provider": "opencode",
+          "model": "deepseek/deepseek-v4-pro",
+          "selfIntegrity": true
+        }
+      },
+      "policy": {
+        "timeoutMs": 5400000
+      },
+      "worker": {
+        "provider": "claude",
+        "model": "opus"
+      },
+      "needs": []
+    }
+  ],
+  "warnings": [
+    {
+      "loopId": "calibration-audit",
+      "code": "unwired-modules",
+      "message": "10 checks cite 9 src modules (plans/cast.json, scripts/check/calibration-agreement.sh, docs/calibration-audit-2026-09.md, docs/calibration-audit-blind-2026-09.md, docs/calibration/refused/blind-2026-09-first/, docs/calibration/refused/, fixtures/adversarial/calibration-audit/, scripts/audit/blind-run.sh, scripts/audit/sighted-run.sh), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "calibration",
+      "code": "unwired-modules",
+      "message": "11 checks cite 6 src modules (docs/calibration-2026-09.md, garden.json, scripts/check/calibration-bar.sh, docs/calibration/corpus.toml, docs/calibration-audit-2026-09.md, docs/calibration/ruling-2026-09-06.toml), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "core",
+      "code": "unwired-modules",
+      "message": "5 checks cite 5 src modules (Cargo.toml, weeder.toml, AGENTS.md, CLAUDE.md, src/core/), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "garden-fit",
+      "code": "unwired-modules",
+      "message": "9 checks cite 15 src modules (Cargo.toml, schemas/garden.schema.json, .brand/products/weeder/identity.md, .github/workflows/ci.yml, .github/workflows/release.yml, npm/package.json, npm/, garden.json, scripts/check/calibration-bar.sh, SKILL.md, .brand/products/weeder/, examples/ci/github.yml, README.md, scripts/umbrella-brand.sh, tests/garden_manifest.rs), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "hardening",
+      "code": "unwired-modules",
+      "message": "5 checks cite 6 src modules (tests/determinism.rs, fixtures/adversarial/, tests/sarif_order.rs, src/core/, tests/core_hostile.rs, tests/check_hostile.rs), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "hidden-tests",
+      "code": "unwired-modules",
+      "message": "4 checks cite 4 src modules (tests/, fixtures/, docs/rules.md, SKILL.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "hooks",
+      "code": "unwired-modules",
+      "message": "5 checks cite 3 src modules (docs/proof-2026-09.md, scripts/proof/claude-stop.sh, scripts/proof/gemini-stop.sh), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "recall",
+      "code": "unwired-modules",
+      "message": "4 checks cite 2 src modules (docs/calibration-2026-09.md, docs/calibration/corpus.toml), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "rules-block",
+      "code": "unwired-modules",
+      "message": "12 checks cite 5 src modules (weeder.toml, AGENTS.md, CLAUDE.md, .github/workflows/, docs/rules.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "rules-prod",
+      "code": "unwired-modules",
+      "message": "8 checks cite 3 src modules (Cargo.toml, .gitignore, weeder.toml), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "sarif",
+      "code": "unwired-modules",
+      "message": "4 checks cite 2 src modules (schemas/sarif-schema-2.1.0.json, docs/sarif.md), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "scan",
+      "code": "unwired-modules",
+      "message": "9 checks cite 5 src modules (CLAUDE.md, AGENTS.md, README.md, /, Cargo.toml), but no single check's evidence spans 2+ of them"
+    },
+    {
+      "loopId": "tilth-core",
+      "code": "unwired-modules",
+      "message": "4 checks cite 5 src modules (.context/tilth-core, src/seams/reader.rs, Cargo.toml, src/, src/core/), but no single check's evidence spans 2+ of them"
+    }
+  ]
+}
