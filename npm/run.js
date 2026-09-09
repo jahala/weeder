@@ -5,9 +5,11 @@
 const { execFileSync } = require("child_process");
 const path = require("path");
 
-const isWindows = process.platform === "win32";
-const binName = isWindows ? "weeder.exe" : "weeder";
-const bin = path.join(__dirname, "bin", binName);
+// The installer names the executable it unpacked; the runner asks it rather
+// than spelling the name a second time.
+const { binaryName } = require("./install.js");
+
+const bin = path.join(__dirname, "bin", binaryName(process.platform));
 
 try {
   execFileSync(bin, process.argv.slice(2), { stdio: "inherit" });

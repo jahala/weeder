@@ -6,7 +6,6 @@ const https = require("https");
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
-const { execSync } = require("child_process");
 
 const PLATFORM_MAP = {
   "linux-x64": "x86_64-unknown-linux-musl",
@@ -16,33 +15,67 @@ const PLATFORM_MAP = {
   "win32-x64": "x86_64-pc-windows-msvc",
 };
 
-const key = `${process.platform}-${process.arch}`;
-const target = PLATFORM_MAP[key];
+const NAME = "weeder";
+const OWNER = "jahala";
 
-if (!target) {
-  console.error(`weeder: no release binary for ${key}`);
-  console.error(`Released for: ${Object.keys(PLATFORM_MAP).join(", ")}`);
-  console.error("Build it instead: cargo install weeder");
-  process.exit(1);
+// The release artifact, named the way scripts/package-release.sh names it and
+// the way garden.json's install.binaries points at it: one gzipped tar per
+// platform, carrying the executable, the manifest and the skill. These are
+// exported so scripts/check/release.sh can hold the wrapper and the manifest to
+// the same names without either of them being read by eye.
+function assetName(target) {
+  return `${NAME}-${target}.tar.gz`;
 }
 
-const version = require("./package.json").version;
-const isWindows = process.platform === "win32";
-const ext = isWindows ? "zip" : "tar.gz";
-const binName = isWindows ? "weeder.exe" : "weeder";
-const url = `https://github.com/jahala/weeder/releases/download/v${version}/weeder-${target}.${ext}`;
-
-const binDir = path.join(__dirname, "bin");
-const binPath = path.join(binDir, binName);
-
-// Already here from an earlier install: nothing to fetch.
-if (fs.existsSync(binPath)) {
-  process.exit(0);
+function assetUrl(target, version) {
+  return `https://github.com/${OWNER}/${NAME}/releases/download/v${version}/${assetName(target)}`;
 }
 
-fs.mkdirSync(binDir, { recursive: true });
+function binaryName(platform) {
+  return platform === "win32" ? `${NAME}.exe` : NAME;
+}
 
-console.log(`weeder: downloading the ${target} binary`);
+function install() {
+  const key = `${process.platform}-${process.arch}`;
+  const target = PLATFORM_MAP[key];
+
+  if (!target) {
+    console.error(`weeder: no release binary for ${key}`);
+    console.error(`Released for: ${Object.keys(PLATFORM_MAP).join(", ")}`);
+    console.error("Build it instead: cargo install weeder");
+    process.exit(1);
+  }
+
+  const version = require("./package.json").version;
+  const url = assetUrl(target, version);
+  const binDir = path.join(__dirname, "bin");
+  const binPath = path.join(binDir, binaryName(process.platform));
+
+  // Already here from an earlier install: nothing to fetch.
+  if (fs.existsSync(binPath)) {
+    return;
+  }
+
+  fs.mkdirSync(binDir, { recursive: true });
+  console.log(`weeder: downloading the ${target} artifact`);
+
+  follow(url, (res) => {
+    // tar reads a gzipped tar on every platform this publishes for, Windows
+    // included, so there is no archive library here.
+    const tar = require("child_process").spawn("tar", ["xz", "-C", binDir], {
+      stdio: ["pipe", "inherit", "inherit"],
+    });
+    res.pipe(tar.stdin);
+    tar.on("close", (code) => {
+      if (code !== 0) {
+        console.error("weeder: the archive did not extract. Install it another way: cargo install weeder");
+        process.exit(1);
+      }
+      fs.chmodSync(binPath, 0o755);
+      console.log("weeder: installed");
+    });
+  });
+}
 
 function follow(url, callback) {
   const mod = url.startsWith("https") ? https : http;
@@ -66,35 +99,8 @@ function follow(url, callback) {
     });
 }
 
-follow(url, (res) => {
-  if (isWindows) {
-    // tar reads a zip on modern Windows, so there is no archive library here.
-    const tmpZip = path.join(binDir, "weeder.zip");
-    const out = fs.createWriteStream(tmpZip);
-    res.pipe(out);
-    out.on("finish", () => {
-      out.close();
-      try {
-        execSync(`tar -xf "${tmpZip}" -C "${binDir}"`, { stdio: "ignore" });
-        fs.unlinkSync(tmpZip);
-        console.log("weeder: installed");
-      } catch {
-        console.error("weeder: the archive did not extract. Install it another way: cargo install weeder");
-        process.exit(1);
-      }
-    });
-  } else {
-    const tar = require("child_process").spawn("tar", ["xz", "-C", binDir], {
-      stdio: ["pipe", "inherit", "inherit"],
-    });
-    res.pipe(tar.stdin);
-    tar.on("close", (code) => {
-      if (code !== 0) {
-        console.error("weeder: the archive did not extract. Install it another way: cargo install weeder");
-        process.exit(1);
-      }
-      fs.chmodSync(binPath, 0o755);
-      console.log("weeder: installed");
-    });
-  }
-});
+module.exports = { PLATFORM_MAP, assetName, assetUrl, binaryName };
+
+if (require.main === module) {
+  install();
+}

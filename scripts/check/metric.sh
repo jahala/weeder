@@ -22,18 +22,14 @@ command -v python3 >/dev/null 2>&1 || {
 command -v git >/dev/null 2>&1 || { echo "git is not on PATH" >&2; exit 3; }
 [ -f "$manifest" ] || { echo "$manifest is missing: weeder publishes no manifest for the umbrella to read" >&2; exit 1; }
 
-command="$(python3 -c 'import json,sys; print((json.load(open(sys.argv[1]))
-    .get("metric") or {}).get("command", ""))' "$manifest")"
-name="$(python3 -c 'import json,sys; print((json.load(open(sys.argv[1]))
-    .get("metric") or {}).get("name", ""))' "$manifest")"
+# The umbrella's manifest contract carries the metric as the command itself, so
+# what the number means is read off the answer the command writes, below, rather
+# than off a second field beside it.
+command="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("metric") or "")' "$manifest")"
 
 status=0
 if [ "$command" != "$expected" ]; then
   echo "garden.json names '$command' as its metric command, and calibration's measurement is '$expected'" >&2
-  status=1
-fi
-if [ -z "$name" ]; then
-  echo "garden.json names no metric, so a reader has no idea what the number means" >&2
   status=1
 fi
 [ "$status" -eq 0 ] || exit "$status"
