@@ -24,14 +24,14 @@
 tend2's `src/verify/mock.ts` (in tend2's own repository, github.com/jahala/tend) is prior art for M1 on TypeScript: read it for the shapes it catches, do not port it.
 
 ## Tests
-- [x] (code) T2 fires at block level when a changed test file's assertion count drops, per language, and stays silent when assertions move between cases with the count unchanged or a `Weed-allow: T2` trailer carries a reason · tests/rule_t2.rs @a1956d1 · by cli
-- [x] (code) T4 warns when a paired removed/added line widens an approximate assertion or a timeout, per language, and stays silent when the number tightens or an unrelated literal changes · tests/rule_t4.rs @987be18 · by cli
-- [x] (code) T5 warns when a snapshot, golden or fixture file changes alongside a prod file, and stays silent when only the snapshot changes or only prod changes · tests/rule_t5.rs @10f4021 · by cli
-- [x] (code) T6 warns on each weakened error assertion shape per language and stays silent when the assertion becomes more specific · tests/rule_t6.rs @0ee6d46 · by cli
-- [x] (code) T7 fires at block level when a rename takes a test file or case out of the runner's naming convention, per language, and stays silent on a rename that stays inside it · tests/rule_t7.rs @db42b55 · by cli
-- [x] (code) M1 warns when a test in the diff mocks a module whose prod file is also in the diff, per language, and stays silent when the mocked module is outside the diff · tests/rule_m1.rs @fd0dec7 · by cli
-- [x] (code) T1 recognises a test case that moved within the diff, by the same name in another test file or the same body under a rename, and does not count it as a deletion; a case that left the diff altogether still counts; and T1's message says a case is covered by nobody only when no case in the diff covers it, naming where the moved cases went otherwise, in ts, py, rs and go · tests/rule_t1.rs @766c55c · by cli
-- [x] (code) T2 follows an assertion that left a changed test file into the rest of the diff, by the case it sat in or the same line under a rename, counts only what did not arrive anywhere, and its message says behaviour is held by nobody only when none of the lost assertions arrived, naming the files they moved into otherwise, in ts, py, rs and go · tests/rule_t2.rs @e470192 · by cli
+- [x] (code) T2 fires at block level when a changed test file's assertion count drops, per language, and stays silent when assertions move between cases with the count unchanged or a `Weed-allow: T2` trailer carries a reason · tests/rule_t2.rs @7080c99 · by cli
+- [x] (code) T4 warns when a paired removed/added line widens an approximate assertion or a timeout, per language, and stays silent when the number tightens or an unrelated literal changes · tests/rule_t4.rs @fdf5a45 · by cli
+- [x] (code) T5 warns when a snapshot, golden or fixture file changes alongside a prod file, and stays silent when only the snapshot changes or only prod changes · tests/rule_t5.rs @2fee2da · by cli
+- [x] (code) T6 warns on each weakened error assertion shape per language and stays silent when the assertion becomes more specific · tests/rule_t6.rs @9c53fac · by cli
+- [x] (code) T7 fires at block level when a rename takes a test file or case out of the runner's naming convention, per language, and stays silent on a rename that stays inside it · tests/rule_t7.rs @0ff5b63 · by cli
+- [x] (code) M1 warns when a test in the diff mocks a module whose prod file is also in the diff, per language, and stays silent when the mocked module is outside the diff · tests/rule_m1.rs @634cda7 · by cli
+- [x] (code) T1 recognises a test case that moved within the diff, by the same name in another test file or the same body under a rename, and does not count it as a deletion; a case that left the diff altogether still counts; and T1's message says a case is covered by nobody only when no case in the diff covers it, naming where the moved cases went otherwise, in ts, py, rs and go · tests/rule_t1.rs @23d804e · by cli
+- [x] (code) T2 follows an assertion that left a changed test file into the rest of the diff, by the case it sat in or the same line under a rename, counts only what did not arrive anywhere, and its message says behaviour is held by nobody only when none of the lost assertions arrived, naming the files they moved into otherwise, in ts, py, rs and go · tests/rule_t2.rs @a30e5d9 · by cli
 
 ## Needs #rules-block
 

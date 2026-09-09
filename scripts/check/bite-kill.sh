@@ -119,8 +119,12 @@ for name in sorted(os.listdir(plans_path) if os.path.isdir(plans_path) else []):
             entry["shape"] = "phases"
 
 # ── the commits: what each node landed ───────────────────────────────────────
+# Branches, remotes and tags are where a landing lives. `--all` would also walk
+# the stash and any tool's private refs, and a stash taken on a history that
+# was since rewritten carries the old landings under old shas, counting each
+# one twice on the machine that holds it.
 landings = {}
-for line in git("log", "--all", "--format=%H%x09%s"):
+for line in git("log", "--branches", "--remotes", "--tags", "--format=%H%x09%s"):
     sha, _, subject = line.partition("\t")
     found = LANDED.match(subject)
     if found:

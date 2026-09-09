@@ -23,14 +23,14 @@
 | G2 | large or binary file added | warn | size above 1 MiB, or binary content detection, on added files not already tracked |
 
 ## Tests
-- [x] (code) S2 warns on each swallowed-error shape per language in prod files and stays silent when the error is logged, wrapped, rethrown, or the empty catch carries a comment naming why · tests/rule_s2.rs @5faf3b8 · by cli
-- [x] (code) S3 warns on each debug leftover shape per language in prod files and stays silent in test files, in `main.rs`, and in a module the config names as a CLI entry · tests/rule_s3.rs @f57f1ae · by cli
-- [x] (code) D1 warns on each manifest and lockfile per language, blocks when a scope excludes the manifest, and stays silent on a README that mentions a package · tests/rule_d1.rs @18f6a62 · by cli
-- [x] (code) D2 fires at block level on a fixture where a layer imports from a layer `[deps]` forbids, per language, and on weeder's own tree when a core file imports from seams; stays silent on allowed directions · tests/rule_d2.rs @17f4815 · by cli
-- [x] (code) X2 fires at block level on a file outside the given scope globs, names the callers of its changed definitions, and stays silent without `--scope` and on files inside the scope · tests/rule_x2.rs @74eb044 · by cli
-- [x] (code) C2 warns when an ignore file gains a pattern matching source or test paths and stays silent on build-output patterns · tests/rule_c2.rs @26b2f5b · by cli
-- [x] (code) G2 warns on an added file above 1 MiB and on an added binary, and stays silent on a small text file and on a tracked binary that only changes · tests/rule_g2.rs @1ba7082 · by cli
-- [x] (code) `[scope] specimens` in `weeder.toml` is a list of directories under `fixtures/adversarial/**` that `check` and `scan` skip for every rule, each skipped path reported once at note level so an exclusion is as visible as an allowance; an entry outside that root, a glob that reaches past it, or a rule name in the list is refused with exit 3 and a message naming it · tests/config_specimens.rs @5f54a1e · by cli
+- [x] (code) S2 warns on each swallowed-error shape per language in prod files and stays silent when the error is logged, wrapped, rethrown, or the empty catch carries a comment naming why · tests/rule_s2.rs @43e07a8 · by cli
+- [x] (code) S3 warns on each debug leftover shape per language in prod files and stays silent in test files, in `main.rs`, and in a module the config names as a CLI entry · tests/rule_s3.rs @a4d6ddd · by cli
+- [x] (code) D1 warns on each manifest and lockfile per language, blocks when a scope excludes the manifest, and stays silent on a README that mentions a package · tests/rule_d1.rs @9541f4f · by cli
+- [x] (code) D2 fires at block level on a fixture where a layer imports from a layer `[deps]` forbids, per language, and on weeder's own tree when a core file imports from seams; stays silent on allowed directions · tests/rule_d2.rs @d0e9617 · by cli
+- [x] (code) X2 fires at block level on a file outside the given scope globs, names the callers of its changed definitions, and stays silent without `--scope` and on files inside the scope · tests/rule_x2.rs @f4d3029 · by cli
+- [x] (code) C2 warns when an ignore file gains a pattern matching source or test paths and stays silent on build-output patterns · tests/rule_c2.rs @051aed7 · by cli
+- [x] (code) G2 warns on an added file above 1 MiB and on an added binary, and stays silent on a small text file and on a tracked binary that only changes · tests/rule_g2.rs @5a92f8f · by cli
+- [x] (code) `[scope] specimens` in `weeder.toml` is a list of directories under `fixtures/adversarial/**` that `check` and `scan` skip for every rule, each skipped path reported once at note level so an exclusion is as visible as an allowance; an entry outside that root, a glob that reaches past it, or a rule name in the list is refused with exit 3 and a message naming it · tests/config_specimens.rs @51005c3 · by cli
 
 ## Needs #rules-tests
 
