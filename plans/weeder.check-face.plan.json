@@ -11,7 +11,8 @@
         "smoke": "tend2 verify docs/tend2/check-face.tend2.html --repo-root . --force --expect-payload 8e22d0c43cc7 --runner 'bash scripts/check/run.sh {evidence}'",
         "audit": {
           "command": "tend2 verify docs/tend2/check-face.tend2.html --repo-root . --force --expect-payload 8e22d0c43cc7 --audit-egress --runner 'bash scripts/check/run.sh {evidence}'",
-          "provider": "codex",
+          "provider": "opencode",
+          "model": "deepseek/deepseek-v4-pro",
           "selfIntegrity": true
         }
       },
@@ -44,7 +45,7 @@
     {
       "loopId": "garden-fit",
       "code": "unwired-modules",
-      "message": "7 checks cite 13 src modules (Cargo.toml, schemas/garden.schema.json, .brand/products/weeder/identity.md, .github/workflows/ci.yml, .github/workflows/release.yml, npm/package.json, npm/, garden.json, scripts/check/calibration-bar.sh, SKILL.md, .brand/products/weeder/, examples/ci/github.yml, README.md), but no single check's evidence spans 2+ of them"
+      "message": "9 checks cite 15 src modules (Cargo.toml, schemas/garden.schema.json, .brand/products/weeder/identity.md, .github/workflows/ci.yml, .github/workflows/release.yml, npm/package.json, npm/, garden.json, scripts/check/calibration-bar.sh, SKILL.md, .brand/products/weeder/, examples/ci/github.yml, README.md, scripts/umbrella-brand.sh, tests/garden_manifest.rs), but no single check's evidence spans 2+ of them"
     },
     {
       "loopId": "hardening",
