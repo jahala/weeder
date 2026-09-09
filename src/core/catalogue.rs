@@ -129,7 +129,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Block,
         short_description: "A stub or a TODO reached production code",
-        full_description: "An added line in a production file carries a stub marker, an unimplemented body, or a function body that only returns nothing.",
+        full_description: "An added line in a production file carries a stub marker, an unimplemented body, or a function body that only returns nothing. A body left unwritten in a base type states a contract rather than a stub, so the finding is dropped where production code somewhere in the tree is built on that type and writes the method, and reported at warn where nothing writes it and an entry file states the type, because the implementation may be in another repository.",
         network: Network::None,
     },
     Rule {

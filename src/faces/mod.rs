@@ -144,7 +144,11 @@ fn sides(root: &Path, source: &Source, paths: &[Option<&str>]) -> Result<Vec<Sid
 /// are questions for git, and both answer for as many paths as they are asked
 /// about at once; the working tree is a question for the filesystem, which has
 /// no process to start.
-fn blobs(root: &Path, source: &Source, paths: &[&str]) -> Result<Vec<Option<Blob>>, String> {
+pub(crate) fn blobs(
+    root: &Path,
+    source: &Source,
+    paths: &[&str],
+) -> Result<Vec<Option<Blob>>, String> {
     match source {
         Source::Reference(reference) => git::files_at_ref(root, reference, paths),
         Source::Index => git::files_in_index(root, paths),

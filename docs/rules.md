@@ -140,7 +140,7 @@ A test in the diff mocks a module whose production file is also in the diff, so 
 
 `check` · blocks by default
 
-An added line in a production file carries a stub marker, an unimplemented body, or a function body that only returns nothing.
+An added line in a production file carries a stub marker, an unimplemented body, or a function body that only returns nothing. A body left unwritten in a base type states a contract rather than a stub, so the finding is dropped where production code somewhere in the tree is built on that type and writes the method, and reported at warn where nothing writes it and an entry file states the type, because the implementation may be in another repository.
 
 <a id="S2"></a>
 ## S2: An error was swallowed

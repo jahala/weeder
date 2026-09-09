@@ -9,3 +9,13 @@ export function label(kind: string): string {
 export function version(): string {
   return "1.4.0";
 }
+
+export class Strategy {
+  send(payload: string): string {
+    return send(payload);
+  }
+
+  retry(payload: string): string {
+    throw new Error("not implemented");
+  }
+}

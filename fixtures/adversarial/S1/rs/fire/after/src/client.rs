@@ -12,3 +12,9 @@ pub fn drain() -> Option<String> {
     // XXX: nothing drains yet
     unimplemented!()
 }
+
+pub trait Sink {
+    fn retry(&self, payload: &str) -> String {
+        todo!()
+    }
+}
