@@ -2,16 +2,18 @@
 //!
 //! A detector is pure: it reads the tree the face gathered and returns findings
 //! carrying the rule's catalogue default level. `evaluate` replaces that level
-//! with the one the config sets, and drops the rules it turns off. Every scan
-//! rule reports a warning, `scan` never blocks, so what the config decides
-//! here is whether a rule runs at all.
+//! with the one the config sets, and drops the rules it turns off. A finding a
+//! detector deliberately reported at some other level keeps it, which is how R1
+//! tells a citation a paragraph vouched for from a name standing on its own.
+//! No scan finding blocks whatever level it carries, so what the config decides
+//! here is mostly whether a rule runs at all.
 
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::core::catalogue;
 use crate::core::config::Config;
 use crate::core::finding::Finding;
-use crate::core::rules::configured_level;
+use crate::core::rules::{configured_level, reported_at};
 use crate::core::syntax;
 use crate::core::tree::{Tree, TreeFile};
 
@@ -48,7 +50,7 @@ pub fn evaluate(tree: &Tree, config: &Config, only: &[String]) -> Vec<Finding> {
             continue;
         };
         for mut finding in detect(tree, config) {
-            finding.level = level;
+            finding.level = reported_at(&finding, rule, level);
             findings.push(finding);
         }
     }

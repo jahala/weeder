@@ -92,6 +92,13 @@ printed, and no shell and no argument from the document ever reaches a process.
 A line like `some-tool; rm -rf build/` in a document is prose weeder reads and
 never a command weeder runs.
 
+R1 reads a citation whole and reports it at the level the document earned. A
+path keeps the `:line` or `:start-end` written on it, so one that resolves is
+still reported when the line is past the end of the file, with the length the
+file has. A name a paragraph pins to a file or a directory is asked of that
+place first and the tree second, and comes back as a warning naming the place; a
+name with nothing beside it is asked of the tree alone and comes back as a note.
+
 ## guard: the law in git
 
 `weeder guard` installs hooks git cannot be talked out of running, by pointing
