@@ -337,7 +337,7 @@ protected: main, master (as weeder.toml has them today).
     <div class="wrap">
       <div class="sec-head rise">
         <p class="kicker">what it judges</p>
-        <h2 id="rules-heading">twenty five rules, and only the unambiguous ones block</h2>
+        <h2 id="rules-heading">twenty seven rules, and only the unambiguous ones block</h2>
         <p class="lede">every rule has an id, an adversarial fixture in typescript, python, rust and go, and a level. a block stops the change. a warning is for the person at the pull request, never for the agent to argue with.</p>
       </div>
       <div class="cat rise">
@@ -348,6 +348,7 @@ protected: main, master (as weeder.toml has them today).
             <li><span class="rid">T2</span><span>assertions were dropped from a changed test file</span></li>
             <li><span class="rid">T3</span><span>a skip or focus marker was added</span></li>
             <li><span class="rid">T7</span><span>a rename took a test out of the runner</span></li>
+            <li><span class="rid">T8</span><span>a configuration line took a test out of the run</span></li>
             <li><span class="rid">S1</span><span>a stub or a todo reached production code</span></li>
             <li><span class="rid">D2</span><span>an import crossed a forbidden boundary</span></li>
             <li><span class="rid">X1</span><span>a secret-looking string was added</span></li>
@@ -377,6 +378,7 @@ protected: main, master (as weeder.toml has them today).
             <li><span class="rid">R2</span><span>a public symbol has no references</span></li>
             <li><span class="rid">R3</span><span>a todo is older than the configured age</span></li>
             <li><span class="rid">R4</span><span>a dependency pin lags the registry</span></li>
+            <li><span class="rid">R5</span><span>a test file the configuration never collects</span></li>
           </ul>
         </div>
       </div>

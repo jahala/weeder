@@ -73,15 +73,16 @@ impl Mutation {
 pub enum NoSite {
     /// The tree holds nothing this shape can be planted in.
     Absent,
-    /// The language's runner cannot be fooled this way at all: renaming a case
-    /// that is collected by an attribute changes nothing about what runs.
-    NotInLanguage,
+    /// The language's runner cannot be fooled this way at all, and why. The
+    /// injector is the only thing that knows the reason, so it carries it
+    /// rather than leaving the report to guess one.
+    NotInLanguage(&'static str),
 }
 
 /// The rules the campaign injects for, in catalogue order.
 pub const RULES: &[&str] = &[
-    "T1", "T2", "T3", "T4", "T5", "T6", "T7", "M1", "S1", "S2", "S3", "D1", "D2", "X1", "X2", "C1",
-    "C2", "C3", "G1", "G2",
+    "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "M1", "S1", "S2", "S3", "D1", "D2", "X1", "X2",
+    "C1", "C2", "C3", "G1", "G2",
 ];
 
 /// Plant one anti-pattern of this rule in this tree, or say why there is
@@ -95,6 +96,7 @@ pub fn inject(rule: &str, lang: Language, tree: &Tree, seed: u64) -> Result<Muta
         "T5" => regenerate_an_expectation(lang, tree, seed),
         "T6" => weaken_an_error_assertion(lang, tree, seed),
         "T7" => return rename_out_of_the_runner(lang, tree, seed),
+        "T8" => return keep_a_suite_out_of_the_run(lang, tree, seed),
         "M1" => mock_the_unit_under_change(lang, tree, seed),
         "S1" => stub_production_code(lang, tree, seed),
         "S2" => swallow_a_failure(lang, tree, seed),
@@ -557,7 +559,9 @@ fn rename_out_of_the_runner(lang: Language, tree: &Tree, seed: u64) -> Result<Mu
         // cargo collects a case by its attribute, so no rename of a case takes
         // one out of the run. Only an integration target has a name to lose,
         // and this tree carries none.
-        return Err(NoSite::NotInLanguage);
+        return Err(NoSite::NotInLanguage(
+            "the language's runner does not collect by name, so no rename takes a case out of the run",
+        ));
     }
     for source in rotate(tree.tests(lang), seed) {
         if tree.touched(&source.path) || !lang.collects_file(&source.path) {
@@ -584,6 +588,108 @@ fn rename_out_of_the_runner(lang: Language, tree: &Tree, seed: u64) -> Result<Mu
         );
     }
     Err(NoSite::Absent)
+}
+
+/// The tag a case gates a suite behind, and the feature it asks a crate for.
+/// Neither is set by a toolchain, so an ordinary run builds neither file.
+const GATE: &str = "slow";
+
+/// The settings file a case writes where a repository has none of its own.
+const SCRIPT_SETTINGS: &str = "jest.config.js";
+
+/// T8: the suite stays where it is and the settings stop collecting it.
+fn keep_a_suite_out_of_the_run(lang: Language, tree: &Tree, seed: u64) -> Result<Mutation, NoSite> {
+    if lang == Language::Rs && tree.paths.iter().all(|path| !collected_rust_target(path)) {
+        // cargo finds a test by the attribute above it, and a crate with no
+        // integration target has no file for a setting to keep out of the run.
+        return Err(NoSite::NotInLanguage(
+            "the language's runner collects a case by the attribute above it, and this history holds no integration target for a setting to keep out of the run",
+        ));
+    }
+    if lang == Language::Ts && tree.paths.iter().any(|path| path == SCRIPT_SETTINGS) {
+        // The repository states its own; rewriting it would be a case about
+        // what was taken away rather than about what was added.
+        return Err(NoSite::Absent);
+    }
+    for source in rotate(tree.tests(lang), seed) {
+        if tree.touched(&source.path) || !lang.collects_file(&source.path) {
+            continue;
+        }
+        // A file the runner collects and that declares no case is somebody's
+        // helpers, and keeping it out of the run takes no test with it.
+        if source.cases().is_empty() {
+            continue;
+        }
+        let Some(planted) = kept_out(lang, tree, source) else {
+            continue;
+        };
+        return Ok(planted);
+    }
+    Err(NoSite::Absent)
+}
+
+/// One suite, and the settings line that stops the runner collecting it, in the
+/// place that language's runner reads.
+fn kept_out(lang: Language, tree: &Tree, source: &Source) -> Option<Mutation> {
+    let name = basename(&source.path);
+    match lang {
+        // A crate attribute and a build constraint are written at the top of
+        // the suite itself, and gate the whole file.
+        Language::Rs => Some(gated(
+            source,
+            &format!("#![cfg(feature = \"{GATE}\")]"),
+            &format!("the suite was gated behind the `{GATE}` feature"),
+        )),
+        Language::Go => Some(gated(
+            source,
+            &format!("//go:build {GATE}"),
+            &format!("the suite was gated behind the `{GATE}` build tag"),
+        )),
+        // The ignore list sits beside the suite, in the file the runner reads
+        // for the directory it is in.
+        Language::Py => {
+            let directory = directory(&source.path);
+            let settings = if directory.is_empty() {
+                "conftest.py".to_string()
+            } else {
+                format!("{directory}/conftest.py")
+            };
+            if tree.touched(&settings) {
+                return None;
+            }
+            let held = std::fs::read_to_string(tree.root.join(&settings)).unwrap_or_default();
+            let text = format!("{held}\ncollect_ignore = [\"{name}\"]\n");
+            Some(
+                Mutation::new(
+                    format!("`{name}` was written into the ignore list of {settings}"),
+                    &source.path,
+                )
+                .writing(&settings, text),
+            )
+        }
+        Language::Ts => {
+            let text = format!(
+                "module.exports = {{\n  testPathIgnorePatterns: [\"{}\"],\n}};\n",
+                source.path
+            );
+            Some(
+                Mutation::new(
+                    format!(
+                        "`{}` was written into the ignored paths of {SCRIPT_SETTINGS}",
+                        source.path
+                    ),
+                    &source.path,
+                )
+                .writing(SCRIPT_SETTINGS, text),
+            )
+        }
+    }
+}
+
+/// The suite with a gate written above everything else in it.
+fn gated(source: &Source, gate: &str, shape: &str) -> Mutation {
+    let text = format!("{gate}\n\n{}", source.text());
+    Mutation::new(shape.to_string(), &source.path).writing(&source.path, text)
 }
 
 fn collected_rust_target(path: &str) -> bool {

@@ -96,6 +96,15 @@ impl Side {
         &self.syntax
     }
 
+    /// What this side's file is, or `FileKind::Other` where the side has no
+    /// file at all.
+    #[must_use]
+    pub fn kind(&self) -> FileKind {
+        self.classification
+            .as_ref()
+            .map_or(FileKind::Other, |classification| classification.kind)
+    }
+
     /// The language this side's file is written in, or `Lang::Other` where the
     /// side has no file or weeder reads none.
     #[must_use]

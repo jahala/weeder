@@ -37,6 +37,7 @@ pub fn present(
         // A rename and a blob are about the files themselves rather than about
         // anything inside one, so neither is read as a site.
         "T7" => the_suite_left_the_runner(lang, planted, tree),
+        "T8" => the_run_no_longer_collects(lang, planted, tree),
         "G2" => bytes_with_no_lines_arrived(planted, tree),
         _ => match Site::read(lang, planted, tree, before) {
             Some(site) => at_the_site(rule, &site, planted, tree),
@@ -338,6 +339,46 @@ fn the_suite_left_the_runner(lang: Language, planted: &Mutation, tree: &Tree) ->
     std::fs::read_to_string(tree.root.join(written))
         .map(|text| !Source::read(written, lang, &text).cases().is_empty())
         .unwrap_or_default()
+}
+
+/// T8: the suite is still where it was, still collected by its name and still
+/// holding cases, and the settings the case wrote name it.
+fn the_run_no_longer_collects(lang: Language, planted: &Mutation, tree: &Tree) -> bool {
+    let Some(suite) = planted.target.first() else {
+        return false;
+    };
+    if !lang.collects_file(suite) {
+        return false;
+    }
+    let Ok(held) = std::fs::read_to_string(tree.root.join(suite)) else {
+        return false;
+    };
+    if Source::read(suite, lang, &held).cases().is_empty() {
+        return false;
+    }
+    let Some((settings, Some(written))) = planted.writes.first() else {
+        return false;
+    };
+    let Ok(after) = std::fs::read_to_string(tree.root.join(settings)) else {
+        return false;
+    };
+    after == *written && keeps_out(&after, settings, suite)
+}
+
+/// Whether the settings the case wrote really keep that suite out: a gate above
+/// everything else in the suite itself, or a line elsewhere that names it.
+fn keeps_out(text: &str, settings: &str, suite: &str) -> bool {
+    if settings == suite {
+        return text
+            .lines()
+            .find(|line| !line.trim().is_empty())
+            .is_some_and(|line| line.contains("cfg(") || line.starts_with("//go:build"));
+    }
+    let name = basename(suite);
+    text.lines().any(|line| {
+        (line.contains(suite) || line.contains(name))
+            && (line.contains("collect_ignore") || line.contains("IgnorePatterns"))
+    })
 }
 
 /// M1: a double of something this very commit changed, standing in a suite.

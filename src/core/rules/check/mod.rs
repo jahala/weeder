@@ -14,6 +14,7 @@ use crate::core::rules::configured_level;
 pub mod c1;
 pub mod c2;
 pub mod c3;
+pub mod collect;
 pub mod d1;
 pub mod d2;
 pub mod g1;
@@ -31,6 +32,7 @@ pub mod t4;
 pub mod t5;
 pub mod t6;
 pub mod t7;
+pub mod t8;
 pub mod vocab;
 pub mod x1;
 pub mod x2;
@@ -52,6 +54,11 @@ pub struct Judgement<'a> {
     pub paths: &'a [String],
     /// Where the definitions the change touched are called from, sorted.
     pub callers: &'a [CallerSite],
+    /// What the change's own lines do to what the runner collects: the suites
+    /// they take out of the run, and the settings they wrote that weeder cannot
+    /// read. The face reads the settings once, so the rule that judges them and
+    /// the face that refuses a run it could not read see the same collection.
+    pub collection: &'a collect::Collection,
 }
 
 type Detector = fn(&Judgement) -> Vec<Finding>;
@@ -66,6 +73,7 @@ const DETECTORS: &[(&str, Detector)] = &[
     ("T5", t5::evaluate),
     ("T6", t6::evaluate),
     ("T7", t7::evaluate),
+    ("T8", t8::evaluate),
     ("M1", m1::evaluate),
     ("S1", s1::evaluate),
     ("S2", s2::evaluate),

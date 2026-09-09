@@ -97,6 +97,15 @@ A removed and an added line turned an assertion on a specific error message or t
 
 A test file or case was renamed out of the naming convention its runner collects, so the test still looks present and no longer runs.
 
+<a id="T8"></a>
+## T8: A configuration line took a test out of the run
+
+`check` · blocks by default
+
+An added or changed line of the runner's settings stops an existing test file from being collected, read from the settings file's kind and name rather than from any product. A line that names the file, or a pattern matching one, blocks; a line that narrows what the runner reads leaves the hidden set to be worked out, and warns. A setting whose value is built rather than written is reported unreadable instead of guessed at.
+
+The settings a repository writes are found the way its manifest is: by what the classifier makes of the file and by the name its ecosystem gives it. What a key means is read from the words it is spelled with — `ignore`, `exclude`, `deselect` on one side, `path`, `files`, `match`, `include` on the other — and a key counts as being about the run only where the key, the table it sits under, or the file's own name says so. A gate written at the top of a suite, on a condition an ordinary run never sets, is the same exclusion written inside the file it hides. `weeder check --strict` refuses the run, at exit 3, where a setting weeder cannot read is among the lines the change wrote.
+
 <a id="M1"></a>
 ## M1: A test mocks the unit under change
 
@@ -231,3 +240,10 @@ A line carrying `TODO`, `FIXME` or `XXX` was last touched further back than `[th
 `scan` · on by default
 
 A manifest pin is further behind the latest release than `[thresholds] dependency_lag` allows, measured against the committed registry snapshot. `weeder scan --refresh-snapshot` is the one path that reaches the registries, and it asks curl to do the reaching.
+
+<a id="R5"></a>
+## R5: A test file the configuration never collects
+
+`scan` · on by default
+
+A test file the tree holds is one the runner's settings never collect, named once per file. It is the tree-state twin of T8, so a repository that arrived with the exclusion already written is told as plainly as one that adds it.

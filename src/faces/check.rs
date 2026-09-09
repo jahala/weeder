@@ -20,6 +20,7 @@ use crate::core::finding::{Finding, Level};
 use crate::core::glob;
 use crate::core::read::CallerSite;
 use crate::core::rules;
+use crate::core::rules::check::collect;
 use crate::core::sarif::{self, Context, EXIT_BLOCKED, EXIT_CLEAN, EXIT_COULD_NOT_RUN, RULES_DOC};
 use crate::core::specimen;
 use crate::core::suppress::{
@@ -87,17 +88,28 @@ fn judge(request: &Request) -> Result<Answer, String> {
         .filter(|path| !specimen::skipped(&config.specimens, path))
         .collect();
     let callers = callers(&root, &changes, &scope)?;
+    // The settings are read once, here: the rule that judges what a line hides
+    // and the refusal below both need the same reading, and reading them twice
+    // would be two answers to one question.
+    let collection = collection(&changes, &paths);
     let mut findings = rules::check::evaluate(&rules::check::Judgement {
         changes: &changes,
         config: &config,
         scope: &scope,
         paths: &paths,
         callers: &callers,
+        collection: &collection,
     });
     findings.extend(excluded.iter().map(|path| specimen::notice(path)));
     if request.strict {
         if let Some(unreadable) = malformed.first() {
             return Err(refusal(unreadable));
+        }
+        if let Some(unreadable) = collection.unreadable.first() {
+            return Err(format!(
+                "{} under --strict weeder will not judge a change whose collection it cannot read.",
+                unreadable.complaint()
+            ));
         }
     }
 
@@ -130,7 +142,16 @@ fn judge(request: &Request) -> Result<Answer, String> {
     Ok(Answer {
         code,
         stdout: write(&findings, request, &root),
-        stderr: malformed.iter().map(complaint).collect(),
+        stderr: malformed
+            .iter()
+            .map(complaint)
+            .chain(
+                collection
+                    .unreadable
+                    .iter()
+                    .map(collect::Unreadable::complaint),
+            )
+            .collect(),
     })
 }
 
@@ -207,6 +228,24 @@ fn scope(request: &Request, config: &Config) -> Vec<String> {
     } else {
         request.scope.clone()
     }
+}
+
+/// What this change does to what the runner collects. The whole repository is
+/// read for its suites, the changed files for the settings that decide about
+/// them, and what comes back is narrowed to the lines the change itself wrote.
+fn collection(changes: &[Change], paths: &[String]) -> collect::Collection {
+    let read: Vec<collect::File<'_>> = changes
+        .iter()
+        .filter_map(|change| {
+            Some(collect::File {
+                path: change.diff.new_path.as_deref()?,
+                kind: change.after.kind(),
+                lang: change.after.lang(),
+                mask: change.after.mask(),
+            })
+        })
+        .collect();
+    collect::written_by(&collect::uncollected(&read, paths), changes)
 }
 
 /// Where the definitions of the out-of-scope files are called from. Only those

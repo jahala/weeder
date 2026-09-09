@@ -19,6 +19,7 @@ use crate::core::classify::Lang;
 use crate::core::diff::ChangeKind;
 use crate::core::finding::{Finding, Level, Message, Region};
 use crate::core::read::{Definition, DefinitionKind};
+use crate::core::rules::check::collect::collects_file;
 use crate::core::rules::check::Judgement;
 use crate::core::syntax::Mask;
 
@@ -89,37 +90,6 @@ fn uncollected_cases(change: &Change) -> Vec<Finding> {
         findings.push(case_finding(path, &gone.name, renamed));
     }
     findings
-}
-
-/// Whether the runner collects a file at this path.
-fn collects_file(lang: Lang, path: &str) -> bool {
-    let segments: Vec<&str> = path.split('/').collect();
-    let Some((name, directories)) = segments.split_last() else {
-        return false;
-    };
-    match lang {
-        // The runners glob for a file whose name carries the word in front of
-        // its extension, or for anything inside the directory kept for tests.
-        Lang::TypeScript | Lang::JavaScript => {
-            name.contains(".test.") || name.contains(".spec.") || directories.contains(&"__tests__")
-        }
-        Lang::Python => {
-            name.starts_with("test_")
-                || name
-                    .strip_suffix(".py")
-                    .is_some_and(|stem| stem.ends_with("_test"))
-        }
-        Lang::Go => name.ends_with("_test.go"),
-        // An integration target is a file at the top of the tests directory,
-        // and nowhere below it: a file one directory down is a module nobody
-        // compiles until something declares it.
-        Lang::Rust => {
-            directories == ["tests"]
-                || directories == ["benches"]
-                || directories.first() == Some(&"src")
-        }
-        Lang::Other => false,
-    }
 }
 
 /// Whether the language's runner decides what a case is from its name alone.

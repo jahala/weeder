@@ -109,6 +109,14 @@ const CATALOGUE: &[Rule] = &[
         network: Network::None,
     },
     Rule {
+        id: "T8",
+        face: Face::Check,
+        default_level: Level::Block,
+        short_description: "A configuration line took a test out of the run",
+        full_description: "An added or changed line of the runner's settings stops an existing test file from being collected, read from the settings file's kind and name rather than from any product. A line that names the file, or a pattern matching one, blocks; a line that narrows what the runner reads leaves the hidden set to be worked out, and warns. A setting whose value is built rather than written is reported unreadable instead of guessed at.",
+        network: Network::None,
+    },
+    Rule {
         id: "M1",
         face: Face::Check,
         default_level: Level::Warn,
@@ -254,6 +262,14 @@ const CATALOGUE: &[Rule] = &[
             what: "registries",
             under: "--refresh-snapshot",
         },
+    },
+    Rule {
+        id: "R5",
+        face: Face::Scan,
+        default_level: Level::Warn,
+        short_description: "A test file the configuration never collects",
+        full_description: "A test file the tree holds is one the runner's settings never collect, named once per file. It is the tree-state twin of T8, so a repository that arrived with the exclusion already written is told as plainly as one that adds it.",
+        network: Network::None,
     },
 ];
 

@@ -290,7 +290,7 @@ fn absences(outcomes: &[Outcome], plan: &Plan) -> String {
             }
             let impossible = outcomes
                 .iter()
-                .any(|outcome| outcome.impossible.contains(&key));
+                .find_map(|outcome| outcome.impossible.get(&key));
             let looked: usize = outcomes
                 .iter()
                 .filter_map(|outcome| outcome.absent.get(&key))
@@ -303,10 +303,8 @@ fn absences(outcomes: &[Outcome], plan: &Plan) -> String {
                 .iter()
                 .filter_map(|outcome| outcome.unplantable.get(&key))
                 .sum();
-            let reason = if impossible {
-                "the language's runner does not collect by name, so no rename takes a case out of \
-                 the run"
-                    .to_string()
+            let reason = if let Some(impossible) = impossible {
+                (*impossible).to_string()
             } else {
                 format!(
                     "no commit of the corpus held a site for this shape: {looked} commits offered \

@@ -24,7 +24,7 @@ mod shape;
 mod source;
 mod tree;
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use clap::Args;
@@ -108,8 +108,9 @@ pub struct Outcome {
     pub cases: Vec<Case>,
     /// Commits that held no site for a rule in a language.
     pub absent: BTreeMap<(String, Language), usize>,
-    /// Rules a language cannot be made to break at all.
-    pub impossible: BTreeSet<(String, Language)>,
+    /// Rules a language cannot be made to break at all, and why the injector
+    /// says so.
+    pub impossible: BTreeMap<(String, Language), &'static str>,
     /// Sites passed over because the commit itself already fires that rule
     /// there, where a hit would prove nothing.
     pub passed_over: BTreeMap<(String, Language), usize>,
@@ -489,8 +490,8 @@ fn walk(
                         *outcome.absent.entry(key).or_default() += 1;
                         continue;
                     }
-                    Err(NoSite::NotInLanguage) => {
-                        outcome.impossible.insert(key);
+                    Err(NoSite::NotInLanguage(reason)) => {
+                        outcome.impossible.insert(key, reason);
                         *wanted.entry((rule.clone(), *lang)).or_default() = 0;
                         continue;
                     }

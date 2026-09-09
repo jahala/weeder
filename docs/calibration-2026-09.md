@@ -40,6 +40,7 @@ No `weeder.toml` was passed and none was read: every rule ran at the level the c
 | T5 | warn | Expected values were regenerated |
 | T6 | warn | An error assertion was weakened |
 | T7 | block | A rename took a test out of the runner |
+| T8 | block | A configuration line took a test out of the run |
 | X1 | block | A secret-looking string was added |
 | X2 | block | A file outside the scope was touched |
 
@@ -328,7 +329,7 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 
 ## Recall
 
-Every rule that blocks, T1, T3, S1, X1, C1, G1, catches at least 95 percent of the anti-patterns planted for it, in each of ts, py, rs and go. 2791 cases were planted one anti-pattern at a time in real commits, and 2761 of them were caught on the site they were planted in.
+Every rule that blocks, T1, T3, S1, X1, C1, G1, catches at least 95 percent of the anti-patterns planted for it, in each of ts, py, rs and go. 2907 cases were planted one anti-pattern at a time in real commits, and 2877 of them were caught on the site they were planted in.
 
 The campaign is `cargo xtask mutate`. For each case it checks out a real commit of a corpus repository, plants one anti-pattern in its tree with a scanner that knows nothing about weeder's detectors, and runs `weeder check --base <parent> --strict`. A case counts as caught only where the rule fires on the file the shape was planted in, on the lines it was planted on where it has lines. A site the unmutated commit already fires that rule on is passed over, so no hit is inherited from the commit itself.
 
@@ -336,13 +337,13 @@ The campaign is `cargo xtask mutate`. For each case it checks out a real commit 
 
 | Repository | Source | Window ends at | Commits walked | Cases |
 |---|---|---|---|---|
-| cobra | `https://github.com/spf13/cobra.git` | `adbc8813901bba65827259daa8e22ff94ec1f30e` | 200 | 320 |
-| copeca | `https://github.com/jahala/copeca.git` | `fc9c5b9e5f34085755c10746f1d46fd46edf2945` | 15 | 251 |
-| hcl | `https://github.com/hashicorp/hcl.git` | `6abbb088cdb82416d1b3d9fcbaab29534133567a` | 200 | 360 |
-| pleach | `https://github.com/jahala/pleach.git` | `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9` | 21 | 280 |
-| tend2 | `https://github.com/jahala/tend.git` | `51035a5c827b1a8c2f49049f07487dcfac9036c6` | 76 | 280 |
-| tilth | `https://github.com/jahala/tilth.git` | `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905` | 191 | 1020 |
-| umbel | `https://github.com/jahala/umbel.git` | `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d` | 34 | 280 |
+| cobra | `https://github.com/spf13/cobra.git` | `adbc8813901bba65827259daa8e22ff94ec1f30e` | 200 | 340 |
+| copeca | `https://github.com/jahala/copeca.git` | `fc9c5b9e5f34085755c10746f1d46fd46edf2945` | 15 | 265 |
+| hcl | `https://github.com/hashicorp/hcl.git` | `6abbb088cdb82416d1b3d9fcbaab29534133567a` | 200 | 380 |
+| pleach | `https://github.com/jahala/pleach.git` | `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9` | 21 | 294 |
+| tend2 | `https://github.com/jahala/tend.git` | `51035a5c827b1a8c2f49049f07487dcfac9036c6` | 76 | 294 |
+| tilth | `https://github.com/jahala/tilth.git` | `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905` | 191 | 1040 |
+| umbel | `https://github.com/jahala/umbel.git` | `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d` | 34 | 294 |
 
 The garden five are the repositories calibration measures precision on, read from `docs/calibration/corpus.toml` at the commits it pins them at. They carry no Go between them and weeder judges Go, so the Go column is measured on two Go projects that `docs/calibration/corpus-go.toml` pins the same way, read exactly as the five are.
 
@@ -386,6 +387,10 @@ Files the injector planted nothing in, counted once for each commit they were re
 | T7 | block | py | 34 | 34 | 0 | 0 | 100.0% |
 | T7 | block | rs | 0 | 0 | 0 | 0 | no cases |
 | T7 | block | go | 40 | 40 | 0 | 0 | 100.0% |
+| T8 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
+| T8 | block | py | 34 | 34 | 0 | 0 | 100.0% |
+| T8 | block | rs | 0 | 0 | 0 | 0 | no cases |
+| T8 | block | go | 40 | 40 | 0 | 0 | 100.0% |
 | M1 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
 | M1 | warn | py | 7 | 7 | 0 | 0 | 100.0% |
 | M1 | warn | rs | 18 | 18 | 0 | 0 | 100.0% |
@@ -480,6 +485,7 @@ Each of these was planted and not reported. The before and after of every one is
 
 - T4 · go, no commit of the corpus held a site for this shape: 400 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
 - T7 · rs, the language's runner does not collect by name, so no rename takes a case out of the run
+- T8 · rs, the language's runner collects a case by the attribute above it, and this history holds no integration target for a setting to keep out of the run
 - D1 · py, no commit of the corpus held a site for this shape: 206 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
 
 <!-- recall:end -->
