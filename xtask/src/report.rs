@@ -689,7 +689,7 @@ impl<'a> Report<'a> {
 
     fn precision(&self) -> String {
         let mut out = String::from("## Precision and the allowance rate\n\n");
-        out.push_str("Precision is the share of blocks that were not false positives. The allowance rate beside it counts `Weed-allow:` trailers per hundred commits from the day the repository installed guard, and is zero before that day because there was no gate to allow anything past. Allowances rising while true positives stay flat is a gate being routed around rather than obeyed.\n\n");
+        out.push_str("Precision is the share of blocks that were not false positives. The allowance rate beside it counts `Weeder-allow:` trailers per hundred commits from the day the repository installed guard, in that spelling and in the one the tool carried before it was renamed, and is zero before that day because there was no gate to allow anything past. Allowances rising while true positives stay flat is a gate being routed around rather than obeyed.\n\n");
         out.push_str("| Repo | Block-level precision | True positives | Allowance rate |\n|---|---|---|---|\n");
         for repo in self.repos {
             let tally = self.tally(repo);
@@ -720,7 +720,7 @@ impl<'a> Report<'a> {
             for rate in stray {
                 let _ = writeln!(
                     out,
-                    "{} carries {} `Weed-allow:` trailers written before guard was installed. They are outside the rate and worth reading: an allowance against a gate that was not running yet allows nothing.\n",
+                    "{} carries {} allowance trailers written before guard was installed. They are outside the rate and worth reading: an allowance against a gate that was not running yet allows nothing.\n",
                     rate.name, rate.trailers_before
                 );
             }

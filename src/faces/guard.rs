@@ -411,6 +411,9 @@ fn judgement(
         base,
         tip,
         scope: Vec::new(),
+        // A commit carries the index and a push carries commits, so neither
+        // hook has a working tree to take an unstaged file from.
+        untracked: None,
         strict: true,
         format: crate::faces::Format::Table,
         config: None,

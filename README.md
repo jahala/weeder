@@ -61,9 +61,16 @@ weeder hook claude
 weeder rules --format json
 ```
 
-`weeder check` with no arguments judges the index and the working tree against `HEAD`. On a
-terminal it writes a table; on a pipe it writes SARIF. `--strict` reports suppressed findings
-at their own level, which is how a reviewer sees what an agent waved through.
+`weeder check` with no arguments judges the index and the working tree against `HEAD`, including
+the files git has never been told about, which is most of what an agent writes. On a terminal it
+writes a table; on a pipe it writes SARIF. `--strict` reports suppressed findings at their own
+level, which is how a reviewer sees what an agent waved through, and `--untracked exclude` leaves
+the unstaged files out.
+
+A finding is allowed through on the record and never in silence: a `Weeder-allow: <RULE>
+<reason>` trailer on the commit being prepared, or a `weeder-allow <RULE>: <reason>` comment
+on the line. Both need a reason, both stay in the log as a note carrying it, and `--strict`
+hands the finding back the level its rule carries. `docs/rules.md` says the rest.
 
 ## Exit codes
 

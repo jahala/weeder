@@ -48,6 +48,28 @@ exclusion covers is reported once, at note level, under the id `SPECIMEN`: the
 log says which files no rule read, and `check` still leaves with whatever the
 files it did read deserve.
 
+## Allowing a finding through
+
+A finding weeder is wrong about, or right about for a reason the change carries anyway,
+is allowed through on the record and never in silence. There are two ways to write one,
+and both need a reason:
+
+| Where | How it is written |
+|---|---|
+| the commit being prepared | a `Weeder-allow: <RULE> <reason>` trailer, handed to weeder with `--message-file` |
+| the line itself | a `weeder-allow <RULE>: <reason>` comment beside it |
+
+An allowance turns the finding into a `note` that stops nobody and stays in the log, carrying
+the reason as a SARIF suppression. `weeder check --strict` gives it back the level its rule
+carries and reports it anyway: an agent that wrote itself an allowance is still stopped, and
+the reviewer sees both the finding and what was said about it. A marker with no reason is a
+line weeder cannot read: it says so on stderr, and under `--strict` it refuses to judge the
+file at all.
+
+A trailer reaches weeder through `--message-file` or on the commits of a `--base` range,
+never from git's own `COMMIT_EDITMSG`, which at pre-commit time still holds the previous
+commit's message. An allowance must not outlive the change it was written for.
+
 <a id="T1"></a>
 ## T1: A test was deleted
 

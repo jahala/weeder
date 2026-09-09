@@ -43,7 +43,7 @@ enum Command {
     /// Judge the last commits of each corpus repository against their parents
     /// and write the calibration file.
     Calibrate(CalibrateArgs),
-    /// Count the `Weed-allow:` trailers each corpus repository wrote per hundred
+    /// Count the allowance trailers each corpus repository wrote per hundred
     /// commits, from the day it installed guard.
     Suppressions(SuppressionsArgs),
     /// Inject one anti-pattern per case into real commits of the corpus and

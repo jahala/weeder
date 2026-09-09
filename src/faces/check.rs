@@ -6,6 +6,12 @@
 //! view a pre-commit hook has. `--base <ref>` judges the tree against a ref, the
 //! view CI has of a branch.
 //!
+//! A file git has never been told about is in none of those diffs, and most of
+//! what an agent writes is one. So the default mode reads them too, as what they
+//! are: added files, with nothing before them. `--untracked` says otherwise
+//! either way, and the index and a range keep their own meanings, because an
+//! index holds what it holds and a history has no working tree in it.
+//!
 //! A run that cannot reach a judgement, no repository, an unreadable ref, a
 //! config weeder cannot parse, leaves with exit 3 and says why on stderr. A gate
 //! that could not run must never look like a gate that passed.
@@ -13,9 +19,9 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use crate::core::change::Change;
+use crate::core::change::{Change, Side};
 use crate::core::config::Config;
-use crate::core::diff::{parse_diff, FileDiff};
+use crate::core::diff::{added_file, parse_diff, FileDiff};
 use crate::core::finding::{Finding, Level};
 use crate::core::glob;
 use crate::core::read::CallerSite;
@@ -25,9 +31,9 @@ use crate::core::sarif::{self, Context, EXIT_BLOCKED, EXIT_CLEAN, EXIT_COULD_NOT
 use crate::core::specimen;
 use crate::core::suppress::{
     apply_suppressions, parse_commit_suppressions, parse_inline_suppressions,
-    InlineSuppressionError, Suppression,
+    InlineSuppressionError, Suppression, MARKER,
 };
-use crate::faces::{gather, read_config, Answer, Format, Source};
+use crate::faces::{gather, read_config, side, Answer, Format, Source, Untracked};
 use crate::seams::{fs, git, reader};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -45,12 +51,16 @@ pub struct Request {
     /// The paths a change may touch. Every file is judged whatever the scope;
     /// X2 (rules-prod) reports a file outside it. Empty leaves `weeder.toml` in charge.
     pub scope: Vec<String>,
+    /// Whether the files git has never been told about are part of the change.
+    /// `None` leaves it to the mode: they are, wherever the working tree is
+    /// being judged against `HEAD`, and are not anywhere else.
+    pub untracked: Option<Untracked>,
     /// Report suppressed findings at their own level, and refuse to guess.
     pub strict: bool,
     pub format: Format,
     /// Read `weeder.toml` from here instead of the repository root.
     pub config: Option<PathBuf>,
-    /// The message of the commit being prepared, for its `Weed-allow:` trailers.
+    /// The message of the commit being prepared, for its `Weeder-allow:` trailers.
     /// A pre-commit gate has no commit to read, so a hook hands the message in.
     pub message_file: Option<PathBuf>,
     pub version: String,
@@ -67,6 +77,9 @@ fn judge(request: &Request) -> Result<Answer, String> {
     let root = git::repository_root(&request.cwd).map_err(|error| error.to_string())?;
     let config = read_config(&root, request.config.as_deref())?;
     let range = range(request)?;
+    // Asked before anything is judged: a run that cannot do what it was asked
+    // never happened, and refusing after the work is a refusal that cost time.
+    let untracked = reads_untracked(request, &range)?;
     let diff = read_diff(&root, &range)?;
     let judged: Vec<FileDiff> = parse_diff(&diff).map_err(|error| {
         format!("weeder could not read the diff git produced: {error}. report it with the change that caused it.")
@@ -74,10 +87,17 @@ fn judge(request: &Request) -> Result<Answer, String> {
     // The specimens leave here, before anything reads them: a file no rule
     // judges has no suppression to honour and no malformed one to complain
     // about either. What it has is a note, so the exclusion is in the log.
-    let (judged, excluded) = set_aside(judged, &config.specimens);
-    let (inline, malformed) = parse_inline_suppressions(&judged);
+    let (judged, mut excluded) = set_aside(judged, &config.specimens);
 
-    let changes = gather(&root, &range.base, &range.after, judged)?;
+    let mut changes = gather(&root, &range.base, &range.after, judged)?;
+    if untracked {
+        let (arrived, set_aside) = arrivals(&root, &config.specimens)?;
+        changes.extend(arrived);
+        excluded.extend(set_aside);
+    }
+    // Read after the change is whole, so an allowance written beside a line of
+    // a file nobody staged counts the way one in a staged file does.
+    let (inline, malformed) = parse_inline_suppressions(changes.iter().map(|change| &change.diff));
     let scope = scope(request, &config);
     // The specimens leave the repository's paths too: a rule that reads what the
     // tree holds, to resolve an import or to work out what a pattern hides,
@@ -188,6 +208,62 @@ fn range(request: &Request) -> Result<Range, String> {
     Ok(Range { base, after })
 }
 
+/// Whether this run reads the files git has never been told about.
+///
+/// A caller who says nothing gets them wherever the working tree is what is
+/// being judged against `HEAD`: that is plain `weeder check`, which is what a
+/// stop hook runs and what pleach's smoke gate runs, and the whole of what a
+/// worker produced is the question there. Everywhere else the answer is no,
+/// because an index carries what a commit would carry and a range of commits
+/// carries no working tree at all. Asking for them where there is no working
+/// tree to read is a run that never happened rather than a flag that quietly
+/// does nothing.
+fn reads_untracked(request: &Request, range: &Range) -> Result<bool, String> {
+    let tree = range.after == Source::Tree;
+    match request.untracked {
+        Some(Untracked::Exclude) => Ok(false),
+        Some(Untracked::Include) if tree => Ok(true),
+        Some(Untracked::Include) if request.staged => Err(
+            "--staged judges the index, and a file git has never been told about is in no index, so --untracked include asks for something that is not there. pass one."
+                .to_string(),
+        ),
+        Some(Untracked::Include) => Err(
+            "a range of commits carries no working tree, so --untracked include has nothing to read there. judge the tree instead, or drop the flag."
+                .to_string(),
+        ),
+        None => Ok(tree && range.base == "HEAD"),
+    }
+}
+
+/// The files that arrived without git being told, each as the added file it is.
+///
+/// They are read here rather than asked of git, which will not diff a file it
+/// has never heard of, and each one is read once: the same bytes become the
+/// hunk a rule reads its lines from and the side a rule asks its weight and its
+/// shape of. They arrive in the order the seam lists them, which is sorted, so
+/// two runs over one tree write one log.
+fn arrivals(root: &Path, specimens: &[String]) -> Result<(Vec<Change>, Vec<String>), String> {
+    let mut arrived = Vec::new();
+    let mut excluded = Vec::new();
+    for path in git::untracked_files(root).map_err(|error| error.to_string())? {
+        if specimen::skipped(specimens, &path) {
+            excluded.push(path);
+            continue;
+        }
+        // A file listed a moment ago and gone now is not a change anyone made;
+        // it is a race with whoever deleted it, and there is nothing to judge.
+        let Some(blob) = git::file_in_tree(root, &path).map_err(|error| error.to_string())? else {
+            continue;
+        };
+        arrived.push(Change {
+            diff: added_file(&path, blob.text().as_deref()),
+            before: Side::default(),
+            after: side(&path, &blob),
+        });
+    }
+    Ok((arrived, excluded))
+}
+
 fn read_diff(root: &Path, range: &Range) -> Result<String, String> {
     let head = range.base == "HEAD";
     let diff = match &range.after {
@@ -264,7 +340,7 @@ fn callers(root: &Path, changes: &[Change], scope: &[String]) -> Result<Vec<Call
     reader::callers(&symbols, root).map_err(|error| error.to_string())
 }
 
-/// The `Weed-allow:` trailers travelling with the change: the message handed in
+/// The `Weeder-allow:` trailers travelling with the change: the message handed in
 /// with `--message-file`, and every commit a judged range carries. git's own
 /// COMMIT_EDITMSG is never read: at pre-commit time it still holds the previous
 /// commit's message, and a trailer must never outlive the change it was written for.
@@ -312,7 +388,7 @@ fn could_not_run(request: &Request, reason: &str) -> Answer {
     }
 }
 
-/// A `weed-allow` with no reason gives weeder nothing to allow it against, so
+/// A `weeder-allow` with no reason gives weeder nothing to allow it against, so
 /// under `--strict` the file goes unjudged rather than judged on a guess.
 fn refusal(unreadable: &InlineSuppressionError) -> String {
     format!(
@@ -323,7 +399,7 @@ fn refusal(unreadable: &InlineSuppressionError) -> String {
 
 fn complaint(error: &InlineSuppressionError) -> String {
     format!(
-        "{}:{} carries a weed-allow weeder cannot read: {}. write it as `weed-allow {}: the reason`.",
+        "{}:{} carries a {MARKER} weeder cannot read: {}. write it as `{MARKER} {}: the reason`.",
         error.path,
         error.line,
         error.message,

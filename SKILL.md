@@ -29,20 +29,26 @@ it found. On a terminal it writes a table; on a pipe it writes SARIF 2.1.0. Pass
 `--format sarif` or `--format table` to say so outright rather than let the
 stream decide.
 
+A file you wrote and never staged is judged too, as the added file it is. `git
+diff` never lists one, so weeder reads them off the working tree itself; the
+files your ignore rules hide are not part of the tree and are not read.
+
 | Flag | What it does |
 |---|---|
 | `--base <ref>` | judge the tree against this ref instead of HEAD |
 | `--staged` | judge the index alone, the view a pre-commit hook has |
+| `--untracked <include\|exclude>` | whether the files git has never been told about are part of the change. Included by default when the working tree is judged against HEAD, left out with `--staged` and `--base` |
 | `--scope <glob>` | the paths the change may touch; every file is still judged, and a file outside the scope is reported for being there. Repeat the flag for more paths |
 | `--strict` | report suppressed findings at their own level, and refuse to guess |
 | `--format <format>` | `sarif` or `table`, rather than choosing by what stdout is |
 | `--config <path>` | read `weeder.toml` from here instead of the repository root |
-| `--message-file <path>` | the message of the commit being prepared, so its `Weed-allow` trailers are read |
+| `--message-file <path>` | the message of the commit being prepared, so its `Weeder-allow:` trailers are read |
 
 ```bash
 weeder check --base origin/main --strict --format sarif > weeder.sarif
 weeder check --staged
 weeder check --scope 'src/parser/**' --scope 'tests/parser/**'
+weeder check --untracked exclude
 ```
 
 ## scan: judge the repository as it is
@@ -149,8 +155,10 @@ weeder rules --format json
   matters, and the next action, in that order.
 - A block is a statement about the change, not about the run. Restore what was
   weakened, or record a reason weeder can read.
-- Suppress with a `Weed-allow` trailer on the commit being prepared, and pass it
-  with `--message-file`. `--strict` reports every suppression at its own level,
-  which is how a reviewer sees what was waved through.
+- Allow a finding through on the record, never in silence: a `Weeder-allow: <RULE>
+  <reason>` trailer on the commit being prepared, passed in with `--message-file`,
+  or a `weeder-allow <RULE>: <reason>` comment on the line itself. Both need a
+  reason; one without is a complaint on stderr. `--strict` reports every allowance
+  at its own level, which is how a reviewer sees what was waved through.
 - Never edit a rule, a fixture or a hook to make a finding go away. That is the
   growth weeder exists to refuse, and `guard` sees it from inside git.

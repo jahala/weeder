@@ -72,6 +72,13 @@ pub struct Answer {
     pub stderr: Vec<String>,
 }
 
+/// Whether a run judges the files git has never been told about.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Untracked {
+    Include,
+    Exclude,
+}
+
 /// Where a version of a file is to be found.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Source {
@@ -152,7 +159,7 @@ fn blobs(root: &Path, source: &Source, paths: &[&str]) -> Result<Vec<Option<Blob
 /// One side of one file, as the bytes git handed over. A file whose bytes are
 /// not text has no lines for a rule to judge, and still has a path and a
 /// weight, which is what G2 asks about.
-fn side(path: &str, blob: &Blob) -> Side {
+pub(crate) fn side(path: &str, blob: &Blob) -> Side {
     let (size, binary) = (Some(blob.size()), blob.is_binary());
     let Some(content) = blob.text() else {
         return Side {

@@ -2,8 +2,14 @@
 //!
 //! Precision says how often weeder was wrong. It says nothing about a gate that is
 //! right and routed around anyway, and the number that shows that is the rate of
-//! `Weed-allow:` trailers: rising allowances against flat true positives means
+//! `Weeder-allow:` trailers: rising allowances against flat true positives means
 //! the gate is being gamed, or is tuned to fire where nobody agrees with it.
+//!
+//! Both spellings are counted, the tool's own and the one it carried before the
+//! rename to weeder. A history read is not the gate. An allowance written under
+//! the old name still let a finding past a gate that was running, and skipping
+//! it would report a repository as more obedient than it was; honouring the old
+//! name at the gate would be a different thing entirely, and weeder does not.
 //!
 //! The rate only means anything from the day a repository installed guard, so
 //! that day is read out of the history rather than assumed: the commit that
@@ -14,7 +20,7 @@ use std::error::Error;
 use std::path::Path;
 
 use weeder::core::guard::BINARY_MARKER;
-use weeder::core::suppress::parse_commit_suppressions;
+use weeder::core::suppress::parse_history_suppressions;
 
 use crate::corpus::Repo;
 use crate::repo::{fingerprint, git, Scratch};
@@ -39,7 +45,8 @@ pub struct RepoRate {
     pub installed: Option<Installed>,
     /// Commits from the install onwards, the install itself included.
     pub commits_since: usize,
-    /// `Weed-allow:` trailers on those commits, counted one per trailer line.
+    /// Allowance trailers on those commits, in either spelling, counted one
+    /// per trailer line.
     pub trailers_since: usize,
     /// Trailers written before there was a gate. They are not part of the rate,
     /// and a repository that carries any is worth saying so about.
@@ -107,7 +114,7 @@ fn count(repo: &Repo, scratch_parent: &Path) -> Result<RepoRate, Box<dyn Error>>
     let trailers = |commits: &[crate::repo::Commit]| {
         commits
             .iter()
-            .map(|commit| parse_commit_suppressions(&commit.message).len())
+            .map(|commit| parse_history_suppressions(&commit.message).len())
             .sum()
     };
 

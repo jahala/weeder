@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
-# Evidence for calibration c4: `cargo xtask suppressions` counts `Weed-allow:`
+# Evidence for calibration c4: `cargo xtask suppressions` counts `Weeder-allow:`
 # trailers per hundred commits on each garden repository from the day guard is
 # installed, counts none before that day, and the calibration file reports that
 # rate beside precision with the true-positive count on the same line.
+#
+# Both spellings of the trailer are counted, the tool's own and the one it
+# carried before the rename to weeder. A history read is not the gate: an
+# allowance written under the old name still let a finding past a gate that was
+# running, and leaving it out would report a repository as more obedient than it
+# was. The gate itself reads one spelling and `tests/suppress_token.rs` holds it
+# to that.
 #
 # Every number the measurement gives is recomputed here from git directly, in a
 # scratch fetched at the same pins the corpus names rather than in any checkout
@@ -60,7 +67,7 @@ while IFS=$'\t' read -r name path tip source; do
   seen=0
   for sha in $history; do
     [ -n "$install" ] && [ "$sha" = "$install" ] && seen=1
-    allowances="$(git -C "$path" log -1 --format=%B "$sha" | grep -c '^[[:space:]]*Weed-allow:' || true)"
+    allowances="$(git -C "$path" log -1 --format=%B "$sha" | grep -cE '^[[:space:]]*Weed(er)?-allow:' || true)"
     if [ "$seen" = "1" ]; then
       since=$((since + 1))
       trailers_since=$((trailers_since + allowances))

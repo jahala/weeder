@@ -233,6 +233,9 @@ pub fn replay_case_in(
         tip: None,
         staged: false,
         scope: scopes(&planted.arguments)?,
+        // A commit judged against its parent, which is a history: the desk it
+        // was written on is not part of it.
+        untracked: None,
         strict: true,
         format: Format::Sarif,
         config: planted.config.as_ref().map(|_| config),

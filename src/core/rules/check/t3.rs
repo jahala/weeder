@@ -192,7 +192,7 @@ fn finding(path: &str, line: u32, marker: &Marker) -> Finding {
         message: Message {
             what,
             why: why.to_string(),
-            next: "take the marker out, or carry a `weed-allow T3:` naming what stops the test running.".to_string(),
+            next: "take the marker out, or carry a `weeder-allow T3:` naming what stops the test running.".to_string(),
         },
         fix: Some(Fix {
             description: "delete the line that carries the marker.".to_string(),

@@ -5,6 +5,13 @@
 //! so the suite builds the history the rate is defined over: allowances written
 //! before the hooks existed, the commit that brings them in, and allowances
 //! written after.
+//!
+//! The history is written in both spellings of the trailer, the tool's own and
+//! the one it carried before the rename to weeder. A history read is not the
+//! gate: an allowance written under the old name still let a finding past a gate
+//! that was running, so both count, and they count into one rate rather than two
+//! columns. What the gate itself honours is a different question, and
+//! `tests/suppress_token.rs` is where it is asked.
 
 mod common;
 
@@ -27,16 +34,34 @@ fn rates(repo: &Repo) -> Value {
         .expect("one repository was asked about")
 }
 
+/// The trailer the tool carries, and the one it carried before the rename. The
+/// retired spelling is built rather than written, so this file is not itself a
+/// place it lives on.
+fn tokens() -> (String, String) {
+    let stem = "weed";
+    (
+        format!("W{}er-allow:", &stem[1..]),
+        format!("W{}-allow:", &stem[1..]),
+    )
+}
+
 /// Two commits with an allowance each before the hooks arrive, the install, and
-/// four commits after it of which one carries two allowances.
+/// four commits after it of which one carries two allowances. Both spellings run
+/// through the history on either side of the install, because both are what a
+/// repository that lived through the rename actually carries.
 fn probe() -> Repo {
+    let (own, retired) = tokens();
     let repo = Repo::init();
     repo.write("src/lib.rs", "pub fn one() -> u32 {\n    1\n}\n");
     repo.commit("the repository begins");
     repo.write("src/two.rs", "pub fn two() -> u32 {\n    2\n}\n");
-    repo.commit("a change\n\nWeed-allow: T1 written when there was no gate to allow past");
+    repo.commit(&format!(
+        "a change\n\n{own} T1 written when there was no gate to allow past"
+    ));
     repo.write("src/three.rs", "pub fn three() -> u32 {\n    3\n}\n");
-    repo.commit("another change\n\nWeed-allow: T2 also written before the hooks");
+    repo.commit(&format!(
+        "another change\n\n{retired} T2 also written before the hooks"
+    ));
 
     repo.write(
         ".githooks/pre-commit",
@@ -47,11 +72,32 @@ fn probe() -> Repo {
     repo.write("src/four.rs", "pub fn four() -> u32 {\n    4\n}\n");
     repo.commit("a change with no allowance");
     repo.write("src/five.rs", "pub fn five() -> u32 {\n    5\n}\n");
-    repo.commit("a change\n\nWeed-allow: T1 the case moved to the module beside it");
+    repo.commit(&format!(
+        "a change\n\n{own} T1 the case moved to the module beside it"
+    ));
     repo.write("src/six.rs", "pub fn six() -> u32 {\n    6\n}\n");
-    repo.commit(
-        "a change\n\nWeed-allow: T2 the assertion moved into the helper\nWeed-allow: S1 the marker is in a fixture",
+    repo.commit(&format!(
+        "a change\n\n{retired} T2 the assertion moved into the helper\n{own} S1 the marker is in a fixture"
+    ));
+    repo
+}
+
+/// The same history, written in one spelling throughout. Two of these, one per
+/// spelling, are the whole claim: the rate does not know which name the tool
+/// carried on the day an allowance was written.
+fn one_spelling(trailer: &str) -> Repo {
+    let repo = Repo::init();
+    repo.write("src/lib.rs", "pub fn one() -> u32 {\n    1\n}\n");
+    repo.commit("the repository begins");
+    repo.write(
+        ".githooks/pre-commit",
+        &format!("#!/bin/sh\n{MARKER} /usr/local/bin/weeder\nexec weeder guard pre-commit\n"),
     );
+    repo.commit("guard is installed");
+    repo.write("src/two.rs", "pub fn two() -> u32 {\n    2\n}\n");
+    repo.commit(&format!(
+        "a change\n\n{trailer} T1 the case moved to the module beside it"
+    ));
     repo
 }
 
@@ -91,7 +137,10 @@ fn a_repository_that_never_installed_guard_has_no_rate_to_report() {
     repo.write("src/lib.rs", "pub fn one() -> u32 {\n    1\n}\n");
     repo.commit("the repository begins");
     repo.write("src/two.rs", "pub fn two() -> u32 {\n    2\n}\n");
-    repo.commit("a change\n\nWeed-allow: T1 an allowance against a gate that is not running");
+    repo.commit(&format!(
+        "a change\n\n{} T1 an allowance against a gate that is not running",
+        tokens().1
+    ));
 
     let rate = rates(&repo);
 
@@ -200,5 +249,46 @@ fn a_pin_that_is_not_a_full_sha_is_refused() {
         refused.stderr.contains("not a full forty-character sha"),
         "an abbreviation can come to mean a second commit: {}",
         refused.stderr
+    );
+}
+
+#[test]
+fn both_spellings_of_the_trailer_land_in_one_rate() {
+    let (own, retired) = tokens();
+    let under_the_new_name = rates(&one_spelling(&own));
+    let under_the_old_name = rates(&one_spelling(&retired));
+
+    assert_eq!(
+        under_the_old_name["trailers_since_install"], 1,
+        "an allowance written under the name the tool used to carry still let a finding past"
+    );
+    // Everything the rate is made of, side by side. The two histories differ
+    // only in the word the trailer opens with, so their shas differ and nothing
+    // the measurement reports may.
+    for field in [
+        "commits",
+        "commits_since_install",
+        "trailers_since_install",
+        "trailers_before_install",
+        "per_hundred_commits",
+    ] {
+        assert_eq!(
+            under_the_new_name[field], under_the_old_name[field],
+            "the rate is of allowances, not of spellings, and `{field}` reports one number for both"
+        );
+    }
+}
+
+#[test]
+fn a_history_carrying_both_spellings_counts_every_allowance_once() {
+    let rate = rates(&probe());
+
+    assert_eq!(
+        rate["trailers_since_install"], 3,
+        "two spellings across two commits, counted as three allowances"
+    );
+    assert_eq!(
+        rate["trailers_before_install"], 2,
+        "and the two written before the hooks, one in each spelling"
     );
 }

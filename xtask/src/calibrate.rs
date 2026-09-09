@@ -153,6 +153,9 @@ fn walk(
             tip: None,
             staged: false,
             scope: Vec::new(),
+            // A commit judged against its parent, which is a history: the desk it
+            // was written on is not part of it.
+            untracked: None,
             strict: true,
             format: Format::Sarif,
             config: None,

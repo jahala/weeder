@@ -138,7 +138,7 @@ fn t2_is_allowed_by_a_trailer_that_carries_a_reason() {
         let repo = fixture("T2", language.name, "fire");
         let name = language.name;
         repo.pending_message(&format!(
-            "Fold the padding cases together\n\nWeed-allow: T2 {REASON}\n"
+            "Fold the padding cases together\n\nWeeder-allow: T2 {REASON}\n"
         ));
 
         let run = repo.weeder(&["check"]);
@@ -165,7 +165,7 @@ fn t2_is_allowed_by_a_trailer_that_carries_a_reason() {
 fn t2_refuses_a_trailer_with_no_reason() {
     let language = &LANGUAGES[0];
     let repo = fixture("T2", language.name, "fire");
-    repo.pending_message("Fold the padding cases together\n\nWeed-allow: T2\n");
+    repo.pending_message("Fold the padding cases together\n\nWeeder-allow: T2\n");
 
     let run = repo.weeder(&["check"]);
     assert!(

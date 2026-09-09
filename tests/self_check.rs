@@ -129,7 +129,7 @@ fn the_allowance_the_config_carries_does_not_disarm_c1_for_an_ordinary_edit() {
     let config =
         fs::read_to_string(repository().join(CONFIG)).expect("weeder.toml should be readable");
     assert!(
-        config.contains("weed-allow C1"),
+        config.contains("weeder-allow C1"),
         "the clean run rests on this allowance, so the test that bounds it needs it there"
     );
 

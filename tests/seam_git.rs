@@ -163,7 +163,7 @@ fn the_messages_of_a_range() {
     let base = repo.head();
 
     repo.write("b.ts", "export const b = 2;\n");
-    repo.commit("the second change\n\nWeed-allow: G1 the merge finishes next commit");
+    repo.commit("the second change\n\nWeeder-allow: G1 the merge finishes next commit");
     repo.write("c.ts", "export const c = 3;\n");
     repo.commit("the third change");
 
@@ -176,7 +176,7 @@ fn the_messages_of_a_range() {
     );
     assert!(messages
         .iter()
-        .any(|message| message.contains("Weed-allow: G1")));
+        .any(|message| message.contains("Weeder-allow: G1")));
 }
 
 #[test]

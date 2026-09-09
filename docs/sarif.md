@@ -65,7 +65,7 @@ the test fails, so a consumer never has to guess what weeder meant.
           "ruleId": "T3",
           "ruleIndex": 2,
           "level": "error",
-          "message": { "text": "A skip marker was added to a test case. The suite still passes because the case no longer runs. Remove the marker, or record a reason with weed-allow." },
+          "message": { "text": "A skip marker was added to a test case. The suite still passes because the case no longer runs. Remove the marker, or record a reason with weeder-allow." },
           "locations": [
             {
               "physicalLocation": {
@@ -130,7 +130,7 @@ why in the same place a SARIF consumer already reads.
 
 A suppressed finding stays in the log. It becomes a `note` and carries a `suppressions` entry of
 kind `inSource` whose `justification` is the reason the author gave, whether that reason arrived as
-a `Weed-allow:` commit trailer or an inline `weed-allow` comment. Both travel with the change, so
+a `Weeder-allow:` commit trailer or an inline `weeder-allow` comment. Both travel with the change, so
 both are in-source as SARIF means it. The pile stays visible and stops nobody. Under `--strict` the
 finding keeps the level its rule carries and still carries the `suppressions` entry: reported, and
 not honoured. A trailer reaches weeder through `--message-file` (a hook hands the message in) or
