@@ -173,15 +173,24 @@ fn install(root: &Path, install: &Install) -> Result<Answer, String> {
 }
 
 fn status(root: &Path) -> Result<Answer, String> {
-    let Some(installed) = installed(root)? else {
-        return Ok(missing(
-            "weeder guard has installed no hooks in this repository, so git runs whatever it finds. run weeder guard install.",
-        ));
+    let entries = match installed(root)? {
+        Some(installed) => installed,
+        // weeder installed nothing here, and another planter may still have put
+        // a stage where git looks. A stage git runs is a stage, so the report is
+        // about that directory rather than about weeder's own record of one.
+        None => match planted(root)? {
+            Some(entries) => entries,
+            None => {
+                return Ok(missing(
+                    "weeder guard has installed no hooks in this repository, so git runs whatever it finds. run weeder guard install.",
+                ))
+            }
+        },
     };
 
     let mut live = Vec::new();
     let mut misses = Vec::new();
-    for entry in &installed {
+    for entry in &entries {
         let path = root.join(entry);
         let Some(script) = fs::read_if_present(&path).map_err(|error| error.to_string())? else {
             misses.push(format!(
@@ -189,28 +198,43 @@ fn status(root: &Path) -> Result<Answer, String> {
             ));
             continue;
         };
-        let Some(binary) = guard::binary_named(&script) else {
+        let written_by_weeder = guard::binary_named(&script);
+        // A hook another planter rendered carries no marker of weeder's, and
+        // what it invokes is the whole of what makes it a stage.
+        let stage = hook_of(entry).filter(|hook| guard::invokes(*hook, &script));
+        if written_by_weeder.is_none() && stage.is_none() {
             misses.push(format!(
-                "{entry} is a file weeder did not write, so what git runs there is not weeder's judgement."
+                "{entry} is a file weeder did not write and it invokes no stage of weeder's, so what git runs there is not weeder's judgement."
             ));
             continue;
-        };
+        }
         if !fs::is_executable(&path) {
             misses.push(format!(
                 "{entry} is not executable, and git walks past a hook it cannot run without a word."
             ));
             continue;
         }
-        if !fs::is_executable(Path::new(binary)) {
-            misses.push(format!(
-                "{entry} names the weeder binary at {binary}, which is not there to run. run weeder guard install again."
-            ));
-            continue;
+        match written_by_weeder {
+            Some(binary) => {
+                if !fs::is_executable(Path::new(binary)) {
+                    misses.push(format!(
+                        "{entry} names the weeder binary at {binary}, which is not there to run. run weeder guard install again."
+                    ));
+                    continue;
+                }
+                live.push(format!("{entry:<24}  live  {binary}"));
+            }
+            None => {
+                let stage = stage.unwrap_or(Hook::CommitMsg);
+                live.push(format!(
+                    "{entry:<24}  live  another planter's hook, and it invokes weeder guard {}",
+                    stage.name()
+                ));
+            }
         }
-        live.push(format!("{entry:<24}  live  {binary}"));
     }
 
-    let directory = directory_of(&installed);
+    let directory = directory_of(&entries);
     match git::config_get(root, HOOKS_PATH_KEY).map_err(|error| error.to_string())? {
         None => misses.push(format!(
             "{HOOKS_PATH_KEY} is not set, so git runs its own hooks and never reaches weeder's."
@@ -414,24 +438,59 @@ fn blocking(findings: &[Finding]) -> Vec<&str> {
     blocked
 }
 
-/// Whether the commit-msg hook guard installed is still there for git to run.
-/// Only weeder's own bundle counts: a file somebody else wrote there answers a
-/// different question, and pre-commit would be deferring to it.
+/// Whether the stage that reads an allowance is there for git to run. The
+/// question is asked of the directory git runs hooks from and answered by what
+/// the file there invokes, never by a marker of weeder's: a planter that renders
+/// hooks from a manifest carries no bed's private text, and its commit-msg hook
+/// is the stage all the same. A file that invokes something else, or nothing,
+/// leaves pre-commit with nothing to defer to; so does one git walks past,
+/// which is any file it cannot run.
 fn reads_the_message(root: &Path) -> Result<bool, String> {
-    let Some(installed) = installed(root)? else {
-        return Ok(false);
-    };
-    let Some(entry) = installed
-        .iter()
-        .find(|entry| entry.ends_with(&format!("/{}", Hook::CommitMsg.name())))
-    else {
-        return Ok(false);
-    };
-    let path = root.join(entry);
+    let path = hooks_directory(root)?.join(Hook::CommitMsg.name());
     let Some(script) = fs::read_if_present(&path).map_err(|error| error.to_string())? else {
         return Ok(false);
     };
-    Ok(guard::is_own_bundle(Hook::CommitMsg, &script) && fs::is_executable(&path))
+    Ok(guard::invokes(Hook::CommitMsg, &script) && fs::is_executable(&path))
+}
+
+/// The directory git runs this repository's hooks from: what `core.hooksPath`
+/// names, and otherwise the `hooks` directory git keeps of its own.
+fn hooks_directory(root: &Path) -> Result<PathBuf, String> {
+    match git::config_get(root, HOOKS_PATH_KEY).map_err(|error| error.to_string())? {
+        Some(setting) if !setting.trim().is_empty() => Ok(root.join(setting.trim())),
+        _ => Ok(git::git_dir(root)
+            .map_err(|error| error.to_string())?
+            .join("hooks")),
+    }
+}
+
+/// The hooks another planter left where git looks, named the way the report
+/// spells a hook, or `None` where that directory holds no stage of weeder's at
+/// all. Every stage is named, present or not, because a directory carrying one
+/// of the four is a repository with three still to install.
+fn planted(root: &Path) -> Result<Option<Vec<String>>, String> {
+    let directory = hooks_directory(root)?;
+    let mut entries = Vec::new();
+    let mut any = false;
+    for hook in Hook::ALL {
+        let path = directory.join(hook.name());
+        if let Some(script) = fs::read_if_present(&path).map_err(|error| error.to_string())? {
+            any |= guard::invokes(hook, &script);
+        }
+        entries.push(
+            path.strip_prefix(root)
+                .unwrap_or(&path)
+                .display()
+                .to_string(),
+        );
+    }
+    Ok(any.then_some(entries))
+}
+
+/// The hook a reported entry is, read off the name of the file itself, which is
+/// git's own name for the stage.
+fn hook_of(entry: &str) -> Option<Hook> {
+    Hook::named(entry.rsplit('/').next().unwrap_or(entry))
 }
 
 fn pre_push(root: &Path, version: &str, request: &PrePush) -> Result<Answer, String> {

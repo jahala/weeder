@@ -258,6 +258,14 @@ fn the_declared_install_names_what_this_repository_publishes() {
         string(&npm, "name"),
         "garden.json names a package the npm wrapper does not publish"
     );
+    // The wrapper is how most of the garden installs weeder, and it fetches the
+    // release its own version names. A package.json left behind at the last
+    // version publishes a wrapper that downloads the last binary.
+    assert_eq!(
+        string(&npm, "version"),
+        version,
+        "the npm wrapper publishes a version other than the one this repository builds"
+    );
 
     let binaries = install["binaries"]
         .as_object()

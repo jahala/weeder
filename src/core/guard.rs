@@ -5,6 +5,8 @@
 
 use std::path::Path;
 
+use crate::core::shell;
+
 use crate::core::glob;
 
 /// The hooks guard installs. Each name is git's own and is also the `weeder guard`
@@ -32,6 +34,12 @@ impl Hook {
         Hook::PrePush,
         Hook::PreRebase,
     ];
+
+    /// The hook git calls a file by this name, or `None` for a file that is not
+    /// one of them.
+    pub fn named(name: &str) -> Option<Hook> {
+        Hook::ALL.into_iter().find(|hook| hook.name() == name)
+    }
 
     pub fn name(self) -> &'static str {
         match self {
@@ -131,8 +139,31 @@ pub fn binary_named(script: &str) -> Option<&str> {
 
 /// The hook a path under `.githooks/` names, or `None` for any other path.
 pub fn hook_named(path: &str) -> Option<Hook> {
-    let name = path.strip_prefix(".githooks/")?;
-    Hook::ALL.into_iter().find(|hook| hook.name() == name)
+    Hook::named(path.strip_prefix(".githooks/")?)
+}
+
+/// Whether a file invokes `weeder guard <hook>`: the subcommand's two words side
+/// by side in a command, with the binary that runs them in front. It is how
+/// weeder knows a stage is installed when somebody else planted it, since a
+/// planter that renders hooks from a manifest carries no marker of weeder's, and
+/// a stage git runs is a stage whoever wrote the file.
+///
+/// The reading is a shell's. A `#` opening a word opens a comment, so words in a
+/// comment are not there at all; quotes hold a word together, so the subcommand
+/// named inside a message the hook prints is one word and invokes nothing; and a
+/// newline, a semicolon, an ampersand, a pipe or a bracket ends the command, so
+/// two words on either side of one are not side by side.
+pub fn invokes(hook: Hook, script: &str) -> bool {
+    // The script is read the way the harness hook reads a command line, by
+    // `shell::commands`: quoting taken off, comments and redirections left out,
+    // one word list per command. A hook is the stage when one of its commands
+    // runs the binary with `guard <hook>` after it, whatever path names the
+    // binary, since the stem names it by its own path and never by a marker.
+    shell::commands(script).iter().any(|words| {
+        words.iter().enumerate().skip(1).any(|(at, word)| {
+            word == "guard" && words.get(at + 1).is_some_and(|next| next == hook.name())
+        })
+    })
 }
 
 /// Whether a file is, byte for byte, the bundle weeder writes for this hook: the
