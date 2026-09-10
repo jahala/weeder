@@ -11,7 +11,7 @@
 //!
 //! `schemas/garden.schema.json` is no longer weeder's proposal: it is the
 //! umbrella's `contracts/manifest.schema.json`, vendored whole at jahala/plotplot
-//! master, commit 106570d259b4116c32803c22b29ad67faf8dbaab, which is the
+//! v1.4.0, commit 106570d259b4116c32803c22b29ad67faf8dbaab, which is the
 //! revision where the contract first allows `commit-msg` in `faces.git`; no tag
 //! carries it, and v1.3.0 does not. `scripts/umbrella-brand.sh` fetches the
 //! umbrella at the version `.brand/products/weeder/petalsrc.example` names,
