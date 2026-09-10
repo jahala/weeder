@@ -13,6 +13,7 @@ use crate::core::glob;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Hook {
     PreCommit,
+    CommitMsg,
     PrePush,
     PreRebase,
 }
@@ -23,11 +24,19 @@ pub enum Hook {
 pub const BINARY_MARKER: &str = "# weeder-guard-binary:";
 
 impl Hook {
-    pub const ALL: [Hook; 3] = [Hook::PreCommit, Hook::PrePush, Hook::PreRebase];
+    /// In the order git runs them, so a person reading `install` or `status`
+    /// reads the stages in the order a commit meets them.
+    pub const ALL: [Hook; 4] = [
+        Hook::PreCommit,
+        Hook::CommitMsg,
+        Hook::PrePush,
+        Hook::PreRebase,
+    ];
 
     pub fn name(self) -> &'static str {
         match self {
             Hook::PreCommit => "pre-commit",
+            Hook::CommitMsg => "commit-msg",
             Hook::PrePush => "pre-push",
             Hook::PreRebase => "pre-rebase",
         }
@@ -37,6 +46,9 @@ impl Hook {
     pub fn refuses(self) -> &'static str {
         match self {
             Hook::PreCommit => "an index that carries a finding weeder blocks on",
+            Hook::CommitMsg => {
+                "an index that blocks, where the message allows none of what it blocks on"
+            }
             Hook::PrePush => {
                 "a pushed range that blocks, and a non-fast-forward to a protected branch"
             }
@@ -49,8 +61,20 @@ impl Hook {
     /// whose bundle passes anything through.
     fn judges_a_branch(self) -> bool {
         match self {
-            Hook::PreCommit => false,
+            Hook::PreCommit | Hook::CommitMsg => false,
             Hook::PrePush | Hook::PreRebase => true,
+        }
+    }
+
+    /// Whether git hands this hook anything weeder has to be given. commit-msg
+    /// is handed the file the message is being written in, and without it there
+    /// is no message to read an allowance from; the branch hooks are handed the
+    /// refs and the upstream they judge. pre-commit is handed nothing and asks
+    /// git for the index itself.
+    fn reads_its_arguments(self) -> bool {
+        match self {
+            Hook::PreCommit => false,
+            Hook::CommitMsg | Hook::PrePush | Hook::PreRebase => true,
         }
     }
 }
@@ -67,6 +91,8 @@ pub fn script(hook: Hook, binary: &Path, protected: &[String]) -> String {
         for branch in protected {
             call.push_str(&format!(" --protect {}", quote(branch)));
         }
+    }
+    if hook.reads_its_arguments() {
         call.push_str(" -- \"$@\"");
     }
 

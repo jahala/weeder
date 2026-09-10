@@ -37,6 +37,7 @@
     },
     "git": [
       "pre-commit",
+      "commit-msg",
       "pre-push",
       "pre-rebase"
     ]
@@ -67,7 +68,7 @@
   "flagged": [
     {
       "what": "schemas/garden.schema.json",
-      "why": "the vendored copy is the umbrella's contracts/manifest.schema.json at plotplot v1.3.0, and that contract moved twice in the week weeder was fitted to it. Re-fetch with scripts/umbrella-brand.sh and read the copy against the source before a release."
+      "why": "the vendored copy is the umbrella's contracts/manifest.schema.json at plotplot v1.4.0, commit 106570d259b4116c32803c22b29ad67faf8dbaab, which is where the contract first allows commit-msg in faces.git. No tag carries that yet: v1.3.0 does not. Re-fetch with scripts/umbrella-brand.sh and read the copy against the source before a release, and move the pin to the tag the umbrella cuts."
     }
   ]
 }

@@ -108,6 +108,9 @@ fn judge(
         // is the index, which holds what it holds.
         untracked: None,
         strict: true,
+        // The harness hook stands where the agent is still writing and no commit
+        // message exists; a trailer here would be one the agent wrote itself.
+        honour_trailers: false,
         format: crate::faces::Format::Table,
         config: None,
         message_file: None,
