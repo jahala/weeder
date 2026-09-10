@@ -70,6 +70,21 @@ A trailer reaches weeder through `--message-file` or on the commits of a `--base
 never from git's own `COMMIT_EDITMSG`, which at pre-commit time still holds the previous
 commit's message. An allowance must not outlive the change it was written for.
 
+### Where a hook reads one
+
+The two ways differ in whose hand wrote them, and the git hooks are where that
+matters. `weeder guard commit-msg` judges the index with the message's trailers
+honoured, and is the deciding stage for any block-level finding a trailer may
+allow. `weeder guard pre-commit` runs before the message exists, so it honours
+nothing: it prints what blocks and names, for each rule, the exact trailer that
+would allow it, `Weeder-allow: <RULE> <reason>`, and says commit-msg is the stage
+that reads it. `weeder guard pre-push` honours a trailer again over the commits
+being pushed, because a commit carries the message it was allowed by.
+
+A `weeder-allow` marker on a line is never honoured by a hook, at any stage. The
+line is the agent's to write and the commit message is the person's, and the
+allowance a gate honours has to be the person's act.
+
 <a id="T1"></a>
 ## T1: A test was deleted
 

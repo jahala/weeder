@@ -102,8 +102,8 @@ name with nothing beside it is asked of the tree alone and comes back as a note.
 ## guard: the law in git
 
 `weeder guard` installs hooks git cannot be talked out of running, by pointing
-`core.hooksPath` at them. The six commands under it are the installer and the
-hooks themselves; git runs the last three, and you run the first three.
+`core.hooksPath` at them. The seven commands under it are the installer and the
+hooks themselves; git runs the last four, and you run the first three.
 
 | Command | What it does |
 |---|---|
@@ -111,6 +111,7 @@ hooks themselves; git runs the last three, and you run the first three.
 | `status` | say whether every hook is still live, and name what is not |
 | `uninstall` | take the hooks away and put back the hooks path that was there |
 | `pre-commit` | judge the index, as git's pre-commit hook |
+| `commit-msg` | judge the index again with the message's `Weeder-allow:` trailers honoured. git writes the message file's path as the one argument |
 | `pre-push` | judge what is being pushed, and keep protected branches from being rewritten. git writes the refs on stdin |
 | `pre-rebase` | refuse rewriting a protected branch |
 
@@ -119,6 +120,21 @@ hooks themselves; git runs the last three, and you run the first three.
 rewrite. Repeat `--protect` for more than one; leaving it out leaves the hooks
 reading `weeder.toml` every time git runs them. `pre-push` and `pre-rebase` take
 the same `--protect` flag, spelled as the installed bundle spells it.
+
+### The trailer flow
+
+A guardrail change a person means is allowed by what that person writes on the
+commit, and the hooks are the two halves of reading it. `guard pre-commit` runs
+before a message exists, so it honours nothing: it prints what blocks and names,
+for each rule, the exact trailer that would allow it,
+`Weeder-allow: <RULE> <reason>`, and says commit-msg is the stage that reads it. `guard commit-msg`
+judges the same index with the message in hand, and is the deciding stage for
+anything a trailer may allow. `guard pre-push` honours the trailer again,
+because a commit carries the message it was allowed by.
+
+A marker on a line is never honoured by a hook, at any stage: the line is the
+agent's to write and the commit message is the person's. Write the trailer, or
+repair what the table names.
 
 ```bash
 weeder guard install --protect main --protect release
@@ -166,6 +182,9 @@ weeder rules --format json
   <reason>` trailer on the commit being prepared, passed in with `--message-file`,
   or a `weeder-allow <RULE>: <reason>` comment on the line itself. Both need a
   reason; one without is a complaint on stderr. `--strict` reports every allowance
-  at its own level, which is how a reviewer sees what was waved through.
+  at its own level, which is how a reviewer sees what was waved through. The one
+  exception is a git hook: `guard commit-msg` and `guard pre-push` honour a
+  trailer, because the message travels with the change and a person wrote it
+  there. A marker on a line is yours, so no hook ever honours one.
 - Never edit a rule, a fixture or a hook to make a finding go away. That is the
   growth weeder exists to refuse, and `guard` sees it from inside git.

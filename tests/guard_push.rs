@@ -2,6 +2,11 @@
 //!
 //! The remote is a bare repository on disk, so every assertion about what was
 //! refused is an assertion about what the remote does or does not now hold.
+//!
+//! A push carries commits, and a commit carries the message a person wrote on
+//! it, so the allowance commit-msg honoured travels with the change all the way
+//! here and is honoured again. A marker on a line travels too, and is not: the
+//! line is the agent's to write, which is the whole of why the two differ.
 
 mod common;
 
@@ -13,6 +18,14 @@ const WIDENED: &str = "export function parse(input: string): string[] {\n  \
                        return input.split(/[,;]/);\n}\n";
 const NARROWED: &str = "export function parse(input: string): string[] {\n  \
                         return input.split(\",\");\n}\n";
+
+/// A guardrail path a repository plants a hook of its own at, beside the four
+/// weeder wrote. It is a shell script, so the inline case has somewhere to write
+/// a marker.
+const GUARDRAIL: &str = ".githooks/post-commit";
+const PLANTED: &str = "#!/bin/sh\n# the stem's own hook, planted beside weeder's\nexit 0\n";
+const RULE: &str = "C1";
+const REASON: &str = "the stem plants its own hook, and the owner asked for it";
 
 #[test]
 fn the_pre_push_hook_refuses_a_non_fast_forward_to_a_protected_branch() {
@@ -163,4 +176,72 @@ fn publish(repo: Repo, remote: Repo) -> (Repo, Repo) {
     ]);
     repo.git(&["push", "--set-upstream", "origin", "main"]);
     (repo, remote)
+}
+
+#[test]
+fn the_pre_push_hook_honours_the_trailer_that_allowed_the_commit_at_commit_msg() {
+    let (repo, remote) = guarded();
+
+    repo.write(GUARDRAIL, PLANTED);
+    repo.stage_all();
+    let landed = repo.try_git(&[
+        "commit",
+        "-m",
+        &format!("plant the stem's own hook\n\nWeeder-allow: {RULE} {REASON}\n"),
+    ]);
+    assert_eq!(
+        landed.code,
+        0,
+        "the allowance lands the commit at commit-msg: {}",
+        landed.output()
+    );
+
+    let allowed = repo.try_git(&["push", "origin", "main"]);
+
+    assert_eq!(
+        allowed.code,
+        0,
+        "a commit a person allowed on its own message can leave the machine: {}",
+        allowed.output()
+    );
+    assert_eq!(
+        remote.git(&["rev-parse", "main"]).trim(),
+        repo.head(),
+        "the remote carries the commit the trailer allowed"
+    );
+}
+
+#[test]
+fn the_pre_push_hook_refuses_a_commit_whose_only_allowance_is_a_marker_on_the_line() {
+    let (repo, remote) = published();
+    let held = remote.git(&["rev-parse", "main"]).trim().to_string();
+
+    // Committed before the hooks are in, which is how a commit carrying nothing
+    // but an inline allowance gets made at all.
+    repo.write(
+        GUARDRAIL,
+        &format!("#!/bin/sh\n# weeder-allow {RULE}: {REASON}\nexit 0\n"),
+    );
+    repo.commit("plant the stem's own hook");
+    repo.weeder(&["guard", "install"]);
+
+    let refused = repo.try_git(&["push", "origin", "main"]);
+
+    assert_ne!(
+        refused.code,
+        0,
+        "an allowance the agent wrote itself is reported, never honoured: {}",
+        refused.output()
+    );
+    let said = refused.output();
+    assert!(said.contains(RULE), "the hook prints the finding:\n{said}");
+    assert!(
+        said.contains("weeder guard refused"),
+        "the hook says which gate refused:\n{said}"
+    );
+    assert_eq!(
+        remote.git(&["rev-parse", "main"]).trim(),
+        held,
+        "the guardrail change never reached the remote"
+    );
 }

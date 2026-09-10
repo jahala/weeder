@@ -157,6 +157,10 @@ fn walk(
             // was written on is not part of it.
             untracked: None,
             strict: true,
+            // A measurement reads what the gate refuses, so what the gate does not
+            // honour is not honoured here either: every allowance is reported at its
+            // own level, trailer and marker alike.
+            honour_trailers: false,
             format: Format::Sarif,
             config: None,
             message_file: None,

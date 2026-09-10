@@ -143,11 +143,12 @@
         },
         "git": {
           "type": "array",
-          "description": "git hook names this bed installs into core.hooksPath",
+          "description": "git hook names this bed installs into core.hooksPath; commit-msg is where an allowance trailer can first be read, so a bed whose block-level findings a trailer may allow declares it beside pre-commit",
           "items": {
             "type": "string",
             "enum": [
               "pre-commit",
+              "commit-msg",
               "pre-push",
               "pre-rebase",
               "post-commit",
