@@ -31,7 +31,7 @@ The crate did not exist when this loop was shaped. almaty, the tilth agent, land
 - [x] (code) the tilth worktree at `.context/tilth-core` is at the commit weeder pins, holds `crates/tilth-core` exposing detection, outline entries, test-file classification, test structure, imports and callers, tilth's binary consumes it, and tilth's CI trio plus the crate's acceptance test are green there · scripts/check/tilth-core.sh @c7cc017 · by cli
 - [x] (code) weeder's `Cargo.toml` depends on `tilth-core` as a git dependency on `https://github.com/jahala/tilth` pinned to rev `7f38db58696e16c2df2be71da985f47097f34920`, with no local patch anywhere, and `cargo build` succeeds · scripts/check/tilth-core-dep.sh @b6e2e95 · by cli
 - [x] (code) `src/seams/reader.rs` is the only file in `src/` that references `tilth_core`, and `src/core/` compiles with the reader's data types only · tests/reader_seam.rs @6315640 · by cli
-- [x] (code) the reader returns outline entries, test shape, imports and callers for one small file in each of ts, py, rs and go, asserted against the fixture's known contents · tests/reader_langs.rs @2dc3a2d · by cli
+- [x] (code) the reader returns outline entries, test shape, imports and callers for one small file in each of ts, py, rs and go, asserted against the fixture's known contents · tests/reader_langs.rs @c295374 · by cli
 
 ## Needs #core
 
