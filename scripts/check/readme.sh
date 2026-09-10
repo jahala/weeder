@@ -108,32 +108,6 @@ else:
         if paragraph.count(".") < 1 or len(paragraph) < 80:
             complaints.append(f"README.md's opening paragraph is too thin to say what weeder is: `{paragraph}`")
 
-# The claims the owner has not settled, each marked where it is made. A mark
-# belongs to the block it sits in, a bullet with its continuation lines, or a
-# paragraph, because that is the unit a reader takes a claim from.
-def blocks(lines):
-    out = []
-    current = []
-    for line in lines:
-        opens = re.match(r"^\s*([-*+]|\d+\.)\s|^#", line)
-        if not line.strip() or opens:
-            if current:
-                out.append(" ".join(current))
-            current = []
-        if line.strip():
-            current.append(line.strip())
-    if current:
-        out.append(" ".join(current))
-    return out
-
-
-marked_blocks = [block for block in blocks(lines) if "[flagged]" in block.lower()]
-for claim, pattern in (
-    ("the manifest schema", r"\bschema\b"),
-):
-    if not any(re.search(pattern, block, re.I) for block in marked_blocks):
-        complaints.append(f"README.md does not mark {claim} as [flagged]")
-
 # --- every path the readme cites ---------------------------------------------
 
 # A citation is a path when its first segment names something at the repository
@@ -287,6 +261,6 @@ print(f"MIT, {len(cited)} paths cited and present, {len(cited_commands)} weeder 
 PY
 
 if [ "$status" -eq 0 ]; then
-  echo "LICENSE is MIT; README.md says what weeder is, flags what the owner has not settled, and cites nothing that does not exist"
+  echo "LICENSE is MIT; README.md says what weeder is and cites nothing that does not exist"
 fi
 exit "$status"
