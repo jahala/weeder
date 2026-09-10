@@ -178,6 +178,21 @@ pub fn related_files(path: &Path, content: &str) -> Vec<PathBuf> {
     resolve_related_files_with_content(path, content)
 }
 
+/// A path the reader found, as the repository spells it: relative to the scope
+/// it was searched under and joined with `/`, so a finding names `src/app/main.ts`
+/// on every platform and never the directory the checkout happens to sit in.
+/// A path outside the scope is kept whole, since there is nothing to make it
+/// relative to.
+fn within(scope: &Path, found: &Path) -> PathBuf {
+    let relative = found.strip_prefix(scope).unwrap_or(found);
+    let spelled = relative
+        .components()
+        .map(|component| component.as_os_str().to_string_lossy().into_owned())
+        .collect::<Vec<String>>()
+        .join("/");
+    PathBuf::from(spelled)
+}
+
 /// Every call site of `symbols` under `scope`, sorted by file and line so two
 /// runs of weeder produce the same findings in the same order.
 ///
@@ -202,7 +217,7 @@ pub fn callers(symbols: &BTreeSet<String>, scope: &Path) -> Result<Vec<CallerSit
         .into_iter()
         .map(|(symbol, site)| CallerSite {
             symbol,
-            path: site.path,
+            path: within(scope, &site.path),
             line: site.line,
             calling_function: site.calling_function,
             call_text: site.call_text.trim().to_string(),

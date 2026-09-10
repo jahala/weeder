@@ -6,16 +6,16 @@
     "gate",
     "hook"
   ],
-  "version": "0.2.1",
+  "version": "0.2.2",
   "install": {
     "cargo": "weeder",
     "npm": "@plotplot/weeder",
     "binaries": {
-      "x86_64-unknown-linux-musl": "https://github.com/jahala/weeder/releases/download/v0.2.1/weeder-x86_64-unknown-linux-musl.tar.gz",
-      "aarch64-unknown-linux-musl": "https://github.com/jahala/weeder/releases/download/v0.2.1/weeder-aarch64-unknown-linux-musl.tar.gz",
-      "x86_64-apple-darwin": "https://github.com/jahala/weeder/releases/download/v0.2.1/weeder-x86_64-apple-darwin.tar.gz",
-      "aarch64-apple-darwin": "https://github.com/jahala/weeder/releases/download/v0.2.1/weeder-aarch64-apple-darwin.tar.gz",
-      "x86_64-pc-windows-msvc": "https://github.com/jahala/weeder/releases/download/v0.2.1/weeder-x86_64-pc-windows-msvc.tar.gz"
+      "x86_64-unknown-linux-musl": "https://github.com/jahala/weeder/releases/download/v0.2.2/weeder-x86_64-unknown-linux-musl.tar.gz",
+      "aarch64-unknown-linux-musl": "https://github.com/jahala/weeder/releases/download/v0.2.2/weeder-aarch64-unknown-linux-musl.tar.gz",
+      "x86_64-apple-darwin": "https://github.com/jahala/weeder/releases/download/v0.2.2/weeder-x86_64-apple-darwin.tar.gz",
+      "aarch64-apple-darwin": "https://github.com/jahala/weeder/releases/download/v0.2.2/weeder-aarch64-apple-darwin.tar.gz",
+      "x86_64-pc-windows-msvc": "https://github.com/jahala/weeder/releases/download/v0.2.2/weeder-x86_64-pc-windows-msvc.tar.gz"
     }
   },
   "faces": {

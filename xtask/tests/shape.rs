@@ -211,7 +211,8 @@ fn weeder() -> &'static PathBuf {
             .parent()
             .and_then(|debug| debug.parent())
             .expect("the target directory")
-            .join("release/weeder");
+            .join("release")
+            .join(format!("weeder{}", std::env::consts::EXE_SUFFIX));
         assert!(binary.exists(), "{} should be built", binary.display());
         binary
     })

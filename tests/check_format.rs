@@ -25,6 +25,10 @@ fn a_pipe_gets_sarif() {
     assert_eq!(run.code, 2);
 }
 
+/// A real terminal on stdout is a pty, which is made with `openpty` here. Windows
+/// has no such call and its own pseudo-console is another API no crate this suite
+/// carries binds, so the question is asked where a pty can be opened.
+#[cfg(unix)]
 #[test]
 fn a_terminal_gets_a_table() {
     let run = conflicted().weeder_on_a_terminal(&["check"]);
@@ -41,6 +45,10 @@ fn format_table_overrides_the_pipe() {
     assert_eq!(run.code, 2);
 }
 
+/// A real terminal on stdout is a pty, which is made with `openpty` here. Windows
+/// has no such call and its own pseudo-console is another API no crate this suite
+/// carries binds, so the question is asked where a pty can be opened.
+#[cfg(unix)]
 #[test]
 fn format_sarif_overrides_the_terminal() {
     let run = conflicted().weeder_on_a_terminal(&["check", "--format", "sarif"]);

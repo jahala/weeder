@@ -13,6 +13,12 @@
 //! language-specific shape of its own, it runs whatever command the caller
 //! named; the case names it prints come from the reader, which `tests/reader_langs.rs`
 //! holds to all four.
+//!
+//! `bite` hands the test command it was given to `sh`, and Windows has no `sh`
+//! on PATH to hand it to: git ships one for the hooks it runs itself and puts it
+//! nowhere a program can find. The face is unshipped, so these tests are unix
+//! until it ships and grows a way to run a command on Windows.
+#![cfg(unix)]
 
 mod common;
 

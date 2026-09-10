@@ -21,8 +21,8 @@
 ## Tests
 - [x] (code) `sarif::render` orders results by file, then line, then rule id, and `tests/sarif_order.rs` proves it on shuffled findings · tests/sarif_order.rs @abcb7f6 · by cli
 - [x] (code) every fixture replayed three times under different locale and time-zone environments produces byte-identical SARIF, and no `HashMap` or `HashSet` in `src/core/` reaches output without a comment stating its order does not · tests/determinism.rs @ce3f583 · by cli
-- [x] (code) a property test over `parse_diff` and `classify_file` with arbitrary and mutated inputs never panics · tests/core_hostile.rs @f9b56f6 · by cli
-- [x] (code) the real binary on repositories with symlinks, a submodule, a merge commit, an empty commit, a 20 MiB file, CRLF, a binary file, non-UTF-8 text, and paths with spaces and quotes leaves with 0, 2 or 3 and never 101, with one stderr line on 3 · tests/check_hostile.rs @042719a · by cli
+- [x] (code) a property test over `parse_diff` and `classify_file` with arbitrary and mutated inputs never panics · tests/core_hostile.rs @5520aae · by cli
+- [x] (code) the real binary on repositories with symlinks, a submodule, a merge commit, an empty commit, a 20 MiB file, CRLF, a binary file, non-UTF-8 text, and paths with spaces and quotes leaves with 0, 2 or 3 and never 101, with one stderr line on 3 · tests/check_hostile.rs @11d75a0 · by cli
 - [x] (code) a panic anywhere in weeder becomes exit 3 with a message naming it as a bug, proven by a test that triggers the hook through a debug-only environment variable · tests/panic_hook.rs @0ffbc7b · by cli
 
 ## Needs #core #sarif #check-face

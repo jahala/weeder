@@ -1,0 +1,6 @@
+# weeder judges bytes: a rule reads the line a file holds, and the fixtures are
+# written to the byte. Git for Windows is installed with `core.autocrlf` on, so
+# without this every checkout there would hand the suite files whose lines end
+# differently from the ones the fixtures committed. No path in this repository is
+# converted on the way in or out.
+* -text

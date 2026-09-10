@@ -195,6 +195,10 @@ fn rules_narrows_the_run_and_a_comma_separates_them() {
     );
 }
 
+/// The terminal half of this is a pty, made with `openpty`, which Windows has
+/// not; its own pseudo-console is another API no crate this suite binds. The
+/// table itself is held to its shape on every platform by the test below.
+#[cfg(unix)]
 #[test]
 fn a_pipe_gets_sarif_a_terminal_gets_a_table_and_format_overrides_both() {
     let repo = untidy_repository();

@@ -13,9 +13,13 @@
 
 mod common;
 
+#[cfg(unix)]
 use std::path::Path;
 
-use common::{fixture, install_script, link_git, shell_word, Finding};
+use common::{fixture, Finding};
+#[cfg(unix)]
+use common::{install_script, link_git, shell_word};
+#[cfg(unix)]
 use tempfile::TempDir;
 
 /// The manifest kinds R4 reads, the package each fixture pins, and the release
@@ -84,6 +88,11 @@ fn the_threshold_is_the_repository_s_own() {
     );
 }
 
+/// The fetcher, the missing fetcher and the one that answers are all programs
+/// this test writes itself, and a `#!/bin/sh` file is a program only where the
+/// kernel reads a shebang. Windows starts no script, so what weeder reached for
+/// is a question only unix can put to it. The pins above are judged on both.
+#[cfg(unix)]
 #[test]
 fn a_scan_reaches_no_registry() {
     // A fetcher that records being asked. If a scan reaches the network at all,
@@ -111,6 +120,7 @@ fn a_scan_reaches_no_registry() {
     );
 }
 
+#[cfg(unix)]
 #[test]
 fn a_refresh_says_so_when_this_machine_has_no_fetcher() {
     // A PATH with git on it and nothing else. `--refresh-snapshot` is the one
@@ -142,6 +152,7 @@ fn a_refresh_says_so_when_this_machine_has_no_fetcher() {
 /// committed snapshot already held for the packages it could not ask about. A
 /// snapshot with nothing in it for a package is a rule with nothing to say, so
 /// dropping the entry would turn a network failure into a clean bill of health.
+#[cfg(unix)]
 #[test]
 fn a_refresh_keeps_what_it_could_not_get_a_fresh_answer_about() {
     let bin = TempDir::new().expect("a directory for the fetcher");
@@ -190,6 +201,7 @@ fn a_refresh_keeps_what_it_could_not_get_a_fresh_answer_about() {
 
 /// A fetcher that writes down having been asked and then refuses, so a scan
 /// that reached for it is recorded whatever it does with the answer.
+#[cfg(unix)]
 fn fetcher(directory: &Path, recorded: &Path) {
     let script = format!(
         "#!/bin/sh\ntouch {}\nexit 1\n",
@@ -201,6 +213,7 @@ fn fetcher(directory: &Path, recorded: &Path) {
 /// A fetcher one registry answers through and the other refuses: the npm reply
 /// is the shape that registry writes, and everything else is a host that does
 /// not resolve, which is what a machine with no network says.
+#[cfg(unix)]
 const ONE_REGISTRY_ANSWERS: &str = r#"#!/bin/sh
 for word in "$@"; do
   case "$word" in

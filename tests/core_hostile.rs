@@ -510,6 +510,10 @@ fn capture() -> Vec<String> {
         .expect("a binary file should be writable");
     std::fs::write(repo.root().join("latin.txt"), [0xE9_u8, b'n', b'\n'])
         .expect("a latin-1 file should be writable");
+    // A symlink is a file unix has and Windows has not: git there leaves
+    // `core.symlinks` off and writes a plain file holding the target's path, so
+    // the corpus carries the shape where the platform can hold one.
+    #[cfg(unix)]
     std::os::unix::fs::symlink("src/parser.ts", repo.root().join("link.ts"))
         .expect("a symlink should be creatable");
     repo.git(&["update-index", "--chmod=+x", "script.sh"]);

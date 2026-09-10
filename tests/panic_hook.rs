@@ -158,13 +158,15 @@ fn weeder_judges_as_usual_when_nobody_asks_it_to_fall_over() {
 #[test]
 fn a_neighbouring_variable_does_not_open_the_door() {
     let repo = Repo::init();
-    let output = repo
-        .weeder_command(&["check", "--format", "sarif"])
+    let mut command = repo.weeder_command(&["check", "--format", "sarif"]);
+    command
         .env("WEEDER_PANIC", "1")
-        .env("WEEDER_PANIC_FOR_TEST", "1")
-        .env("weeder_panic_for_tests", "1")
-        .output()
-        .expect("the weeder binary should run");
+        .env("WEEDER_PANIC_FOR_TEST", "1");
+    // Windows reads environment names without regard to case, so there the
+    // lowercase spelling is the variable itself and not a neighbour of it.
+    #[cfg(unix)]
+    command.env("weeder_panic_for_tests", "1");
+    let output = command.output().expect("the weeder binary should run");
     assert_eq!(
         output.status.code(),
         Some(0),

@@ -6,6 +6,12 @@
 //! whatever the verdict, clean, blocked, timed out, or a suite that never
 //! passes at all, the worktree bite made is gone by the time it leaves. A judge
 //! that litters checkouts across a machine is a judge nobody runs twice.
+//!
+//! `bite` runs its command through `sh`, and the commands here are a shell's:
+//! `sleep 30` is the one that outlives a deadline. Windows carries no `sh` on
+//! PATH and no `sleep`, and the face is unshipped, so these tests are unix until
+//! it ships and grows a way to run a command on Windows.
+#![cfg(unix)]
 
 mod common;
 

@@ -76,13 +76,19 @@ fn callers_of(name: &str, scope: &Path) -> Vec<String> {
         .expect("a directory of fixtures is searchable")
         .iter()
         .map(|site| {
-            let file = site
-                .path
-                .strip_prefix(scope)
-                .expect("a call site sits inside the scope searched")
-                .to_string_lossy()
-                .to_string();
-            format!("{file}:{} in {}", site.line, site.calling_function)
+            // The seam names a site relative to the scope it searched, joined
+            // with `/` on every platform; the test reads the spelling as given.
+            assert!(
+                site.path.is_relative(),
+                "a call site is named relative to the scope: {}",
+                site.path.display()
+            );
+            format!(
+                "{}:{} in {}",
+                site.path.display(),
+                site.line,
+                site.calling_function
+            )
         })
         .collect()
 }

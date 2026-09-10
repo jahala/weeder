@@ -27,7 +27,7 @@
 #![allow(dead_code)]
 
 use std::ffi::OsStr;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
@@ -419,7 +419,12 @@ impl Repo {
 
     /// The built binary, run with a real pseudo-terminal on stdout, so it
     /// answers the question a terminal asks rather than being told the answer.
+    /// A pty is made with `openpty` here, which Windows has not: its own
+    /// pseudo-console is another API and no crate this suite carries binds it.
+    #[cfg(unix)]
     pub fn weeder_on_a_terminal(&self, arguments: &[&str]) -> Run {
+        use std::io::Read;
+
         let terminal = Terminal::open();
         let mut child = self
             .weeder_command(arguments)
@@ -704,28 +709,59 @@ pub fn path_with_weeder() -> String {
         .expect("the built binary should sit in a directory")
         .display()
         .to_string();
-    match std::env::var("PATH") {
-        Ok(path) => format!("{directory}:{path}"),
-        Err(_) => directory,
+    match std::env::var_os("PATH") {
+        // The separator between two entries of a PATH is the platform's, a
+        // colon on unix and a semicolon on Windows, so the list is built with
+        // the one this machine reads rather than with either spelling.
+        Some(path) => {
+            let mut entries = vec![PathBuf::from(&directory)];
+            entries.extend(std::env::split_paths(&path));
+            std::env::join_paths(entries)
+                .expect("a PATH the platform can hold")
+                .to_string_lossy()
+                .to_string()
+        }
+        None => directory,
     }
 }
+
+/// A file this machine will run, the way the platform spells that. On unix it is
+/// the mode bits git and the kernel both read; on Windows there are none to
+/// write, and a file that is there is a file that runs.
+#[cfg(unix)]
+pub fn make_runnable(path: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+
+    std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755))
+        .expect("the file should be runnable");
+}
+
+/// A file this machine will run. Windows keeps no execute bit, so a file that is
+/// there is already one, and there is nothing for this to write.
+#[cfg(windows)]
+pub fn make_runnable(_path: &Path) {}
 
 /// A script a test owns, written into a directory it owns and made runnable.
 /// A PATH built out of these is how a test sees which programs weeder reached
 /// for: the program it would have run is right there, and it answers.
+///
+/// A `#!/bin/sh` file is a program where the kernel reads a shebang line, which
+/// Windows does not do: there a program is an executable image, and nothing
+/// starts a shell script. So the tests that put a program of their own on PATH
+/// are unix tests, and each of them says so at its own gate.
+#[cfg(unix)]
 pub fn install_script(directory: &Path, name: &str, body: &str) -> PathBuf {
-    use std::os::unix::fs::PermissionsExt;
-
     let path = directory.join(name);
     std::fs::write(&path, body).expect("the script should be writable");
-    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755))
-        .expect("the script should be runnable");
+    make_runnable(&path);
     path
 }
 
 /// git, where a test has taken everything else off PATH. weeder asks git what the
 /// tree holds before any rule runs, so a PATH without it is a scan that never
-/// starts and proves nothing.
+/// starts and proves nothing. It stands where [`install_script`] does: the
+/// stand-in is a shell script, and Windows starts no script as a program.
+#[cfg(unix)]
 pub fn link_git(directory: &Path) {
     let found = which("git").expect("git should be on PATH");
     install_script(
@@ -738,7 +774,10 @@ pub fn link_git(directory: &Path) {
     );
 }
 
-/// Where a program on PATH is, asked of the shell that owns the question.
+/// Where a program on PATH is, asked of the shell that owns the question. The
+/// two halves are the same question: unix has a shell builtin for it, Windows
+/// has a program, and neither exists on the other.
+#[cfg(unix)]
 pub fn which(program: &str) -> Option<PathBuf> {
     let found = Command::new("/usr/bin/env")
         .args(["sh", "-c", &format!("command -v {program}")])
@@ -748,6 +787,20 @@ pub fn which(program: &str) -> Option<PathBuf> {
         .status
         .success()
         .then(|| PathBuf::from(String::from_utf8_lossy(&found.stdout).trim()))
+}
+
+/// Where a program on PATH is, asked of the program Windows answers it with.
+/// `where` prints one line per match, and the first is the one that would run.
+#[cfg(windows)]
+pub fn which(program: &str) -> Option<PathBuf> {
+    let found = Command::new("where").arg(program).output().ok()?;
+    if !found.status.success() {
+        return None;
+    }
+    String::from_utf8_lossy(&found.stdout)
+        .lines()
+        .next()
+        .map(|line| PathBuf::from(line.trim()))
 }
 
 /// A path as one word a shell cannot take apart.
@@ -850,12 +903,18 @@ fn string(value: &serde_json::Value) -> String {
 }
 
 /// A pseudo-terminal: the pair of file descriptors a terminal is made of. The
-/// child writes to the device end, the test reads the control end.
+/// child writes to the device end, the test reads the control end. Windows has
+/// no `openpty` and no file descriptors to pair, so this and the one method that
+/// opens one are unix.
+#[cfg(unix)]
 struct Terminal {
     control: std::os::fd::OwnedFd,
     device: std::os::fd::OwnedFd,
 }
 
+/// The terminal's own methods, gated with it: Windows opens no pty here, so
+/// there is nothing on that platform for them to be written about.
+#[cfg(unix)]
 impl Terminal {
     fn open() -> Terminal {
         use std::os::fd::FromRawFd;
@@ -891,6 +950,8 @@ impl Terminal {
     /// Everything the child wrote to the terminal, with the carriage returns a
     /// terminal adds taken back out.
     fn read_to_end(self) -> String {
+        use std::io::Read;
+
         let Terminal { control, device } = self;
         // The last device handle must go, or the read never sees end of file.
         drop(device);
