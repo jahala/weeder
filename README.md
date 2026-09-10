@@ -44,10 +44,9 @@ tar xzf "weeder-$target.tar.gz" weeder
 install -m 755 weeder ~/.local/bin/weeder
 ```
 
-A windows build is on its way (#30). The crate on crates.io and the npm wrapper in `npm/`
-(`@plotplot/weeder`, scoped because the bare name was taken years ago by an empty placeholder)
-publish from the same release workflow once the registries are set up; until then the tarball is
-the install.
+A windows build is on its way (#30). The crate on crates.io and the npm wrapper
+(`@plotplot/weeder`) publish from the same release workflow once the registries are set up;
+until then the tarball is the install.
 
 ## The faces
 
@@ -121,18 +120,6 @@ dropped. `docs/sarif.md` names every convention and the test that pins it, and
 against a gate rather than around it. Install it into your harness's skill directory, or read
 it as-is.
 
-## What is not settled
-
-The accent bramble and the MIT licence were confirmed by the owner on 2026-09-05, and the
-name on 2026-09-06: `weed` was taken on the one namespace that binds, the executable, where
-SeaweedFS has shipped `weed` through Homebrew for years. One claim is still open, marked
-**[flagged]** where it is made:
-
-- **The manifest schema.** `schemas/garden.schema.json` is the umbrella's manifest contract,
-  vendored whole at plotplot v1.3.0. That contract moved twice in the week weeder was fitted to
-  it, so the copy is a pin rather than a settled shape: re-fetch it with
-  `scripts/umbrella-brand.sh` and read the two against each other before a release. **[flagged]**
-
 ## Building
 
 ```bash
@@ -140,10 +127,8 @@ cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
 ```
 
 `AGENTS.md` is the working brief: the layout, the dependency direction weeder enforces on
-itself, and the rules any change here is held to. The plan and the proof live as loops in
-`docs/tend2/`; evidence scripts a loop cites live in `scripts/check/`; the adversarial
-fixtures every rule is built from live in `fixtures/adversarial/`. `garden.json` is what the
-umbrella reads to verify weeder belongs to the garden.
+itself, and the rules any change here is held to. Every rule is built from the adversarial
+fixtures under `fixtures/adversarial/`, one minimal repository per rule per language.
 
 ## Support
 
