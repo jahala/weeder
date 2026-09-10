@@ -152,6 +152,9 @@ pub struct Import {
 pub struct CallerSite {
     /// The symbol that was searched for and found called here.
     pub symbol: String,
+    /// Relative to the scope the search was given, joined with `/` on every
+    /// platform, so a finding that names it reads the same wherever the checkout
+    /// sits.
     pub path: PathBuf,
     /// 1-based.
     pub line: u32,
