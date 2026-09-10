@@ -137,9 +137,9 @@ fn only_the_named_repository_of_a_corpus_is_fetched() {
         format!(
             "[[repo]]\nname = \"probe\"\nsource = \"{}\"\ntip = \"{}\"\n\n\
              [[repo]]\nname = \"absent\"\nsource = \"{}\"\ntip = \"0123456789012345678901234567890123456789\"\n",
-            repo.root().display().to_string().replace('\\', \"/\"),
+            repo.root().display().to_string().replace('\\', "/"),
             repo.tip(),
-            missing.display().to_string().replace('\\', \"/\"),
+            missing.display().to_string().replace('\\', "/"),
         ),
     )
     .expect("the corpus should be writable");
