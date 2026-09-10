@@ -69,7 +69,9 @@ jobs:
       # the library for this target at all, and a failure there should say so
       # rather than arrive as a test that never ran.
       - run: cargo build --workspace --all-targets
-      - run: cargo test --workspace
+      # Every suite runs even after one fails, so one Windows run says everything
+      # that is wrong there rather than the first thing, at fifteen minutes a run.
+      - run: cargo test --workspace --no-fail-fast
         env:
           # The runner's own TEMP names its user directory by an 8.3 short name
           # and git answers every question with the long one, so the temp
