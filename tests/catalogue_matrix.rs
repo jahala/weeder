@@ -81,6 +81,14 @@ impl Rule {
     }
 }
 
+/// The rules this platform can walk. A `bite` cell runs its language's own
+/// suite through `sh`, which Windows has on no PATH: git ships one for its own
+/// hooks and puts it nowhere a program finds it. The face is unshipped, so the
+/// walk covers the faces that run here and `tests/bite.rs` holds `bite` on unix.
+fn walkable(rule: &Rule) -> bool {
+    cfg!(unix) || rule.face != "bite"
+}
+
 fn catalogue() -> Vec<Rule> {
     let run = weeder_in(
         &PathBuf::from(env!("CARGO_MANIFEST_DIR")),
@@ -89,13 +97,20 @@ fn catalogue() -> Vec<Rule> {
     assert_eq!(run.code, 0, "the catalogue should print: {}", run.stderr);
     let rows: Vec<serde_json::Value> =
         serde_json::from_str(&run.stdout).expect("the catalogue should be json");
-    rows.iter()
+    let walked: Vec<Rule> = rows
+        .iter()
         .map(|row| Rule {
             id: string(&row["id"]),
             face: string(&row["face"]),
             level: string(&row["level"]),
         })
-        .collect()
+        .filter(walkable)
+        .collect();
+    assert!(
+        !walked.is_empty(),
+        "the catalogue should print rules this platform can walk"
+    );
+    walked
 }
 
 fn string(value: &serde_json::Value) -> String {

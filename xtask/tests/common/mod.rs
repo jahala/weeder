@@ -134,7 +134,12 @@ fn run_xtask(arguments: &[&str], scratch: Option<&Path>) -> Run {
     let mut command = Command::new(binary());
     command.args(arguments);
     if let Some(scratch) = scratch {
+        // `std::env::temp_dir` reads TMPDIR on unix and TEMP or TMP on Windows,
+        // so all three are named and the run puts its scratch where the caller
+        // can look for it on either platform.
         command.env("TMPDIR", scratch);
+        command.env("TEMP", scratch);
+        command.env("TMP", scratch);
     }
     let output = command.output().expect("the xtask binary should be built");
     Run {

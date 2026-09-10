@@ -47,6 +47,37 @@ jobs:
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
 
+  # Windows is one of the five platforms the release contract names, and v0.1.0
+  # shipped four: the tag was the first time anything was compiled for it, the
+  # leg failed on an ungated `std::os::unix` import in the library, and the two
+  # publish jobs were skipped behind it. The suite runs here on the same events
+  # as the ubuntu job, so a platform-specific break is a red check on a pull
+  # request rather than a release that stops half way through.
+  windows:
+    runs-on: windows-latest
+    steps:
+      # The self-check judges the whole repository against its root commit, so
+      # the runner needs the history, not the one commit a shallow clone holds.
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # ratchet:dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # ratchet:Swatinem/rust-cache@v2
+        with:
+          key: windows
+      # The compile is its own step: what the release run failed on was building
+      # the library for this target at all, and a failure there should say so
+      # rather than arrive as a test that never ran.
+      - run: cargo build --workspace --all-targets
+      - run: cargo test --workspace
+        env:
+          # The runner's own TEMP names its user directory by an 8.3 short name
+          # and git answers every question with the long one, so the temp
+          # repositories the suite builds go where every component of the path is
+          # its own name and the two spellings cannot disagree.
+          TMP: ${{ runner.temp }}
+          TEMP: ${{ runner.temp }}
+
   # The latency budget is measured on the release binary, so the suite runs a
   # second time on the release profile. A rule that starts reading a file it did
   # not need, or a seam that stops being lazy, shows up here as a failing test

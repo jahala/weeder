@@ -13,7 +13,6 @@
 
 mod common;
 
-use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 
 use common::Repo;
@@ -252,26 +251,20 @@ fn planted(hook: &str) -> Repo {
 }
 
 /// The binary the stem's hook names, at the path the stem keeps it. It is the
-/// weeder under test, reached by a path weeder's own install would never write.
+/// weeder under test, copied there, so the hook reaches a real program by a path
+/// weeder's own install would never write.
 fn stem_binary(repo: &Repo) {
     let path = repo.root().join(STEM_BINARY);
     let directory = path.parent().expect("the binary sits in a directory");
     std::fs::create_dir_all(directory).expect("a directory for the binary");
-    common::install_script(
-        directory,
-        "weeder",
-        &format!(
-            "#!/bin/sh\nexec {} \"$@\"\n",
-            common::shell_word(&common::binary().display().to_string())
-        ),
-    );
+    std::fs::copy(common::binary(), &path).expect("weeder should copy");
+    common::make_runnable(&path);
 }
 
 fn write_hook(repo: &Repo, path: &str, body: &str) {
     repo.write(path, body);
     let path = repo.root().join(path);
-    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755))
-        .expect("the hook should be runnable");
+    common::make_runnable(&path);
     assert!(Path::new(&path).is_file(), "the hook is on disk");
 }
 

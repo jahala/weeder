@@ -58,6 +58,12 @@ const CLIENTS: &[&str] = &[
     "socket2",
 ];
 
+/// The denial is `sandbox-exec` or `unshare`, and Windows has neither: taking
+/// the network away from a process there is a job object or a firewall rule, and
+/// neither can be asked for from a test. The two proofs below hold the other
+/// side on every platform: nothing in `src/` opens a socket, and the catalogue
+/// says which rule may reach one.
+#[cfg(unix)]
 #[test]
 fn a_scan_under_a_denied_network_leaves_clean_with_findings() {
     let repo = fixture(FETCHING_RULE, "rs", "fire");
@@ -75,6 +81,7 @@ fn a_scan_under_a_denied_network_leaves_clean_with_findings() {
     );
 }
 
+#[cfg(unix)]
 #[test]
 fn a_refresh_under_a_denied_network_says_the_registry_was_unreachable() {
     let repo = fixture(FETCHING_RULE, "rs", "fire");
@@ -197,6 +204,7 @@ fn the_catalogue_names_the_one_rule_that_may_reach_a_network() {
 /// The built binary, run in a repository with the network taken away from the
 /// process before it starts. Everything else about the run is what any other
 /// test does.
+#[cfg(unix)]
 fn denied(repo: &Repo, arguments: &[&str]) -> Run {
     let denial = Denial::on_this_machine();
     let weeder = binary().display().to_string();
@@ -218,11 +226,13 @@ fn denied(repo: &Repo, arguments: &[&str]) -> Run {
 }
 
 /// How this machine takes the network away from a process it starts.
+#[cfg(unix)]
 struct Denial {
     program: String,
     arguments: Vec<String>,
 }
 
+#[cfg(unix)]
 impl Denial {
     /// The first mechanism this machine can actually start a process with. A
     /// machine with none of them cannot hold this proof up, and a test that

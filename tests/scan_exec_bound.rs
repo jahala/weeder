@@ -13,6 +13,12 @@
 //! recordings rather than promised. The document in the fixture cites a
 //! subcommand the tool no longer offers, so a scan that quietly skipped the
 //! document would fail here too.
+//!
+//! Every program on that PATH is a `#!/bin/sh` file, and a script is a program
+//! only where the kernel reads a shebang line. Windows starts no script as a
+//! program, so a recording of what weeder ran cannot be taken there and this
+//! whole proof is unix's to give.
+#![cfg(unix)]
 
 mod common;
 

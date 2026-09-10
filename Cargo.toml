@@ -5,7 +5,7 @@ members = ["xtask"]
 
 [package]
 name = "weeder"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 
 [[bin]]
@@ -27,12 +27,16 @@ tempfile = "3"
 # No default features: the vendored schema is self-contained, so the validator
 # never resolves a reference over the network or off the filesystem.
 jsonschema = { version = "0.53", default-features = false }
-# A real pseudo-terminal, so the format tests ask the binary what it does with a
-# terminal on stdout instead of asking it to believe there is one.
-libc = "0.2"
 # The hostile-input tests: core is handed inputs nobody wrote on purpose, and
 # has to answer or refuse rather than fall over.
 proptest = "1.11.0"
+
+# A real pseudo-terminal, so the format tests ask the binary what it does with a
+# terminal on stdout instead of asking it to believe there is one. Windows has
+# no openpty and no pty to open, so the crate is asked for where the tests that
+# use it are compiled and nowhere else.
+[target.'cfg(unix)'.dev-dependencies]
+libc = "0.2"
 
 [profile.release]
 opt-level = 3

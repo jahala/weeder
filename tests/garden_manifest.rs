@@ -281,6 +281,91 @@ fn the_declared_install_names_what_this_repository_publishes() {
     }
 }
 
+/// The platform the release contract named and v0.1.0 did not ship: the leg
+/// failed to compile and the publish jobs were skipped behind it, so the asset
+/// is the newest of the five and the last the manifest declares.
+const WINDOWS_TARGET: &str = "x86_64-pc-windows-msvc";
+
+/// How many platforms the release contract names.
+const PLATFORMS: usize = 5;
+
+/// The release that first carries the windows asset. The garden's lockfile pins
+/// an asset by its url, and no release before this one published one for this
+/// target, so a manifest naming an earlier version points the lock at a file
+/// that is not there. It is a floor and not an equality: every release after it
+/// carries the asset too.
+const FIRST_WINDOWS_RELEASE: &str = "0.2.2";
+
+/// The targets `install.binaries` declares, in the order the file writes them.
+/// serde_json holds an object's keys sorted, and the order a reader of
+/// garden.json sees is the order its text has, so the text is what this reads.
+fn declared_targets() -> Vec<String> {
+    let source = read("garden.json");
+    let mut ordered: Vec<String> = manifest()["install"]["binaries"]
+        .as_object()
+        .expect("garden.json should carry install.binaries")
+        .keys()
+        .cloned()
+        .collect();
+    ordered.sort_by_key(|target| {
+        source
+            .find(&format!("\"{target}\""))
+            .unwrap_or_else(|| panic!("garden.json declares {target} somewhere in its text"))
+    });
+    ordered
+}
+
+/// A version as the numbers it is written in, so two of them can be compared
+/// the way a release is newer than another rather than as text, where "0.10.0"
+/// sorts under "0.2.0".
+fn release_numbers(version: &str) -> Vec<u64> {
+    version
+        .split('.')
+        .map(|part| {
+            part.parse().unwrap_or_else(|_| {
+                panic!("a release version is written in numbers, not {version}")
+            })
+        })
+        .collect()
+}
+
+#[test]
+fn the_declared_install_names_the_windows_asset_the_release_first_carries() {
+    let manifest = manifest();
+    let name = string(&manifest, "name");
+    let version = string(&manifest, "version");
+    let targets = declared_targets();
+
+    assert_eq!(
+        targets.len(),
+        PLATFORMS,
+        "the release contract names {PLATFORMS} platforms, and garden.json declares {targets:?}"
+    );
+    assert_eq!(
+        targets.last().map(String::as_str),
+        Some(WINDOWS_TARGET),
+        "{WINDOWS_TARGET} is the platform this release adds, so it is the last of the five the \
+         manifest declares: {targets:?}"
+    );
+
+    let url = manifest["install"]["binaries"][WINDOWS_TARGET]
+        .as_str()
+        .expect("the windows target is downloaded from a url")
+        .to_string();
+    assert!(
+        url.ends_with(&format!(
+            "/releases/download/v{version}/{name}-{WINDOWS_TARGET}.tar.gz"
+        )),
+        "the garden's lockfile pins the asset by its url, and garden.json points \
+         {WINDOWS_TARGET} at {url} while this repository builds v{version}"
+    );
+    assert!(
+        release_numbers(&version) >= release_numbers(FIRST_WINDOWS_RELEASE),
+        "v{version} is older than v{FIRST_WINDOWS_RELEASE}, the release that first carries \
+         {name}-{WINDOWS_TARGET}.tar.gz: the lock would pin an asset no release published"
+    );
+}
+
 #[test]
 fn the_declared_cli_is_the_binary_this_repository_builds() {
     let manifest = manifest();

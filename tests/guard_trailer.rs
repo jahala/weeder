@@ -16,6 +16,9 @@
 
 mod common;
 
+/// A hook git cannot run is a hook whose execute bit is off, and only unix has
+/// one: the test that takes it away is gated below and Windows has no such shape.
+#[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
 use common::Repo;
@@ -204,6 +207,10 @@ fn a_trailer_for_another_rule_allows_nothing() {
     assert_eq!(repo.head(), before, "no commit was made");
 }
 
+/// The stage that cannot run is a file git skips for its mode. Windows keeps no
+/// mode and git for Windows runs any hook file it finds, so there is no way to
+/// put a repository into this state there.
+#[cfg(unix)]
 #[test]
 fn pre_commit_refuses_on_its_own_when_the_stage_it_defers_to_cannot_run() {
     let repo = guarded();

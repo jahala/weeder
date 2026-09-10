@@ -115,8 +115,20 @@ pub fn remove_dir_if_empty(path: &Path) -> Result<(), FsError> {
     }
 }
 
+// Whether a file runs is git's question and not weeder's, and git answers it
+// differently on each platform, so both halves of the answer are written here.
+//
+// On unix git checks the execute bit before it calls a hook and walks past a
+// hook it cannot run without a word, which is the one thing a gate must not do,
+// so the bit is read and written. On Windows there is no such bit: NTFS keeps no
+// mode, and Git for Windows takes `X_OK` out of the `access` call it makes
+// before it looks for a hook, so any hook file that is there is a hook git runs,
+// through the `sh` it ships, which reads the `#!/bin/sh` line install writes.
+// There the question is whether the file is there, and there is no mode to write.
+
 /// Whether a path is a file this machine will run. A hook git cannot execute is
 /// a hook git walks past without a word, which is the one thing a gate must not do.
+#[cfg(unix)]
 pub fn is_executable(path: &Path) -> bool {
     use std::os::unix::fs::PermissionsExt;
 
@@ -124,7 +136,15 @@ pub fn is_executable(path: &Path) -> bool {
         .is_ok_and(|metadata| metadata.is_file() && metadata.permissions().mode() & 0o111 != 0)
 }
 
+/// Whether a path is a file this machine will run. Windows keeps no execute bit
+/// and git looks for none, so a hook file that is there is a hook git runs.
+#[cfg(windows)]
+pub fn is_executable(path: &Path) -> bool {
+    std::fs::metadata(path).is_ok_and(|metadata| metadata.is_file())
+}
+
 /// The mode a hook needs: everyone may read it and run it, its owner may rewrite it.
+#[cfg(unix)]
 pub fn make_executable(path: &Path) -> Result<(), FsError> {
     use std::os::unix::fs::PermissionsExt;
 
@@ -134,6 +154,15 @@ pub fn make_executable(path: &Path) -> Result<(), FsError> {
             message: error.to_string(),
         }
     })
+}
+
+/// The mode a hook needs on Windows, which is no mode at all: the file being
+/// there is what makes git run it, so there is nothing to write and nothing that
+/// can fail. The path is taken all the same, because the caller's question is
+/// about that file and the answer has one shape on every platform.
+#[cfg(windows)]
+pub fn make_executable(_path: &Path) -> Result<(), FsError> {
+    Ok(())
 }
 
 /// A path with every symlink and `..` resolved, or `None` where nothing is

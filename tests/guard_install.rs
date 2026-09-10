@@ -6,7 +6,6 @@
 
 mod common;
 
-use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 use common::Repo;
@@ -44,13 +43,27 @@ fn install_writes_every_hook_and_points_git_at_them() {
             resolved(&common::binary()),
             "{hook} names the binary it was installed from"
         );
-        let mode = std::fs::metadata(&path)
-            .expect("the hook is on disk")
-            .permissions()
-            .mode();
+        // What makes a file a hook git runs is the platform's answer, not
+        // weeder's. On unix it is the execute bit, and git walks past a hook
+        // without one; Windows keeps no such bit and git for Windows asks for
+        // none, so there the whole of it is that the file is on disk.
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+
+            let mode = std::fs::metadata(&path)
+                .expect("the hook is on disk")
+                .permissions()
+                .mode();
+            assert!(
+                mode & 0o111 != 0,
+                "{hook} is executable, or git walks past it without a word"
+            );
+        }
+        #[cfg(windows)]
         assert!(
-            mode & 0o111 != 0,
-            "{hook} is executable, or git walks past it without a word"
+            path.is_file(),
+            "{hook} is on disk, which is the whole of what makes git run it here"
         );
         assert!(run.stdout.contains(hook), "install says it wrote {hook}");
     }

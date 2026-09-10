@@ -118,6 +118,10 @@ fn staged_diff(repo: &Repo, base: &str) -> String {
     repo.git(&["diff", "--no-color", "--find-renames", "--cached", base])
 }
 
+/// A symlink in a work tree is a shape unix has and Windows has not: git there
+/// leaves `core.symlinks` off and writes a plain file holding the target's path,
+/// so there is no link for weeder to walk past.
+#[cfg(unix)]
 #[test]
 fn a_symlink_to_a_file_and_to_a_directory_are_judged() {
     let repo = Repo::init();
@@ -392,6 +396,11 @@ fn text_that_is_not_utf_eight_is_judged() {
     );
 }
 
+/// Two of these names are unix's to spell: NTFS refuses a quote in a filename
+/// outright, and a backslash there separates directories rather than being a
+/// character in a name. The rest of the list is judged on both platforms by the
+/// tests above.
+#[cfg(unix)]
 #[test]
 fn paths_with_spaces_and_quotes_are_judged_and_named_as_they_are_spelled() {
     let repo = Repo::init();
@@ -444,6 +453,11 @@ fn a_rename_is_judged() {
 /// All of it in one repository, judged every way a caller can ask. The shapes
 /// meet each other here, which is where a parser that handles each one alone
 /// tends to come apart.
+/// Two of the shapes in here are unix's alone: a path with a quote in it, which
+/// NTFS refuses, and a symlink, which git for Windows writes as a plain file.
+/// The tree is the one weeder has to survive whole, so it is built where every
+/// shape in it exists rather than built short.
+#[cfg(unix)]
 #[test]
 fn everything_at_once_is_judged() {
     let inner = Repo::init();
@@ -522,6 +536,9 @@ fn a_directory_that_is_not_a_repository_leaves_with_a_reason() {
     assert_eq!(run.code, 3, "no repository, no judgement: {}", run.stdout);
 }
 
+/// A symlink, which is a unix file: Windows makes one only with a privilege
+/// nobody grants a test, and git for Windows would write a plain file anyway.
+#[cfg(unix)]
 fn symlink(target: &str, at: std::path::PathBuf) {
     if let Some(parent) = at.parent() {
         std::fs::create_dir_all(parent).expect("a directory for the symlink");

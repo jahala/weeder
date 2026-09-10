@@ -5,8 +5,6 @@
 
 mod common;
 
-use std::os::unix::fs::PermissionsExt;
-
 use common::Repo;
 
 #[test]
@@ -43,8 +41,14 @@ fn status_names_a_hook_that_is_missing() {
     );
 }
 
+/// A hook git will not run is a hook with the execute bit off, which is a shape
+/// only unix has: Windows keeps no such bit and git for Windows asks for none,
+/// so the twin below states what a hook file means there instead.
+#[cfg(unix)]
 #[test]
 fn status_names_a_hook_git_cannot_run() {
+    use std::os::unix::fs::PermissionsExt;
+
     let repo = installed();
     let hook = repo.root().join(".githooks/pre-commit");
     std::fs::set_permissions(&hook, std::fs::Permissions::from_mode(0o644))
@@ -56,6 +60,30 @@ fn status_names_a_hook_git_cannot_run() {
     assert!(
         names(&run.stdout, "pre-commit", "not executable"),
         "status names the hook and the miss:\n{}",
+        run.stdout
+    );
+}
+
+/// The same question on Windows, where the answer is the other one: there is no
+/// bit to take off, and a hook file that is on disk is a hook git runs, so
+/// status reads it as live rather than inventing a mode to complain about.
+#[cfg(windows)]
+#[test]
+fn status_reads_a_hook_that_is_there_as_one_git_runs() {
+    let repo = installed();
+    let hook = repo.root().join(".githooks/pre-commit");
+    assert!(hook.is_file(), "the hook install wrote is on disk");
+
+    let run = repo.weeder(&["guard", "status"]);
+
+    assert_eq!(
+        run.code, 0,
+        "every hook is there, so nothing is missing\n{}",
+        run.stderr
+    );
+    assert!(
+        names(&run.stdout, "pre-commit", "live"),
+        "a hook file that is there is one git runs:\n{}",
         run.stdout
     );
 }
@@ -102,10 +130,11 @@ fn status_names_a_hooks_path_that_is_set_no_more() {
 fn status_names_a_hook_whose_binary_is_gone() {
     let repo = Repo::init();
     let elsewhere = tempfile::TempDir::new().expect("a temp directory for the copy");
-    let copy = elsewhere.path().join("weeder");
+    let copy = elsewhere
+        .path()
+        .join(format!("weeder{}", std::env::consts::EXE_SUFFIX));
     std::fs::copy(common::binary(), &copy).expect("weeder should copy");
-    std::fs::set_permissions(&copy, std::fs::Permissions::from_mode(0o755))
-        .expect("the copy should be runnable");
+    common::make_runnable(&copy);
 
     // Installed by the copy, so the hooks name the copy, and then the copy goes
     // the way a binary goes when a checkout moves or a release is cleaned up.
