@@ -21,8 +21,8 @@ Without explicit commits, bite reads the two most recent commits above the base 
 If fewer than 90 percent of pleach's phased nodes in the proof repository yield a clean test commit that bite can apply alone, bite is reported and left unshipped: `docs/bite-2026-09.md` records the count and the reasons, and the subcommand stays out of the release.
 
 ## Tests
-- [x] (code) on a fixture with a test commit and an implementation commit, bite passes when the test fails alone and passes with the implementation, and reports B1 at block level naming the passing tests when the test passes alone · tests/bite.rs @1c8ca09 · by cli
-- [x] (code) a test command that hangs is exit 3 with the timeout named, and the temp worktree is removed on every path · tests/bite_exec.rs @6e0b70c · by cli
+- [x] (code) on a fixture with a test commit and an implementation commit, bite passes when the test fails alone and passes with the implementation, and reports B1 at block level naming the passing tests when the test passes alone · tests/bite.rs @3814510 · by cli
+- [x] (code) a test command that hangs is exit 3 with the timeout named, and the temp worktree is removed on every path · tests/bite_exec.rs @9044e0a · by cli
 - [x] (code) the proof-repo measurement in `docs/bite-2026-09.md` shows at least 90 percent of phased nodes yield a clean test commit, or the file records the kill and `bite` is absent from `weeder --help` · scripts/check/bite-kill.sh @2911c71 · by cli
 
 ## Needs #calibration
