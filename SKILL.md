@@ -132,6 +132,13 @@ judges the same index with the message in hand, and is the deciding stage for
 anything a trailer may allow. `guard pre-push` honours the trailer again,
 because a commit carries the message it was allowed by.
 
+`guard pre-commit` defers only while there is a stage to defer to. The stage is
+whatever executable file at `core.hooksPath` invokes `weeder guard commit-msg`,
+whoever wrote it: a harness that renders hooks from its own manifest installs the
+stage as surely as `guard install` does. With no such file there, `pre-commit`
+refuses on its own, because a gate that hands its verdict to a hook nobody runs
+is not a gate.
+
 A marker on a line is never honoured by a hook, at any stage: the line is the
 agent's to write and the commit message is the person's. Write the trailer, or
 repair what the table names.

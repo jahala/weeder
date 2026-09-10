@@ -81,6 +81,11 @@ would allow it, `Weeder-allow: <RULE> <reason>`, and says commit-msg is the stag
 that reads it. `weeder guard pre-push` honours a trailer again over the commits
 being pushed, because a commit carries the message it was allowed by.
 
+The deferral holds only while the stage is there to run. `weeder guard pre-commit`
+reads the directory git runs hooks from and takes any executable file that
+invokes `weeder guard commit-msg` as the stage, whoever installed it; with none
+there it refuses on its own rather than passing the verdict to nobody.
+
 A `weeder-allow` marker on a line is never honoured by a hook, at any stage. The
 line is the agent's to write and the commit message is the person's, and the
 allowance a gate honours has to be the person's act.

@@ -33,6 +33,12 @@ impl Hook {
         Hook::PreRebase,
     ];
 
+    /// The hook git calls a file by this name, or `None` for a file that is not
+    /// one of them.
+    pub fn named(name: &str) -> Option<Hook> {
+        Hook::ALL.into_iter().find(|hook| hook.name() == name)
+    }
+
     pub fn name(self) -> &'static str {
         match self {
             Hook::PreCommit => "pre-commit",
@@ -131,8 +137,105 @@ pub fn binary_named(script: &str) -> Option<&str> {
 
 /// The hook a path under `.githooks/` names, or `None` for any other path.
 pub fn hook_named(path: &str) -> Option<Hook> {
-    let name = path.strip_prefix(".githooks/")?;
-    Hook::ALL.into_iter().find(|hook| hook.name() == name)
+    Hook::named(path.strip_prefix(".githooks/")?)
+}
+
+/// Whether a file invokes `weeder guard <hook>`: the subcommand's two words side
+/// by side in a command, with the binary that runs them in front. It is how
+/// weeder knows a stage is installed when somebody else planted it, since a
+/// planter that renders hooks from a manifest carries no marker of weeder's, and
+/// a stage git runs is a stage whoever wrote the file.
+///
+/// The reading is a shell's. A `#` opening a word opens a comment, so words in a
+/// comment are not there at all; quotes hold a word together, so the subcommand
+/// named inside a message the hook prints is one word and invokes nothing; and a
+/// newline, a semicolon, an ampersand, a pipe or a bracket ends the command, so
+/// two words on either side of one are not side by side.
+pub fn invokes(hook: Hook, script: &str) -> bool {
+    commands(script).iter().any(|words| {
+        words.iter().enumerate().skip(1).any(|(at, word)| {
+            word == "guard" && words.get(at + 1).is_some_and(|next| next == hook.name())
+        })
+    })
+}
+
+/// A script as the commands a shell would run, each one the words it is made of.
+/// An expansion is left as the text that spells it: what `$weeder` holds is not
+/// weeder's to know, and the words around it are the question here.
+fn commands(script: &str) -> Vec<Vec<String>> {
+    let mut commands: Vec<Vec<String>> = Vec::new();
+    let mut words: Vec<String> = Vec::new();
+    let mut word: Option<String> = None;
+    let mut characters = script.chars().peekable();
+    while let Some(character) = characters.next() {
+        match character {
+            '\'' => {
+                let held = word.get_or_insert_with(String::new);
+                for character in characters.by_ref() {
+                    if character == '\'' {
+                        break;
+                    }
+                    held.push(character);
+                }
+            }
+            '"' => {
+                let held = word.get_or_insert_with(String::new);
+                while let Some(character) = characters.next() {
+                    match character {
+                        '"' => break,
+                        // Inside double quotes a backslash is an escape only
+                        // before the four characters that still mean something
+                        // there, and before a newline, which joins the lines.
+                        '\\' => match characters.next() {
+                            Some('\n') | None => {}
+                            Some(next @ ('"' | '\\' | '$' | '`')) => held.push(next),
+                            Some(next) => {
+                                held.push('\\');
+                                held.push(next);
+                            }
+                        },
+                        _ => held.push(character),
+                    }
+                }
+            }
+            '\\' => match characters.next() {
+                Some('\n') | None => {}
+                Some(next) => word.get_or_insert_with(String::new).push(next),
+            },
+            // A `#` that opens a word opens a comment, which runs to the end of
+            // the line and takes the line's end with it.
+            '#' if word.is_none() => {
+                for character in characters.by_ref() {
+                    if character == '\n' {
+                        break;
+                    }
+                }
+                end_command(&mut word, &mut words, &mut commands);
+            }
+            ' ' | '\t' => end_word(&mut word, &mut words),
+            '\n' | ';' | '&' | '|' | '(' | ')' => end_command(&mut word, &mut words, &mut commands),
+            _ => word.get_or_insert_with(String::new).push(character),
+        }
+    }
+    end_command(&mut word, &mut words, &mut commands);
+    commands
+}
+
+fn end_word(word: &mut Option<String>, words: &mut Vec<String>) {
+    if let Some(held) = word.take() {
+        words.push(held);
+    }
+}
+
+fn end_command(
+    word: &mut Option<String>,
+    words: &mut Vec<String>,
+    commands: &mut Vec<Vec<String>>,
+) {
+    end_word(word, words);
+    if !words.is_empty() {
+        commands.push(std::mem::take(words));
+    }
 }
 
 /// Whether a file is, byte for byte, the bundle weeder writes for this hook: the
