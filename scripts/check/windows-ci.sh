@@ -53,13 +53,22 @@ jobs = workflow.get("jobs") or {}
 complaints = []
 
 
+# A flag that changes how a run reports and not what it runs. `--no-fail-fast`
+# keeps every suite running after one fails, so one Windows run says everything
+# that is wrong there; the suite it runs is the same suite.
+REPORTING_FLAGS = ("--no-fail-fast",)
+
+
 def suites(job):
-    """The `cargo test` lines a job runs."""
-    return [
-        step["run"].strip()
-        for step in job.get("steps") or []
-        if "cargo test" in (step.get("run") or "")
-    ]
+    """The `cargo test` lines a job runs, with reporting flags set aside."""
+    found = []
+    for step in job.get("steps") or []:
+        line = (step.get("run") or "").strip()
+        if "cargo test" not in line:
+            continue
+        words = [word for word in line.split() if word not in REPORTING_FLAGS]
+        found.append(" ".join(words))
+    return found
 
 
 on_windows = {key: job for key, job in jobs.items() if job.get("runs-on") == runner}

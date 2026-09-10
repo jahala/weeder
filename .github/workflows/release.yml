@@ -121,7 +121,11 @@ jobs:
   publish-npm:
     needs: build
     runs-on: ubuntu-latest
-    # Trusted publishing (OIDC): no token to leak, and provenance is automatic.
+    # Two ways in. A token from the NPM_TOKEN secret, which is what the first
+    # publish of a scoped package has to use: trusted publishing is configured on
+    # a package that already exists. Once the owner has set a trusted publisher
+    # on npmjs.com for this workflow, the secret goes and OIDC takes over, with
+    # no token to leak and provenance automatic; id-token stays for that day.
     permissions:
       id-token: write
       contents: read
@@ -135,3 +139,5 @@ jobs:
       # which wants a newer node than the runner guarantees.
       - run: npm install -g npm@11
       - run: npm publish ./npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
