@@ -19,11 +19,13 @@ The tests carry the same shape: a test that sets or reads a mode, or creates a s
 ## Tests
 - [ ] (code) every `std::os::unix` use in `src/`, `xtask/` and `tests/` sits behind `cfg(unix)` with a `cfg(windows)` twin or a gate reason beside it, `is_executable` and `make_executable` carry both platform meanings and the reason above, and the host suite is green · scripts/check/platform-gates.sh
 - [ ] (code) `ci.yml` builds and runs the suite on `windows-latest` beside ubuntu, on the same push and pull request events, and the latest CI run on `master` has that job green; the evidence reads the run from GitHub and refuses when the job is missing, skipped or red · scripts/check/windows-ci.sh
+- [ ] (code) `Cargo.toml`, `npm/package.json` and `garden.json` say 0.2.2 and the manifest's asset URLs name the v0.2.2 release, the fifth of them `weeder-x86_64-pc-windows-msvc.tar.gz`, since the release that first carries the Windows build must be pinned by the lock · tests/garden_manifest.rs
 - [ ] (human) the owner pushes the next tag and its release run publishes `weeder-x86_64-pc-windows-msvc.tar.gz` with its `.sha256` beside the four assets v0.1.0 shipped, with `publish-crate` and `publish-npm` reached rather than skipped
 
 ## Needs #garden-fit #guard
 
 ## Tried
 - 2026-09-09 shaped from cape-town's report of the v0.1.0 release run: four assets published, the Windows leg red on four compile errors in `src/seams/fs.rs` (two `cannot find unix in os`, `mode` and `from_mode` not found), the publish jobs skipped behind it. A cross-check from macOS (`cargo check --target x86_64-pc-windows-msvc`) does not reach weeder's code: every tree-sitter grammar's build script needs the MSVC C compiler, so the compile can only be proven on a Windows runner, and the first check is the static shape while the second is the compile. Dispatch waits on cape-town's resume; the stem runs alone
+- 2026-09-10 cape-town's resume for this node alone: the loop as shaped, the suite on windows-latest held green on master, 0.2.2 in the same landing since the release must carry the fifth asset, #30 closed with the merge commit, the owner tags
 </script>
 <script src="loop.js"></script>
