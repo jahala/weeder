@@ -460,7 +460,13 @@ fn fault(panic: &std::panic::PanicHookInfo<'_>) -> String {
         .collect::<Vec<&str>>()
         .join(" ");
     match panic.location() {
-        Some(location) => format!("{said} at {}:{}", location.file(), location.line()),
+        // The file is spelled with the platform's separator at compile time;
+        // the line reads the same on every platform, so it is written with `/`.
+        Some(location) => format!(
+            "{said} at {}:{}",
+            location.file().replace('\\', "/"),
+            location.line()
+        ),
         None => said,
     }
 }
