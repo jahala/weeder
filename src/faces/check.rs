@@ -33,7 +33,7 @@ use crate::core::sarif::{self, Context, EXIT_BLOCKED, EXIT_CLEAN, EXIT_COULD_NOT
 use crate::core::specimen;
 use crate::core::suppress::{
     apply_suppressions, parse_commit_suppressions, parse_inline_suppressions,
-    InlineSuppressionError, Suppression, MARKER,
+    InlineSuppressionError, Suppression, SuppressionSource, MARKER,
 };
 use crate::core::syntax::Mask;
 use crate::faces::{blobs, gather, read_config, side, Answer, Format, Source, Untracked};
@@ -60,6 +60,13 @@ pub struct Request {
     pub untracked: Option<Untracked>,
     /// Report suppressed findings at their own level, and refuse to guess.
     pub strict: bool,
+    /// Whether `--strict` still honours an allowance a person wrote in a commit
+    /// message. It is for the caller that judges a change the message travels
+    /// with: the commit-msg hook reads the message being written, the pre-push
+    /// hook reads the messages of the commits being pushed, and in both the
+    /// trailer is a person's act on this very change. An inline marker is the
+    /// agent's own line and is never honoured here, whatever this says.
+    pub honour_trailers: bool,
     pub format: Format,
     /// Read `weeder.toml` from here instead of the repository root.
     pub config: Option<PathBuf>,
@@ -69,14 +76,34 @@ pub struct Request {
     pub version: String,
 }
 
+/// What a run judged: the bytes a caller writes and the code it leaves with,
+/// and the findings behind them. A face that only reports takes the answer; the
+/// pre-commit hook takes the findings too, because it names the trailer that
+/// would allow each rule that blocked, and a rule id read back out of a rendered
+/// table would be weeder parsing its own prose.
+pub struct Verdict {
+    pub answer: Answer,
+    pub findings: Vec<Finding>,
+}
+
 pub fn run(request: &Request) -> Answer {
+    verdict(request).answer
+}
+
+pub fn verdict(request: &Request) -> Verdict {
     match judge(request) {
-        Ok(answer) => answer,
-        Err(reason) => could_not_run(request, &reason),
+        Ok(verdict) => verdict,
+        // A run that never judged anything has no findings to hand over, and
+        // saying so with an empty list is what keeps a caller from reading a
+        // failure as a clean tree.
+        Err(reason) => Verdict {
+            answer: could_not_run(request, &reason),
+            findings: Vec::new(),
+        },
     }
 }
 
-fn judge(request: &Request) -> Result<Answer, String> {
+fn judge(request: &Request) -> Result<Verdict, String> {
     let root = git::repository_root(&request.cwd).map_err(|error| error.to_string())?;
     let config = read_config(&root, request.config.as_deref())?;
     let range = range(request)?;
@@ -138,16 +165,26 @@ fn judge(request: &Request) -> Result<Answer, String> {
         }
     }
 
-    let mut suppressions = inline;
-    suppressions.extend(trailers(request, &root)?);
+    // The person's allowance is read first, so where a trailer and an inline
+    // marker name the same rule the finding carries the trailer: the two differ
+    // in what a strict run does with them, and the one a strict run may honour
+    // is the one the finding has to be holding.
+    let mut suppressions = trailers(request, &root)?;
+    suppressions.extend(inline);
     let findings = apply_suppressions(findings, &suppressions);
     // Under --strict a suppression is reported and not honoured: the finding
     // keeps the suppression it carries and gets its own level back, so a gate an
     // agent wrote an allowance for still stops it, and the reviewer sees both.
+    // A caller that judges a change the message travels with says so, and the
+    // one allowance a person could have written there is honoured; see
+    // `honoured` below for which that is and why it is the only one.
     let findings: Vec<Finding> = if request.strict {
         findings
             .into_iter()
             .map(|mut finding| {
+                if honoured(&finding, request) {
+                    return finding;
+                }
                 if let Some(level) = finding.suppressed.as_ref().and_then(|s| s.original_level) {
                     finding.level = level;
                 }
@@ -164,20 +201,35 @@ fn judge(request: &Request) -> Result<Answer, String> {
         EXIT_CLEAN
     };
 
-    Ok(Answer {
-        code,
-        stdout: write(&findings, request, &root),
-        stderr: malformed
-            .iter()
-            .map(complaint)
-            .chain(
-                collection
-                    .unreadable
-                    .iter()
-                    .map(collect::Unreadable::complaint),
-            )
-            .collect(),
+    Ok(Verdict {
+        answer: Answer {
+            code,
+            stdout: write(&findings, request, &root),
+            stderr: malformed
+                .iter()
+                .map(complaint)
+                .chain(
+                    collection
+                        .unreadable
+                        .iter()
+                        .map(collect::Unreadable::complaint),
+                )
+                .collect(),
+        },
+        findings,
     })
+}
+
+/// Whether an allowance this run is honouring is what took the level off this
+/// finding. Only a trailer can be one, and only where the caller judges a change
+/// the message travels with; everything else gets the level its rule carries
+/// back, so the reviewer sees the finding and what was said about it both.
+fn honoured(finding: &Finding, request: &Request) -> bool {
+    request.honour_trailers
+        && finding
+            .suppressed
+            .as_ref()
+            .is_some_and(|suppression| suppression.source == SuppressionSource::CommitTrailer)
 }
 
 /// The two states a run compares. The state a change starts from is always a

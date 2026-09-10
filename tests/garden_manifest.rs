@@ -10,10 +10,12 @@
 //! repository's own files.
 //!
 //! `schemas/garden.schema.json` is no longer weeder's proposal: it is the
-//! umbrella's `contracts/manifest.schema.json`, vendored whole at plotplot
-//! v1.3.0 (8fd9b6ddc7a2619fdfa2c133e057da5cdcf6b466). `scripts/umbrella-brand.sh`
-//! fetches the umbrella at the version `.brand/products/weeder/petalsrc.example`
-//! names, which is how the copy is re-read against its source. The umbrella is a
+//! umbrella's `contracts/manifest.schema.json`, vendored whole at jahala/plotplot
+//! master, commit 106570d259b4116c32803c22b29ad67faf8dbaab, which is the
+//! revision where the contract first allows `commit-msg` in `faces.git`; no tag
+//! carries it, and v1.3.0 does not. `scripts/umbrella-brand.sh` fetches the
+//! umbrella at the version `.brand/products/weeder/petalsrc.example` names,
+//! which is how the copy is re-read against its source. The umbrella is a
 //! private repository, so this file validates against the vendored copy and
 //! holds it to the contract's own `$id` rather than reaching for the network in
 //! the middle of `cargo test`.
@@ -35,6 +37,13 @@ use weeder::core::{classify_file, FileKind, Lang};
 const METRIC_SCRIPT: &str = "scripts/check/calibration-bar.sh";
 /// The contract the vendored schema is a copy of, as the contract names itself.
 const CONTRACT_ID: &str = "https://plotplot.ai/contracts/manifest.schema.json";
+/// The revision of the umbrella the vendored copy was taken at. weeder cannot
+/// reach a private repository from a test, so the pin is held here and in
+/// `garden.json`'s flagged note, and the two are read against each other.
+const CONTRACT_REVISION: &str = "106570d259b4116c32803c22b29ad67faf8dbaab";
+/// The git hook the ruling of 2026-09-10 added: the stage that reads an
+/// allowance trailer, and so the stage that decides a block a trailer may allow.
+const TRAILER_STAGE: &str = "commit-msg";
 /// weeder's contract: 2 is at least one block-level result.
 const REFUSED: i32 = 2;
 /// The separator between a hook event and the tool call it is declared for,
@@ -171,6 +180,47 @@ fn the_manifest_validates_against_the_vendored_contract() {
         complaints.is_empty(),
         "garden.json does not validate against schemas/garden.schema.json:\n{}",
         complaints.join("\n")
+    );
+}
+
+#[test]
+fn the_vendored_contract_names_the_revision_it_was_taken_at() {
+    let flagged = manifest()["flagged"]
+        .as_array()
+        .expect("garden.json should carry a flagged list")
+        .iter()
+        .find(|entry| string(entry, "what") == "schemas/garden.schema.json")
+        .map(|entry| string(entry, "why"))
+        .expect("the vendored schema is flagged until the umbrella tags the revision it came from");
+    assert!(
+        flagged.contains(CONTRACT_REVISION),
+        "garden.json flags the vendored schema without saying which revision of the umbrella it \
+         is: a copy nobody can re-read against its source is a fork wearing the contract's name\n\
+         {flagged}"
+    );
+}
+
+#[test]
+fn the_contract_allows_the_stage_that_reads_an_allowance() {
+    let schema: Value = serde_json::from_str(&read("schemas/garden.schema.json"))
+        .expect("the vendored schema should be json");
+    let allowed: Vec<String> = schema["properties"]["faces"]["properties"]["git"]["items"]["enum"]
+        .as_array()
+        .expect("the contract enumerates the git hooks a bed may declare")
+        .iter()
+        .map(|hook| hook.as_str().unwrap_or_default().to_string())
+        .collect();
+    assert!(
+        allowed.iter().any(|hook| hook == TRAILER_STAGE),
+        "the vendored contract does not allow {TRAILER_STAGE} in faces.git, so it is older than \
+         {CONTRACT_REVISION}; re-fetch it at that revision rather than editing the copy"
+    );
+    assert!(
+        strings(&manifest()["faces"], "git")
+            .iter()
+            .any(|hook| hook == TRAILER_STAGE),
+        "garden.json does not declare {TRAILER_STAGE}, and the stem plants what the manifest \
+         names: an allowance trailer would reach a hook nobody installed"
     );
 }
 

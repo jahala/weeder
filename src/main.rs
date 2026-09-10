@@ -103,6 +103,10 @@ enum GuardCommand {
     Uninstall,
     /// The pre-commit hook: judge the index. git runs this.
     PreCommit,
+    /// The commit-msg hook: judge the index again with the message's
+    /// Weeder-allow trailers honoured, which is the stage that reads them. git
+    /// runs this, and hands it the file the message is being written in.
+    CommitMsg(CommitMsgArgs),
     /// The pre-push hook: judge what is being pushed, and keep protected
     /// branches from being rewritten. git runs this, and writes the refs on stdin.
     PrePush(HookArgs),
@@ -119,6 +123,13 @@ struct InstallArgs {
     /// leaves the hooks reading weeder.toml every time git runs them.
     #[arg(long, value_name = "branch")]
     protect: Vec<String>,
+}
+
+#[derive(Debug, Args)]
+struct CommitMsgArgs {
+    /// The file git is having the commit message written in.
+    #[arg(value_name = "message-file")]
+    message_file: PathBuf,
 }
 
 #[derive(Debug, Args)]
@@ -258,6 +269,11 @@ fn run_check(args: CheckArgs) -> Answer {
             UntrackedFiles::Exclude => Untracked::Exclude,
         }),
         strict: args.strict,
+        // A trailer is honoured under --strict where the message travels with
+        // the change and a person wrote it there. That is a git hook's ground,
+        // and `weeder guard` is the caller that stands on it; from the command
+        // line --strict reports every allowance at its own level.
+        honour_trailers: false,
         format,
         config: args.config,
         message_file: args.message_file,
@@ -356,6 +372,9 @@ fn run_guard(args: GuardArgs) -> Answer {
         GuardCommand::Status => guard::Command::Status,
         GuardCommand::Uninstall => guard::Command::Uninstall,
         GuardCommand::PreCommit => guard::Command::PreCommit,
+        GuardCommand::CommitMsg(args) => guard::Command::CommitMsg(guard::CommitMsg {
+            message_file: args.message_file,
+        }),
         GuardCommand::PrePush(args) => {
             let mut refs = String::new();
             if let Err(error) = std::io::stdin().read_to_string(&mut refs) {

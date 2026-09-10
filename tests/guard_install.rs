@@ -11,8 +11,13 @@ use std::path::{Path, PathBuf};
 
 use common::Repo;
 
-/// The hooks guard installs, in the order it names them.
-const HOOKS: [&str; 3] = ["pre-commit", "pre-push", "pre-rebase"];
+/// The hooks guard installs, in the order it names them, which is the order git
+/// runs them: the stage that reads the allowance a person wrote sits between the
+/// index and the push.
+const HOOKS: [&str; 4] = ["pre-commit", "commit-msg", "pre-push", "pre-rebase"];
+/// The stage that reads a `Weeder-allow:` trailer. Without it a guardrail change
+/// a person means has no way past the gate at all.
+const TRAILER_STAGE: &str = "commit-msg";
 /// The line a bundle carries to say which binary it calls.
 const BINARY_MARKER: &str = "# weeder-guard-binary:";
 const HOOKS_PATH: [&str; 4] = ["config", "--local", "--get", "core.hooksPath"];
@@ -89,11 +94,76 @@ fn install_bakes_the_branches_it_was_told_to_protect_into_the_hooks() {
             "{hook} carries the branches this install named:\n{script}"
         );
     }
-    let commit = read(&repo.root().join(".githooks/pre-commit"));
+    for hook in ["pre-commit", TRAILER_STAGE] {
+        let script = read(&repo.root().join(".githooks").join(hook));
+        assert!(
+            !script.contains("--protect"),
+            "an index has no branch to protect:\n{script}"
+        );
+    }
+}
+
+#[test]
+fn the_commit_msg_hook_is_handed_the_file_git_writes_the_message_in() {
+    let repo = Repo::init();
+    repo.weeder(&["guard", "install"]);
+
+    let script = read(&repo.root().join(".githooks").join(TRAILER_STAGE));
     assert!(
-        !commit.contains("--protect"),
-        "an index has no branch to protect:\n{commit}"
+        script.contains(&format!("guard {TRAILER_STAGE} -- \"$@\"")),
+        "the hook passes git's own argument through, and without it there is no message to read \
+         an allowance from:\n{script}"
     );
+}
+
+#[test]
+fn status_names_a_missing_commit_msg_and_refuses_to_call_the_rest_the_law() {
+    let repo = Repo::init();
+    repo.weeder(&["guard", "install"]);
+    std::fs::remove_file(repo.root().join(".githooks").join(TRAILER_STAGE))
+        .expect("the hook is on disk");
+
+    let run = repo.weeder(&["guard", "status"]);
+
+    assert_eq!(
+        run.code, 2,
+        "the stage that reads an allowance is gone, and that is a miss\n{}{}",
+        run.stdout, run.stderr
+    );
+    assert!(
+        run.stdout
+            .lines()
+            .any(|line| line.contains(TRAILER_STAGE) && line.contains("missing")),
+        "status names the hook and the miss:\n{}",
+        run.stdout
+    );
+}
+
+#[test]
+fn the_commit_that_first_carries_the_four_goes_through_the_hooks_it_installs() {
+    let repo = Repo::init();
+    let run = repo.weeder(&["guard", "install"]);
+    assert_eq!(run.code, 0, "install runs clean\n{}", run.stderr);
+
+    repo.stage_all();
+    let adopted = repo.try_git(&["commit", "-m", "weeder guard installed"]);
+
+    assert_eq!(
+        adopted.code,
+        0,
+        "a hook is a guardrail path, and C1 knows weeder's own bundle byte for byte, so adopting \
+         weeder is an ordinary commit rather than one that needs an allowance: {}",
+        adopted.output()
+    );
+    let carried = repo.git(&["show", "--format=", "--name-only", "HEAD"]);
+    for hook in HOOKS {
+        assert!(
+            carried
+                .lines()
+                .any(|line| line == format!(".githooks/{hook}")),
+            "the commit carries {hook}:\n{carried}"
+        );
+    }
 }
 
 #[test]

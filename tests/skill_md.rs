@@ -4,6 +4,12 @@
 //! the one that rots, so it is checked against the binary rather than against a
 //! list written down beside it, every command and every flag weeder prints, all
 //! the way down the tree, has to appear in SKILL.md.
+//!
+//! Coverage is not the whole of it. An allowance is the one thing an agent has
+//! to get right by reading rather than by trying, because the wrong half of it,
+//! a marker the agent writes on its own line, is honoured by no hook at any
+//! stage. So the two pages that teach it, SKILL.md and `docs/rules.md`, are held
+//! to naming the stage that reads a trailer and the stage that only names it.
 
 mod common;
 
@@ -11,6 +17,13 @@ use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
 use common::weeder_command_in;
+use weeder::core::suppress::TRAILER;
+
+/// The stage that reads an allowance a person wrote, and the stage that runs
+/// before one exists. A page that teaches the flow has to name both, or an agent
+/// reading it writes the allowance where nothing reads it.
+const READS_THE_TRAILER: &str = "guard commit-msg";
+const NAMES_THE_TRAILER: &str = "guard pre-commit";
 
 fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf()
@@ -176,4 +189,75 @@ fn names(body: &str, name: &str) -> bool {
             .is_none_or(boundary);
         before && after
     })
+}
+
+/// A markdown section: its heading, and every line under it up to the next
+/// heading of the same rank or above. It is how a page is held to teaching
+/// something *where* it teaches it, rather than anywhere in the file.
+fn section_named(source: &str, heading: &str) -> String {
+    let rank = heading
+        .chars()
+        .take_while(|character| *character == '#')
+        .count();
+    let mut lines = source.lines().skip_while(|line| line.trim_end() != heading);
+    let opening = lines
+        .next()
+        .unwrap_or_else(|| panic!("the page should carry a section headed `{heading}`"));
+    let body = lines.take_while(|line| match rank_of(line) {
+        Some(deeper) => deeper > rank,
+        None => true,
+    });
+    std::iter::once(opening)
+        .chain(body)
+        .collect::<Vec<&str>>()
+        .join("\n")
+}
+
+/// How deep a markdown heading sits, or `None` for a line that is not one.
+fn rank_of(line: &str) -> Option<usize> {
+    let hashes = line
+        .chars()
+        .take_while(|character| *character == '#')
+        .count();
+    (hashes > 0 && line[hashes..].starts_with(' ')).then_some(hashes)
+}
+
+/// Every term a page has to carry where it teaches an allowance through, read
+/// off the binary's own token rather than off a copy kept here. The page is read
+/// as one run of words, because where a sentence was wrapped is the writer's
+/// business and not the reader's.
+fn taught(page: &str, where_it_is: &str) {
+    let words = page.split_whitespace().collect::<Vec<&str>>().join(" ");
+    for term in [
+        READS_THE_TRAILER,
+        NAMES_THE_TRAILER,
+        &format!("{TRAILER} <RULE> <reason>"),
+    ] {
+        assert!(
+            words.contains(term),
+            "{where_it_is} does not name `{term}`, and an allowance written where no stage reads \
+             it is an agent talking to itself:\n{page}"
+        );
+    }
+}
+
+#[test]
+fn the_skill_teaches_where_a_trailer_is_written_and_which_stage_reads_it() {
+    let source = skill();
+    let (_, body) = front_matter(&source);
+    taught(
+        &section_named(&body, "### The trailer flow"),
+        "SKILL.md's trailer flow",
+    );
+}
+
+#[test]
+fn the_rules_page_says_the_same_where_it_explains_allowances() {
+    let path = root().join("docs/rules.md");
+    let page = std::fs::read_to_string(&path)
+        .unwrap_or_else(|error| panic!("docs/rules.md should be readable: {error}"));
+    taught(
+        &section_named(&page, "## Allowing a finding through"),
+        "docs/rules.md's allowance section",
+    );
 }

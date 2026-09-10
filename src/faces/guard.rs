@@ -1,16 +1,23 @@
 //! `weeder guard`, weeder's judgement put where a harness cannot route around it.
 //!
-//! `install` writes three POSIX shell hooks that call this binary and points
+//! `install` writes four POSIX shell hooks that call this binary and points
 //! `core.hooksPath` at the directory holding them, keeping whatever that setting
 //! was so `uninstall` can put it back. `status` says whether each hook is still
-//! live. The three hook subcommands are what those scripts run: git calls them,
+//! live. The four hook subcommands are what those scripts run: git calls them,
 //! and the code they leave with is git's answer, so a hook that could not judge
 //! stops the operation rather than waving it through.
+//!
+//! The stages are not interchangeable. pre-commit sees the index and no message,
+//! so it names the allowance a person could write and leaves the verdict to
+//! commit-msg, which sees the message and is the deciding stage for anything a
+//! trailer may allow. pre-push sees the commits themselves, messages and all.
 
 use std::path::{Path, PathBuf};
 
+use crate::core::finding::{Finding, Level};
 use crate::core::guard::{self, Hook, PushRef};
 use crate::core::sarif::{EXIT_BLOCKED, EXIT_CLEAN, EXIT_COULD_NOT_RUN};
+use crate::core::suppress::TRAILER;
 use crate::faces::{check, read_config, Answer};
 use crate::seams::{fs, git};
 
@@ -41,8 +48,16 @@ pub enum Command {
     Status,
     Uninstall,
     PreCommit,
+    CommitMsg(CommitMsg),
     PrePush(PrePush),
     PreRebase(PreRebase),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CommitMsg {
+    /// The file git is having the message written in, which git hands the hook
+    /// as its one argument.
+    pub message_file: PathBuf,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -94,6 +109,7 @@ fn judge(request: &Request) -> Result<Answer, String> {
         Command::Status => status(&root),
         Command::Uninstall => uninstall(&root),
         Command::PreCommit => pre_commit(&root, &request.version),
+        Command::CommitMsg(message) => commit_msg(&root, &request.version, message),
         Command::PrePush(push) => pre_push(&root, &request.version, push),
         Command::PreRebase(rebase) => pre_rebase(&root, rebase),
     }
@@ -292,13 +308,130 @@ fn uninstall(root: &Path) -> Result<Answer, String> {
     })
 }
 
+/// Pre-commit judges the index before a message exists, so the one allowance a
+/// person is entitled to write, a `Weeder-allow:` trailer on this commit, is not
+/// on disk yet and this hook can honour none of it. What it does instead is say
+/// what blocks and name, for each rule, the exact trailer that would allow it,
+/// and leave the verdict to commit-msg, which reads the message the person
+/// wrote. The deferral holds only while there is a stage to defer to: with the
+/// commit-msg hook gone, pre-commit refuses here, because a gate that hands its
+/// verdict to a hook nobody runs is not a gate.
 fn pre_commit(root: &Path, version: &str) -> Result<Answer, String> {
-    let answer = check::run(&judgement(root, version, None, None));
-    Ok(refusal(
-        answer,
-        "pre-commit",
-        "the index carries a finding that blocks. repair what the table names and commit again, or take that change back out of the index.",
-    ))
+    let judged = check::verdict(&judgement(root, version, None, None));
+    let answer = judged.answer;
+    if answer.code != EXIT_BLOCKED {
+        return Ok(answer);
+    }
+    let named = named_before_the_message(&judged.findings);
+    if reads_the_message(root)? {
+        return Ok(Answer {
+            code: EXIT_CLEAN,
+            stdout: format!("{}{named}", answer.stdout),
+            ..answer
+        });
+    }
+    Ok(Answer {
+        stdout: format!(
+            "{}{named}{}",
+            answer.stdout,
+            refused_line(
+                "pre-commit: the index carries a finding that blocks, and the commit-msg hook that reads an allowance is not installed here. repair what the table names, or run weeder guard install and write the allowance on the commit."
+            )
+        ),
+        ..answer
+    })
+}
+
+/// The commit-msg hook: the index judged again, with the trailers of the message
+/// being written honoured. It is the deciding stage for anything a trailer may
+/// allow, because it is the first stage at which the person's own words about
+/// this change exist.
+fn commit_msg(root: &Path, version: &str, request: &CommitMsg) -> Result<Answer, String> {
+    let mut judged = judgement(root, version, None, None);
+    judged.message_file = Some(request.message_file.clone());
+    let judged = check::verdict(&judged);
+    let answer = judged.answer;
+    if answer.code != EXIT_BLOCKED {
+        // pre-commit already wrote the receipt for this very index a moment
+        // ago. A second stage saying the same nothing is noise on every commit
+        // anyone makes, so this one speaks only when it has something to refuse.
+        return Ok(Answer {
+            stdout: String::new(),
+            ..answer
+        });
+    }
+    Ok(Answer {
+        stdout: format!(
+            "{}{}{}",
+            answer.stdout,
+            named_against_the_message(&judged.findings),
+            refused_line(
+                "commit-msg: the index carries a finding that blocks and this message allows none of it. repair what the table names, or write the allowance above for the change you mean."
+            )
+        ),
+        ..answer
+    })
+}
+
+/// What pre-commit says about each rule that blocked: the exact trailer a person
+/// writes to allow it, and the stage that will read it, since this one cannot.
+fn named_before_the_message(findings: &[Finding]) -> String {
+    blocking(findings)
+        .iter()
+        .map(|rule| {
+            format!(
+                "{rule} is a person's to allow: write `{TRAILER} {rule} <reason>` in this commit's message. pre-commit runs before that message exists, so commit-msg is the stage that reads it.\n"
+            )
+        })
+        .collect()
+}
+
+/// What commit-msg says about each rule the message did not allow. The message
+/// exists by now, so the line is about what it does not carry rather than about
+/// where to write it.
+fn named_against_the_message(findings: &[Finding]) -> String {
+    blocking(findings)
+        .iter()
+        .map(|rule| {
+            format!(
+                "{rule} blocks still: this message carries no `{TRAILER} {rule} <reason>` written for it, and a marker on the line is the agent's own, reported and never honoured.\n"
+            )
+        })
+        .collect()
+}
+
+/// The rules that blocked, each named once. They are read off the findings
+/// rather than off a list kept beside them, so a rule landing tomorrow teaches
+/// its own allowance with nothing added here.
+fn blocking(findings: &[Finding]) -> Vec<&str> {
+    let mut blocked: Vec<&str> = findings
+        .iter()
+        .filter(|finding| finding.level == Level::Block)
+        .map(|finding| finding.rule.as_str())
+        .collect();
+    blocked.sort_unstable();
+    blocked.dedup();
+    blocked
+}
+
+/// Whether the commit-msg hook guard installed is still there for git to run.
+/// Only weeder's own bundle counts: a file somebody else wrote there answers a
+/// different question, and pre-commit would be deferring to it.
+fn reads_the_message(root: &Path) -> Result<bool, String> {
+    let Some(installed) = installed(root)? else {
+        return Ok(false);
+    };
+    let Some(entry) = installed
+        .iter()
+        .find(|entry| entry.ends_with(&format!("/{}", Hook::CommitMsg.name())))
+    else {
+        return Ok(false);
+    };
+    let path = root.join(entry);
+    let Some(script) = fs::read_if_present(&path).map_err(|error| error.to_string())? else {
+        return Ok(false);
+    };
+    Ok(guard::is_own_bundle(Hook::CommitMsg, &script) && fs::is_executable(&path))
 }
 
 fn pre_push(root: &Path, version: &str, request: &PrePush) -> Result<Answer, String> {
@@ -395,10 +528,12 @@ fn pre_rebase(root: &Path, request: &PreRebase) -> Result<Answer, String> {
     })
 }
 
-/// What a hook asks `weeder check`: the index alone at pre-commit time, a range at
-/// pre-push time, and always `--strict`, so an allowance an agent wrote for
-/// itself is reported and not honoured. The table is what git prints, because
-/// whoever is being refused is a person.
+/// What a hook asks `weeder check`: the index alone at pre-commit and commit-msg
+/// time, a range at pre-push time, and always `--strict`, so an allowance an
+/// agent wrote itself on a line is reported and not honoured. A trailer is the
+/// other thing: it is a person's act, on the very change being judged, and every
+/// hook honours one it can see. pre-commit sees none, because no message exists
+/// yet. The table is what git prints, because whoever is being refused is a person.
 fn judgement(
     root: &Path,
     version: &str,
@@ -415,6 +550,7 @@ fn judgement(
         // hook has a working tree to take an unstaged file from.
         untracked: None,
         strict: true,
+        honour_trailers: true,
         format: crate::faces::Format::Table,
         config: None,
         message_file: None,
@@ -511,23 +647,6 @@ fn same_directory(root: &Path, setting: &str, directory: &str) -> bool {
     ) {
         (Some(left), Some(right)) => left == right,
         _ => false,
-    }
-}
-
-/// A hook's answer: the table check wrote, and, where it blocked, the line
-/// naming which hook refused and what to do about it. Exit 3 keeps its own code
-/// and its own message, so a hook that could not judge still stops git.
-fn refusal(answer: Answer, hook: &str, what_to_do: &str) -> Answer {
-    if answer.code != EXIT_BLOCKED {
-        return answer;
-    }
-    Answer {
-        stdout: format!(
-            "{}{}",
-            answer.stdout,
-            refused_line(&format!("{hook}: {what_to_do}"))
-        ),
-        ..answer
     }
 }
 
