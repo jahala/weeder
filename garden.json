@@ -45,7 +45,7 @@
   "check": "weeder check --format sarif",
   "metric": "bash scripts/check/calibration-bar.sh",
   "context": {
-    "upfront_tokens": 0
+    "upfront_tokens": 63
   },
   "coverage": {
     "languages": [
