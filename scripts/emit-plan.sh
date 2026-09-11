@@ -14,4 +14,7 @@ tend2 emit-plan docs/tend2 --repo-root . --verify-bin tend2 --runner "$runner" \
 jq --arg r "--runner '$runner'" \
   '.nodes |= map(if .accept.audit and (.accept.audit.command | endswith("--audit-egress")) then .accept.audit.command += " " + $r else . end)' \
   "$out" > "$out.tmp" && mv "$out.tmp" "$out"
-pleach validate "$out" | jq -c '{valid, waves}'
+# The conductor's pleach is a pinned clone invoked by path (PLEACH names the
+# command), never the `pleach` on PATH, which on this machine is a link into a
+# live working tree.
+${PLEACH:-pleach} validate "$out" | jq -c '{valid, waves}'

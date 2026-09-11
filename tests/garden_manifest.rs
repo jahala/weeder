@@ -576,13 +576,31 @@ fn the_declared_metric_command_names_the_calibration_bar() {
     );
 }
 
+/// The context a session pays for weeder before speaking is the skill's
+/// description, which a harness loads up front to know the skill exists; the
+/// body is read only when the skill is invoked. The umbrella measures it at four
+/// characters per token, rounded up, and its fit evidence holds the manifest to
+/// that number, so the number here is computed from SKILL.md rather than typed.
 #[test]
-fn the_declared_context_cost_is_a_measured_zero() {
+fn the_declared_context_cost_is_the_skill_descriptions_measure() {
     let manifest = manifest();
+    let skill = read("SKILL.md");
+    let frontmatter = skill
+        .split("---")
+        .nth(1)
+        .expect("SKILL.md opens with a frontmatter block");
+    let description = frontmatter
+        .lines()
+        .find_map(|line| line.strip_prefix("description:"))
+        .expect("the frontmatter carries a description")
+        .trim();
+    let measured = description.len().div_ceil(4) as u64;
     assert_eq!(
         manifest["context"]["upfront_tokens"].as_u64(),
-        Some(0),
-        "weeder is a binary a caller runs; it puts nothing in a session before it is called"
+        Some(measured),
+        "garden.json declares the context cost the skill description measures at four characters \
+         per token: {} characters, {measured} tokens",
+        description.len()
     );
     assert!(
         manifest["faces"].get("mcp").is_none(),

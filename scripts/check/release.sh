@@ -131,9 +131,12 @@ for job, step in on_release:
         complaints.append(f"ci.yml job '{job}' continues on error, so nothing it runs can fail the build")
 
 # The debug and the release runs cover the same suite; a release job that ran a
-# smaller set would leave the budget unmeasured for whatever it skipped.
+# smaller set would leave the budget unmeasured for whatever it skipped. The
+# profile flag and a reporting flag are set aside first: `--no-fail-fast` keeps
+# every suite running after one fails, which the windows job wants so one run
+# says everything, and the suite it runs is the same suite.
 suites = {
-    re.sub(r"\s*--release\b", "", runs(step)).strip()
+    re.sub(r"\s*--(release|no-fail-fast)\b", "", runs(step)).strip()
     for _, _, step in steps(ci)
     if "cargo test" in runs(step)
 }
