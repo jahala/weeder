@@ -9,7 +9,11 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 runner='bash scripts/check/run.sh {evidence}'
 out="${1:-plans/weeder.plan.json}"
-tend2 emit-plan docs/tend2 --repo-root . --verify-bin tend2 --runner "$runner" \
+# The verifier is a pinned master build invoked by path (TEND2 names the
+# command), never the `tend2` on PATH, which on this machine is a link to a
+# build out of a feature worktree; the plan's own verify command names the pin.
+tend2_bin="${TEND2:-tend2}"
+$tend2_bin emit-plan docs/tend2 --repo-root . --verify-bin "$tend2_bin" --runner "$runner" \
   --cast-file plans/cast.json --audit-file plans/audit.json --node-timeout-ms 5400000 --out "$out"
 jq --arg r "--runner '$runner'" \
   '.nodes |= map(if .accept.audit and (.accept.audit.command | endswith("--audit-egress")) then .accept.audit.command += " " + $r else . end)' \
