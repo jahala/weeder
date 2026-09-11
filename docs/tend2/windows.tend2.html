@@ -19,7 +19,7 @@ The tests carry the same shape: a test that sets or reads a mode, or creates a s
 ## Tests
 - [x] (code) every `std::os::unix` use in `src/`, `xtask/` and `tests/` sits behind `cfg(unix)` with a `cfg(windows)` twin or a gate reason beside it, `is_executable` and `make_executable` carry both platform meanings and the reason above, and the workspace builds with every test target on the host · scripts/check/platform-gates.sh @0157f28 · by cli
 - [x] (code) `ci.yml` builds and runs the suite on `windows-latest` beside ubuntu, on the same push and pull request events, and the latest CI run on `master` has that job green; the evidence reads the run from GitHub and refuses when the job is missing, skipped or red · scripts/check/windows-ci.sh @0f86f2d · by cli
-- [x] (code) `Cargo.toml`, `npm/package.json` and `garden.json` say 0.2.2 and the manifest's asset URLs name the v0.2.2 release, the fifth of them `weeder-x86_64-pc-windows-msvc.tar.gz`, since the release that first carries the Windows build must be pinned by the lock · tests/garden_manifest.rs @44fdce9 · by cli
+- [x] (code) `Cargo.toml`, `npm/package.json` and `garden.json` say 0.2.2 and the manifest's asset URLs name the v0.2.2 release, the fifth of them `weeder-x86_64-pc-windows-msvc.tar.gz`, since the release that first carries the Windows build must be pinned by the lock · tests/garden_manifest.rs @fedc459 · by cli
 - [ ] (human) the owner pushes the next tag and its release run publishes `weeder-x86_64-pc-windows-msvc.tar.gz` with its `.sha256` beside the four assets v0.1.0 shipped, with `publish-crate` and `publish-npm` reached rather than skipped
 
 ## Needs #garden-fit #guard
