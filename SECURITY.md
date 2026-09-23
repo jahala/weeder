@@ -14,7 +14,7 @@ Only the latest minor release receives security updates. Older versions don't.
 
 ## What weeder does with your code
 
-weeder reads a diff and the files it touches, runs `git` with argument arrays (never a shell string), and writes a SARIF log. It makes no network requests and sends nothing anywhere. `weeder scan --refresh-snapshot`, when it lands, is the one command that reaches a package registry, and it says so.
+weeder reads a diff and the files it touches, runs `git` with argument arrays (never a shell string), and writes a SARIF log. It makes no network requests and sends nothing anywhere, with one exception: `weeder scan --refresh-snapshot` asks curl to reach the package registries, and it says so. `weeder scan` also runs each program that `[docs] commands` in `weeder.toml` names, with `--help`, to check the commands the docs cite.
 
 A secret weeder finds is never repeated in its output: the finding names the shape and the line, not the value.
 

@@ -31,12 +31,12 @@ implementation belongs.
 
 ## Install
 
-Release binaries are built for linux and macos on x86_64 and aarch64, one `weeder-<target>.tar.gz`
+Release binaries are built for linux and macos on x86_64 and aarch64 and for windows on x86_64, one `weeder-<target>.tar.gz`
 per platform on the [releases page](https://github.com/jahala/weeder/releases), with its SHA-256
 beside it. The tarball holds the executable, `garden.json` and `SKILL.md`.
 
 ```bash
-target=aarch64-apple-darwin   # or x86_64-apple-darwin, x86_64-unknown-linux-musl, aarch64-unknown-linux-musl
+target=aarch64-apple-darwin   # or x86_64-apple-darwin, x86_64-unknown-linux-musl, aarch64-unknown-linux-musl, x86_64-pc-windows-msvc
 base=https://github.com/jahala/weeder/releases/latest/download
 curl -fsSLO "$base/weeder-$target.tar.gz" -O "$base/weeder-$target.tar.gz.sha256"
 shasum -a 256 -c "weeder-$target.tar.gz.sha256"
@@ -44,7 +44,7 @@ tar xzf "weeder-$target.tar.gz" weeder
 install -m 755 weeder ~/.local/bin/weeder
 ```
 
-A windows build is on its way (#30). The crate on crates.io and the npm wrapper
+The windows tarball holds `weeder.exe`. The crate on crates.io and the npm wrapper
 (`@plotplot/weeder`) publish from the same release workflow once the registries are set up;
 until then the tarball is the install.
 
@@ -123,7 +123,7 @@ it as-is.
 ## Building
 
 ```bash
-cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
+cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace
 ```
 
 `AGENTS.md` is the working brief: the layout, the dependency direction weeder enforces on

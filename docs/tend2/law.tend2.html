@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>law · weeder</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# law — the change never supplies the law it is judged by
+**Goal.** A change can switch weeder off today. `weeder.toml` is read from the working tree for every face and every range (`src/faces/mod.rs`), so a pull request that deletes a test and adds `[rules] T1 = "off"`, `C1 = "off"` passes `weeder check --base main --strict` with exit 0 and no results, which is the CI form the README recommends. `git diff` runs without `--text` (`src/seams/git.rs`), so one line of `* -diff` in `.git/info/attributes`, which no diff ever shows, or one NUL byte in a source file, hides every added line from every hunk rule. A test moved into a specimen directory is set aside by its new path, and T1 follows a lost case to any case with the same name, whatever its body. All four were reproduced on 2026-09-23 (`docs/reviews/2026-09-23-repo-audit.md`, F1, F2, F5, F6). This loop closes them, so that CI running `weeder check --base <protected branch> --strict` is a wall.
+
+## The law comes from the base
+
+The configuration a range is judged under is the one its base holds: `HEAD` for the working tree and for `--staged`, the base commit for `--base` and for pre-push. A change to `weeder.toml` takes effect once it has landed, and until then C1 judges it under the law it is changing. A repository with no `weeder.toml` at its base is judged at the catalogue's levels. `--config <path>` stays what it is, an explicit choice by whoever runs weeder. `docs/architecture.md` §4 is the trust model this rests on.
+
+## Tests
+- [ ] (code) in a fixture repository, a branch that deletes a test and adds `weeder.toml` turning T1 and C1 off exits 2 on T1 under `check --base main --strict`; a staged skip with an unstaged `weeder.toml` turning T3 off exits 2 under `check --staged`, and the same state is refused by `git commit` with the guard installed; a repository whose base has no `weeder.toml` is judged at the catalogue's levels; `SKILL.md` and `docs/rules.md` say the law is read from the base · tests/check_law_source.rs
+- [ ] (code) a stub, a secret, a skip and a conflict marker each still block, in ts, py, rs and go, when `.git/info/attributes` holds `* -diff`, when a committed `.gitattributes` marks the file `-diff`, and when the file carries a NUL byte in a comment · tests/check_binary_blind.rs
+- [ ] (code) a test file renamed into a `[scope] specimens` directory is judged as a deletion (T1), and a lost test case followed by a case of the same name holding fewer assertions is judged as a deletion, each in ts, py, rs and go · tests/rule_t1.rs
+- [ ] (code) with `diff.noprefix` or `diff.mnemonicPrefix` set in the user's global git config, `weeder check` judges the change it would judge without them · tests/check_git_config.rs
+- [ ] (code) `cargo xtask calibrate` and `cargo xtask mutate` run again on the pinned corpus with a judgement line for every new block, and both bars hold · scripts/check/calibration-bar.sh
+
+## Tried
+- 2026-09-23 shaped from the repository audit of the same day. The owner was asked where the law comes from, the base or the state being judged, and the default was taken while no answer came: the base, because a law the change can write is no law, and because a configuration change that waits for its own landing costs one merge. Overrule it here, and the first check changes with it
+- 2026-09-23 scope-out, recorded so it is not re-argued without new evidence: hooks written into the working tree, a harness hook that matches `git` by spelling, `core.fsmonitor` and clean filters in the repository's own git config, skip-worktree flags, a symlink to a device, and `scan` running what `[docs] commands` names. Each was reproduced, and each needs an agent working deliberately against the local layers. Local hooks are early warning and CI is the wall, which this loop makes true; `docs/architecture.md` §4 says so where a reader looks for it
+</script>
+<script src="loop.js"></script>

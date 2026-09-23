@@ -8,8 +8,8 @@ Thanks for your interest. weeder is small on purpose: one core, three faces, and
 2. Run the gates locally:
    ```bash
    cargo fmt --check
-   cargo clippy --all-targets -- -D warnings
-   cargo test
+   cargo clippy --workspace --all-targets -- -D warnings
+   cargo test --workspace
    ```
 3. Open a PR. Say what changed and how to test it.
 

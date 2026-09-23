@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>release · weeder</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# release — master stays green, and every install route weeder names works
+**Goal.** No release run has been green end to end. The tarballs ship; `publish-crate` fails because `tilth-core` is a git dependency (issue #45) and `publish-npm` fails with `ENEEDAUTH` because `NPM_TOKEN` is empty. crates.io and npm both answer 404 for weeder, yet `garden.json` advertises both routes, `npm/install.js` answers every failure with `cargo install weeder`, and `examples/ci/github.yml`, the workflow the README tells people to copy, installs with `npm install -g @plotplot/weeder` and fails at that step. `master` has no branch protection: pull request 49 merged over three red checks and left it red for two days. A test that copies the binary and runs it (`tests/guard_status.rs`) fails with `ETXTBSY` when another test thread forks while the copy is open for writing, and it has turned `master` and a dependabot pull request red. Reproduced on 2026-09-23 (`docs/reviews/2026-09-23-repo-audit.md`, F8, F9, F14, F15).
+
+## Tests
+- [ ] (code) `examples/ci/github.yml` installs weeder from the release tarball and checks its SHA-256 before it runs, and a scratch repository running that workflow's install and check steps gets weeder's verdict · scripts/check/ci-example.sh
+- [ ] (code) `garden.json` and `npm/install.js` name only install routes that answer today, and the manifest test holds each named route to the registry's answer rather than to the crate's name · tests/garden_manifest.rs
+- [ ] (code) `npm/install.js` checks the archive against the SHA-256 the release publishes before it extracts anything, follows https redirects only and at most five, and extracts the one executable · scripts/check/release.sh
+- [ ] (code) every test that copies the weeder binary and runs the copy does it through one harness helper that retries an exec refused with `ExecutableFileBusy`, and fifty consecutive release-profile runs of `guard_status` and `guard_planter` on Linux pass · tests/guard_status.rs
+- [ ] (human) the owner requires `check`, `windows` and `latency` to pass before a pull request merges into `master`
+- [ ] (human) the owner sets `NPM_TOKEN`, or a trusted publisher on npmjs.com for `release.yml`, and a release run's `publish-npm` is green
+
+## Tried
+- 2026-09-23 shaped from the repository audit of the same day. The crate route waits on `tilth-core` reaching crates.io (issue #45) and is not this loop's; until it lands the crate is left out of what `garden.json` names. Issue #44 was closed while `publish-npm` still fails, and issue #33 stays open although `bite` exists and is hidden on purpose; both are the owner's to reopen or close
+</script>
+<script src="loop.js"></script>

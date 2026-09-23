@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>authoring · weeder</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# authoring — a new rule cannot be half-added
+**Goal.** A rule is one pure function in one file, and the suite already fails when a rule lacks fixtures, docs or a detector entry. Two gaps are left, found on 2026-09-23 (`docs/reviews/2026-09-23-repo-audit.md`). Every detector writes its own level into each finding, and `reported_at` (`src/core/rules/mod.rs`) applies the configured level only where that equals the catalogue default, so a detector that writes the wrong level takes the rule out of `[rules]` without a word. The recall campaign's rule list is typed by hand (`xtask/src/mutate/inject.rs`), so a rule nobody adds there is never measured, and nothing fails. And the six places a new rule touches are written down nowhere.
+
+## Tests
+- [ ] (code) a detector's finding carries the catalogue's level unless the detector names a rule-specific level as an override the type spells out; for every check rule, a fire fixture run under `[rules] <id> = "warn"` reports nothing at error level, and under `"off"` reports nothing from that rule · tests/config_levels.rs
+- [ ] (code) the recall campaign injects for every check rule the catalogue holds, read from the catalogue, and a check rule with no injector fails `cargo test --workspace` · xtask/src/mutate/inject.rs
+- [ ] (code) `docs/adding-a-rule.md` walks one rule through every file it touches, from the catalogue row to the recall injector, `CONTRIBUTING.md` points at it, and `weeder scan` reports no R1 finding on it · scripts/check/adding-a-rule.sh
+
+## Tried
+- 2026-09-23 shaped from the repository audit of the same day. Left out: moving the shared helpers (`collect.rs`, `vocab.rs`, `idiom.rs`, `generated.rs`) out of `src/core/rules/check/`, which would read better and fixes nothing
+</script>
+<script src="loop.js"></script>
