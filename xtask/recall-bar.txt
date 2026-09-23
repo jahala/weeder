@@ -1,0 +1,7 @@
+# The rules the recall bar holds to 95 percent in each of ts, py, rs and go.
+# `cargo xtask mutate` names them in the sentence the recall section opens with,
+# and scripts/check/recall-bar.sh holds the measured figures to the bar, both
+# reading this file, so the sentence and the check cannot name different rules.
+# It is a subset of the rules that block: which of those the bar should cover
+# is the owner's call, and this list is where that call is written down.
+T1 T3 S1 X1 C1 G1
