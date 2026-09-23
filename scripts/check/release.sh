@@ -367,6 +367,88 @@ if complaints:
 print(f"{asset} carries {binary}, garden.json and {skill}, and its digest file matches")
 PY
 
+# --- the npm installer, on the artifact just built ------------------------------
+#
+# The wrapper's download is the one part not run here, because it needs a
+# published release and the network. Everything that decides what reaches the
+# disk is run: the archive the packaging wrote is admitted against the digest it
+# wrote, a copy with one byte changed is refused before anything is extracted,
+# only the executable comes out, and the redirect policy is asked about the
+# hops a hostile or broken server could answer with.
+node - "$out" "$asset" <<'JS' || status=1
+const fs = require("fs");
+const path = require("path");
+const install = require("./npm/install.js");
+
+const [out, asset] = process.argv.slice(2);
+const archive = fs.readFileSync(path.join(out, asset));
+const digest = fs.readFileSync(path.join(out, `${asset}.sha256`), "utf8");
+const executable = install.binaryName(process.platform);
+const complaints = [];
+const listing = (directory) => (fs.existsSync(directory) ? fs.readdirSync(directory).sort() : []);
+
+const admitted = path.join(out, "admitted");
+const kept = install.installFrom(archive, digest, asset, admitted, executable);
+if (!kept.ok) {
+  complaints.push(`the installer refused the archive the packaging just wrote: ${kept.reason}`);
+} else {
+  if (JSON.stringify(listing(admitted)) !== JSON.stringify([executable])) {
+    complaints.push(
+      `the installer extracted ${JSON.stringify(listing(admitted))}, and it extracts ${executable} alone`
+    );
+  }
+  if (process.platform !== "win32" && !(fs.statSync(kept.path).mode & 0o111)) {
+    complaints.push(`the installer left ${kept.path} unexecutable`);
+  }
+}
+
+const tampered = Buffer.from(archive);
+tampered[tampered.length >> 1] ^= 0xff;
+const refused = path.join(out, "refused");
+const taken = install.installFrom(tampered, digest, asset, refused, executable);
+if (taken.ok) {
+  complaints.push("the installer admitted an archive with one byte changed");
+}
+if (listing(refused).length) {
+  complaints.push(
+    `the installer wrote ${JSON.stringify(listing(refused))} out of an archive it refused`
+  );
+}
+
+const elsewhere = digest.replace(asset, "weeder-some-other-target.tar.gz");
+if (install.installFrom(archive, elsewhere, asset, path.join(out, "misnamed"), executable).ok) {
+  complaints.push("the installer admitted a digest file that names another asset");
+}
+
+const from = "https://github.com/jahala/weeder/releases/download/v0/weeder.tar.gz";
+const cases = [
+  ["an https redirect", "https://objects.githubusercontent.com/weeder.tar.gz", 0, true],
+  ["a relative redirect", "/jahala/weeder/archive.tar.gz", 0, true],
+  ["the fifth redirect", "https://objects.githubusercontent.com/weeder.tar.gz", 4, true],
+  ["a sixth redirect", "https://objects.githubusercontent.com/weeder.tar.gz", 5, false],
+  ["a redirect to plain http", "http://objects.githubusercontent.com/weeder.tar.gz", 0, false],
+  ["a redirect with no location", undefined, 0, false],
+];
+if (install.MAX_REDIRECTS !== 5) {
+  complaints.push(`the installer follows ${install.MAX_REDIRECTS} redirects, and it follows five`);
+}
+for (const [what, location, hops, followed] of cases) {
+  const answer = install.redirectTo(from, location, hops);
+  if (answer.ok !== followed) {
+    complaints.push(`the installer ${answer.ok ? "follows" : "refuses"} ${what}`);
+  } else if (answer.ok && !answer.url.startsWith("https://")) {
+    complaints.push(`the installer follows ${what} to ${answer.url}`);
+  }
+}
+
+for (const complaint of complaints) console.error(complaint);
+if (complaints.length) process.exit(1);
+console.log(
+  `the npm installer admits ${asset} by its digest, refuses a tampered copy before extracting, ` +
+    `takes ${executable} alone, and follows https redirects only, at most ${install.MAX_REDIRECTS}`
+);
+JS
+
 if [ "$status" -eq 0 ]; then
   echo "the release pipeline: both workflows pass actionlint, the suite runs on a release build, the matrix is the manifest's, and the packaged artifact is the shape the lock pins"
 fi
