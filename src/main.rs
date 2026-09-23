@@ -123,6 +123,11 @@ struct InstallArgs {
     /// leaves the hooks reading weeder.toml every time git runs them.
     #[arg(long, value_name = "branch")]
     protect: Vec<String>,
+    /// Point git at weeder's hooks even where it runs another directory's hooks
+    /// today. Those stop running until weeder guard uninstall puts the setting
+    /// back.
+    #[arg(long)]
+    replace: bool,
 }
 
 #[derive(Debug, Args)]
@@ -367,6 +372,7 @@ fn run_guard(args: GuardArgs) -> Answer {
                 hooks_dir: args.hooks_dir,
                 protect: args.protect,
                 binary,
+                replace: args.replace,
             })
         }
         GuardCommand::Status => guard::Command::Status,
