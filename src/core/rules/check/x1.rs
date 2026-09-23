@@ -35,7 +35,7 @@
 
 use crate::core::change::Change;
 use crate::core::classify::Lang;
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Level, Message, Region, Stamp};
 use crate::core::rules::check::Judgement;
 
 /// The prefixes an issuer stamps on a credential, and how much opaque tail one
@@ -124,7 +124,7 @@ const ENTROPY_BITS: f64 = 4.0;
 /// issues a credential with a bracket in it.
 const SLOT_CHARACTERS: &[char] = &['<', '>', '{', '}'];
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     let mut findings = Vec::new();
     for change in changes {
@@ -402,7 +402,7 @@ fn entropy(value: &str) -> f64 {
 /// A credential shape, named without its value ever being repeated, and the
 /// level weeder reports that shape at.
 struct Shape {
-    level: Level,
+    stamp: Stamp,
     message: Message,
 }
 
@@ -433,7 +433,7 @@ impl Shape {
     /// to take it out and rotate it.
     fn credential(what: String) -> Shape {
         Shape {
-            level: Level::Block,
+            stamp: Stamp::Rule,
             message: Message {
                 what,
                 why: "a credential in a commit is a credential published, and deleting the line later leaves it in the history.".to_string(),
@@ -446,7 +446,7 @@ impl Shape {
     /// loud and it stops nothing.
     fn published() -> Shape {
         Shape {
-            level: Level::Note,
+            stamp: Stamp::Override(Level::Note),
             message: Message {
                 what: "a published example credential was added: the string a vendor prints in its own documentation.".to_string(),
                 why: "an example is a quotation rather than a key, so there is nothing to rotate and nothing to block, and weeder names it here so a reader is not left wondering whether it was read.".to_string(),
@@ -456,10 +456,9 @@ impl Shape {
     }
 }
 
-fn finding(path: &str, line: u32, shape: &Shape) -> Finding {
-    Finding {
-        rule: "X1".to_string(),
-        level: shape.level,
+fn finding(path: &str, line: u32, shape: &Shape) -> Detection {
+    Detection {
+        stamp: shape.stamp,
         path: path.to_string(),
         region: Some(Region {
             start_line: line,
@@ -467,6 +466,5 @@ fn finding(path: &str, line: u32, shape: &Shape) -> Finding {
         }),
         message: shape.message.clone(),
         fix: None,
-        suppressed: None,
     }
 }

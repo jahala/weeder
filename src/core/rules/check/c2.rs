@@ -12,7 +12,7 @@
 //! only what a build wrote, is an ignore file doing its job.
 
 use crate::core::classify::{classify_file, FileKind};
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::glob;
 use crate::core::rules::check::Judgement;
 
@@ -24,7 +24,7 @@ const IGNORE_FILES: &[&str] = &[
     ".dockerignore",
 ];
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let mut findings = Vec::new();
     for change in judged.changes {
         let Some(path) = change.diff.new_path.as_deref() else {
@@ -107,12 +107,11 @@ fn directory(path: &str) -> &str {
     }
 }
 
-fn finding(path: &str, line: u32, pattern: &str, hidden: &[String]) -> Finding {
+fn finding(path: &str, line: u32, pattern: &str, hidden: &[String]) -> Detection {
     let first = hidden.first().map(String::as_str).unwrap_or_default();
     let rest = hidden.len().saturating_sub(1);
-    Finding {
-        rule: "C2".to_string(),
-        level: Level::Warn,
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: Some(Region {
             start_line: line,
@@ -127,6 +126,5 @@ fn finding(path: &str, line: u32, pattern: &str, hidden: &[String]) -> Finding {
             next: "narrow the pattern to what a build wrote, or take it back out.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }

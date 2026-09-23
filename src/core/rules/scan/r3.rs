@@ -13,7 +13,7 @@
 use std::collections::BTreeSet;
 
 use crate::core::config::Config;
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::syntax;
 use crate::core::tree::Tree;
 
@@ -23,7 +23,7 @@ const MARKERS: &[&str] = &["TODO", "FIXME", "XXX"];
 /// Seconds in a day. git dates a line to the second; a threshold is in days.
 const DAY: i64 = 86_400;
 
-pub fn evaluate(tree: &Tree, config: &Config) -> Vec<Finding> {
+pub fn evaluate(tree: &Tree, config: &Config) -> Vec<Detection> {
     let allowed = i64::from(config.thresholds.todo_age_days);
     let mut findings = Vec::new();
     for (path, line, marker) in marked_lines(tree) {
@@ -76,10 +76,9 @@ fn marked_lines(tree: &Tree) -> Vec<(String, u32, String)> {
     found
 }
 
-fn finding(path: &str, line: u32, marker: &str, days: i64, allowed: i64) -> Finding {
-    Finding {
-        rule: "R3".to_string(),
-        level: Level::Warn,
+fn finding(path: &str, line: u32, marker: &str, days: i64, allowed: i64) -> Detection {
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: Some(Region {
             start_line: line,
@@ -91,6 +90,5 @@ fn finding(path: &str, line: u32, marker: &str, days: i64, allowed: i64) -> Find
             next: "do the work, write it down where work is tracked, or delete the marker.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }

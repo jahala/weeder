@@ -21,7 +21,7 @@ use std::ops::RangeInclusive;
 
 use crate::core::change::Change;
 use crate::core::classify::{FileKind, Lang};
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::glob;
 use crate::core::rules::check::vocab::{holds_word, names, Name};
 use crate::core::rules::check::Judgement;
@@ -101,7 +101,7 @@ fn debugging(lang: Lang) -> Debugging {
     }
 }
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let mut findings = Vec::new();
     for change in judged.changes {
         let Some(path) = change.diff.new_path.as_deref() else {
@@ -212,10 +212,9 @@ impl Leftover {
     }
 }
 
-fn finding(path: &str, line: u32, leftover: &Leftover) -> Finding {
-    Finding {
-        rule: "S3".to_string(),
-        level: Level::Warn,
+fn finding(path: &str, line: u32, leftover: &Leftover) -> Detection {
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: Some(Region {
             start_line: line,
@@ -227,6 +226,5 @@ fn finding(path: &str, line: u32, leftover: &Leftover) -> Finding {
             next: leftover.next.to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }

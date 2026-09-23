@@ -15,7 +15,7 @@
 
 use crate::core::change::Change;
 use crate::core::classify::FileKind;
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::rules::check::vocab::{doubled_symbol, is_mock, names};
 use crate::core::rules::check::Judgement;
 use crate::core::syntax::Mask;
@@ -26,7 +26,7 @@ const SOURCE_EXTENSIONS: &[&str] = &["ts", "tsx", "js", "jsx", "mjs", "cjs", "py
 /// The file a directory's module specifier resolves to, per language.
 const DIRECTORY_MODULES: &[&str] = &["index", "__init__", "mod"];
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     let production: Vec<&Change> = changes
         .iter()
@@ -198,14 +198,13 @@ fn strip_extension(path: &str) -> String {
     }
 }
 
-fn finding(path: &str, line: u32, double: &Double, covered: &str) -> Finding {
+fn finding(path: &str, line: u32, double: &Double, covered: &str) -> Detection {
     let what = format!(
         "this test stands a double in for `{}`, which the same change edits in `{covered}`.",
         double.written()
     );
-    Finding {
-        rule: "M1".to_string(),
-        level: Level::Warn,
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: Some(Region {
             start_line: line,
@@ -217,6 +216,5 @@ fn finding(path: &str, line: u32, double: &Double, covered: &str) -> Finding {
             next: "let the test reach the real unit, or point the case at what the double is standing in for.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }

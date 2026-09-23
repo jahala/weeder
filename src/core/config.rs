@@ -27,10 +27,13 @@ pub struct Thresholds {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Config {
-    /// `[rules]`: what the repository set each rule to. It is only ever asked
-    /// about a rule by id, never walked, so the order it holds its keys in
-    /// reaches no output, the rules that run and the order they report in come
-    /// from the catalogue, which is a slice.
+    /// `[rules]`: what the repository set each rule to, and only the rules it
+    /// named. A rule it left out runs at its catalogue default, which
+    /// [`Config::setting`] answers, and a level the repository did write caps
+    /// every finding of that rule. It is only ever asked about a rule by id,
+    /// never walked, so the order it holds its keys in reaches no output, the
+    /// rules that run and the order they report in come from the catalogue,
+    /// which is a slice.
     pub rules: HashMap<String, RuleSetting>,
     /// `[scope] allow`: the globs a change may touch; everything else is X2.
     pub scope_globs: Vec<String>,
@@ -72,15 +75,23 @@ impl std::fmt::Display for ConfigError {
 
 impl std::error::Error for ConfigError {}
 
+impl Config {
+    /// What a rule is set to: what the repository wrote for it, or the
+    /// catalogue default where it wrote nothing.
+    #[must_use]
+    pub fn setting(&self, rule: &Rule) -> RuleSetting {
+        self.rules
+            .get(rule.id)
+            .copied()
+            .unwrap_or_else(|| default_setting(rule))
+    }
+}
+
 impl Default for Config {
     fn default() -> Self {
-        let rules = catalogue::rules()
-            .iter()
-            .map(|rule| (rule.id.to_string(), default_setting(rule)))
-            .collect();
-
         Self {
-            rules,
+            // Nothing stated. Asked by id only, so its order reaches no output.
+            rules: HashMap::new(),
             scope_globs: vec!["**/*".to_string()],
             specimens: Vec::new(),
             layers: BTreeMap::new(),

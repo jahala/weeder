@@ -19,7 +19,7 @@
 
 use crate::core::change::Change;
 use crate::core::classify::{classify_file, FileKind};
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::guard;
 use crate::core::rules::check::Judgement;
 
@@ -29,12 +29,12 @@ const INSTRUCTIONS: &[&str] = &["AGENTS.md", "CLAUDE.md"];
 /// The heading that opens the section those files state their law in.
 const HARD_LIMITS: &str = "hard limits";
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     changes.iter().filter_map(edit).collect()
 }
 
-fn edit(change: &Change) -> Option<Finding> {
+fn edit(change: &Change) -> Option<Detection> {
     let path = change.path()?;
     if classify_file(path, "").kind != FileKind::Guardrail {
         return None;
@@ -125,10 +125,9 @@ fn heading_rank(line: &str) -> Option<usize> {
     (hashes > 0 && (rest.is_empty() || rest.starts_with(' '))).then_some(hashes)
 }
 
-fn guardrail(path: &str) -> Finding {
-    Finding {
-        rule: "C1".to_string(),
-        level: Level::Block,
+fn guardrail(path: &str) -> Detection {
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: None,
         message: Message {
@@ -137,14 +136,12 @@ fn guardrail(path: &str) -> Finding {
             next: "revert it, or land the guardrail change on its own so a person reads it.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }
 
-fn limits(path: &str, line: u32) -> Finding {
-    Finding {
-        rule: "C1".to_string(),
-        level: Level::Block,
+fn limits(path: &str, line: u32) -> Detection {
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: Some(Region {
             start_line: line,
@@ -156,6 +153,5 @@ fn limits(path: &str, line: u32) -> Finding {
             next: "revert the section, or land the change to the limits on its own so a person reads it.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }

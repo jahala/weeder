@@ -12,11 +12,11 @@
 //! review. `weeder scan --refresh-snapshot` is the one command that goes and asks.
 
 use crate::core::config::Config;
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::registry::{self, Behind, Pin, Registry, Version};
 use crate::core::tree::Tree;
 
-pub fn evaluate(tree: &Tree, config: &Config) -> Vec<Finding> {
+pub fn evaluate(tree: &Tree, config: &Config) -> Vec<Detection> {
     let allowed = config.thresholds.dependency_lag;
     let mut findings = Vec::new();
     for file in &tree.files {
@@ -52,10 +52,9 @@ fn finding(
     latest: Version,
     behind: Behind,
     allowed: u32,
-) -> Finding {
-    Finding {
-        rule: "R4".to_string(),
-        level: Level::Warn,
+) -> Detection {
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: (pin.line > 0).then_some(Region {
             start_line: pin.line,
@@ -74,6 +73,5 @@ fn finding(
             next: format!("upgrade `{}`, or raise [thresholds] dependency_lag and say why.", pin.package),
         },
         fix: None,
-        suppressed: None,
     }
 }

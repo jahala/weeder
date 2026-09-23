@@ -56,6 +56,21 @@ exclusion covers is reported once, at note level, under the id `SPECIMEN`: the
 log says which files no rule read, and `check` still leaves with whatever the
 files it did read deserve.
 
+### How a finding's level is settled
+
+Most findings carry their rule's level: the one listed below, or the one
+`[rules]` writes for the rule. A few carry a level of their own, because the
+detector knows something about that one finding the config cannot. D1 blocks on
+a manifest outside the run's scope. C3 blocks on a workflow `[guardrails] paths`
+names. T2 and T8 warn where the fall or the hidden set cannot be proved. S1
+warns on a base method an entry file hands out. X1 reports a published example
+key as a note, and R1 does the same for a bare name nothing pins to a place.
+
+A level the repository writes caps those findings too. `D1 = "warn"` blocks
+nothing, and a finding that asked for a quieter level than the one written keeps
+its own. `off` silences the rule. A rule the repository leaves out of `[rules]`
+reports each finding at the level its detector asked for.
+
 ## Allowing a finding through
 
 A finding weeder is wrong about, or right about for a reason the change carries anyway,

@@ -29,14 +29,14 @@
 use std::collections::BTreeSet;
 
 use crate::core::change::{Change, Side};
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::read::TestUnit;
 use crate::core::rules::check::generated;
 use crate::core::rules::check::vocab::Suite;
 use crate::core::rules::check::Judgement;
 use crate::core::syntax::Mask;
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     // A file's cases are read once and asked two questions: what this file no
     // longer has, and what every other file in the change has now.
@@ -79,7 +79,7 @@ struct Followed {
 }
 
 /// What the change did to this file's tests, where it did anything at all.
-fn deletion(change: &Change, held: &Held, arrived: &[Arrival]) -> Option<Finding> {
+fn deletion(change: &Change, held: &Held, arrived: &[Arrival]) -> Option<Detection> {
     let path = change.path()?;
     if !change.before.holds_tests() {
         return None;
@@ -225,7 +225,7 @@ fn written(mask: &Mask, suite: &Suite, unit: &TestUnit) -> Case {
     }
 }
 
-fn file_gone(path: &str, cases: usize, moved: &Followed) -> Finding {
+fn file_gone(path: &str, cases: usize, moved: &Followed) -> Detection {
     let message = if moved.count == 0 {
         Message {
             what: format!("a test file was deleted, and {} went with it.", counted(cases)),
@@ -244,14 +244,12 @@ fn file_gone(path: &str, cases: usize, moved: &Followed) -> Finding {
             next: "send the rest after the others, or say in the change which behaviour stopped being worth a test.".to_string(),
         }
     };
-    Finding {
-        rule: "T1".to_string(),
-        level: Level::Block,
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: None,
         message,
         fix: None,
-        suppressed: None,
     }
 }
 
@@ -262,7 +260,7 @@ fn cases_gone(
     after: usize,
     remaining: usize,
     moved: &Followed,
-) -> Finding {
+) -> Detection {
     let what = if moved.count == 0 {
         format!(
             "{} disappeared from this file: it declared {before} and now declares {after}.",
@@ -276,9 +274,8 @@ fn cases_gone(
             named(&moved.into)
         )
     };
-    Finding {
-        rule: "T1".to_string(),
-        level: Level::Block,
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: change.first_edit().map(|line| Region {
             start_line: line,
@@ -290,7 +287,6 @@ fn cases_gone(
             next: "put the cases back, or say in the change which behaviour stopped being worth a test.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }
 
