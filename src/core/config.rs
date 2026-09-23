@@ -109,6 +109,9 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
 
     if let Some(rules) = raw.rules {
         for (rule, value) in rules {
+            if catalogue::rule(&rule).is_none() {
+                return Err(unknown_rule(&rule));
+            }
             let setting = parse_rule_setting(&rule, &value)?;
             config.rules.insert(rule, setting);
         }
@@ -193,6 +196,59 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
     }
 
     Ok(config)
+}
+
+/// The refusal of a `[rules]` key the catalogue does not hold. Such a key is
+/// taken and changes nothing, so a repository that meant to turn a rule off or
+/// up would believe it had; the error names the id weeder thinks was meant.
+fn unknown_rule(key: &str) -> ConfigError {
+    let message = match catalogue::rules()
+        .iter()
+        .find(|rule| rule.id.eq_ignore_ascii_case(key))
+    {
+        Some(rule) => format!(
+            "rule ids are written in capitals, so this sets nothing. write it as `{}`",
+            rule.id
+        ),
+        None => format!(
+            "weeder has no rule of that id, so this sets nothing. the nearest id it has is `{}`, and `weeder rules` lists them all",
+            nearest(key)
+        ),
+    };
+    ConfigError {
+        key: format!("rules.{key}"),
+        message,
+    }
+}
+
+/// The catalogue id spelled nearest to a key: the fewest characters changed,
+/// then an id that shares the key's first character, then the catalogue's own
+/// order, so the answer is the same on every run.
+fn nearest(key: &str) -> &'static str {
+    let key = key.to_ascii_uppercase();
+    let first = key.chars().next();
+    catalogue::rules()
+        .iter()
+        .min_by_key(|rule| (distance(&key, rule.id), rule.id.chars().next() != first))
+        .map_or("", |rule| rule.id)
+}
+
+/// How many characters must be inserted, deleted or replaced to turn one
+/// string into the other.
+fn distance(left: &str, right: &str) -> usize {
+    let right: Vec<char> = right.chars().collect();
+    let mut previous: Vec<usize> = (0..=right.len()).collect();
+    for (row, leftward) in left.chars().enumerate() {
+        let mut current = vec![row + 1];
+        for (column, rightward) in right.iter().enumerate() {
+            let replace = previous[column] + usize::from(leftward != *rightward);
+            let insert = current[column] + 1;
+            let delete = previous[column + 1] + 1;
+            current.push(replace.min(insert).min(delete));
+        }
+        previous = current;
+    }
+    previous[right.len()]
 }
 
 fn parse_rule_setting(rule: &str, value: &str) -> Result<RuleSetting, ConfigError> {
