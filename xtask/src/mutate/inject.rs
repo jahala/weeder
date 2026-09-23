@@ -11,6 +11,8 @@
 //! One mutation per case, always. A hit has to be attributable to one rule and a
 //! miss to one site, which is the whole reason the campaign is worth running.
 
+use weeder::core::catalogue::{self, Face};
+
 use super::source::{basename, directory, extension, Case, Language, Source};
 use super::tree::Tree;
 
@@ -79,40 +81,60 @@ pub enum NoSite {
     NotInLanguage(&'static str),
 }
 
-/// The rules the campaign injects for, in catalogue order.
-pub const RULES: &[&str] = &[
-    "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "M1", "S1", "S2", "S3", "D1", "D2", "X1", "X2",
-    "C1", "C2", "C3", "G1", "G2",
-];
+/// The rules the campaign injects for: every check rule the catalogue holds,
+/// in catalogue order. A check rule lands in the catalogue before it lands
+/// here, so a rule with no planter below is caught by the test at the foot of
+/// this file rather than left out of the measurement in silence.
+pub fn rules() -> Vec<&'static str> {
+    catalogue::rules()
+        .iter()
+        .filter(|rule| rule.face == Face::Check)
+        .map(|rule| rule.id)
+        .collect()
+}
+
+/// What plants one rule's shape in a tree, or says why there is nowhere to.
+type Planter = fn(Language, &Tree, u64) -> Result<Mutation, NoSite>;
+
+/// The planter for a rule, or `None` where the campaign has none for it.
+fn planter(rule: &str) -> Option<Planter> {
+    let found: Planter = match rule {
+        "T1" => |lang, tree, seed| delete_a_case(lang, tree, seed).ok_or(NoSite::Absent),
+        "T2" => |lang, tree, seed| drop_an_assertion(lang, tree, seed).ok_or(NoSite::Absent),
+        "T3" => |lang, tree, seed| add_a_skip(lang, tree, seed).ok_or(NoSite::Absent),
+        "T4" => |lang, tree, seed| widen_a_slack(lang, tree, seed).ok_or(NoSite::Absent),
+        "T5" => {
+            |lang, tree, seed| regenerate_an_expectation(lang, tree, seed).ok_or(NoSite::Absent)
+        }
+        "T6" => {
+            |lang, tree, seed| weaken_an_error_assertion(lang, tree, seed).ok_or(NoSite::Absent)
+        }
+        "T7" => rename_out_of_the_runner,
+        "T8" => keep_a_suite_out_of_the_run,
+        "M1" => {
+            |lang, tree, seed| mock_the_unit_under_change(lang, tree, seed).ok_or(NoSite::Absent)
+        }
+        "S1" => |lang, tree, seed| stub_production_code(lang, tree, seed).ok_or(NoSite::Absent),
+        "S2" => |lang, tree, seed| swallow_a_failure(lang, tree, seed).ok_or(NoSite::Absent),
+        "S3" => |lang, tree, seed| leave_a_print(lang, tree, seed).ok_or(NoSite::Absent),
+        "D1" => |lang, tree, seed| change_a_manifest(lang, tree, seed).ok_or(NoSite::Absent),
+        "D2" => |lang, tree, seed| cross_a_boundary(lang, tree, seed).ok_or(NoSite::Absent),
+        "X1" => |lang, tree, seed| add_a_secret(lang, tree, seed).ok_or(NoSite::Absent),
+        "X2" => |lang, tree, seed| touch_outside_the_scope(lang, tree, seed).ok_or(NoSite::Absent),
+        "C1" => |lang, tree, seed| edit_a_guardrail(lang, tree, seed).ok_or(NoSite::Absent),
+        "C2" => |lang, tree, seed| broaden_an_ignore(lang, tree, seed).ok_or(NoSite::Absent),
+        "C3" => |lang, tree, seed| edit_a_workflow(lang, tree, seed).ok_or(NoSite::Absent),
+        "G1" => |lang, tree, seed| commit_a_conflict(lang, tree, seed).ok_or(NoSite::Absent),
+        "G2" => |lang, tree, seed| add_a_blob(lang, tree, seed).ok_or(NoSite::Absent),
+        _ => return None,
+    };
+    Some(found)
+}
 
 /// Plant one anti-pattern of this rule in this tree, or say why there is
 /// nowhere to plant it.
 pub fn inject(rule: &str, lang: Language, tree: &Tree, seed: u64) -> Result<Mutation, NoSite> {
-    let planted = match rule {
-        "T1" => delete_a_case(lang, tree, seed),
-        "T2" => drop_an_assertion(lang, tree, seed),
-        "T3" => add_a_skip(lang, tree, seed),
-        "T4" => widen_a_slack(lang, tree, seed),
-        "T5" => regenerate_an_expectation(lang, tree, seed),
-        "T6" => weaken_an_error_assertion(lang, tree, seed),
-        "T7" => return rename_out_of_the_runner(lang, tree, seed),
-        "T8" => return keep_a_suite_out_of_the_run(lang, tree, seed),
-        "M1" => mock_the_unit_under_change(lang, tree, seed),
-        "S1" => stub_production_code(lang, tree, seed),
-        "S2" => swallow_a_failure(lang, tree, seed),
-        "S3" => leave_a_print(lang, tree, seed),
-        "D1" => change_a_manifest(lang, tree, seed),
-        "D2" => cross_a_boundary(lang, tree, seed),
-        "X1" => add_a_secret(lang, tree, seed),
-        "X2" => touch_outside_the_scope(lang, tree, seed),
-        "C1" => edit_a_guardrail(lang, tree, seed),
-        "C2" => broaden_an_ignore(lang, tree, seed),
-        "C3" => edit_a_workflow(lang, tree, seed),
-        "G1" => commit_a_conflict(lang, tree, seed),
-        "G2" => add_a_blob(lang, tree, seed),
-        _ => None,
-    };
-    planted.ok_or(NoSite::Absent)
+    planter(rule).map_or(Err(NoSite::Absent), |plant| plant(lang, tree, seed))
 }
 
 // ---------------------------------------------------------------------------
@@ -1743,6 +1765,35 @@ fn rotate_owned(items: Vec<Case>, seed: u64) -> std::vec::IntoIter<Case> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::mutate::shape;
+
+    /// A check rule the catalogue holds and the campaign cannot plant, or
+    /// cannot confirm once planted, is a rule the recall section never
+    /// measures. It fails here, where the rule is added, rather than as a
+    /// silence in a report nobody runs routinely.
+    #[test]
+    fn every_check_rule_in_the_catalogue_has_a_planter_and_a_reader() {
+        let rules = rules();
+        assert!(!rules.is_empty(), "the catalogue should hold check rules");
+        let unmeasured: Vec<String> = rules
+            .iter()
+            .filter_map(
+                |rule| match (planter(rule).is_some(), shape::confirms(rule)) {
+                    (true, true) => None,
+                    (false, true) => Some(format!("{rule} has no planter in inject.rs")),
+                    (true, false) => Some(format!("{rule} has no reader in shape.rs")),
+                    (false, false) => Some(format!(
+                        "{rule} has no planter in inject.rs and no reader in shape.rs"
+                    )),
+                },
+            )
+            .collect();
+        assert!(
+            unmeasured.is_empty(),
+            "the recall campaign cannot measure every check rule:\n{}",
+            unmeasured.join("\n")
+        );
+    }
 
     #[test]
     fn a_wait_grows() {
