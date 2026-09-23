@@ -12,6 +12,10 @@
 //! either way, and the index and a range keep their own meanings, because an
 //! index holds what it holds and a history has no working tree in it.
 //!
+//! Every mode is judged under `weeder.toml` as the base of its range carries it,
+//! `HEAD` or the base ref, and never under the copy the change holds: a law the
+//! judged change could write would let it switch the judge off.
+//!
 //! A run that cannot reach a judgement, no repository, an unreadable ref, a
 //! config weeder cannot parse, leaves with exit 3 and says why on stderr. A gate
 //! that could not run must never look like a gate that passed.
@@ -36,7 +40,7 @@ use crate::core::suppress::{
     InlineSuppressionError, Suppression, SuppressionSource, MARKER,
 };
 use crate::core::syntax::Mask;
-use crate::faces::{blobs, gather, read_config, side, Answer, Format, Source, Untracked};
+use crate::faces::{blobs, gather, read_law, side, written_law, Answer, Format, Source, Untracked};
 use crate::seams::{fs, git, reader};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -68,7 +72,7 @@ pub struct Request {
     /// agent's own line and is never honoured here, whatever this says.
     pub honour_trailers: bool,
     pub format: Format,
-    /// Read `weeder.toml` from here instead of the repository root.
+    /// Read `weeder.toml` from here instead of from the base of the range.
     pub config: Option<PathBuf>,
     /// The message of the commit being prepared, for its `Weeder-allow:` trailers.
     /// A pre-commit gate has no commit to read, so a hook hands the message in.
@@ -105,8 +109,9 @@ pub fn verdict(request: &Request) -> Verdict {
 
 fn judge(request: &Request) -> Result<Verdict, String> {
     let root = git::repository_root(&request.cwd).map_err(|error| error.to_string())?;
-    let config = read_config(&root, request.config.as_deref())?;
     let range = range(request)?;
+    // The law comes from where the range starts, never from what it judges.
+    let config = read_law(&root, &range.base, request.config.as_deref())?;
     // Asked before anything is judged: a run that cannot do what it was asked
     // never happened, and refusing after the work is a refusal that cost time.
     let untracked = reads_untracked(request, &range)?;
@@ -125,6 +130,7 @@ fn judge(request: &Request) -> Result<Verdict, String> {
         changes.extend(arrived);
         excluded.extend(set_aside);
     }
+    written_law(&changes)?;
     // Read after the change is whole, so an allowance written beside a line of
     // a file nobody staged counts the way one in a staged file does.
     let (inline, malformed) = parse_inline_suppressions(changes.iter().map(|change| &change.diff));

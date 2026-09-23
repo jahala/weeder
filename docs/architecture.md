@@ -8,7 +8,7 @@ A static binary that judges what an agent produced and refuses dishonest growth:
 
 ## 2. Binding principles
 
-1. The change being judged never supplies the law it is judged by. The configuration, the rule set and the hooks that run weeder come from a state the change did not write. *(Not yet true: see §6, T-1 and T-3.)*
+1. The change being judged never supplies the law it is judged by. The configuration, the rule set and the hooks that run weeder come from a state the change did not write. *(Not yet true for the hooks: see §6, T-3.)*
 2. Fail closed. Anything weeder cannot read is exit 3, never exit 0.
 3. Only a finding that admits one reading blocks. `src/core/catalogue.rs` holds the level of every rule.
 4. Deterministic output. The same diff, tree and config write the same bytes (`tests/determinism.rs`, `tests/sarif_order.rs`).
@@ -52,7 +52,7 @@ So the wall is CI running `weeder check --base <protected branch> --strict` from
 | Recall of the six rules the recall loop bars | proven | `docs/calibration-2026-09.md`, recall section. D2, T2, T7, T8 and X2 also block and are not held to the bar; D2 is at 55 percent in Go |
 | Latency budget | proven in CI | `tests/speed.rs` on the release profile |
 | Never panics on input | proven for the diff parser and classifier | `tests/core_hostile.rs` (proptest). `syntax::Mask` is not fuzzed |
-| T-1: the law comes from a state the change did not write | **open, fails open** | `weeder.toml` is read from the working tree (`src/faces/mod.rs`). See `docs/reviews/2026-09-23-repo-audit.md` |
+| T-1: the law comes from a state the change did not write | proven | `check` and every hook read `weeder.toml` at the base of the range (`read_law` in `src/faces/mod.rs`); `tests/check_law_source.rs` drives the CI, `--staged`, guard and harness forms |
 | T-2: git shows weeder every changed line | **open, fails open** | `git diff` runs without `--text`, so an attribute or a NUL byte hides the hunks |
 | T-3: the hooks that run weeder are weeder's | **open, fails open** | hooks live in the working tree; `guard status` trusts their contents |
 | T-4: a harness hook sees every commit | **open** | `PreToolUse` matches the program `git` by its literal name; `Stop` judges against `HEAD` only |

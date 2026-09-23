@@ -111,15 +111,16 @@ fn weeders_own_source_holds_its_doctrine_until_one_arrow_is_drawn_backwards() {
     assert_eq!(broken.code, 2, "a forbidden direction blocks");
 }
 
-/// A repository holding weeder's own source and weeder's own `weeder.toml`, with all
-/// of it staged as the change to judge.
+/// A repository whose base carries weeder's own `weeder.toml`, the law a change
+/// is judged under, with weeder's own source staged as the change to judge.
 fn weeders_own_source() -> Repo {
     let repo = Repo::init();
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    copy_tree(&root.join("src"), &repo.root().join("src"));
     let config =
         std::fs::read_to_string(root.join("weeder.toml")).expect("weeder states its own law");
     repo.write("weeder.toml", &config);
+    repo.commit("weeder's own law");
+    copy_tree(&root.join("src"), &repo.root().join("src"));
     repo.stage_all();
     repo
 }

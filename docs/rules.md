@@ -21,6 +21,14 @@ unshipped, and what would turn it back on.
 
 `weeder.toml` at the root of the repository, every section optional.
 
+For `check` and the hooks it is read from the base of the judged range, never
+from the change: HEAD for the working tree and for `--staged`, the base commit for
+`--base` and for pre-push. A change to `weeder.toml` is judged under the law it
+is changing, C1 included, and takes effect once it lands. A base with no
+`weeder.toml` is judged at the levels below. `check --config <path>` names
+another law for one run. `scan` judges the tree it is given, and reads the
+`weeder.toml` that tree holds.
+
 | Section | What it sets | Rules that read it |
 |---|---|---|
 | `[rules]` | a level per rule id: `block`, `warn` or `off` for a check rule, `on` or `off` for a scan rule | all of them |

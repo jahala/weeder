@@ -18,7 +18,7 @@ use crate::core::finding::{Finding, Level};
 use crate::core::guard::{self, Hook, PushRef};
 use crate::core::sarif::{EXIT_BLOCKED, EXIT_CLEAN, EXIT_COULD_NOT_RUN};
 use crate::core::suppress::TRAILER;
-use crate::faces::{check, read_config, Answer};
+use crate::faces::{check, read_law, Answer};
 use crate::seams::{fs, git};
 
 /// Where git is told to look, unless `--hooks-dir` names somewhere else. It sits
@@ -635,13 +635,14 @@ fn base_for(root: &Path, pushed: &PushRef) -> Result<String, String> {
 }
 
 /// The branches these hooks protect: what `install --protect` baked into the
-/// bundle, and otherwise what `weeder.toml` says at the moment git runs the hook,
-/// so changing the config takes effect without installing again.
+/// bundle, and otherwise what `weeder.toml` says at `HEAD` when git runs the
+/// hook, so a committed change to the config takes effect without installing
+/// again, and one nobody committed is not yet the law.
 fn protected(root: &Path, from_the_bundle: &[String]) -> Result<Vec<String>, String> {
     if !from_the_bundle.is_empty() {
         return Ok(from_the_bundle.to_vec());
     }
-    Ok(read_config(root, None)?.protected_branches)
+    Ok(read_law(root, "HEAD", None)?.protected_branches)
 }
 
 /// The line `install` prints about what the hooks will keep, which is the one
@@ -649,7 +650,7 @@ fn protected(root: &Path, from_the_bundle: &[String]) -> Result<Vec<String>, Str
 fn protection(root: &Path, from_the_flag: &[String]) -> Result<String, String> {
     let branches = protected(root, from_the_flag)?;
     let source = if from_the_flag.is_empty() {
-        "as weeder.toml has them today"
+        "as weeder.toml at HEAD has them"
     } else {
         "as this install named them"
     };

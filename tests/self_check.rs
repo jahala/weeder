@@ -51,11 +51,25 @@ fn root_commit() -> String {
 
 /// The run the check is about: weeder judging its own tree against its first
 /// commit, writing SARIF.
+///
+/// A change is judged under the law its base carries, and the root commit
+/// carries none, so this run names the tree's own `weeder.toml` with `--config`.
+/// That is the one way to choose a law, and it belongs to whoever runs weeder:
+/// the question here is whether weeder's tree passes weeder's own law.
 fn self_check() -> common::Run {
     let base = root_commit();
+    let config = repository().join(CONFIG);
     common::weeder_in(
         &repository(),
-        &["check", "--base", &base, "--format", "sarif"],
+        &[
+            "check",
+            "--base",
+            &base,
+            "--format",
+            "sarif",
+            "--config",
+            &config.display().to_string(),
+        ],
     )
 }
 

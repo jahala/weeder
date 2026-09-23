@@ -41,8 +41,15 @@ files your ignore rules hide are not part of the tree and are not read.
 | `--scope <glob>` | the paths the change may touch; every file is still judged, and a file outside the scope is reported for being there. Repeat the flag for more paths |
 | `--strict` | report suppressed findings at their own level, and refuse to guess |
 | `--format <format>` | `sarif` or `table`, rather than choosing by what stdout is |
-| `--config <path>` | read `weeder.toml` from here instead of the repository root |
+| `--config <path>` | read `weeder.toml` from here instead of from the base the change is judged against |
 | `--message-file <path>` | the message of the commit being prepared, so its `Weeder-allow:` trailers are read |
+
+The law a change is judged under is `weeder.toml` read from the base of the
+range: HEAD for the working tree and for `--staged`, the base commit for
+`--base` and for the pre-push hook. A `weeder.toml` the change writes, staged or
+not, is judged like any other file and takes effect once it lands. A base with
+no `weeder.toml` is judged at the catalogue's own levels. `--config` is the one
+way to name another law, and it is for whoever runs weeder, not for the change.
 
 ```bash
 weeder check --base origin/main --strict --format sarif > weeder.sarif
@@ -118,7 +125,7 @@ hooks themselves; git runs the last four, and you run the first three.
 `install` takes `--hooks-dir <dir>` to write the hooks somewhere other than
 `.githooks`, and `--protect <branch>` to name a branch the hooks refuse to
 rewrite. Repeat `--protect` for more than one; leaving it out leaves the hooks
-reading `weeder.toml` every time git runs them. `pre-push` and `pre-rebase` take
+reading `weeder.toml` at HEAD every time git runs them. `pre-push` and `pre-rebase` take
 the same `--protect` flag, spelled as the installed bundle spells it.
 
 ### The trailer flow

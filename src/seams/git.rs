@@ -175,6 +175,29 @@ pub fn files_at_ref(
     read_objects(root, paths, &tree_objects(&listing))
 }
 
+/// One file as the commit a range starts from carries it: `HEAD`, a ref, a sha,
+/// or the empty tree. `None` where that commit carries no such file, and for the
+/// empty tree and a `HEAD` before the first commit, which carry nothing at all.
+///
+/// Unlike `files_at_ref`, a listing git refuses is a refusal and never an empty
+/// tree: this is how weeder reads the law a range is judged under, and a law
+/// read as absent because git could not answer is a law quietly switched off.
+pub fn file_at_base(root: &Path, base: &str, path: &str) -> Result<Option<Blob>, GitError> {
+    let commit = if base == "HEAD" {
+        head_or_empty_tree(root)?
+    } else {
+        resolve_base(root, base)?
+    };
+    if commit == EMPTY_TREE {
+        return Ok(None);
+    }
+    let listing = run_lossy(root, &["ls-tree", "-z", "--full-tree", &commit, "--", path])?;
+    Ok(read_objects(root, &[path], &tree_objects(&listing))?
+        .into_iter()
+        .flatten()
+        .next())
+}
+
 /// The same question of the index: what a commit would carry, for every path
 /// at once. A path the index holds unmerged is carried at three stages and at
 /// none of them is it what a commit would carry, so those are left out here as

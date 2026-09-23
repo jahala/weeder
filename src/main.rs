@@ -164,7 +164,8 @@ struct CheckArgs {
     /// Write SARIF or a table, rather than choosing by what stdout is.
     #[arg(long, value_enum, value_name = "format")]
     format: Option<CheckFormat>,
-    /// Read weeder.toml from here instead of the repository root.
+    /// Read weeder.toml from here instead of from the base the change is
+    /// judged against.
     #[arg(long, value_name = "path")]
     config: Option<PathBuf>,
     /// The message of the commit being prepared, for its Weeder-allow trailers.

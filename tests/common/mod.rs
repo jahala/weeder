@@ -270,6 +270,14 @@ impl Repo {
         repo
     }
 
+    /// A repository before its first commit: a working tree, and a `HEAD` that
+    /// names a branch nothing has been committed to yet.
+    pub fn unborn() -> Repo {
+        let repo = Repo::empty();
+        repo.git(&["init", "--initial-branch=main"]);
+        repo
+    }
+
     /// A bare repository: the thing a push goes to. It has no working tree and
     /// no first commit, so a test pushes one into it and reads back what arrived.
     pub fn bare() -> Repo {
