@@ -17,7 +17,7 @@ CI runs the same three commands on every change, and runs the suite again on a r
 
 ## What helps
 
-- **A fixture first.** A new rule, or a change to what one fires on, lands as a fire and a silent fixture under `fixtures/adversarial/<RULE>/<lang>/` in every language weeder reads, then the detector. A test that cannot fail is not a test.
+- **A fixture first.** A new rule, or a change to what one fires on, lands as a fire and a silent fixture under `fixtures/adversarial/<RULE>/<lang>/` in every language weeder reads, then the detector. A test that cannot fail is not a test. `docs/adding-a-rule.md` walks one rule through every file a new rule touches, in order.
 - **Nothing mocked.** Tests build a real git repository in a temp dir and run the built binary. `tests/common/mod.rs` is the harness; use it rather than a shortcut.
 - **Small PRs.** Easier to review, easier to merge.
 - **A commit body that says why.** The log is the project's reasoning trail; the subject says what, the body says why.

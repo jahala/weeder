@@ -7,7 +7,7 @@ The map in `docs/tend2/` is the plan and the proof. Read the project loop (`docs
 ## Layout
 
 ```
-src/core/      pure: parse_diff → Hunks · classify_file → kind + lang · change (a changed file with both sides read) · tree (the repository a scan rule reads) · syntax (code vs comment vs literal, per line) · rules/check/<id>.rs and rules/scan/<id>.rs → Vec<Finding> · sarif::render → Log · catalogue (rule ids, defaults, descriptions) · config · suppress · help (a command's own --help, parsed) · registry (manifest pins, the committed snapshot, lag)
+src/core/      pure: parse_diff → Hunks · classify_file → kind + lang · change (a changed file with both sides read) · tree (the repository a scan rule reads) · syntax (code vs comment vs literal, per line) · rules/check/<id>.rs and rules/scan/<id>.rs → Vec<Detection>, which the rule's `DETECTORS` entry names and settles into a Finding · sarif::render → Log · catalogue (rule ids, defaults, descriptions) · config · suppress · help (a command's own --help, parsed) · registry (manifest pins, the committed snapshot, lag)
 src/seams/     I/O behind small functions, injected by faces: git (diff, file at ref, refs, hooks path), exec (a command with a timeout), fs, reader (tilth-core: language detection, outlines, test shape, imports, callers)
 src/faces/     the CLI subcommands: check, scan, guard, bite, hook, rules
 tests/         integration tests that drive the real `weeder` binary on real git repositories in temp dirs (assert_cmd + tempfile); tests/common/ holds the fixture harness

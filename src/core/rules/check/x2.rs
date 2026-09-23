@@ -14,7 +14,7 @@
 //! the sentence a change was supposed to be held to.
 
 use crate::core::change::Change;
-use crate::core::finding::{Finding, Level, Message};
+use crate::core::finding::{Detection, Message, Stamp};
 use crate::core::glob;
 use crate::core::read::CallerSite;
 use crate::core::rules::check::Judgement;
@@ -23,7 +23,7 @@ use crate::core::rules::check::Judgement;
 /// reviewer needs to know where to look, not to read a list.
 const NAMED_CALLERS: usize = 3;
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let mut findings = Vec::new();
     for change in judged.changes {
         let Some(path) = change.path() else {
@@ -59,10 +59,9 @@ fn blast_radius(change: &Change, path: &str, callers: &[CallerSite]) -> String {
     }
 }
 
-fn finding(path: &str, radius: &str) -> Finding {
-    Finding {
-        rule: "X2".to_string(),
-        level: Level::Block,
+fn finding(path: &str, radius: &str) -> Detection {
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: None,
         message: Message {
@@ -71,6 +70,5 @@ fn finding(path: &str, radius: &str) -> Finding {
             next: "revert the file, or widen the scope on purpose so the change is the one that was asked for.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }

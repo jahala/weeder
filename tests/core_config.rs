@@ -1,13 +1,22 @@
 mod common;
 
+use weeder::core::catalogue::{self, Rule};
 use weeder::core::{parse_config, RuleSetting};
+
+fn rule(id: &str) -> &'static Rule {
+    catalogue::rule(id).expect("the catalogue holds the rule")
+}
 
 #[test]
 fn parses_typed_config_and_defaults() {
     let defaults = parse_config(None).expect("absent config should use defaults");
-    assert_eq!(defaults.rules["T1"], RuleSetting::Block);
-    assert_eq!(defaults.rules["T4"], RuleSetting::Warn);
-    assert_eq!(defaults.rules["R1"], RuleSetting::On);
+    assert!(
+        defaults.rules.is_empty(),
+        "a repository that wrote no [rules] stated no level"
+    );
+    assert_eq!(defaults.setting(rule("T1")), RuleSetting::Block);
+    assert_eq!(defaults.setting(rule("T4")), RuleSetting::Warn);
+    assert_eq!(defaults.setting(rule("R1")), RuleSetting::On);
     assert_eq!(defaults.thresholds.todo_age_days, 30);
     assert!(defaults
         .protected_branches
@@ -46,6 +55,12 @@ paths = [".github/workflows/release.yml"]
     .expect("valid config should parse");
 
     assert_eq!(config.rules["T1"], RuleSetting::Warn);
+    assert_eq!(config.setting(rule("T1")), RuleSetting::Warn);
+    assert!(
+        !config.rules.contains_key("T2"),
+        "a rule the repository did not name is not stated"
+    );
+    assert_eq!(config.setting(rule("T2")), RuleSetting::Block);
     assert_eq!(config.rules["T4"], RuleSetting::Off);
     assert_eq!(config.rules["R2"], RuleSetting::Off);
     assert_eq!(config.scope_globs, vec!["src/**", "tests/**"]);

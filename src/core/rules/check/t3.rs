@@ -13,7 +13,7 @@
 
 use crate::core::change::Change;
 use crate::core::classify::Lang;
-use crate::core::finding::{Finding, Fix, Level, Message, Region};
+use crate::core::finding::{Detection, Fix, Message, Region, Stamp};
 use crate::core::rules::check::Judgement;
 use crate::core::syntax::{words, Mask};
 
@@ -49,7 +49,7 @@ enum Effect {
     Focused,
 }
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     let mut findings = Vec::new();
     for change in changes {
@@ -170,7 +170,7 @@ fn language(change: &Change) -> Lang {
         .map_or(Lang::Other, |classification| classification.lang)
 }
 
-fn finding(path: &str, line: u32, marker: &Marker) -> Finding {
+fn finding(path: &str, line: u32, marker: &Marker) -> Detection {
     let (what, why) = match marker.effect {
         Effect::Skipped => (
             format!("a skip marker was added to a test: `{}`.", marker.written),
@@ -181,9 +181,8 @@ fn finding(path: &str, line: u32, marker: &Marker) -> Finding {
             "a focused case is the only one its file runs, and the rest report as passing.",
         ),
     };
-    Finding {
-        rule: "T3".to_string(),
-        level: Level::Block,
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: Some(Region {
             start_line: line,
@@ -198,6 +197,5 @@ fn finding(path: &str, line: u32, marker: &Marker) -> Finding {
             description: "delete the line that carries the marker.".to_string(),
             replacement: None,
         }),
-        suppressed: None,
     }
 }

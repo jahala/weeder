@@ -1,18 +1,19 @@
 //! The check-face detectors, and the level each one reports at.
 //!
 //! A detector is pure: it reads the [`Judgement`] the face gathered and returns
-//! findings carrying the rule's catalogue default level. `evaluate` replaces
-//! that level with the one the config sets, and drops the rules it turns off.
+//! detections stamped with its rule's level or with an override of its own.
+//! `evaluate` names each one's rule from this table, settles its level against
+//! the config, and drops the rules the config turns off.
 
 use std::collections::BTreeSet;
 
 use crate::core::catalogue;
 use crate::core::change::Change;
 use crate::core::config::Config;
-use crate::core::finding::Finding;
+use crate::core::finding::{Detection, Finding};
 use crate::core::hierarchy::Hierarchy;
 use crate::core::read::CallerSite;
-use crate::core::rules::{configured_level, reported_at};
+use crate::core::rules::report;
 
 pub mod c1;
 pub mod c2;
@@ -80,7 +81,7 @@ pub fn types_in_question(changes: &[Change]) -> BTreeSet<String> {
     s1::types_in_question(changes)
 }
 
-type Detector = fn(&Judgement) -> Vec<Finding>;
+type Detector = fn(&Judgement) -> Vec<Detection>;
 
 /// The detectors weeder has on this face. A catalogue rule absent from this table
 /// is not run; the loop that lands its detector adds the entry here.
@@ -115,13 +116,7 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
         let Some(rule) = catalogue::rule(id) else {
             continue;
         };
-        let Some(level) = configured_level(rule, judged.config) else {
-            continue;
-        };
-        for mut finding in detect(judged) {
-            finding.level = reported_at(&finding, rule, level);
-            findings.push(finding);
-        }
+        findings.extend(report(rule, judged.config, || detect(judged)));
     }
     findings
 }

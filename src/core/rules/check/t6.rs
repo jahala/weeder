@@ -13,12 +13,12 @@
 //! rewritten, and weeder leaves it alone rather than guessing which is narrower.
 
 use crate::core::change::Replacement;
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::rules::check::vocab::{failure_qualifiers, mentions_failure};
 use crate::core::rules::check::Judgement;
 use crate::core::syntax::Mask;
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     let mut findings = Vec::new();
     for change in changes {
@@ -56,15 +56,14 @@ fn weakening(before: &Mask, after: &Mask, pair: &Replacement<'_>) -> Option<Vec<
     (!lost.is_empty()).then_some(lost)
 }
 
-fn finding(path: &str, line: u32, lost: &[String]) -> Finding {
+fn finding(path: &str, line: u32, lost: &[String]) -> Detection {
     let named = lost
         .iter()
         .map(|qualifier| format!("`{qualifier}`"))
         .collect::<Vec<String>>()
         .join(", ");
-    Finding {
-        rule: "T6".to_string(),
-        level: Level::Warn,
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: Some(Region {
             start_line: line,
@@ -76,6 +75,5 @@ fn finding(path: &str, line: u32, lost: &[String]) -> Finding {
             next: "name the error the code raises again, or say in the change why any failure will do.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }

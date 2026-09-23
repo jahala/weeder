@@ -41,7 +41,7 @@
 use std::collections::BTreeSet;
 
 use crate::core::config::Config;
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Level, Message, Region, Stamp};
 use crate::core::glob;
 use crate::core::syntax;
 use crate::core::tree::{CommandListing, Tree, TreeFile};
@@ -57,7 +57,7 @@ fn is_document(path: &str) -> bool {
     DOCUMENTS.iter().any(|pattern| glob::matches(pattern, path))
 }
 
-pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Finding> {
+pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Detection> {
     let extensions = tree.extensions();
     let known = known_identifiers(tree);
     let mut findings = Vec::new();
@@ -185,16 +185,15 @@ struct Complaint {
     /// it to a place is a claim weeder can hold to that place; a name standing
     /// on its own is answered by the whole repository, and prose writes those
     /// by the hundred, so it is reported and left quiet.
-    level: Level,
+    stamp: Stamp,
     what: String,
     why: String,
     next: String,
 }
 
-fn finding(path: &str, line: u32, complaint: &Complaint) -> Finding {
-    Finding {
-        rule: "R1".to_string(),
-        level: complaint.level,
+fn finding(path: &str, line: u32, complaint: &Complaint) -> Detection {
+    Detection {
+        stamp: complaint.stamp,
         path: path.to_string(),
         region: Some(Region {
             start_line: line,
@@ -206,7 +205,6 @@ fn finding(path: &str, line: u32, complaint: &Complaint) -> Finding {
             next: complaint.next.clone(),
         },
         fix: None,
-        suppressed: None,
     }
 }
 
@@ -256,7 +254,7 @@ fn place<'a>(tree: &'a Tree, cited: &str, extensions: &BTreeSet<String>) -> Plac
             return Place::Found(under(tree, &prefix, &prefix));
         }
         return Place::Gone(Complaint {
-            level: Level::Warn,
+            stamp: Stamp::Rule,
             what: format!("the docs cite `{cited}`, and nothing in the tree is under `{prefix}`."),
             why: "a pattern rooted at a directory that is gone matches nothing, so whoever follows the doc finds an empty answer rather than an error.".to_string(),
             next: format!("point it at the directory `{prefix}` became, or drop the sentence."),
@@ -280,7 +278,7 @@ fn place<'a>(tree: &'a Tree, cited: &str, extensions: &BTreeSet<String>) -> Plac
             return Place::Prose;
         }
         return Place::Gone(Complaint {
-            level: Level::Warn,
+            stamp: Stamp::Rule,
             what: format!("the docs cite the path `{cited}`, and the tree holds nothing there."),
             why: "a reader following the path finds nothing, and a tool given it fails on a file that has moved or gone.".to_string(),
             next: "cite where the file is now, or delete the reference.".to_string(),
@@ -307,7 +305,7 @@ fn place<'a>(tree: &'a Tree, cited: &str, extensions: &BTreeSet<String>) -> Plac
         });
     }
     Place::Gone(Complaint {
-        level: Level::Warn,
+        stamp: Stamp::Rule,
         what: format!("the docs cite the file `{cited}`, and no file in the tree carries that name."),
         why: "a reader looking for the file finds none, and the doc describes a repository that no longer exists.".to_string(),
         next: "cite the file the repository has, or delete the reference.".to_string(),
@@ -351,7 +349,7 @@ fn linked<'a>(tree: &'a Tree, document: &str, destination: &str) -> Place<'a> {
         return Place::Found(under(tree, &path, destination));
     }
     Place::Gone(Complaint {
-        level: Level::Warn,
+        stamp: Stamp::Rule,
         what: format!("the docs link to `{destination}`, and the tree holds nothing there."),
         why: "a reader who follows the link lands on nothing, and the page still draws it as though it went somewhere.".to_string(),
         next: "point the link at where the file is now, or take the link out.".to_string(),
@@ -400,7 +398,7 @@ fn line_complaint(anchor: &Anchor, cited: &str) -> Option<Complaint> {
     }
     let path = &file.path;
     Some(Complaint {
-        level: Level::Warn,
+        stamp: Stamp::Rule,
         what: format!("the docs cite `{cited}`, and `{path}` is {count} lines long."),
         why: "a citation past the end of a file lands nowhere, and the lines it was written against have moved somewhere this one does not say.".to_string(),
         next: format!("read `{path}` and cite the line the text sits on now, or drop the number."),
@@ -512,7 +510,7 @@ fn command_complaint(tree: &Tree, cited: &str) -> Vec<Complaint> {
                 // to judge.
                 if !listing.subcommands.is_empty() {
                     complaints.push(Complaint {
-                        level: Level::Warn,
+                        stamp: Stamp::Rule,
                         what: format!("the docs cite `{cited}`, and `{}` has no subcommand `{word}`.", path.join(" ")),
                         why: "the command as written fails the moment anyone runs it, and the doc is the only place it still exists.".to_string(),
                         next: format!("run `{} --help` and cite a subcommand it prints.", path.join(" ")),
@@ -535,7 +533,7 @@ fn command_complaint(tree: &Tree, cited: &str) -> Vec<Complaint> {
             continue;
         }
         complaints.push(Complaint {
-            level: Level::Warn,
+            stamp: Stamp::Rule,
             what: format!("the docs cite `{cited}`, and `{}` has no flag `{flag}`.", path.join(" ")),
             why: "the command as written is refused the moment anyone runs it, and a reader has no way to tell that from the doc.".to_string(),
             next: format!("run `{} --help` and cite a flag it prints.", path.join(" ")),
@@ -583,7 +581,7 @@ fn symbol_complaint(
             return Vec::new();
         }
         return vec![Complaint {
-            level: Level::Note,
+            stamp: Stamp::Override(Level::Note),
             what: format!("the docs cite the symbol `{cited}`, and the code declares and uses no `{name}`."),
             why: "a name that only the documentation still knows sends a reader looking for code that was renamed or deleted.".to_string(),
             next: "cite the name the code carries now, or delete the reference.".to_string(),
@@ -602,7 +600,7 @@ fn symbol_complaint(
         format!("the file `{}`", anchor.display)
     };
     vec![Complaint {
-        level: Level::Warn,
+        stamp: Stamp::Rule,
         what: format!("the docs cite `{cited}` beside {place}, and neither it nor the rest of the tree declares `{name}`."),
         why: "a name the paragraph pins to a place is a claim about that place, and a reader who goes there finds nothing of the kind.".to_string(),
         next: format!("cite the name {place} carries now, or delete the reference."),

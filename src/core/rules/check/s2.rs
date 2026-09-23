@@ -21,7 +21,7 @@
 
 use crate::core::change::Change;
 use crate::core::classify::{FileKind, Lang};
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::rules::check::idiom;
 use crate::core::rules::check::vocab::mentions_failure;
 use crate::core::rules::check::Judgement;
@@ -71,7 +71,7 @@ fn handling(lang: Lang) -> Handling {
     }
 }
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let mut findings = Vec::new();
     for change in judged.changes {
         let Some(path) = change.diff.new_path.as_deref() else {
@@ -217,10 +217,9 @@ impl Swallowed {
     }
 }
 
-fn finding(path: &str, line: u32, swallowed: &Swallowed) -> Finding {
-    Finding {
-        rule: "S2".to_string(),
-        level: Level::Warn,
+fn finding(path: &str, line: u32, swallowed: &Swallowed) -> Detection {
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: Some(Region {
             start_line: line,
@@ -232,6 +231,5 @@ fn finding(path: &str, line: u32, swallowed: &Swallowed) -> Finding {
             next: "log the failure, wrap it for the caller, hand it on, or say in a comment why it is right to drop it.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }

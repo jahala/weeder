@@ -17,13 +17,13 @@
 use crate::core::change::{Change, Side};
 use crate::core::classify::Lang;
 use crate::core::diff::ChangeKind;
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::read::{Definition, DefinitionKind};
 use crate::core::rules::check::collect::collects_file;
 use crate::core::rules::check::Judgement;
 use crate::core::syntax::Mask;
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     let mut findings = Vec::new();
     for change in changes {
@@ -34,7 +34,7 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
 }
 
 /// A file the change renamed out of what its runner collects.
-fn uncollected_file(change: &Change) -> Option<Finding> {
+fn uncollected_file(change: &Change) -> Option<Detection> {
     if change.diff.change != ChangeKind::Renamed {
         return None;
     }
@@ -53,7 +53,7 @@ fn uncollected_file(change: &Change) -> Option<Finding> {
 }
 
 /// Every case the change renamed out of what its runner collects.
-fn uncollected_cases(change: &Change) -> Vec<Finding> {
+fn uncollected_cases(change: &Change) -> Vec<Detection> {
     let Some(path) = change.diff.new_path.as_deref() else {
         return Vec::new();
     };
@@ -140,11 +140,10 @@ fn language(side: &Side) -> Option<Lang> {
         .filter(|lang| *lang != Lang::Other)
 }
 
-fn file_finding(change: &Change, from: &str, to: &str) -> Finding {
+fn file_finding(change: &Change, from: &str, to: &str) -> Detection {
     let cases = change.before.case_count();
-    Finding {
-        rule: "T7".to_string(),
-        level: Level::Block,
+    Detection {
+        stamp: Stamp::Rule,
         path: to.to_string(),
         region: change.first_edit().map(|line| Region {
             start_line: line,
@@ -159,14 +158,12 @@ fn file_finding(change: &Change, from: &str, to: &str) -> Finding {
             next: "rename it back inside the convention, or move its cases into a file the runner collects.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }
 
-fn case_finding(path: &str, from: &str, renamed: &Definition) -> Finding {
-    Finding {
-        rule: "T7".to_string(),
-        level: Level::Block,
+fn case_finding(path: &str, from: &str, renamed: &Definition) -> Detection {
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: Some(Region {
             start_line: renamed.start_line,
@@ -181,7 +178,6 @@ fn case_finding(path: &str, from: &str, renamed: &Definition) -> Finding {
             next: "give it back a name the runner collects, or call it from a case that has one.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }
 

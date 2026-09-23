@@ -11,11 +11,11 @@
 //! reading of that state is a reason to stop a change.
 
 use crate::core::config::Config;
-use crate::core::finding::{Finding, Level, Message};
+use crate::core::finding::{Detection, Message, Stamp};
 use crate::core::rules::check::collect::{self, File, Hidden};
 use crate::core::tree::Tree;
 
-pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Finding> {
+pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Detection> {
     let read: Vec<File<'_>> = tree
         .files
         .iter()
@@ -34,10 +34,9 @@ pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Finding> {
         .collect()
 }
 
-fn finding(hidden: &Hidden) -> Finding {
-    Finding {
-        rule: "R5".to_string(),
-        level: Level::Warn,
+fn finding(hidden: &Hidden) -> Detection {
+    Detection {
+        stamp: Stamp::Rule,
         path: hidden.test.clone(),
         region: None,
         message: Message {
@@ -50,6 +49,5 @@ fn finding(hidden: &Hidden) -> Finding {
             next: "collect it again, delete it, or say in the configuration why it is kept out.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }

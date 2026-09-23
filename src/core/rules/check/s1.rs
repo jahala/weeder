@@ -37,7 +37,7 @@ use std::collections::BTreeSet;
 
 use crate::core::change::Change;
 use crate::core::classify::{FileKind, Lang};
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Level, Message, Region, Stamp};
 use crate::core::hierarchy::{self, Hierarchy};
 use crate::core::read::{Definition, DefinitionKind, Outline};
 use crate::core::rules::check::idiom;
@@ -69,7 +69,7 @@ const UNFINISHED_PHRASES: &[&str] = &["notimplemented", "notyetimplemented", "un
 /// is why an empty body under either is the whole of what was meant.
 const DECLARING_BASES: &[&str] = &["Protocol", "ABC", "ABCMeta"];
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let mut findings = Vec::new();
     for change in judged.changes {
         let Some(path) = change.diff.new_path.as_deref() else {
@@ -325,14 +325,14 @@ impl Stub {
 /// one case weeder will not settle: the package hands the contract out, and the
 /// type that fills it in may be in a repository this run cannot read. That is a
 /// warning for the person at the pull request rather than a stopped commit.
-fn finding(path: &str, found: &Found, tree: &Hierarchy) -> Finding {
+fn finding(path: &str, found: &Found, tree: &Hierarchy) -> Detection {
     let exported = found
         .contract
         .as_ref()
         .and_then(|contract| tree.exported_through(&contract.base));
-    let (level, why, next) = match (&found.contract, exported) {
+    let (stamp, why, next) = match (&found.contract, exported) {
         (Some(contract), Some(entry)) => (
-            Level::Warn,
+            Stamp::Override(Level::Warn),
             format!(
                 "`{}` is declared on `{}` and nothing in the repository overrides it, and `{entry}` states `{}` to whatever reads this package, so the override may live in another repository.",
                 contract.method, contract.base, contract.base
@@ -340,7 +340,7 @@ fn finding(path: &str, found: &Found, tree: &Hierarchy) -> Finding {
             "write it here, or allow the line with `weeder-allow S1:` naming the implementation that fills it in.".to_string(),
         ),
         (Some(contract), None) => (
-            Level::Block,
+            Stamp::Rule,
             format!(
                 "`{}` is declared on `{}` and nothing in the repository overrides it, so the failure is what every caller gets.",
                 contract.method, contract.base
@@ -348,14 +348,13 @@ fn finding(path: &str, found: &Found, tree: &Hierarchy) -> Finding {
             TAKE_IT_BACK.to_string(),
         ),
         (None, _) => (
-            Level::Block,
+            Stamp::Rule,
             found.stub.why.to_string(),
             TAKE_IT_BACK.to_string(),
         ),
     };
-    Finding {
-        rule: "S1".to_string(),
-        level,
+    Detection {
+        stamp,
         path: path.to_string(),
         region: Some(Region {
             start_line: found.line,
@@ -367,7 +366,6 @@ fn finding(path: &str, found: &Found, tree: &Hierarchy) -> Finding {
             next,
         },
         fix: None,
-        suppressed: None,
     }
 }
 

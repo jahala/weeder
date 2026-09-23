@@ -11,11 +11,11 @@
 
 use crate::core::change::Change;
 use crate::core::classify::FileKind;
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Level, Message, Region, Stamp};
 use crate::core::glob;
 use crate::core::rules::check::Judgement;
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     judged
         .changes
         .iter()
@@ -23,15 +23,18 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
         .collect()
 }
 
-fn manifest(change: &Change, scope: &[String]) -> Option<Finding> {
+fn manifest(change: &Change, scope: &[String]) -> Option<Detection> {
     let path = change.path()?;
     if !change.after.is(FileKind::Manifest) && !change.before.is(FileKind::Manifest) {
         return None;
     }
     let allowed = glob::matches_any(scope, path);
-    Some(Finding {
-        rule: "D1".to_string(),
-        level: if allowed { Level::Warn } else { Level::Block },
+    Some(Detection {
+        stamp: if allowed {
+            Stamp::Rule
+        } else {
+            Stamp::Override(Level::Block)
+        },
         path: path.to_string(),
         region: change.first_edit().map(|line| Region {
             start_line: line,
@@ -49,6 +52,5 @@ fn manifest(change: &Change, scope: &[String]) -> Option<Finding> {
             next: "read the change to the manifest yourself, and land it on its own if it was not part of the work.".to_string(),
         },
         fix: None,
-        suppressed: None,
     })
 }

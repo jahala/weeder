@@ -15,7 +15,7 @@ use std::collections::BTreeMap;
 
 use crate::core::classify::{FileKind, Lang};
 use crate::core::config::Config;
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::read::{Definition, DefinitionKind};
 use crate::core::tree::{Tree, TreeFile};
 
@@ -40,7 +40,7 @@ const ENTRY_NAME: &str = "main";
 /// file the classifier already reads as a test.
 const RUNNER_PREFIXES: &[&str] = &["Test", "Benchmark", "Fuzz", "Example"];
 
-pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Finding> {
+pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Detection> {
     let words = code_words(tree);
     let mut findings = Vec::new();
 
@@ -131,11 +131,10 @@ fn is_referenced(
     })
 }
 
-fn finding(file: &TreeFile, definition: &Definition) -> Finding {
+fn finding(file: &TreeFile, definition: &Definition) -> Detection {
     let name = &definition.name;
-    Finding {
-        rule: "R2".to_string(),
-        level: Level::Warn,
+    Detection {
+        stamp: Stamp::Rule,
         path: file.path.clone(),
         region: Some(Region {
             start_line: definition.start_line,
@@ -147,6 +146,5 @@ fn finding(file: &TreeFile, definition: &Definition) -> Finding {
             next: format!("call `{name}`, stop exporting it, or delete it."),
         },
         fix: None,
-        suppressed: None,
     }
 }

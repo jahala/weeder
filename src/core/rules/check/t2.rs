@@ -40,14 +40,14 @@
 use std::collections::BTreeSet;
 
 use crate::core::change::{Change, Side};
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Level, Message, Region, Stamp};
 use crate::core::read::TestUnit;
 use crate::core::rules::check::generated::{Runs, Times};
 use crate::core::rules::check::vocab::Suite;
 use crate::core::rules::check::Judgement;
 use crate::core::syntax::Mask;
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     // A file's claims are read once and asked two questions: what this file no
     // longer claims, and what every other file in the change claims now.
@@ -100,7 +100,7 @@ struct Followed {
 }
 
 /// What the change did to this file's assertions, where it did anything.
-fn dropped(change: &Change, made: &Made, arrived: &[Arrival]) -> Option<Finding> {
+fn dropped(change: &Change, made: &Made, arrived: &[Arrival]) -> Option<Detection> {
     let path = change.diff.new_path.as_deref()?;
     // A file the change took away took its assertions with it, and that is T1's
     // finding to make: one deletion, one finding.
@@ -128,7 +128,7 @@ fn dropped(change: &Change, made: &Made, arrived: &[Arrival]) -> Option<Finding>
     }
     let mut found = finding(path, change, before, after, remaining, &moved);
     if unproven {
-        found.level = Level::Warn;
+        found.stamp = Stamp::Override(Level::Warn);
         found.message = uncounted(before, after, remaining, &moved);
     }
     Some(found)
@@ -338,7 +338,7 @@ fn finding(
     after: usize,
     remaining: usize,
     moved: &Followed,
-) -> Finding {
+) -> Detection {
     let message = if moved.count == 0 {
         Message {
             what: format!(
@@ -360,9 +360,8 @@ fn finding(
             next: "make the rest again where they belong, or carry a `Weeder-allow: T2` trailer saying which claim stopped being worth making.".to_string(),
         }
     };
-    Finding {
-        rule: "T2".to_string(),
-        level: Level::Block,
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: change.first_edit().map(|line| Region {
             start_line: line,
@@ -370,7 +369,6 @@ fn finding(
         }),
         message,
         fix: None,
-        suppressed: None,
     }
 }
 
