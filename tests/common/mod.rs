@@ -554,14 +554,58 @@ pub fn weeder_command_in(directory: &Path, arguments: &[&str]) -> Command {
     command_in(&binary(), directory, arguments)
 }
 
-/// A weeder binary a test put somewhere of its own, a copy, so the test can take
-/// it away again and see what weeder says about a hook naming a binary that is gone.
+/// A weeder binary at a path other than the built one's, run in `directory` the
+/// way the harness runs weeder. A test that makes a copy of weeder to run makes
+/// it with [`run_a_copy`].
 pub fn command_in(binary: &Path, directory: &Path, arguments: &[&str]) -> Command {
     let mut command = isolated(Command::new(binary));
     command
         .current_dir(directory)
         .args(arguments.iter().map(OsStr::new));
     command
+}
+
+/// How many times a fresh copy of weeder is run again when the kernel calls it
+/// busy, and how long each wait is: two seconds in all, where the wait it covers
+/// is one sibling child reaching its own exec.
+const BUSY_RETRIES: u32 = 100;
+const BUSY_PAUSE: std::time::Duration = std::time::Duration::from_millis(20);
+
+/// Copies the built weeder to `to`, makes the copy runnable, and runs it with
+/// `arguments` in `directory`. Every test that runs a copy of weeder, itself or
+/// through git, makes the copy here.
+///
+/// Linux refuses to exec a file that any process holds open for writing: the
+/// exec fails with ETXTBSY, `ExecutableFileBusy`. `fs::copy` holds the copy open
+/// for writing while it fills it. The descriptor is close-on-exec, but a sibling
+/// test thread that forks in that window gives its child a duplicate, and the
+/// child keeps it until it reaches its own exec. So for a moment after this
+/// process has closed the copy, the copy can still have a writer, and running it
+/// is refused. The retry waits that moment out.
+///
+/// Once one run of the copy has started, nothing held it open for writing at
+/// that instant, and nothing can again: this process closed its descriptor
+/// before the first attempt, so no later fork inherits one, and the children
+/// that did inherit one have let it go. Every later exec of the copy, the
+/// test's own or one git makes for a hook, is therefore safe, which is why a
+/// test whose copy only git runs still runs it here once. macOS and Windows
+/// never refuse the exec this way, and there the first attempt is the only one.
+pub fn run_a_copy(to: &Path, directory: &Path, arguments: &[&str]) -> std::process::Output {
+    std::fs::copy(binary(), to).expect("weeder should copy");
+    make_runnable(to);
+    for _ in 0..BUSY_RETRIES {
+        match command_in(to, directory, arguments).output() {
+            Err(error) if error.kind() == std::io::ErrorKind::ExecutableFileBusy => {
+                std::thread::sleep(BUSY_PAUSE);
+            }
+            Err(error) => panic!("the copy at {} should run: {error}", to.display()),
+            Ok(output) => return output,
+        }
+    }
+    panic!(
+        "the copy at {} was still busy after {BUSY_RETRIES} tries",
+        to.display()
+    )
 }
 
 pub struct Run {

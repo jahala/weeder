@@ -32,7 +32,20 @@ jobs:
           fetch-depth: 0
 
       - name: Install weeder
-        run: npm install -g @plotplot/weeder
+        env:
+          # The release asset for this runner. Every release publishes one
+          # tarball per platform, with its SHA-256 beside it.
+          WEEDER_TARGET: x86_64-unknown-linux-musl
+        run: |
+          base=https://github.com/jahala/weeder/releases/latest/download
+          asset="weeder-$WEEDER_TARGET.tar.gz"
+          cd "$RUNNER_TEMP"
+          curl -fsSLO "$base/$asset" -O "$base/$asset.sha256"
+          # The archive is opened only once it is the one the release published.
+          sha256sum -c "$asset.sha256"
+          mkdir -p weeder-bin
+          tar xzf "$asset" -C weeder-bin weeder
+          echo "$RUNNER_TEMP/weeder-bin" >> "$GITHUB_PATH"
 
       - name: Judge the pull request
         run: weeder check --base origin/${{ github.base_ref }} --strict --format sarif > weeder.sarif

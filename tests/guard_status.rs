@@ -133,14 +133,10 @@ fn status_names_a_hook_whose_binary_is_gone() {
     let copy = elsewhere
         .path()
         .join(format!("weeder{}", std::env::consts::EXE_SUFFIX));
-    std::fs::copy(common::binary(), &copy).expect("weeder should copy");
-    common::make_runnable(&copy);
 
     // Installed by the copy, so the hooks name the copy, and then the copy goes
     // the way a binary goes when a checkout moves or a release is cleaned up.
-    let installed = common::command_in(&copy, repo.root(), &["guard", "install"])
-        .output()
-        .expect("the copy should run");
+    let installed = common::run_a_copy(&copy, repo.root(), &["guard", "install"]);
     assert!(
         installed.status.success(),
         "the copy installs: {}",
