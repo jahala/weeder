@@ -16,8 +16,11 @@
 //! down, counts once per entry, and a table that loses a row loses a claim.
 //! Where the file does not write the cases down, a loop over them runs its
 //! claims some number of times weeder cannot read, and a change that puts a
-//! claim under such a loop is one whose fall weeder cannot prove; it says
-//! nothing about it rather than claim a loss that may not be there.
+//! claim under such a loop is one whose fall weeder cannot prove. It is not
+//! let through in silence, because deleting the claims and adding such a loop
+//! would then pass unread; it is reported as a warning, which is for the
+//! person at the pull request, and it says the loss is unproven rather than
+//! claiming it. A table weeder can count still blocks when it loses a row.
 //!
 //! A claim can also leave a file without leaving the suite. Splitting one test
 //! file into two, or folding two into one, takes claims out of one file and
@@ -111,10 +114,9 @@ fn dropped(change: &Change, made: &Made, arrived: &[Arrival]) -> Option<Finding>
     }
     // A claim the change put under a loop whose cases weeder cannot count may
     // run as often as every claim that left, so the fall is one weeder cannot
-    // prove. A loop that was there on both sides takes nothing from the proof.
-    if !unanswered(&made.after.floors, &made.before.floors).is_empty() {
-        return None;
-    }
+    // prove, and a person has to read it. A loop that was there on both sides
+    // takes nothing from the proof.
+    let unproven = !unanswered(&made.after.floors, &made.before.floors).is_empty();
     let moved = followed(
         &unanswered(&made.before.made, &made.after.made),
         arrived,
@@ -124,7 +126,31 @@ fn dropped(change: &Change, made: &Made, arrived: &[Arrival]) -> Option<Finding>
     if remaining == 0 {
         return None;
     }
-    Some(finding(path, change, before, after, remaining, &moved))
+    let mut found = finding(path, change, before, after, remaining, &moved);
+    if unproven {
+        found.level = Level::Warn;
+        found.message = uncounted(before, after, remaining, &moved);
+    }
+    Some(found)
+}
+
+/// What T2 says where the claims it cannot find may be running under a loop
+/// over cases the file does not write down: the fall as written, and why only
+/// a person can say whether anything was lost.
+fn uncounted(before: usize, after: usize, remaining: usize, moved: &Followed) -> Message {
+    let went = if moved.count == 0 {
+        String::new()
+    } else {
+        format!(", {} moved to {}", counted(moved.count), named(&moved.into))
+    };
+    Message {
+        what: format!(
+            "{} went out of this file as written{went}: it made {before} and now writes {after}, and the rest now run under a loop over cases weeder cannot count.",
+            counted(remaining)
+        ),
+        why: "the loop may run every claim that left or none of them, and only running it or reading it says which, so weeder cannot tell a suite that got shorter from one that stopped checking.".to_string(),
+        next: "read the loop and the cases it runs over; if the claims are gone, put them back, and if they are there, write the cases down where weeder can count them.".to_string(),
+    }
 }
 
 /// Both sides of one changed file, read for the claims they make.

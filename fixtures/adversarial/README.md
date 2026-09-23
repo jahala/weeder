@@ -21,7 +21,7 @@ table and the one that leaves a case behind while it does, T2 has
 `parametrized/` and `looped/` for three assertions that become one run over a
 table of the same three cases, their `-short/` twins that drop a row, and
 `uncounted/` and `uncounted-kept/` for a loop over cases the file does not
-write down, new and unchanged, C3 has a `promoted/`
+write down, new (a warning) and unchanged (a block), C3 has a `promoted/`
 whose `weeder.toml` names a workflow under `[guardrails] paths`, and R1 has a
 `fire-bound/` whose document cites the commands a scan must refuse to run.
 R1 keeps one folder per authority a citation is answered by: `paths/`,

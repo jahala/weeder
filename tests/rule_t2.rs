@@ -561,20 +561,47 @@ fn t2_blocks_when_the_table_drops_one_of_the_cases() {
 }
 
 #[test]
-fn t2_claims_no_loss_when_it_cannot_count_the_cases_a_new_loop_runs() {
+fn t2_warns_when_the_claims_that_left_now_run_under_a_loop_it_cannot_count() {
     for language in LANGUAGES {
         let name = language.name;
+        let before = assertions(&language, "uncounted/before");
+        let after = assertions(&language, "uncounted/after");
         assert!(
-            assertions(&language, "uncounted/after") < assertions(&language, "uncounted/before"),
-            "{name}: the file writes fewer claims than it did, or the silence proves nothing"
+            after < before,
+            "{name}: the file writes fewer claims than it did, or the warning proves nothing"
         );
         let (findings, code) = reported(&language, "uncounted");
         assert_eq!(
-            findings,
-            Vec::new(),
-            "{name}: a loop over cases weeder cannot count may run every claim that left"
+            findings.len(),
+            1,
+            "{name}: one finding, T2's, and nothing else: {findings:#?}"
         );
-        assert_eq!(code, 0, "{name}: nothing blocked");
+        let finding = &findings[0];
+        assert_eq!(finding.rule, "T2", "{name}: the finding is T2's");
+        assert_eq!(
+            finding.level, "warning",
+            "{name}: a loss weeder cannot prove is a warning for the person, not a block: {}",
+            finding.message
+        );
+        assert_eq!(finding.path, language.path, "{name}: the file is named");
+        assert!(
+            finding
+                .message
+                .contains(&format!("made {before} and now writes {after}")),
+            "{name}: the finding names both counts: {}",
+            finding.message
+        );
+        assert!(
+            finding.message.contains("cannot count"),
+            "{name}: the finding says why it cannot decide: {}",
+            finding.message
+        );
+        assert!(
+            !finding.message.contains(HELD_BY_NOBODY),
+            "{name}: the loop may still hold the behaviour, so the finding may not say nobody does: {}",
+            finding.message
+        );
+        assert_eq!(code, 0, "{name}: a warning stops nobody");
     }
 }
 
