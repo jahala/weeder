@@ -239,6 +239,16 @@ fn the_declared_name_and_version_are_the_crate_this_repository_builds() {
     );
 }
 
+/// The registry routes the schema allows beside the tarballs. None of them is
+/// named until a green publish job proves it: on 2026-09-23 crates.io and npm
+/// both answered 404 for weeder, `publish-crate` waited on `tilth-core` reaching
+/// crates.io (issue #45) and `publish-npm` on a token nobody had set. A route
+/// returns to the manifest in the change that proves its publish.
+const REGISTRY_ROUTES: [&str; 4] = ["cargo", "npm", "pip", "git"];
+
+/// Where a person goes for weeder when the npm wrapper cannot fetch it.
+const RELEASES_PAGE: &str = "https://github.com/jahala/weeder/releases";
+
 #[test]
 fn the_declared_install_names_what_this_repository_publishes() {
     let manifest = manifest();
@@ -246,18 +256,15 @@ fn the_declared_install_names_what_this_repository_publishes() {
     let name = string(&manifest, "name");
     let version = string(&manifest, "version");
 
-    assert_eq!(
-        string(install, "cargo"),
-        cargo_package("name"),
-        "garden.json names a crate crates.io would not have under that name"
-    );
+    for route in REGISTRY_ROUTES {
+        assert!(
+            install.get(route).is_none(),
+            "garden.json names install.{route}, and no publish job has proved that route green: \
+             the tarballs are the install until one does"
+        );
+    }
     let npm: Value =
         serde_json::from_str(&read("npm/package.json")).expect("npm/package.json should be json");
-    assert_eq!(
-        string(install, "npm"),
-        string(&npm, "name"),
-        "garden.json names a package the npm wrapper does not publish"
-    );
     // The wrapper is how most of the garden installs weeder, and it fetches the
     // release its own version names. A package.json left behind at the last
     // version publishes a wrapper that downloads the last binary.
@@ -270,6 +277,11 @@ fn the_declared_install_names_what_this_repository_publishes() {
     let binaries = install["binaries"]
         .as_object()
         .expect("garden.json should carry install.binaries");
+    assert_eq!(
+        binaries.len(),
+        PLATFORMS,
+        "the release publishes {PLATFORMS} tarballs, and garden.json names {binaries:?}"
+    );
     for (target, url) in binaries {
         let url = url.as_str().expect("a target is downloaded from a url");
         let expected = format!("/releases/download/v{version}/{name}-{target}.tar.gz");
@@ -279,6 +291,24 @@ fn the_declared_install_names_what_this_repository_publishes() {
              for v{version}"
         );
     }
+}
+
+/// The npm wrapper answers a download it could not finish. It used to answer
+/// every failure with `cargo install weeder`, a route crates.io answered 404
+/// for, so a person who followed the advice failed twice. It names the release
+/// page, where the tarballs the manifest declares are.
+#[test]
+fn the_npm_wrapper_sends_a_failed_download_to_the_release_tarballs() {
+    let wrapper = read("npm/install.js");
+    assert!(
+        !wrapper.contains("cargo install"),
+        "npm/install.js sends a person to `cargo install`, and garden.json names no crate"
+    );
+    assert!(
+        wrapper.contains(&format!("\"{RELEASES_PAGE}\"")),
+        "npm/install.js does not name {RELEASES_PAGE}, where the tarballs garden.json declares \
+         are published"
+    );
 }
 
 /// The platform the release contract named and v0.1.0 did not ship: the leg

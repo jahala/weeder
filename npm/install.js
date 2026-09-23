@@ -16,7 +16,9 @@ const PLATFORM_MAP = {
 };
 
 const NAME = "weeder";
-const OWNER = "jahala";
+// Where every release's tarballs are published, and where a person goes for
+// weeder when this wrapper cannot fetch it. No registry carries weeder yet.
+const RELEASES = "https://github.com/jahala/weeder/releases";
 
 // The release artifact, named the way scripts/package-release.sh names it and
 // the way garden.json's install.binaries points at it: one gzipped tar per
@@ -28,7 +30,7 @@ function assetName(target) {
 }
 
 function assetUrl(target, version) {
-  return `https://github.com/${OWNER}/${NAME}/releases/download/v${version}/${assetName(target)}`;
+  return `${RELEASES}/download/v${version}/${assetName(target)}`;
 }
 
 function binaryName(platform) {
@@ -42,7 +44,7 @@ function install() {
   if (!target) {
     console.error(`weeder: no release binary for ${key}`);
     console.error(`Released for: ${Object.keys(PLATFORM_MAP).join(", ")}`);
-    console.error("Build it instead: cargo install weeder");
+    console.error(`The release page lists every tarball: ${RELEASES}`);
     process.exit(1);
   }
 
@@ -68,7 +70,7 @@ function install() {
     res.pipe(tar.stdin);
     tar.on("close", (code) => {
       if (code !== 0) {
-        console.error("weeder: the archive did not extract. Install it another way: cargo install weeder");
+        console.error(`weeder: the archive did not extract. Download the tarball instead: ${RELEASES}/tag/v${version}`);
         process.exit(1);
       }
       fs.chmodSync(binPath, 0o755);
@@ -86,7 +88,7 @@ function follow(url, callback) {
       } else if (res.statusCode !== 200) {
         console.error(`weeder: the download answered HTTP ${res.statusCode}`);
         console.error(`URL: ${url}`);
-        console.error("Install it another way: cargo install weeder");
+        console.error(`Download the tarball instead: ${RELEASES}`);
         process.exit(1);
       } else {
         callback(res);
@@ -94,7 +96,7 @@ function follow(url, callback) {
     })
     .on("error", (err) => {
       console.error(`weeder: the download did not finish: ${err.message}`);
-      console.error("Install it another way: cargo install weeder");
+      console.error(`Download the tarball instead: ${RELEASES}`);
       process.exit(1);
     });
 }
