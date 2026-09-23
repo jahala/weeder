@@ -11,7 +11,7 @@ pub mod scan;
 use std::path::Path;
 
 use crate::core::change::{self, Change, Side};
-use crate::core::classify::{classify_file, FileKind};
+use crate::core::classify::{classify_file, reads_as_text, FileKind};
 use crate::core::config::{parse_config, Config};
 use crate::core::diff::FileDiff;
 use crate::core::read::TestShape;
@@ -153,10 +153,26 @@ pub fn gather(
         .into_iter()
         .zip(before)
         .zip(after)
-        .map(|((diff, before), after)| Change {
-            diff,
-            before,
-            after,
+        .map(|((diff, before), after)| {
+            // git is asked for the text of every change, so no attribute can
+            // hide a hunk. A blob's hunks are its bytes cut at every newline,
+            // which nobody wrote as lines, so a change whose side is a blob is
+            // judged as the blob it is, the way git would have written it.
+            let judged_side = if diff.new_path.is_some() {
+                &after
+            } else {
+                &before
+            };
+            let diff = if judged_side.is_blob() {
+                diff.without_lines()
+            } else {
+                diff
+            };
+            Change {
+                diff,
+                before,
+                after,
+            }
         })
         .collect())
 }
@@ -200,12 +216,24 @@ pub(crate) fn blobs(
     .map_err(|error| error.to_string())
 }
 
+/// A file's bytes as the text a rule reads, or `None` where they carry no lines.
+///
+/// A file whose path says it is text is read as text whatever its bytes hold:
+/// git takes one NUL for a binary file, and a NUL in a comment must not be how a
+/// stub or a secret goes unread. Any other file with a NUL in it is the blob it
+/// looks like. A byte that is not utf-8 is replaced, as everywhere weeder reads a
+/// file, because a rule matches ascii shapes.
+pub(crate) fn readable(path: &str, blob: &Blob) -> Option<String> {
+    (!blob.is_binary() || reads_as_text(path))
+        .then(|| String::from_utf8_lossy(&blob.bytes).into_owned())
+}
+
 /// One side of one file, as the bytes git handed over. A file whose bytes are
 /// not text has no lines for a rule to judge, and still has a path and a
 /// weight, which is what G2 asks about.
 pub(crate) fn side(path: &str, blob: &Blob) -> Side {
     let (size, binary) = (Some(blob.size()), blob.is_binary());
-    let Some(content) = blob.text() else {
+    let Some(content) = readable(path, blob) else {
         return Side {
             classification: Some(classify_file(path, "")),
             size,

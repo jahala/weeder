@@ -660,9 +660,14 @@ fn resolve_base(root: &Path, base: &str) -> Result<String, GitError> {
     resolve_ref(root, base)
 }
 
+/// Every diff weeder reads. `--text` because git otherwise takes an attribute
+/// or one NUL byte as a reason to show no lines at all, and whoever writes the
+/// change can write either; the face decides which files are blobs, by what
+/// their paths and bytes are.
 fn diff(root: &Path, revisions: &[&str]) -> Result<String, GitError> {
     let mut arguments = vec![
         "diff",
+        "--text",
         "--no-color",
         "--no-ext-diff",
         "--no-textconv",

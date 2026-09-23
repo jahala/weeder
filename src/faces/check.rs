@@ -40,7 +40,9 @@ use crate::core::suppress::{
     InlineSuppressionError, Suppression, SuppressionSource, MARKER,
 };
 use crate::core::syntax::Mask;
-use crate::faces::{blobs, gather, read_law, side, written_law, Answer, Format, Source, Untracked};
+use crate::faces::{
+    blobs, gather, read_law, readable, side, written_law, Answer, Format, Source, Untracked,
+};
 use crate::seams::{fs, git, reader};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -318,10 +320,11 @@ fn arrivals(root: &Path, specimens: &[String]) -> Result<(Vec<Change>, Vec<Strin
         let Some(blob) = git::file_in_tree(root, &path).map_err(|error| error.to_string())? else {
             continue;
         };
+        let after = side(&path, &blob);
         arrived.push(Change {
-            diff: added_file(&path, blob.text().as_deref()),
+            diff: added_file(&path, after.content.as_deref()),
             before: Side::default(),
-            after: side(&path, &blob),
+            after,
         });
     }
     Ok((arrived, excluded))
@@ -439,7 +442,7 @@ fn hierarchy(
 
     let mut tree = Hierarchy::default();
     for (path, blob) in named.iter().zip(blobs(root, after, &named)?) {
-        let Some(content) = blob.and_then(|blob| blob.text()) else {
+        let Some(content) = blob.and_then(|blob| readable(path, &blob)) else {
             continue;
         };
         if !change::reads_as_code(Some(content.len() as u64))

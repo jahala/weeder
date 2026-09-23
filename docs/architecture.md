@@ -53,7 +53,7 @@ So the wall is CI running `weeder check --base <protected branch> --strict` from
 | Latency budget | proven in CI | `tests/speed.rs` on the release profile |
 | Never panics on input | proven for the diff parser and classifier | `tests/core_hostile.rs` (proptest). `syntax::Mask` is not fuzzed |
 | T-1: the law comes from a state the change did not write | proven | `check` and every hook read `weeder.toml` at the base of the range (`read_law` in `src/faces/mod.rs`); `tests/check_law_source.rs` drives the CI, `--staged`, guard and harness forms |
-| T-2: git shows weeder every changed line | **open, fails open** | `git diff` runs without `--text`, so an attribute or a NUL byte hides the hunks |
+| T-2: git shows weeder every changed line | proven | every diff runs with `--text`, and a file whose path says it is text is read as text whatever its bytes hold (`readable` in `src/faces/mod.rs`); `tests/check_binary_blind.rs` hides a stub, a secret, a skip and a conflict marker three ways in four languages |
 | T-3: the hooks that run weeder are weeder's | **open, fails open** | hooks live in the working tree; `guard status` trusts their contents |
 | T-4: a harness hook sees every commit | **open** | `PreToolUse` matches the program `git` by its literal name; `Stop` judges against `HEAD` only |
 | `bite` proves a test fails without its change | unshipped by measurement | `docs/bite-2026-09.md` |
@@ -64,7 +64,7 @@ Release tarballs for five targets, each with a SHA-256, from `.github/workflows/
 
 ## 8. Security baseline
 
-- git runs from argument arrays with `--no-ext-diff --no-textconv --no-color` and `core.quotepath=false`.
+- git runs from argument arrays with `core.quotepath=false`, and every diff with `--text --no-ext-diff --no-textconv --no-color`.
 - A secret is never echoed; X1 names the shape and the line.
 - A panic is exit 3.
 - `scan --refresh-snapshot` reaches the registries through curl; `scan` runs the programs `[docs] commands` names.

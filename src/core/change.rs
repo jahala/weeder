@@ -49,7 +49,10 @@ pub struct Side {
     /// rule tells "there is no file here" from "there is a file weeder cannot
     /// read a line of".
     pub size: Option<u64>,
-    /// Whether this side's bytes carry no lines to judge.
+    /// Whether this side's bytes hold a NUL, git's own test for a binary file.
+    /// A file whose path says it is text is read line by line all the same, and
+    /// G2 still reports one that arrives this way: nobody can review it on a
+    /// page that shows no lines.
     pub binary: bool,
     /// The file read once as code, comment and literal. The face makes that
     /// pass on the way in and hands the result to every rule, so a file weeder
@@ -63,6 +66,13 @@ impl Side {
     #[must_use]
     pub fn text(&self) -> &str {
         self.content.as_deref().unwrap_or_default()
+    }
+
+    /// Whether this side is a blob: a file whose bytes are binary and whose path
+    /// gave weeder no reason to read them as text, so it has no lines at all.
+    #[must_use]
+    pub fn is_blob(&self) -> bool {
+        self.binary && self.content.is_none()
     }
 
     /// Whether this side's file is of that kind. A side with no file is nothing.

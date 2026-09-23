@@ -25,6 +25,21 @@ impl FileDiff {
     pub fn path(&self) -> Option<&str> {
         self.new_path.as_deref().or(self.old_path.as_deref())
     }
+
+    /// The same change with its lines taken out, as git writes a binary file:
+    /// `Binary files differ` where the content changed, and nothing where only
+    /// the name or the mode did.
+    #[must_use]
+    pub fn without_lines(self) -> FileDiff {
+        if self.hunks.is_empty() {
+            return self;
+        }
+        FileDiff {
+            change: ChangeKind::Binary,
+            hunks: Vec::new(),
+            ..self
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
