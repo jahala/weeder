@@ -478,3 +478,122 @@ fn t2_counts_the_claims_that_left_the_diff_and_names_where_the_others_went() {
 /// The sentence T2 may only write when none of the claims that left arrived
 /// anywhere in the change.
 const HELD_BY_NOBODY: &str = "held by nobody";
+
+/// The fixtures that turn three written-out claims into one claim run over a
+/// table of the same three cases: a parametrized case, and a loop over a
+/// literal.
+const TABLED: [&str; 2] = ["parametrized", "looped"];
+
+/// The same fixtures with one row taken out of the table on the way.
+const SHORTENED: [&str; 2] = ["parametrized-short", "looped-short"];
+
+/// Every finding a fixture's change is reported with, and the exit it ends
+/// with.
+fn reported(language: &Language, state: &str) -> (Vec<common::Finding>, i32) {
+    let repo = fixture("T2", language.name, state);
+    let changed = repo.git(&["diff", "HEAD", "--name-only"]);
+    assert!(
+        changed.lines().any(|path| path == language.path),
+        "{}/{state}: the test file must be in the diff, or the answer proves nothing",
+        language.name
+    );
+    let run = repo.weeder(&["check"]);
+    (run.findings(), run.code)
+}
+
+/// The T2 findings among a run's.
+fn t2(findings: Vec<common::Finding>) -> Vec<common::Finding> {
+    findings
+        .into_iter()
+        .filter(|finding| finding.rule == "T2")
+        .collect()
+}
+
+#[test]
+fn t2_stays_silent_when_written_out_claims_become_one_claim_over_the_same_cases() {
+    for language in LANGUAGES {
+        for state in TABLED {
+            let name = language.name;
+            assert_eq!(
+                assertions(&language, &format!("{state}/before")),
+                3,
+                "{name}/{state}: the claims start written out, one per case"
+            );
+            assert_eq!(
+                assertions(&language, &format!("{state}/after")),
+                1,
+                "{name}/{state}: and end as one claim the table runs"
+            );
+            let (findings, code) = reported(&language, state);
+            assert_eq!(
+                findings,
+                Vec::new(),
+                "{name}/{state}: one claim run over three cases is three claims, and the three cases are all still there"
+            );
+            assert_eq!(code, 0, "{name}/{state}: nothing blocked");
+        }
+    }
+}
+
+#[test]
+fn t2_blocks_when_the_table_drops_one_of_the_cases() {
+    for language in LANGUAGES {
+        for state in SHORTENED {
+            let name = language.name;
+            let (findings, code) = reported(&language, state);
+            let findings = t2(findings);
+            assert_eq!(
+                findings.len(),
+                1,
+                "{name}/{state}: a case the table no longer runs is a claim gone: {findings:#?}"
+            );
+            assert_eq!(findings[0].level, "error", "{name}/{state}: T2 blocks");
+            assert!(
+                findings[0]
+                    .message
+                    .contains("1 assertion went out of this file: it made 3 and now makes 2."),
+                "{name}/{state}: the table is counted by its cases: {}",
+                findings[0].message
+            );
+            assert_eq!(code, 2, "{name}/{state}: the change is stopped");
+        }
+    }
+}
+
+#[test]
+fn t2_claims_no_loss_when_it_cannot_count_the_cases_a_new_loop_runs() {
+    for language in LANGUAGES {
+        let name = language.name;
+        assert!(
+            assertions(&language, "uncounted/after") < assertions(&language, "uncounted/before"),
+            "{name}: the file writes fewer claims than it did, or the silence proves nothing"
+        );
+        let (findings, code) = reported(&language, "uncounted");
+        assert_eq!(
+            findings,
+            Vec::new(),
+            "{name}: a loop over cases weeder cannot count may run every claim that left"
+        );
+        assert_eq!(code, 0, "{name}: nothing blocked");
+    }
+}
+
+#[test]
+fn t2_still_blocks_a_drop_beside_a_loop_it_cannot_count_that_did_not_change() {
+    for language in LANGUAGES {
+        let name = language.name;
+        let (findings, code) = reported(&language, "uncounted-kept");
+        let findings = t2(findings);
+        assert_eq!(
+            findings.len(),
+            1,
+            "{name}: the loop was there on both sides, so the claim that went is provably gone: {findings:#?}"
+        );
+        assert!(
+            findings[0].message.contains("1 assertion went out"),
+            "{name}: one claim went: {}",
+            findings[0].message
+        );
+        assert_eq!(code, 2, "{name}: the change is stopped");
+    }
+}
