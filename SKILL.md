@@ -128,6 +128,13 @@ rewrite. Repeat `--protect` for more than one; leaving it out leaves the hooks
 reading `weeder.toml` at HEAD every time git runs them. `pre-push` and `pre-rebase` take
 the same `--protect` flag, spelled as the installed bundle spells it.
 
+`core.hooksPath` is one setting, so pointing it at weeder's hooks stops git
+running whatever it ran before: another tool's directory, such as `.husky`, or
+the hooks in `.git/hooks` when nothing is set. `install` refuses with exit 3 where
+that would silence a hook, and names the directory. Call weeder from a hook
+there instead, or pass `--replace` to switch git anyway; `uninstall` puts the
+setting back.
+
 ### The trailer flow
 
 A guardrail change a person means is allowed by what that person writes on the

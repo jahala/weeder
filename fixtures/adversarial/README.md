@@ -17,13 +17,18 @@ for what it holds: T5 has a `silent-code/` for the half where the code moves
 without the expectation, T7 has `fire-case/` and `silent-case/` for the
 languages whose runners collect a case by the name it is declared under, T1 has
 `silent-table/` and `fire-table/` for the suite that moves its cases into a
-table and the one that leaves a case behind while it does, C3 has a `promoted/`
+table and the one that leaves a case behind while it does, T2 has
+`parametrized/` and `looped/` for three assertions that become one run over a
+table of the same three cases, their `-short/` twins that drop a row, and
+`uncounted/` and `uncounted-kept/` for a loop over cases the file does not
+write down, new (a warning) and unchanged (a block), C3 has a `promoted/`
 whose `weeder.toml` names a workflow under `[guardrails] paths`, and R1 has a
 `fire-bound/` whose document cites the commands a scan must refuse to run.
 R1 keeps one folder per authority a citation is answered by: `paths/`,
 `commands/`, `flags/` and `symbols/` for the four, `lines/` for a citation that
 names a line the file is not long enough to have, and `anchors/` and
-`directory/` for the file and the directory a paragraph pins a name to.
+`directory/` for the file and the directory a paragraph pins a name to, and
+`links/` for the markdown links whose destinations are judged alone.
 Every directory holding a `before/` and an `after/` is a fixture, whatever it is
 called, and `tests/determinism.rs` replays all of them.
 

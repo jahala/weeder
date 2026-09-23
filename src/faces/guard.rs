@@ -33,6 +33,39 @@ const HOOKS_PATH_KEY: &str = "core.hooksPath";
 const RECORD_DIR: &str = "weeder";
 const PREVIOUS_HOOKS_PATH: &str = "previous-hooks-path";
 const INSTALLED_HOOKS: &str = "installed-hooks";
+/// Every hook git runs by name, as githooks(5) lists them. A file of one of
+/// these names in git's own hooks directory is a hook that stops running the
+/// moment `core.hooksPath` points elsewhere.
+const GIT_HOOKS: &[&str] = &[
+    "applypatch-msg",
+    "pre-applypatch",
+    "post-applypatch",
+    "pre-commit",
+    "pre-merge-commit",
+    "prepare-commit-msg",
+    "commit-msg",
+    "post-commit",
+    "pre-rebase",
+    "post-checkout",
+    "post-merge",
+    "pre-push",
+    "pre-receive",
+    "update",
+    "proc-receive",
+    "post-receive",
+    "post-update",
+    "reference-transaction",
+    "push-to-checkout",
+    "pre-auto-gc",
+    "post-rewrite",
+    "sendemail-validate",
+    "fsmonitor-watchman",
+    "p4-changelist",
+    "p4-prepare-changelist",
+    "p4-post-changelist",
+    "p4-pre-submit",
+    "post-index-change",
+];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Request {
@@ -70,6 +103,9 @@ pub struct Install {
     pub protect: Vec<String>,
     /// The binary the hooks will name, resolved by the caller: weeder's own path.
     pub binary: PathBuf,
+    /// Whether to point git at weeder's hooks where it runs another
+    /// directory's hooks today, rather than refuse.
+    pub replace: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -128,6 +164,11 @@ fn install(root: &Path, install: &Install) -> Result<Answer, String> {
         .clone()
         .unwrap_or_else(|| PathBuf::from(DEFAULT_HOOKS_DIR));
     let named = named.display().to_string();
+    if !install.replace {
+        if let Some(refusal) = displaced(root, &named)? {
+            return Err(refusal);
+        }
+    }
     let directory = root.join(&named);
     fs::create_dir_all(&directory).map_err(|error| error.to_string())?;
 
@@ -170,6 +211,67 @@ fn install(root: &Path, install: &Install) -> Result<Answer, String> {
         stdout,
         stderr: Vec::new(),
     })
+}
+
+/// Why installing into `named` would stop hooks git runs today, or `None` where
+/// it would stop none. `core.hooksPath` is one setting, so pointing it at
+/// weeder's directory silences whatever directory git ran hooks from before:
+/// another tool's, named by the setting, or git's own when nothing is set.
+/// A setting that already names weeder's directory silences nobody, which is
+/// what keeps a second install as quiet as the first.
+fn displaced(root: &Path, named: &str) -> Result<Option<String>, String> {
+    let setting = git::config_get(root, HOOKS_PATH_KEY)
+        .map_err(|error| error.to_string())?
+        .map(|setting| setting.trim().to_string())
+        .filter(|setting| !setting.is_empty());
+    if let Some(setting) = setting {
+        let ours = same_place(root, &setting, named)
+            || installed(root)?
+                .is_some_and(|entries| same_place(root, &setting, directory_of(&entries)));
+        return Ok((!ours).then(|| {
+            format!(
+                "{HOOKS_PATH_KEY} names {setting}, so git runs this repository's hooks from there, and pointing it at {named} would stop every one of them running. call weeder from a hook in {setting}, or run weeder guard install --replace to switch git to {named}; weeder guard uninstall puts {setting} back."
+            )
+        }));
+    }
+    let own = git::git_dir(root)
+        .map_err(|error| error.to_string())?
+        .join("hooks");
+    let mut live = Vec::new();
+    for name in GIT_HOOKS {
+        let path = own.join(name);
+        let Some(script) = fs::read_if_present(&path).map_err(|error| error.to_string())? else {
+            continue;
+        };
+        if fs::is_executable(&path) && guard::binary_named(&script).is_none() {
+            live.push(*name);
+        }
+    }
+    if live.is_empty() {
+        return Ok(None);
+    }
+    let shown = own
+        .strip_prefix(root)
+        .unwrap_or(&own)
+        .display()
+        .to_string()
+        .replace('\\', "/");
+    Ok(Some(format!(
+        "git runs {} from {shown}, and setting {HOOKS_PATH_KEY} to {named} would stop git running anything there. call weeder from those hooks, or run weeder guard install --replace to switch git to {named}; weeder guard uninstall unsets {HOOKS_PATH_KEY} again, which hands git back to them.",
+        live.join(", ")
+    )))
+}
+
+/// Whether two ways of naming a hooks directory name the same one: written the
+/// same, apart from a leading `./` or a trailing `/`, or resolving to the same
+/// place on disk.
+fn same_place(root: &Path, left: &str, right: &str) -> bool {
+    let plain = |path: &str| {
+        path.trim_end_matches('/')
+            .trim_start_matches("./")
+            .to_string()
+    };
+    plain(left) == plain(right) || same_directory(root, left, right)
 }
 
 fn status(root: &Path) -> Result<Answer, String> {

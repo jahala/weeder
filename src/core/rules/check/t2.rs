@@ -10,6 +10,18 @@
 //! vocabulary, read off the code alone: the same words in a comment or inside a
 //! string are talk about a test rather than a test.
 //!
+//! An assertion is made once for every case it runs for. Three written out and
+//! one inside a table of the same three cases are the same three claims, so a
+//! line inside a parametrized case, or a loop over a table the file writes
+//! down, counts once per entry, and a table that loses a row loses a claim.
+//! Where the file does not write the cases down, a loop over them runs its
+//! claims some number of times weeder cannot read, and a change that puts a
+//! claim under such a loop is one whose fall weeder cannot prove. It is not
+//! let through in silence, because deleting the claims and adding such a loop
+//! would then pass unread; it is reported as a warning, which is for the
+//! person at the pull request, and it says the loss is unproven rather than
+//! claiming it. A table weeder can count still blocks when it loses a row.
+//!
 //! A claim can also leave a file without leaving the suite. Splitting one test
 //! file into two, or folding two into one, takes claims out of one file and
 //! makes them in another, and both files are in the same diff: nothing is
@@ -30,6 +42,7 @@ use std::collections::BTreeSet;
 use crate::core::change::{Change, Side};
 use crate::core::finding::{Finding, Level, Message, Region};
 use crate::core::read::TestUnit;
+use crate::core::rules::check::generated::{Runs, Times};
 use crate::core::rules::check::vocab::Suite;
 use crate::core::rules::check::Judgement;
 use crate::core::syntax::Mask;
@@ -47,12 +60,14 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
         .collect()
 }
 
-/// One claim a test file makes, as a move can be followed by it: the case it
-/// sits in, and the line it is written on.
+/// One line of a test file that makes claims, as a move can be followed by it:
+/// the case it sits in, the line it is written on, and how many claims it
+/// makes, which is its assertions times the cases a table runs them for.
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Claim {
     case: String,
     line: String,
+    weight: usize,
 }
 
 /// A claim a file in this change did not make before it and makes now.
@@ -62,10 +77,20 @@ struct Arrival {
     claim: Claim,
 }
 
+/// The claims one side of a file makes, and the ones among them a loop runs
+/// over cases weeder cannot count. Those are counted once, which is the least
+/// they can be, and they are kept apart so that a count resting on them is
+/// never taken for the whole of what the file claims.
+#[derive(Default)]
+struct Said {
+    made: Vec<Claim>,
+    floors: Vec<Claim>,
+}
+
 /// The claims one changed file makes on each side of the change.
 struct Made {
-    before: Vec<Claim>,
-    after: Vec<Claim>,
+    before: Said,
+    after: Said,
 }
 
 /// Where the claims a file lost turned up, and how many of them did.
@@ -82,17 +107,50 @@ fn dropped(change: &Change, made: &Made, arrived: &[Arrival]) -> Option<Finding>
     if change.is_deletion() || !change.before.holds_tests() || !change.after.holds_tests() {
         return None;
     }
-    let before = made.before.len();
-    let after = made.after.len();
+    let before = total(&made.before.made);
+    let after = total(&made.after.made);
     if after >= before {
         return None;
     }
-    let moved = followed(&unanswered(&made.before, &made.after), arrived, path);
+    // A claim the change put under a loop whose cases weeder cannot count may
+    // run as often as every claim that left, so the fall is one weeder cannot
+    // prove, and a person has to read it. A loop that was there on both sides
+    // takes nothing from the proof.
+    let unproven = !unanswered(&made.after.floors, &made.before.floors).is_empty();
+    let moved = followed(
+        &unanswered(&made.before.made, &made.after.made),
+        arrived,
+        path,
+    );
     let remaining = (before - after).saturating_sub(moved.count);
     if remaining == 0 {
         return None;
     }
-    Some(finding(path, change, before, after, remaining, &moved))
+    let mut found = finding(path, change, before, after, remaining, &moved);
+    if unproven {
+        found.level = Level::Warn;
+        found.message = uncounted(before, after, remaining, &moved);
+    }
+    Some(found)
+}
+
+/// What T2 says where the claims it cannot find may be running under a loop
+/// over cases the file does not write down: the fall as written, and why only
+/// a person can say whether anything was lost.
+fn uncounted(before: usize, after: usize, remaining: usize, moved: &Followed) -> Message {
+    let went = if moved.count == 0 {
+        String::new()
+    } else {
+        format!(", {} moved to {}", counted(moved.count), named(&moved.into))
+    };
+    Message {
+        what: format!(
+            "{} went out of this file as written{went}: it made {before} and now writes {after}, and the rest now run under a loop over cases weeder cannot count.",
+            counted(remaining)
+        ),
+        why: "the loop may run every claim that left or none of them, and only running it or reading it says which, so weeder cannot tell a suite that got shorter from one that stopped checking.".to_string(),
+        next: "read the loop and the cases it runs over; if the claims are gone, put them back, and if they are there, write the cases down where weeder can count them.".to_string(),
+    }
 }
 
 /// Both sides of one changed file, read for the claims they make.
@@ -101,6 +159,13 @@ fn made(change: &Change) -> Made {
         before: claims(&change.before),
         after: claims(&change.after),
     }
+}
+
+/// How many claims a set of lines makes between them.
+fn total(claims: &[Claim]) -> usize {
+    claims
+        .iter()
+        .fold(0, |sum, claim| sum.saturating_add(claim.weight))
 }
 
 /// Every claim that arrived in a test file this change touched. A claim the
@@ -115,7 +180,7 @@ fn arrivals(changes: &[Change], read: &[Made]) -> Vec<Arrival> {
         if !change.after.holds_tests() {
             continue;
         }
-        for claim in unanswered(&made.after, &made.before) {
+        for claim in unanswered(&made.after.made, &made.before.made) {
             found.push(Arrival {
                 path: path.to_string(),
                 claim,
@@ -135,49 +200,62 @@ fn followed(lost: &[Claim], arrived: &[Arrival], from: &str) -> Followed {
     let landed: Vec<&Claim> = elsewhere.iter().map(|arrival| &arrival.claim).collect();
     let left: Vec<&Claim> = lost.iter().collect();
     let mut into = BTreeSet::new();
-    let mut count = 0;
-    for at in answered(&left, &landed).into_iter().flatten() {
-        count += 1;
+    let mut count: usize = 0;
+    for (at, amount) in answered(&left, &landed).into_iter().flatten() {
+        count = count.saturating_add(amount);
         into.insert(elsewhere[at].path.clone());
     }
     Followed { count, into }
 }
 
-/// The claims on the left that nothing on the right answers for.
+/// The claims on the left that nothing on the right answers for, each carrying
+/// the part of its weight left unanswered.
 fn unanswered(left: &[Claim], right: &[Claim]) -> Vec<Claim> {
     let lost: Vec<&Claim> = left.iter().collect();
     let made: Vec<&Claim> = right.iter().collect();
     answered(&lost, &made)
         .into_iter()
         .zip(left)
-        .filter(|(found, _)| found.is_none())
-        .map(|(_, claim)| claim.clone())
+        .filter_map(|(found, claim)| {
+            let answered = found
+                .iter()
+                .fold(0_usize, |sum, (_, amount)| sum.saturating_add(*amount));
+            let weight = claim.weight.saturating_sub(answered);
+            (weight > 0).then(|| Claim {
+                weight,
+                ..claim.clone()
+            })
+        })
         .collect()
 }
 
-/// Each claim on the left with the one on the right that answers for it, where
-/// one does, and each answer spoken for once. An identical line is paired
-/// first, so a rewritten line is not credited with a partner the line it was
-/// written as has the better claim to.
-fn answered(left: &[&Claim], right: &[&Claim]) -> Vec<Option<usize>> {
-    let mut found: Vec<Option<usize>> = vec![None; left.len()];
-    let mut taken = vec![false; right.len()];
+/// Each claim on the left with the claims on the right that answer for it, and
+/// how much of it each one answers for, no claim on the right spoken for more
+/// often than it is made. An identical line is paired first, so a rewritten
+/// line is not credited with a partner the line it was written as has the
+/// better claim to.
+fn answered(left: &[&Claim], right: &[&Claim]) -> Vec<Vec<(usize, usize)>> {
+    let mut found: Vec<Vec<(usize, usize)>> = vec![Vec::new(); left.len()];
+    let mut owed: Vec<usize> = left.iter().map(|claim| claim.weight).collect();
+    let mut free: Vec<usize> = right.iter().map(|claim| claim.weight).collect();
     for same_line in [true, false] {
         for (index, claim) in left.iter().enumerate() {
-            if found[index].is_some() {
-                continue;
-            }
-            let at = right.iter().enumerate().position(|(at, made)| {
-                !taken[at]
-                    && if same_line {
-                        claim.line == made.line
-                    } else {
-                        answers(claim, made)
-                    }
-            });
-            if let Some(at) = at {
-                taken[at] = true;
-                found[index] = Some(at);
+            for (at, made) in right.iter().enumerate() {
+                if owed[index] == 0 {
+                    break;
+                }
+                let pairs = if same_line {
+                    claim.line == made.line
+                } else {
+                    answers(claim, made)
+                };
+                if free[at] == 0 || !pairs {
+                    continue;
+                }
+                let amount = owed[index].min(free[at]);
+                owed[index] -= amount;
+                free[at] -= amount;
+                found[index].push((at, amount));
             }
         }
     }
@@ -193,28 +271,43 @@ fn answers(left: &Claim, made: &Claim) -> bool {
 }
 
 /// The claims one side of a change makes, in the order the file makes them. A
-/// side that holds no tests makes none and is not read for any: every changed
-/// file passes through here, and most of them are not tests.
-fn claims(side: &Side) -> Vec<Claim> {
+/// line inside a table makes its claims once for every case the table runs it
+/// for. A side that holds no tests makes none and is not read for any: every
+/// changed file passes through here, and most of them are not tests.
+fn claims(side: &Side) -> Said {
+    let mut said = Said::default();
     if !side.holds_tests() {
-        return Vec::new();
+        return said;
     }
     let mask = side.mask();
     let suite = Suite::of(side.lang(), mask);
     let cases: Vec<&TestUnit> = side.tests.cases().collect();
-    let mut made = Vec::new();
+    // The tables are read only once a line has made a claim, since most of the
+    // files that pass through here make none.
+    let mut runs: Option<Runs> = None;
     for line in 1..=mask.line_count() {
         let count = suite.assertions(mask, line);
         if count == 0 {
             continue;
         }
-        let claim = Claim {
+        let claim = |weight: usize| Claim {
             case: enclosing(&cases, line).to_string(),
             line: written(mask, line),
+            weight,
         };
-        made.extend(std::iter::repeat_n(claim, count));
+        match runs
+            .get_or_insert_with(|| Runs::of(side.lang(), mask))
+            .times(line)
+        {
+            Times::Counted(0) => {}
+            Times::Counted(times) => said.made.push(claim(count.saturating_mul(times))),
+            Times::Uncounted => {
+                said.made.push(claim(count));
+                said.floors.push(claim(count));
+            }
+        }
     }
-    made
+    said
 }
 
 /// The case a line sits in: the narrowest one that spans it, so a case written

@@ -183,7 +183,12 @@ fn the_commit_that_first_carries_the_four_goes_through_the_hooks_it_installs() {
 fn install_records_the_hooks_path_that_was_there_and_uninstall_puts_it_back() {
     let repo = Repo::init();
     repo.git(&["config", "core.hooksPath", ".their-hooks"]);
-    repo.weeder(&["guard", "install"]);
+    let run = repo.weeder(&["guard", "install", "--replace"]);
+    assert_eq!(
+        run.code, 0,
+        "asked to replace, install runs\n{}",
+        run.stderr
+    );
 
     assert_eq!(
         read(&repo.root().join(".git/weeder/previous-hooks-path")).trim(),
@@ -210,8 +215,13 @@ fn install_records_the_hooks_path_that_was_there_and_uninstall_puts_it_back() {
 fn a_second_install_keeps_the_first_record_of_what_was_there() {
     let repo = Repo::init();
     repo.git(&["config", "core.hooksPath", ".their-hooks"]);
-    repo.weeder(&["guard", "install"]);
-    repo.weeder(&["guard", "install"]);
+    repo.weeder(&["guard", "install", "--replace"]);
+    let again = repo.weeder(&["guard", "install"]);
+    assert_eq!(
+        again.code, 0,
+        "git already runs weeder's own hooks, so installing again replaces nobody's\n{}",
+        again.stderr
+    );
 
     assert_eq!(
         read(&repo.root().join(".git/weeder/previous-hooks-path")).trim(),
@@ -220,6 +230,80 @@ fn a_second_install_keeps_the_first_record_of_what_was_there() {
     );
     repo.weeder(&["guard", "uninstall"]);
     assert_eq!(repo.git(&HOOKS_PATH).trim(), ".their-hooks");
+}
+
+#[test]
+fn install_refuses_to_move_git_away_from_a_hooks_path_another_tool_set() {
+    let repo = Repo::init();
+    repo.write(".husky/pre-commit", "#!/bin/sh\nnpm test\n");
+    repo.git(&["config", "core.hooksPath", ".husky"]);
+
+    let run = repo.weeder(&["guard", "install"]);
+    assert_eq!(
+        run.code, 3,
+        "installing would stop the hooks in .husky running, so it is refused\n{}{}",
+        run.stdout, run.stderr
+    );
+    assert!(
+        run.stderr.contains(".husky"),
+        "the refusal names the directory git runs hooks from now: {}",
+        run.stderr
+    );
+    assert!(
+        run.stderr.contains("--replace") && run.stderr.contains("weeder guard uninstall"),
+        "the refusal says how to go on, and how to come back: {}",
+        run.stderr
+    );
+    assert_eq!(
+        repo.git(&HOOKS_PATH).trim(),
+        ".husky",
+        "git still runs the hooks it ran before"
+    );
+    assert!(
+        !repo.root().join(".githooks").exists(),
+        "a refused install writes nothing"
+    );
+
+    let replaced = repo.weeder(&["guard", "install", "--replace"]);
+    assert_eq!(replaced.code, 0, "{}", replaced.stderr);
+    assert_eq!(repo.git(&HOOKS_PATH).trim(), ".githooks");
+    repo.weeder(&["guard", "uninstall"]);
+    assert_eq!(
+        repo.git(&HOOKS_PATH).trim(),
+        ".husky",
+        "uninstall hands git back to the hooks it replaced"
+    );
+}
+
+#[test]
+fn install_refuses_to_silence_the_hooks_git_keeps_of_its_own() {
+    let repo = Repo::init();
+    let theirs = repo.root().join(".git/hooks/pre-push");
+    std::fs::write(&theirs, "#!/bin/sh\ngit lfs pre-push \"$@\"\n")
+        .expect("their hook should be writable");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&theirs, std::fs::Permissions::from_mode(0o755))
+            .expect("their hook should be executable");
+    }
+
+    let run = repo.weeder(&["guard", "install"]);
+    assert_eq!(
+        run.code, 3,
+        "pointing core.hooksPath anywhere stops .git/hooks running, so it is refused\n{}{}",
+        run.stdout, run.stderr
+    );
+    assert!(
+        run.stderr.contains("pre-push") && run.stderr.contains("--replace"),
+        "the refusal names the hook that would stop running and how to go on: {}",
+        run.stderr
+    );
+    assert_ne!(
+        repo.try_git(&HOOKS_PATH).code,
+        0,
+        "the setting was never written"
+    );
 }
 
 #[test]
