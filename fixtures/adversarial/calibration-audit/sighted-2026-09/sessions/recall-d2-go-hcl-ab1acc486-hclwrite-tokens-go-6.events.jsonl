@@ -1,2 +1,0 @@
-{"type": "input", "case": "recall:D2:go:hcl:ab1acc486:hclwrite/tokens.go:6", "sha256": "83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered report SHA-256: 83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829\nVerdict: not-a-case\nReasoning: Importing a sibling `integrationtest` package is not a forbidden boundary crossing; D2 flags internal/test boundaries, not ordinary cross-package imports, so the planted shape was never genuinely present."}

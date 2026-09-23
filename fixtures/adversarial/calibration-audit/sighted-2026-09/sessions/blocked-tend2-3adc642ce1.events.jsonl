@@ -1,2 +1,0 @@
-{"type": "input", "case": "blocked:tend2:3adc642ce1", "sha256": "83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered report SHA-256: 83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829\nVerdict: false-positive\nReasoning: The case was not deleted but refactored into a loop over sibling directories, so the single it() still covers all inputs and no behaviour lost coverage."}

@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t6-ts-tend2-42c840a73-test-verify-test-ts-176.md", "sha256": "1c0989503024c9190a9ee39521ab9a78086a53be9b8be68097048fb256d0a4fc", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered packet SHA-256: 1c0989503024c9190a9ee39521ab9a78086a53be9b8be68097048fb256d0a4fc\nVerdict: miss\nReasoning: The change removes `/description/` from `toThrow()`, weakening the error assertion by no longer naming the error, yet weeder reported no finding."}

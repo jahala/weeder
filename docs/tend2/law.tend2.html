@@ -19,7 +19,7 @@ The configuration a range is judged under is the one its base holds: `HEAD` for 
 - [x] (code) a stub, a secret, a skip and a conflict marker each still block, in ts, py, rs and go, when `.git/info/attributes` holds `* -diff`, when a committed `.gitattributes` marks the file `-diff`, and when the file carries a NUL byte in a comment · tests/check_binary_blind.rs @860100f · by cli
 - [x] (code) a test file renamed into a `[scope] specimens` directory is judged as a deletion (T1), and a lost test case followed by a case of the same name holding fewer assertions is judged as a deletion, each in ts, py, rs and go · tests/rule_t1.rs @767f74b · by cli
 - [x] (code) with `diff.noprefix` or `diff.mnemonicPrefix` set in the user's global git config, `weeder check` judges the change it would judge without them · tests/check_git_config.rs @732d68b · by cli
-- [ ] (code) `cargo xtask calibrate` and `cargo xtask mutate` run again on the pinned corpus with a judgement line for every new block, and both bars hold · scripts/check/calibration-bar.sh
+- [x] (code) `cargo xtask calibrate` and `cargo xtask mutate` run again on the pinned corpus with a judgement line for every new block, and both bars hold · scripts/check/calibration-bar.sh @d5d890c · by cli
 
 ## Tried
 - 2026-09-23 shaped from the repository audit of the same day. The owner was asked where the law comes from, the base or the state being judged, and the default was taken while no answer came: the base, because a law the change can write is no law, and because a configuration change that waits for its own landing costs one merge. Overrule it here, and the first check changes with it

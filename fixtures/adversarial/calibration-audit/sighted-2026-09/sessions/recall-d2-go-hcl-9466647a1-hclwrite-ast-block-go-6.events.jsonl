@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:D2:go:hcl:9466647a1:hclwrite/ast_block.go:6", "sha256": "53cc854e83907753799a66e79bc60609d55921ad906122751b7fa0d98dc7ed54", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 53cc854e83907753799a66e79bc60609d55921ad906122751b7fa0d98dc7ed54\nVerdict: miss\nReasoning: The planted import has the production package `hclwrite` importing the test-only `integrationtest` package, a genuine forbidden-boundary crossing that D2 should catch, and weeder reported nothing there."}

@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t6-ts-tend2-8d939ec15-test-route-test-ts-143.md", "sha256": "0363992b00320572680f46cdce5bafc9e9772a46dc7e28be1d1c3e5ad2306ccb", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered packet SHA-256: 0363992b00320572680f46cdce5bafc9e9772a46dc7e28be1d1c3e5ad2306ccb\nVerdict: miss\nReasoning: The assertion dropped `/sample/` and no longer names the error, weakening it, yet weeder reported nothing at that site."}

@@ -1,2 +1,0 @@
-{"type": "input", "case": "recall:T1:ts:tend2:6d9a1cf91:test/site-paths.test.ts", "sha256": "83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered report SHA-256: 83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829\nVerdict: miss\nReasoning: The site is a test file and a test case was genuinely deleted, which is exactly T1's shape, and weeder reported nothing there."}
