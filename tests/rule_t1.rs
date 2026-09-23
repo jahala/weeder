@@ -18,6 +18,11 @@
 //! a case gone like any other, and the finding that reports it counts only what
 //! left and names the files the rest moved into.
 //!
+//! Two more read the moves that only look like one. A case that arrives under
+//! its old name making fewer assertions is a case written over, and counts as
+//! gone. A test file moved into a `[scope] specimens` directory leaves the
+//! tree weeder judges, and is judged as deleted from the path it left.
+//!
 //! Every number here is counted off the fixture by this file's own reading of
 //! what a case looks like, so the expectation is written independently of the
 //! detector that has to meet it.
@@ -525,3 +530,166 @@ fn t1_counts_the_cases_that_left_the_diff_and_names_where_the_others_went() {
 
 /// The sentence T1 may only write when nothing in the diff took the cases over.
 const COVERED_BY_NOBODY: &str = "covered by nobody";
+
+/// Whether a line of a fixture's test file makes an assertion, read the way each
+/// language makes one. This is how the hollowed fixture shows that the case it
+/// keeps by name checks less than the case that left.
+fn asserts(lang: &str, line: &str) -> bool {
+    match lang {
+        "ts" => line.contains("expect("),
+        "py" | "rs" => line.starts_with("assert"),
+        "go" => line.contains("t.Fatal") || line.contains("t.Error"),
+        other => panic!("no assertion shape is written down for {other}"),
+    }
+}
+
+fn assertions(lang: &str, declaration: &Declaration) -> usize {
+    declaration
+        .body
+        .iter()
+        .filter(|line| asserts(lang, line))
+        .count()
+}
+
+#[test]
+fn t1_fires_when_a_case_moves_under_its_own_name_holding_fewer_assertions() {
+    for language in LANGUAGES {
+        let name = language.name;
+        let left = declarations(name, "moved-hollow/before", language.deleted);
+        let arrived = declarations(name, "moved-hollow/after", language.thinned);
+        let hollowed: Vec<(&Declaration, &Declaration)> = left
+            .iter()
+            .filter_map(|case| {
+                arrived
+                    .iter()
+                    .find(|now| now.name == case.name)
+                    .filter(|now| assertions(name, now) < assertions(name, case))
+                    .map(|now| (case, now))
+            })
+            .collect();
+        assert_eq!(
+            hollowed.len(),
+            1,
+            "{name}: exactly one case arrives under its own name making fewer assertions: {arrived:#?}"
+        );
+        let kept = left
+            .iter()
+            .filter(|case| {
+                arrived
+                    .iter()
+                    .any(|now| now == *case || (now.name == case.name && now.body == case.body))
+            })
+            .count();
+        assert_eq!(
+            kept,
+            left.len() - 1,
+            "{name}: every other case moves whole, so the finding counts one"
+        );
+
+        let repo = fixture("T1", name, "moved-hollow");
+        let run = repo.weeder(&["check"]);
+        let reported: Vec<common::Finding> = run
+            .findings()
+            .into_iter()
+            .filter(|finding| finding.rule == "T1")
+            .collect();
+        assert_eq!(
+            reported.len(),
+            1,
+            "{name}: one finding, on the file the cases left: {reported:#?}"
+        );
+        assert_eq!(
+            reported[0].path, language.deleted,
+            "{name}: the file is named"
+        );
+        assert_eq!(reported[0].level, "error", "{name}: T1 blocks");
+        assert_eq!(run.code, 2, "{name}: a case written over with less blocks");
+        assert!(
+            reported[0].message.contains("1 test case went"),
+            "{name}: the hollowed case is the one that went: {}",
+            reported[0].message
+        );
+        assert!(
+            reported[0]
+                .message
+                .contains(&format!("{} test cases moved", kept)),
+            "{name}: the cases that moved whole are counted as moved: {}",
+            reported[0].message
+        );
+    }
+}
+
+/// Where the specimen fixture moves the test file to.
+fn in_specimens(path: &str) -> String {
+    format!("fixtures/adversarial/parser/{path}")
+}
+
+#[test]
+fn t1_judges_a_test_moved_into_a_specimen_directory_as_deleted() {
+    for language in LANGUAGES {
+        let name = language.name;
+        let repo = fixture("T1", name, "specimen");
+        let moved = in_specimens(language.deleted);
+        let status = repo.git(&["diff", "--cached", "--find-renames", "--name-status"]);
+        assert!(
+            status
+                .lines()
+                .any(|line| line.starts_with('R') && line.ends_with(&moved)),
+            "{name}: git has to see a rename into the specimen directory, or the test proves nothing:\n{status}"
+        );
+
+        let run = repo.weeder(&["check", "--format", "sarif"]);
+        let findings = run.findings();
+        let t1: Vec<&common::Finding> = findings.iter().filter(|f| f.rule == "T1").collect();
+        assert_eq!(
+            t1.len(),
+            1,
+            "{name}: the suite lost a file, whatever directory it went to: {findings:#?}"
+        );
+        assert_eq!(
+            t1[0].path, language.deleted,
+            "{name}: the path it left is named"
+        );
+        assert_eq!(t1[0].level, "error", "{name}: T1 blocks");
+        assert_eq!(run.code, 2, "{name}: {}", run.stderr);
+        assert!(
+            findings
+                .iter()
+                .any(|finding| finding.rule == "SPECIMEN" && finding.path == moved),
+            "{name}: where it went is noted as the specimen it now is: {findings:#?}"
+        );
+    }
+}
+
+#[test]
+fn a_file_moved_from_one_specimen_directory_to_another_stays_set_aside() {
+    let repo = common::Repo::init();
+    repo.write(
+        "weeder.toml",
+        "[scope]\nspecimens = [\"fixtures/adversarial\"]\n",
+    );
+    let suite = fixture_file("T1", "ts", "moved/before", "src/parser.test.ts");
+    repo.write("fixtures/adversarial/one/parser.test.ts", &suite);
+    repo.commit("a specimen");
+    std::fs::create_dir_all(repo.root().join("fixtures/adversarial/two"))
+        .expect("the directory it moves to");
+    repo.git(&[
+        "mv",
+        "fixtures/adversarial/one/parser.test.ts",
+        "fixtures/adversarial/two/parser.test.ts",
+    ]);
+
+    let run = repo.weeder(&["check", "--format", "sarif"]);
+    let rules: Vec<String> = run
+        .findings()
+        .into_iter()
+        .map(|finding| finding.rule)
+        .collect();
+    assert_eq!(
+        rules,
+        vec!["SPECIMEN".to_string()],
+        "a specimen that stays a specimen is noted and judged by nothing: {}",
+        run.output()
+    );
+    assert_eq!(run.code, 0);
+}

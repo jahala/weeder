@@ -93,7 +93,7 @@ pub fn added_file(path: &str, text: Option<&str>) -> FileDiff {
     let (change, hunks) = match text {
         None => (ChangeKind::Binary, Vec::new()),
         Some("") => (ChangeKind::Added, Vec::new()),
-        Some(text) => (ChangeKind::Added, vec![whole_file(text)]),
+        Some(text) => (ChangeKind::Added, vec![whole_file(text, LineKind::Added)]),
     };
     FileDiff {
         old_path: None,
@@ -108,8 +108,35 @@ pub fn added_file(path: &str, text: Option<&str>) -> FileDiff {
     }
 }
 
-/// One hunk covering the whole of a file that was not there before.
-fn whole_file(text: &str) -> Hunk {
+/// The diff of a file that leaves whole: every line removed, no side after it.
+///
+/// This is how weeder writes a file that moved out of what it judges and into a
+/// specimen directory: the suite no longer has it, whatever path it went to.
+/// What this is handed is the text the file had, or nothing where its bytes
+/// carried no lines.
+#[must_use]
+pub fn removed_file(path: &str, text: Option<&str>) -> FileDiff {
+    let (change, hunks) = match text {
+        None => (ChangeKind::Binary, Vec::new()),
+        Some("") => (ChangeKind::Deleted, Vec::new()),
+        Some(text) => (
+            ChangeKind::Deleted,
+            vec![whole_file(text, LineKind::Removed)],
+        ),
+    };
+    FileDiff {
+        old_path: Some(path.to_string()),
+        new_path: None,
+        change,
+        hunks,
+        old_mode: None,
+        new_mode: None,
+    }
+}
+
+/// One hunk covering the whole of a file, every line of it added where the
+/// file was not there before, or removed where it is not there after.
+fn whole_file(text: &str, kind: LineKind) -> Hunk {
     let ends_open = !text.ends_with('\n');
     // Counted the way the parser counts the hunks git writes: a line past what
     // a line number can hold stays at the last number there is, so a finding
@@ -119,10 +146,14 @@ fn whole_file(text: &str) -> Hunk {
         .lines()
         .map(|line| {
             number = number.saturating_add(1);
+            let (old_line, new_line) = match kind {
+                LineKind::Removed => (Some(number), None),
+                _ => (None, Some(number)),
+            };
             HunkLine {
-                kind: LineKind::Added,
-                old_line: None,
-                new_line: Some(number),
+                kind,
+                old_line,
+                new_line,
                 text: line.to_string(),
                 no_newline: false,
             }
@@ -133,11 +164,16 @@ fn whole_file(text: &str) -> Hunk {
             last.no_newline = true;
         }
     }
+    let count = u32::try_from(lines.len()).unwrap_or(u32::MAX);
+    let (old_start, old_count, new_start, new_count) = match kind {
+        LineKind::Removed => (1, count, 0, 0),
+        _ => (0, 0, 1, count),
+    };
     Hunk {
-        old_start: 0,
-        old_count: 0,
-        new_start: 1,
-        new_count: u32::try_from(lines.len()).unwrap_or(u32::MAX),
+        old_start,
+        old_count,
+        new_start,
+        new_count,
         section: None,
         lines,
     }

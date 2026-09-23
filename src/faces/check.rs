@@ -26,7 +26,7 @@ use std::path::{Path, PathBuf};
 use crate::core::change::{self, Change, Side};
 use crate::core::classify::{classify_file, FileKind};
 use crate::core::config::Config;
-use crate::core::diff::{added_file, parse_diff, FileDiff};
+use crate::core::diff::{added_file, parse_diff, removed_file, FileDiff};
 use crate::core::finding::{Finding, Level};
 use crate::core::glob;
 use crate::core::hierarchy::{self, Hierarchy};
@@ -124,9 +124,14 @@ fn judge(request: &Request) -> Result<Verdict, String> {
     // The specimens leave here, before anything reads them: a file no rule
     // judges has no suppression to honour and no malformed one to complain
     // about either. What it has is a note, so the exclusion is in the log.
-    let (judged, mut excluded) = set_aside(judged, &config.specimens);
+    let SetAside {
+        kept,
+        departed,
+        mut excluded,
+    } = set_aside(judged, &config.specimens);
 
-    let mut changes = gather(&root, &range.base, &range.after, judged)?;
+    let mut changes = gather(&root, &range.base, &range.after, kept)?;
+    changes.extend(departures(&root, &range, &departed)?);
     if untracked {
         let (arrived, set_aside) = arrivals(&root, &config.specimens)?;
         changes.extend(arrived);
@@ -343,22 +348,64 @@ fn read_diff(root: &Path, range: &Range) -> Result<String, String> {
     diff.map_err(|error| error.to_string())
 }
 
+/// What `set_aside` made of a change: the files weeder judges as git wrote them,
+/// the files that moved out of the judged tree into a specimen directory, by the
+/// path they left, and the specimen paths it was told to leave alone.
+struct SetAside {
+    kept: Vec<FileDiff>,
+    departed: Vec<String>,
+    excluded: Vec<String>,
+}
+
 /// The changed files weeder judges, and the paths it was told to leave alone.
 /// A specimen is skipped by every rule at once: the file never reaches a
 /// detector, so no rule can be the one that read it anyway.
-fn set_aside(judged: Vec<FileDiff>, specimens: &[String]) -> (Vec<FileDiff>, Vec<String>) {
-    let mut kept = Vec::new();
-    let mut excluded = Vec::new();
+///
+/// A file is a specimen only where every path it has is one. A file that moved
+/// into a specimen directory left the tree weeder judges, and a test that leaves
+/// the suite that way is a test deleted, so it is judged as the deletion of the
+/// path it left, and the path it arrived at is noted like any other specimen.
+fn set_aside(judged: Vec<FileDiff>, specimens: &[String]) -> SetAside {
+    let mut aside = SetAside {
+        kept: Vec::new(),
+        departed: Vec::new(),
+        excluded: Vec::new(),
+    };
+    let skipped = |path: &Option<String>| {
+        path.as_deref()
+            .map(|path| specimen::skipped(specimens, path))
+    };
     for file in judged {
-        match file
-            .path()
-            .filter(|path| specimen::skipped(specimens, path))
-        {
-            Some(path) => excluded.push(path.to_string()),
-            None => kept.push(file),
+        match (skipped(&file.old_path), skipped(&file.new_path)) {
+            (Some(false), Some(true)) => {
+                aside.excluded.extend(file.new_path);
+                aside.departed.extend(file.old_path);
+            }
+            (Some(true), Some(true) | None) | (None, Some(true)) => {
+                aside.excluded.extend(file.path().map(ToString::to_string));
+            }
+            _ => aside.kept.push(file),
         }
     }
-    (kept, excluded)
+    aside
+}
+
+/// The files that left the judged tree for a specimen directory, each as the
+/// deletion it is from where weeder stands: the side it had at the base, and
+/// every line of it taken out.
+fn departures(root: &Path, range: &Range, departed: &[String]) -> Result<Vec<Change>, String> {
+    let leaving: Vec<FileDiff> = departed
+        .iter()
+        .map(|path| removed_file(path, Some("")))
+        .collect();
+    Ok(gather(root, &range.base, &range.after, leaving)?
+        .into_iter()
+        .zip(departed)
+        .map(|(change, path)| Change {
+            diff: removed_file(path, change.before.content.as_deref()),
+            ..change
+        })
+        .collect())
 }
 
 /// The paths this run allows the change to touch. `--scope` is what the caller
