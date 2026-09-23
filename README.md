@@ -9,8 +9,17 @@ SARIF 2.1.0.
 ```
 $ weeder check
 error  G1  src/parser.ts:2  a merge conflict marker (<<<<<<<) was added.
+       why   the file carries both sides of a merge nobody finished, so it does not
+             parse and does not run.
+       next  finish the merge, delete the markers, and stage the file again.
 error  G1  src/parser.ts:4  a merge conflict marker (=======) was added.
+       why   the file carries both sides of a merge nobody finished, so it does not
+             parse and does not run.
+       next  finish the merge, delete the markers, and stage the file again.
 error  G1  src/parser.ts:6  a merge conflict marker (>>>>>>>) was added.
+       why   the file carries both sides of a merge nobody finished, so it does not
+             parse and does not run.
+       next  finish the merge, delete the markers, and stage the file again.
 3 errors, 0 warnings, 0 notes
 ```
 

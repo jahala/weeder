@@ -231,9 +231,27 @@ fn the_table_reads_like_the_one_check_writes() {
     assert_eq!(run.code, 0);
 
     let lines: Vec<&str> = run.stdout.lines().collect();
-    let (counts, findings) = lines.split_last().expect("the table ends with its counts");
+    let (counts, written) = lines.split_last().expect("the table ends with its counts");
+    // A row names a finding; the lines indented under it say why and what next.
+    let findings: Vec<&str> = written
+        .iter()
+        .copied()
+        .filter(|line| !line.starts_with(' '))
+        .collect();
     assert!(!findings.is_empty(), "the table should carry the findings");
-    for line in findings {
+    let labels = written
+        .iter()
+        .filter(|line| line.starts_with(' '))
+        .filter_map(|line| line.split_whitespace().next())
+        .filter(|word| *word == "why" || *word == "next")
+        .count();
+    assert_eq!(
+        labels,
+        findings.len() * 2,
+        "every finding says why and what next under its row:\n{}",
+        run.stdout
+    );
+    for line in &findings {
         let cells: Vec<&str> = line.split_whitespace().collect();
         assert_eq!(cells[0], "warning", "the level comes first: {line}");
         assert!(cells[1].starts_with('R'), "then the rule id: {line}");

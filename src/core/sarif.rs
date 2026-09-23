@@ -320,9 +320,10 @@ pub fn to_json(log: &Log) -> String {
     serde_json::to_string_pretty(log).expect("a log holds only values serde_json can write")
 }
 
-/// One line per finding for a terminal: level, rule, `path:line`, the what.
-/// Block findings first, then warnings, then notes; inside a level by path then
-/// line. The last line counts each level.
+/// One row per finding for a terminal: level, rule, `path:line`, the what, and
+/// under it, indented beneath the rule, why it matters and what to do next,
+/// each wrapped to a readable width. Block findings first, then warnings, then
+/// notes; inside a level by path then line. The last line counts each level.
 pub fn render_table(findings: &[Finding]) -> String {
     let mut rows: Vec<Row> = findings.iter().map(row).collect();
     rows.sort_by(|left, right| {
@@ -336,6 +337,7 @@ pub fn render_table(findings: &[Finding]) -> String {
     let rule_width = rows.iter().map(|row| row.rule.len()).max();
     let place_width = rows.iter().map(|row| row.place.len()).max();
 
+    let indent = " ".repeat(level_width.unwrap_or_default() + 2);
     let mut table = String::new();
     for row in &rows {
         let line = format!(
@@ -350,6 +352,12 @@ pub fn render_table(findings: &[Finding]) -> String {
         );
         table.push_str(line.trim_end());
         table.push('\n');
+        for (label, text) in [("why", &row.why), ("next", &row.next)] {
+            for (index, part) in wrapped(text).into_iter().enumerate() {
+                let label = if index == 0 { label } else { "" };
+                table.push_str(&format!("{indent}{label:<LABEL_WIDTH$}{part}\n"));
+            }
+        }
     }
 
     let count = |level: SarifLevel| rows.iter().filter(|row| row.level == level).count();
@@ -362,6 +370,37 @@ pub fn render_table(findings: &[Finding]) -> String {
     table
 }
 
+/// How wide the label in front of a why or a next is, with the space after it.
+const LABEL_WIDTH: usize = "next  ".len();
+
+/// How many characters of a why or a next one line of the table carries. A
+/// sentence longer than that wraps onto the lines below, indented to where its
+/// text starts, so a terminal of any width reads it as a paragraph rather than
+/// as one line running off the edge.
+const WRAP: usize = 72;
+
+/// A sentence broken between words into lines of at most [`WRAP`] characters.
+/// A word longer than that stands on a line of its own rather than being cut.
+/// A sentence with nothing in it gives no lines at all.
+fn wrapped(text: &str) -> Vec<String> {
+    let mut lines: Vec<String> = Vec::new();
+    let mut current = String::new();
+    for word in text.split_whitespace() {
+        let needed = current.chars().count() + 1 + word.chars().count();
+        if !current.is_empty() && needed > WRAP {
+            lines.push(std::mem::take(&mut current));
+        }
+        if !current.is_empty() {
+            current.push(' ');
+        }
+        current.push_str(word);
+    }
+    if !current.is_empty() {
+        lines.push(current);
+    }
+    lines
+}
+
 struct Row {
     level: SarifLevel,
     rule: String,
@@ -369,6 +408,8 @@ struct Row {
     line: u32,
     place: String,
     what: String,
+    why: String,
+    next: String,
 }
 
 fn row(finding: &Finding) -> Row {
@@ -385,6 +426,8 @@ fn row(finding: &Finding) -> Row {
         line,
         place,
         what: finding.message.what.trim().to_string(),
+        why: finding.message.why.trim().to_string(),
+        next: finding.message.next.trim().to_string(),
     }
 }
 

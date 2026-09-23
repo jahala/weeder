@@ -154,13 +154,20 @@ one line, so a one-line finding reads as `{ "startLine": 12 }`.
 
 ```
 error    T1  tests/parser.test.ts:12  A test case disappeared from a changed test file.
-error    S1  src/parser.rs:40         A stub reached production code.
+         why   a case that is gone cannot fail, so the behaviour it held the code to is
+               now unwatched.
+         next  put the case back, or say in the change which behaviour stopped being
+               worth a test.
 warning  S3  src/parser.rs:4          A debug leftover reached production code.
-2 errors, 1 warning, 0 notes
+         why   it prints on every run in production, where nobody is reading.
+         next  delete it, or route it through the logger.
+1 error, 1 warning, 0 notes
 ```
 
-Columns are padded to the widest cell so the message column lines up. The count line is always the
-last line, and an empty run is that line alone.
+Each row carries what was found. Under it, indented beneath the rule, come why it matters and what
+to do next, each wrapped at 72 characters. SARIF joins the same three into one message. Columns are
+padded to the widest cell so the message column lines up. The count line is always the last line,
+and an empty run is that line alone.
 
 ## The order results come in
 
