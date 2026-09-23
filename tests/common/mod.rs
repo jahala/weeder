@@ -370,6 +370,28 @@ impl Repo {
         run.stdout
     }
 
+    /// git, in this repository, with something added to its environment: a
+    /// test that asks what a person's own settings do to git sets them here.
+    pub fn git_with(&self, arguments: &[&str], environment: &[(&str, &str)]) -> String {
+        let mut command = isolated(Command::new("git"));
+        for (name, value) in environment {
+            command.env(name, value);
+        }
+        let output = command
+            .arg("-C")
+            .arg(self.root())
+            .args(arguments)
+            .output()
+            .expect("git should be on PATH");
+        assert!(
+            output.status.success(),
+            "git {} failed: {}",
+            arguments.join(" "),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        String::from_utf8_lossy(&output.stdout).to_string()
+    }
+
     /// git, in this repository, where the test is asking whether it worked. A
     /// commit or a push a hook refuses leaves with a code, and that code is the
     /// answer the test came for.

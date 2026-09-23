@@ -664,6 +664,12 @@ fn resolve_base(root: &Path, base: &str) -> Result<String, GitError> {
 /// or one NUL byte as a reason to show no lines at all, and whoever writes the
 /// change can write either; the face decides which files are blobs, by what
 /// their paths and bytes are.
+///
+/// Everything else that shapes the text is named here too, because git reads a
+/// person's global configuration as readily as the repository's: the `a/` and
+/// `b/` a header names its paths with, which `diff.noprefix`,
+/// `diff.mnemonicPrefix` and `diff.srcPrefix` would change, and the single
+/// space a blank context line carries, which `diff.suppressBlankEmpty` drops.
 fn diff(root: &Path, revisions: &[&str]) -> Result<String, GitError> {
     let mut arguments = vec![
         "diff",
@@ -672,10 +678,12 @@ fn diff(root: &Path, revisions: &[&str]) -> Result<String, GitError> {
         "--no-ext-diff",
         "--no-textconv",
         "--find-renames",
+        "--src-prefix=a/",
+        "--dst-prefix=b/",
         CONTEXT_LINES,
     ];
     arguments.extend_from_slice(revisions);
-    run_lossy(root, &arguments)
+    run_lossy_with(root, &["diff.suppressBlankEmpty=false"], &arguments)
 }
 
 /// One git invocation whose answer is read as text even where some of it is not
@@ -687,7 +695,17 @@ fn diff(root: &Path, revisions: &[&str]) -> Result<String, GitError> {
 /// question weeder asks git has a sha, a ref or a setting for an answer, and those
 /// are still read strictly, bytes weeder cannot read there are a refusal.
 fn run_lossy(directory: &Path, arguments: &[&str]) -> Result<String, GitError> {
-    let attempt = attempt(directory, arguments)?;
+    run_lossy_with(directory, &[], arguments)
+}
+
+/// The same, with settings of weeder's own in front of the command.
+fn run_lossy_with(
+    directory: &Path,
+    settings: &[&str],
+    arguments: &[&str],
+) -> Result<String, GitError> {
+    let words: Vec<&OsStr> = arguments.iter().map(|word| OsStr::new(*word)).collect();
+    let attempt = attempt_os(directory, settings, &words)?;
     if attempt.code == 0 {
         Ok(String::from_utf8_lossy(&attempt.stdout).into_owned())
     } else {
@@ -739,8 +757,10 @@ impl Attempt {
     }
 }
 
-/// One git invocation. Its config comes from the repository alone: a global
-/// `quotepath` or an external diff driver must not change what weeder judges.
+/// One git invocation. git reads its settings from the person running it as
+/// well as from the repository, global and system files both, so every setting
+/// that would change what weeder reads is named on the command line instead:
+/// `core.quotepath` for every call, and the shape of a diff in `diff`.
 fn attempt(directory: &Path, arguments: &[&str]) -> Result<Attempt, GitError> {
     let arguments: Vec<&OsStr> = arguments.iter().map(|word| OsStr::new(*word)).collect();
     attempt_os(directory, &[], &arguments)
