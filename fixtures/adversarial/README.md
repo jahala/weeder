@@ -27,7 +27,8 @@ whose `weeder.toml` names a workflow under `[guardrails] paths`, and R1 has a
 R1 keeps one folder per authority a citation is answered by: `paths/`,
 `commands/`, `flags/` and `symbols/` for the four, `lines/` for a citation that
 names a line the file is not long enough to have, and `anchors/` and
-`directory/` for the file and the directory a paragraph pins a name to.
+`directory/` for the file and the directory a paragraph pins a name to, and
+`links/` for the markdown links whose destinations are judged alone.
 Every directory holding a `before/` and an `after/` is a fixture, whatever it is
 called, and `tests/determinism.rs` replays all of them.
 

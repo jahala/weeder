@@ -191,6 +191,32 @@ fn a_name_a_directory_anchors_is_judged_against_everything_under_it() {
 }
 
 #[test]
+fn a_markdown_link_is_judged_by_its_destination_alone() {
+    let found = findings("links", "fire");
+    assert_eq!(
+        found.len(),
+        3,
+        "an inline link, a reference definition and a link relative to its own document point nowhere, and R1 reported: {found:#?}"
+    );
+    for (document, destination) in [
+        ("README.md", "`./docs/guide.md`"),
+        ("README.md", "`docs/notes.md`"),
+        ("docs/record.md", "`./gone.md`"),
+    ] {
+        let finding = about(&found, destination);
+        assert_eq!(
+            finding.path, document,
+            "{destination} is written in {document}"
+        );
+        assert_eq!(finding.level, "warning");
+    }
+    assert!(
+        found.iter().all(|finding| !finding.message.contains("](")),
+        "a link's text and its destination are two things, never one path: {found:#?}"
+    );
+}
+
+#[test]
 fn nothing_is_reported_when_every_citation_still_resolves() {
     for lang in [
         "paths",
@@ -200,6 +226,7 @@ fn nothing_is_reported_when_every_citation_still_resolves() {
         "lines",
         "anchors",
         "directory",
+        "links",
     ] {
         let found = findings(lang, "silent");
         assert!(

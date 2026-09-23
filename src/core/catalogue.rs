@@ -233,7 +233,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Scan,
         default_level: Level::Warn,
         short_description: "The docs cite something that no longer exists",
-        full_description: "A path, command, flag or symbol cited in the repository's markdown does not resolve against the tree.",
+        full_description: "A path, command, flag or symbol cited in the repository's markdown does not resolve against the tree. A link is judged by its destination alone, read from the directory of the document that writes it.",
         network: Network::None,
     },
     Rule {
