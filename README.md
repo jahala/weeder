@@ -57,13 +57,47 @@ The windows tarball holds `weeder.exe`. The crate on crates.io and the npm wrapp
 (`@plotplot/weeder`) publish from the same release workflow once the registries are set up;
 until then the tarball is the install.
 
+## Switch it on
+
+Installing the binary guards nothing yet. weeder judges a repository once one of three places
+calls it, and each one is set up on purpose.
+
+In git, per repository. This writes hooks into `.githooks` and points git at them, so every
+commit and push is judged. It refuses where another tool already owns the hooks, such as husky,
+and names the way forward.
+
+```bash
+cd your-repository
+weeder guard install --protect main
+weeder guard status
+```
+
+In Claude Code, per machine or per project. Add this to `~/.claude/settings.json`, or to
+`.claude/settings.json` in a repository, so a commit over a blocking change is refused and a
+turn cannot end over one. Gemini CLI takes `weeder hook gemini` on `BeforeTool` and
+`AfterAgent`; Codex takes `weeder hook codex` on `PreToolUse` and `Stop`.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [{ "matcher": "Bash", "hooks": [{ "type": "command", "command": "weeder hook claude" }] }],
+    "Stop": [{ "matcher": "", "hooks": [{ "type": "command", "command": "weeder hook claude" }] }]
+  }
+}
+```
+
+In CI, per repository: copy `examples/ci/github.yml` (below). This is the one that holds. The
+hooks above run on a machine the agent can also write to, so they catch honest mistakes early,
+and an agent working against them can get past them. CI judges a fresh checkout against the
+protected branch, under the `weeder.toml` that branch carries.
+
 ## The faces
 
 | Face | What it does |
 |---|---|
 | `weeder check` | judges a diff and may block. This is the one wired into hooks and CI |
 | `weeder scan` | judges the repository as it is and never blocks: rotted docs, dead exports, stale work markers, lagging pins |
-| `weeder guard` | puts that judgement inside git, through hooks git cannot be talked out of running |
+| `weeder guard` | puts that judgement inside git, through hooks that run on every commit and push |
 | `weeder hook` | answers an agent harness's hook event, so a turn ends against weeder's verdict |
 | `weeder rules` | prints the catalogue, the level each rule carries, and what it may reach over the network |
 
