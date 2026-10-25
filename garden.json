@@ -8,8 +8,6 @@
   ],
   "version": "0.2.4",
   "install": {
-    "cargo": "weeder",
-    "npm": "@plotplot/weeder",
     "binaries": {
       "x86_64-unknown-linux-musl": "https://github.com/jahala/weeder/releases/download/v0.2.4/weeder-x86_64-unknown-linux-musl.tar.gz",
       "aarch64-unknown-linux-musl": "https://github.com/jahala/weeder/releases/download/v0.2.4/weeder-aarch64-unknown-linux-musl.tar.gz",

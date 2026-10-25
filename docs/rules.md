@@ -21,6 +21,14 @@ unshipped, and what would turn it back on.
 
 `weeder.toml` at the root of the repository, every section optional.
 
+For `check` and the hooks it is read from the base of the judged range, never
+from the change: HEAD for the working tree and for `--staged`, the base commit for
+`--base` and for pre-push. A change to `weeder.toml` is judged under the law it
+is changing, C1 included, and takes effect once it lands. A base with no
+`weeder.toml` is judged at the levels below. `check --config <path>` names
+another law for one run. `scan` judges the tree it is given, and reads the
+`weeder.toml` that tree holds.
+
 | Section | What it sets | Rules that read it |
 |---|---|---|
 | `[rules]` | a level per rule id: `block`, `warn` or `off` for a check rule, `on` or `off` for a scan rule | all of them |
@@ -47,6 +55,21 @@ the list are each refused with exit 3, naming what was written. Every path an
 exclusion covers is reported once, at note level, under the id `SPECIMEN`: the
 log says which files no rule read, and `check` still leaves with whatever the
 files it did read deserve.
+
+### How a finding's level is settled
+
+Most findings carry their rule's level: the one listed below, or the one
+`[rules]` writes for the rule. A few carry a level of their own, because the
+detector knows something about that one finding the config cannot. D1 blocks on
+a manifest outside the run's scope. C3 blocks on a workflow `[guardrails] paths`
+names. T2 and T8 warn where the fall or the hidden set cannot be proved. S1
+warns on a base method an entry file hands out. X1 reports a published example
+key as a note, and R1 does the same for a bare name nothing pins to a place.
+
+A level the repository writes caps those findings too. `D1 = "warn"` blocks
+nothing, and a finding that asked for a quieter level than the one written keeps
+its own. `off` silences the rule. A rule the repository leaves out of `[rules]`
+reports each finding at the level its detector asked for.
 
 ## Allowing a finding through
 
@@ -102,7 +125,7 @@ A test file was removed, or a test case disappeared from a changed test file, co
 
 `check` · blocks by default
 
-The assertion count of a changed test file fell between HEAD and the working tree, and no allowance carries a reason for it. An assertion the same change makes in another test file moved rather than went, and is left out of the count and of what the finding claims.
+The assertion count of a changed test file fell between HEAD and the working tree, and no allowance carries a reason for it. An assertion inside a parametrized case or a loop counts once for each case the file writes down, so a table that loses a row loses a claim. A fall that leaves claims under a new loop whose cases the file does not write down is reported as a warning rather than a block, since that loop may run every assertion that left and only a person can say whether it does. An assertion the same change makes in another test file moved rather than went, and is left out of the count and of what the finding claims.
 
 <a id="T3"></a>
 ## T3: A skip or focus marker was added
@@ -260,7 +283,7 @@ The cases are named from the test shape of each side of the test commit, so what
 
 `scan` · on by default
 
-A path, command, flag or symbol cited in the repository's markdown does not resolve against the tree.
+A path, command, flag or symbol cited in the repository's markdown does not resolve against the tree. A link is judged by its destination alone, read from the directory of the document that writes it.
 
 A citation carries the line it names. A path that resolves is still wrong when the line is past the end of the file, and the finding says how long the file is. A bare name is answered by whatever the paragraph pinned it to: a path or a directory cited on the same line, or the last one that resolved under the same heading. That place is asked first, the rest of the tree second, and what neither answered is a warning naming the place, because a reader can go there and see. A name with nothing beside it is asked of the tree alone and reported as a note: prose is full of words that are nobody's symbol, and the loud half of this rule is the half a document vouched for.
 

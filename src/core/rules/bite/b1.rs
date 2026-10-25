@@ -15,10 +15,10 @@ use std::collections::BTreeSet;
 
 use crate::core::bite::{Trial, Verdict};
 use crate::core::change::Change;
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::read::TestUnit;
 
-pub fn evaluate(trial: &Trial) -> Vec<Finding> {
+pub fn evaluate(trial: &Trial) -> Vec<Detection> {
     if trial.alone == Verdict::Failed {
         return Vec::new();
     }
@@ -46,7 +46,7 @@ fn subject(tested: &[Change]) -> Vec<&Change> {
 
 /// What one file has to answer for: a finding per case the commit added, or one
 /// for the file where weeder can name no case in it.
-fn reported(change: &Change) -> Vec<Finding> {
+fn reported(change: &Change) -> Vec<Detection> {
     let Some(path) = change.path() else {
         return Vec::new();
     };
@@ -75,10 +75,9 @@ fn added_cases(change: &Change) -> Vec<&TestUnit> {
         .collect()
 }
 
-fn one_case(path: &str, case: &TestUnit) -> Finding {
-    Finding {
-        rule: "B1".to_string(),
-        level: Level::Block,
+fn one_case(path: &str, case: &TestUnit) -> Detection {
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: Some(Region {
             start_line: case.start_line,
@@ -94,14 +93,12 @@ fn one_case(path: &str, case: &TestUnit) -> Finding {
             next: "make the case fail on the base, by asserting the behaviour the change adds, and run bite again.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }
 
-fn whole_file(path: &str) -> Finding {
-    Finding {
-        rule: "B1".to_string(),
-        level: Level::Block,
+fn whole_file(path: &str) -> Detection {
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: None,
         message: Message {
@@ -112,6 +109,5 @@ fn whole_file(path: &str) -> Finding {
             next: "make the tests this commit carries fail on the base, then run bite again.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }

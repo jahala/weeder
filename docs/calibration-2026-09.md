@@ -1,8 +1,8 @@
 # calibration: weeder over real history, 2026-09
 
-weeder ships as a gate: over 635 commits of real history in 5 repositories it blocked 20, of which 4 were block-level false positives, 0.63 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level. The re-grade behind it is blind: docs/calibration-audit-blind-2026-09.md declares `Blind: yes` and agrees at the bar, so its auditor judged the cases from a packet with the builder's class out of sight, and the sighted re-grade in docs/calibration-audit-2026-09.md is recorded beside it.
+weeder ships as a gate, pending the independent re-grade: over 635 commits of real history in 5 repositories it blocked 20, of which 3 were block-level false positives, 0.47 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level, and the classification under it untrusted until a re-grade agrees at the bar. The re-grade behind it is a sighted one: docs/calibration-audit-2026-09.md declares `Blind: no`, so its auditor could read the builder's class beside each case before judging. The blind re-grade in docs/calibration-audit-blind-2026-09.md is under the bar, so no blind agreement stands behind this number yet.
 
-A second party re-graded the classification and docs/calibration-audit-2026-09.md and docs/calibration-audit-blind-2026-09.md records the agreement: blocked commits in docs/calibration-audit-blind-2026-09.md at 90.0 percent of 20 cases, recall cases in docs/calibration-audit-blind-2026-09.md at 95.0 percent of 20 cases. That is what took the qualification off this sentence. The floor under that share is 0.94 percent, 6 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 0.63 percent, 4 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table. Both numbers stay in this file: under the three classes in use before the ruling of 2026-09-06 the same 23 blocked commits counted 7 false positives, 1.10 percent, and under it, where a blocked commit is claim-true or claim-false and `acceptable` is a label the audit never counts, they count 4, 0.63 percent. The definition changed on that date and the question was corrected, not the goalpost moved.
+The classification under that number is the builder's own, and the re-grade is under the 90 percent bar: blocked commits in docs/calibration-audit-blind-2026-09.md agrees on 80.0 percent of 20 cases. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing. The floor under that share is 0.94 percent, 6 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 0.47 percent, 3 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table. Both numbers stay in this file: under the three classes in use before the ruling of 2026-09-06 the same 23 blocked commits counted 7 false positives, 1.10 percent, and under it, where a blocked commit is claim-true or claim-false and `acceptable` is a label the audit never counts, they count 4, 0.63 percent. The definition changed on that date and the question was corrected, not the goalpost moved.
 
 ## How this was measured
 
@@ -69,17 +69,17 @@ The window ends at `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9`, fetched from `htt
 |---|---|---|---|
 | `624529b3a9` feat(loop): the hygiene gate — empty-diff, secrets, deletion tripwire (§E) | X1 | false positive | X1 says a private key block was added to src/core/hygiene.ts and to test/unit/hygiene.test.ts, and that a credential in a commit is a credential published. Both hits are the regular expression that pleach's own secret detector matches a private key header with, and its fixture. There is no credential to rotate. |
 
-## tend2, 200 commits judged, 6 blocked, 22 warned
+## tend2, 200 commits judged, 6 blocked, 23 warned
 
 The window ends at `51035a5c827b1a8c2f49049f07487dcfac9036c6`, fetched from `https://github.com/jahala/tend.git`: the last 200 commits reaching it that are not merges, 200 of which have a parent to be judged against.
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
 | `067730ddd0` polish(audit): the obsolete-and-theater sweep — seven findings, all fixed | T2 | acceptable | T2 says test/renderer-fresh.test.ts went from 5 assertions to 4, and it did. The one that went demanded dist/loop.js and dist/loop.global.js be byte-identical, and this commit stops emitting the second file; the case still demands the GENERATED banner and the css header. An assertion cannot hold a file that is no longer built. |
-| `3adc642ce1` polish(root): no asset folder in the root — maps carry their own renderer | T1 | false positive | T1 says a case disappeared from test/renderer-fresh.test.ts, 2 declared down to 1, and that the behaviour it held is unwatched. The case was not deleted: it became a loop over the sibling directories, so the file runs one it() declaration over several inputs. The declaration count fell and the coverage did not. |
 | `bf2754689c` polish(cli): one orientation command, one asset convention (#102) | T1 | acceptable | T1 says test/season.test.ts went with 4 cases, and it did. The season command it tested is removed by the same commit, which folds orientation into one command with its own tests, so the cases went where the feature went. A suite leaving the tree is worth a person's eye. |
 | `08529d5f56` sunset(v1): the legacy lane leaves the tree — @plotplot/tend2 ships tend2 only | T1 | acceptable | T1 says forty-odd test files went with thousands of cases, and they did. This is the v1 sunset: 240 files and 94763 lines out, the adapters, the CLI and the core they tested leaving in the same commit and recoverable at the v1-final tag. Nothing is less covered afterwards because nothing they covered is still shipped, and a deletion this size is what a gate should stop a reader on. |
 | `78fed73b0c` cleanup: bare necessities — killed-spike tree, skein prototype, root screenshots, v1-map parkland removed (all in git history; paid facet cache untouched on disk); superseded docs to docs/archive; docs/bridge restored after its drift-guard caught the move (load-bearing spec, not history) | T1 | acceptable | T1 says the spikes/loop-hole test files went with their cases, and they did. The spike was killed: 50 of its non-test files go in the same commit, so the code under those cases left with them. |
+| `2bb9d83f23` fix(loop-hole): briefing signal density — dismiss once, empty sections elide, unique headers (sonnet, SYN-D, chain-gated) | T2 | acceptable | T2 says spikes/loop-hole/tests/briefing-v3.spec.ts went from 23 claims to 19, and it did: the case loops over the section headings, and each empty section used to be held to its heading and two lines of 'cleared the floor' text, where now it is held to the heading's absence. The commit makes empty sections elide, and the case was rewritten to demand exactly that, with a new claim that the scaffolding text is gone. The behaviour changed and the test follows it; nothing is watched less. First blocked on 2026-09-23, when T2 began counting a claim once per case its loop runs it for. |
 | `52b97e43ce` feat(loop-hole): refusal hygiene — sanitized one-line reasons + child stderr (rate limits read as rate limits); .loop-scratch gitignored | X1 | false positive | X1 says a secret-looking value was added, assigned to `detail-meta__key` and to `journey-row__key`. Both hits are class attributes in the renderer's html builder, and X1 read `class="...__key">` as an assignment. The value is markup. |
 
 ## copeca, 25 commits judged, 1 blocked, 7 warned
@@ -107,14 +107,14 @@ The window ends at `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d`, fetched from `htt
 |---|---|---|---|---|---|---|---|
 | tilth | 200 | 8 | 80 | 1 | 7 | 0 | 0.00% |
 | pleach | 152 | 1 | 21 | 0 | 0 | 1 | 0.66% |
-| tend2 | 200 | 6 | 22 | 0 | 4 | 2 | 1.00% |
+| tend2 | 200 | 6 | 23 | 0 | 5 | 1 | 0.50% |
 | copeca | 25 | 1 | 7 | 0 | 0 | 1 | 4.00% |
 | umbel | 58 | 4 | 13 | 2 | 2 | 0 | 0.00% |
-| **pooled** | **635** | **20** | **143** | **3** | **13** | **4** | **0.63%** |
+| **pooled** | **635** | **20** | **144** | **3** | **14** | **3** | **0.47%** |
 
-The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 0.63 percent of 635 commits, and 0 commits weeder could not judge.
+The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 0.47 percent of 635 commits, and 0 commits weeder could not judge.
 
-Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 177 of them at block level still, 78 at warn level, 1 at note level and 76 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files; 9 moved from T1 at block level to T5 at warn level, all of them on test files.
+Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 176 of them at block level still, 78 at warn level, 1 at note level and 77 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files; 9 moved from T1 at block level to T5 at warn level, all of them on test files.
 
 Too few commits to carry a share of their own, reported and not judged alone: copeca (25 commits, 4.00 percent). Their commits and their false positives are both in the pooled total.
 
@@ -122,7 +122,7 @@ Too few commits to carry a share of their own, reported and not judged alone: co
 
 A rule that splits in two is supposed to take friction off the gate while keeping the finding. Until the same files are read twice that is a claim. Every file whose answer changed is here with the rule that refused it, the kind weeder gives the file, and the loudest thing weeder says about it now.
 
-174 of the first run's block-level findings are refused by the same rule at the same level and are left out of this table; the 158 whose answer changed are all in it.
+173 of the first run's block-level findings are refused by the same rule at the same level and are left out of this table; the 159 whose answer changed are all in it.
 
 | Repo | Commit | File | Kind | Blocked then by | Says now | At |
 |---|---|---|---|---|---|---|
@@ -192,6 +192,7 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 | tend2 | `08529d5f56` | `tests/fixtures/audit-emit/passing/unit.mjs` | test | T1 | T5 | warn |
 | tend2 | `08529d5f56` | `tests/fixtures/audit-emit/trivial-recipe/docs/tend/features/__fixture__.tend.html` | test | T1 | T5 | warn |
 | tend2 | `1e39b91c5f` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
+| tend2 | `3adc642ce1` | `test/renderer-fresh.test.ts` | test | T1 | nothing | nothing |
 | tend2 | `40875df2c4` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tend2 | `78fed73b0c` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tend2 | `78fed73b0c` | `spikes/loop-hole/tests/cluster-fixture.ts` | test | T1 | nothing | nothing |
@@ -289,10 +290,6 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 
 Every block whose claim was not true of the change, under the rule that made it. This is the list the rule loops work from.
 
-**T1**, one block
-
-- tend2 `3adc642ce1` polish(root): no asset folder in the root — maps carry their own renderer, T1 says a case disappeared from test/renderer-fresh.test.ts, 2 declared down to 1, and that the behaviour it held is unwatched. The case was not deleted: it became a loop over the sibling directories, so the file runs one it() declaration over several inputs. The declaration count fell and the coverage did not.
-
 **X1**, 3 blocks
 
 - pleach `624529b3a9` feat(loop): the hygiene gate — empty-diff, secrets, deletion tripwire (§E), X1 says a private key block was added to src/core/hygiene.ts and to test/unit/hygiene.test.ts, and that a credential in a commit is a credential published. Both hits are the regular expression that pleach's own secret detector matches a private key header with, and its fixture. There is no credential to rotate.
@@ -307,7 +304,7 @@ Precision is the share of blocks that were not false positives. The allowance ra
 |---|---|---|---|
 | tilth | 100.0% | 1 | 0.0 per 100 commits (guard not installed) |
 | pleach | 0.0% | 0 | 0.0 per 100 commits (guard not installed) |
-| tend2 | 66.7% | 0 | 0.0 per 100 commits (guard not installed) |
+| tend2 | 83.3% | 0 | 0.0 per 100 commits (guard not installed) |
 | copeca | 0.0% | 0 | 0.0 per 100 commits (guard not installed) |
 | umbel | 100.0% | 2 | 0.0 per 100 commits (guard not installed) |
 
@@ -320,8 +317,8 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 | Rule | Blocks | True positive | Acceptable | False positive | False-positive share of its blocks |
 |---|---|---|---|---|---|
 | S1 | 2 | 2 | 0 | 0 | 0.00% |
-| T1 | 9 | 1 | 7 | 1 | 11.11% |
-| T2 | 9 | 1 | 8 | 0 | 0.00% |
+| T1 | 8 | 1 | 7 | 0 | 0.00% |
+| T2 | 10 | 1 | 9 | 0 | 0.00% |
 | X1 | 3 | 0 | 0 | 3 | 100.00% |
 
 
@@ -329,7 +326,7 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 
 ## Recall
 
-Every rule that blocks, T1, T3, S1, X1, C1, G1, catches at least 95 percent of the anti-patterns planted for it, in each of ts, py, rs and go. 2907 cases were planted one anti-pattern at a time in real commits, and 2877 of them were caught on the site they were planted in.
+Every rule the recall bar holds, T1, T3, S1, X1, C1, G1, catches at least 95 percent of the anti-patterns planted for it, in each of ts, py, rs and go. 2907 cases were planted one anti-pattern at a time in real commits, and 2879 of them were caught on the site they were planted in.
 
 The campaign is `cargo xtask mutate`. For each case it checks out a real commit of a corpus repository, plants one anti-pattern in its tree with a scanner that knows nothing about weeder's detectors, and runs `weeder check --base <parent> --strict`. A case counts as caught only where the rule fires on the file the shape was planted in, on the lines it was planted on where it has lines. A site the unmutated commit already fires that rule on is passed over, so no hit is inherited from the commit itself.
 
@@ -359,7 +356,7 @@ Files the injector planted nothing in, counted once for each commit they were re
 
 | Rule | Level | Language | Cases | Hits | Misses | Unplantable | Recall |
 |---|---|---|---|---|---|---|---|
-| T1 | block | ts | 42 | 40 | 2 | 0 | 95.2% |
+| T1 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
 | T1 | block | py | 34 | 34 | 0 | 0 | 100.0% |
 | T1 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
 | T1 | block | go | 40 | 39 | 1 | 0 | 97.5% |
@@ -467,9 +464,7 @@ Each of these was planted and not reported. The before and after of every one is
 - T6 · ts · tend2 `32df8ddd1` · `test/verify.test.ts:176`, an error assertion stopped naming the error
 - T6 · ts · tend2 `2a0e93933` · `test/verify.test.ts:176`, an error assertion stopped naming the error
 - T6 · ts · tend2 `fadcb3808` · `test/verify.test.ts:176`, an error assertion stopped naming the error
-- T1 · ts · tend2 `6d9a1cf91` · `test/site-paths.test.ts`, the case `${dir} (${pages.length} pages)` was deleted
 - T6 · ts · tend2 `6d9a1cf91` · `test/route.test.ts:143`, an error assertion stopped naming the error
-- T1 · ts · tend2 `8d939ec15` · `test/renderer-fresh.test.ts`, the case `it` was deleted
 - T6 · ts · tend2 `8d939ec15` · `test/route.test.ts:143`, an error assertion stopped naming the error
 - T6 · ts · tend2 `e2adbab97` · `test/verify.test.ts:176`, an error assertion stopped naming the error
 - T6 · ts · tend2 `56072cdab` · `test/verify.test.ts:176`, an error assertion stopped naming the error

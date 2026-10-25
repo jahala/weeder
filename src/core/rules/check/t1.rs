@@ -17,8 +17,9 @@
 //! into two, or folding two into one, takes cases out of one file and puts them
 //! into another, and both files are in the same diff: nothing is covered less
 //! afterwards. So the cases a file no longer has are looked for in the rest of
-//! the change, by the name their runner collects them under and, where the move
-//! renamed them, by everything they hold with that name taken out. A case found
+//! the change, by the name their runner collects them under, still making at
+//! least the assertions they made, and, where the move renamed them, by
+//! everything they hold with that name taken out. A case found
 //! there is not a deletion and is not counted as one, and what is left over is
 //! what the finding reports. Only when nothing was found anywhere does weeder say
 //! the behaviour is covered by nobody; where some cases moved, the finding names
@@ -28,13 +29,14 @@
 use std::collections::BTreeSet;
 
 use crate::core::change::{Change, Side};
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::read::TestUnit;
 use crate::core::rules::check::generated;
+use crate::core::rules::check::vocab::Suite;
 use crate::core::rules::check::Judgement;
 use crate::core::syntax::Mask;
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     // A file's cases are read once and asked two questions: what this file no
     // longer has, and what every other file in the change has now.
@@ -48,12 +50,13 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
 }
 
 /// One case, as a move can be followed by it: the name its runner collects it
-/// under, and what it holds with that name taken out, so the same case under
-/// another name reads the same.
+/// under, what it holds with that name taken out, so the same case under
+/// another name reads the same, and how many assertions it makes.
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Case {
     name: String,
     body: String,
+    assertions: usize,
 }
 
 /// A case a file in this change did not have before it and has now.
@@ -76,7 +79,7 @@ struct Followed {
 }
 
 /// What the change did to this file's tests, where it did anything at all.
-fn deletion(change: &Change, held: &Held, arrived: &[Arrival]) -> Option<Finding> {
+fn deletion(change: &Change, held: &Held, arrived: &[Arrival]) -> Option<Detection> {
     let path = change.path()?;
     if !change.before.holds_tests() {
         return None;
@@ -168,8 +171,14 @@ fn followed(lost: &[Case], arrived: &[Arrival], from: &str) -> Followed {
 /// it under, or, where the move renamed it, everything it holds apart from that
 /// name. A case that holds nothing is followed by its name alone, because an
 /// empty body is every empty body.
+///
+/// A name is only a label, and a label can be written over a case that checks
+/// nothing, so a case followed by its name must still make at least the
+/// assertions it made before. One that makes fewer is the old case deleted and
+/// a new one written under its name.
 fn covers(one: &Case, other: &Case) -> bool {
-    (!one.name.is_empty() && one.name == other.name)
+    let named = !one.name.is_empty() && one.name == other.name;
+    (named && other.assertions >= one.assertions)
         || (!one.body.is_empty() && one.body == other.body)
 }
 
@@ -182,9 +191,10 @@ fn cases(side: &Side) -> Vec<Case> {
         return Vec::new();
     }
     let mask = side.mask();
+    let suite = Suite::of(side.lang(), mask);
     declared
         .into_iter()
-        .map(|unit| written(mask, unit))
+        .map(|unit| written(mask, &suite, unit))
         .collect()
 }
 
@@ -193,7 +203,10 @@ fn cases(side: &Side) -> Vec<Case> {
 /// another file still reads as the case that left. The name is taken out where
 /// it is first written, which is the line that declares the case; a case that
 /// says its own title again inside itself keeps that.
-fn written(mask: &Mask, unit: &TestUnit) -> Case {
+fn written(mask: &Mask, suite: &Suite, unit: &TestUnit) -> Case {
+    let assertions = (unit.start_line..=unit.end_line)
+        .map(|line| suite.assertions(mask, line))
+        .sum();
     let text = (unit.start_line..=unit.end_line)
         .map(|line| mask.outside_comments(line))
         .map(|line| line.split_whitespace().collect::<Vec<&str>>().join(" "))
@@ -208,10 +221,11 @@ fn written(mask: &Mask, unit: &TestUnit) -> Case {
     Case {
         name: unit.name.clone(),
         body,
+        assertions,
     }
 }
 
-fn file_gone(path: &str, cases: usize, moved: &Followed) -> Finding {
+fn file_gone(path: &str, cases: usize, moved: &Followed) -> Detection {
     let message = if moved.count == 0 {
         Message {
             what: format!("a test file was deleted, and {} went with it.", counted(cases)),
@@ -230,14 +244,12 @@ fn file_gone(path: &str, cases: usize, moved: &Followed) -> Finding {
             next: "send the rest after the others, or say in the change which behaviour stopped being worth a test.".to_string(),
         }
     };
-    Finding {
-        rule: "T1".to_string(),
-        level: Level::Block,
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: None,
         message,
         fix: None,
-        suppressed: None,
     }
 }
 
@@ -248,7 +260,7 @@ fn cases_gone(
     after: usize,
     remaining: usize,
     moved: &Followed,
-) -> Finding {
+) -> Detection {
     let what = if moved.count == 0 {
         format!(
             "{} disappeared from this file: it declared {before} and now declares {after}.",
@@ -262,9 +274,8 @@ fn cases_gone(
             named(&moved.into)
         )
     };
-    Finding {
-        rule: "T1".to_string(),
-        level: Level::Block,
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: change.first_edit().map(|line| Region {
             start_line: line,
@@ -276,7 +287,6 @@ fn cases_gone(
             next: "put the cases back, or say in the change which behaviour stopped being worth a test.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }
 

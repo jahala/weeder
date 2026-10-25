@@ -33,41 +33,59 @@ pub fn present(
     tree: &Tree,
     before: &[(String, Option<String>)],
 ) -> bool {
-    match rule {
-        // A rename and a blob are about the files themselves rather than about
-        // anything inside one, so neither is read as a site.
-        "T7" => the_suite_left_the_runner(lang, planted, tree),
-        "T8" => the_run_no_longer_collects(lang, planted, tree),
-        "G2" => bytes_with_no_lines_arrived(planted, tree),
-        _ => match Site::read(lang, planted, tree, before) {
-            Some(site) => at_the_site(rule, &site, planted, tree),
-            None => false,
-        },
+    match reader(rule) {
+        Some(Reader::Files(read)) => read(lang, planted, tree),
+        Some(Reader::Site(read)) => {
+            Site::read(lang, planted, tree, before).is_some_and(|site| read(&site, planted, tree))
+        }
+        None => false,
     }
 }
 
-fn at_the_site(rule: &str, site: &Site, planted: &Mutation, tree: &Tree) -> bool {
-    match rule {
-        "T1" => a_case_is_gone(site),
-        "T2" => a_case_stopped_claiming(site),
-        "T3" => a_case_is_turned_off(site),
-        "T4" => a_slack_grew(site),
-        "T5" => an_expectation_moved(site, tree),
-        "T6" => a_claim_stopped_naming_the_failure(site),
-        "M1" => a_double_stands_in_for_the_change(site, tree),
-        "S1" => a_marker_for_work_is_in_shipped_code(site),
-        "S2" => a_failure_goes_nowhere(site),
-        "S3" => a_print_is_in_shipped_code(site),
-        "D1" => a_dependency_pin_moved(site),
-        "D2" => an_import_crosses_a_layer(site, tree),
-        "X1" => a_credential_is_written_down(site),
-        "X2" => the_change_reached_past_its_scope(site, planted),
-        "C1" => a_guardrail_was_rewritten(site),
-        "C2" => an_ignore_reaches_the_source(site, tree),
-        "C3" => a_workflow_was_rewritten(site),
-        "G1" => a_merge_was_left_half_finished(site),
-        _ => false,
-    }
+/// How a rule's shape is confirmed in the tree.
+enum Reader {
+    /// A rename and a blob are about the files themselves rather than about
+    /// anything inside one, so neither is read as a site.
+    Files(fn(Language, &Mutation, &Tree) -> bool),
+    /// Everything else is read at the one site the case names.
+    Site(fn(&Site, &Mutation, &Tree) -> bool),
+}
+
+/// Whether the campaign can confirm this rule's shape at all. A rule with a
+/// planter and no reader would have every case it plants counted unplantable.
+/// The campaign asks `reader` itself; the question is here for the test in
+/// `inject.rs` that holds every check rule to both arms.
+#[cfg(test)]
+pub fn confirms(rule: &str) -> bool {
+    reader(rule).is_some()
+}
+
+/// The reader for a rule, or `None` where the campaign has none for it.
+fn reader(rule: &str) -> Option<Reader> {
+    Some(match rule {
+        "T7" => Reader::Files(the_suite_left_the_runner),
+        "T8" => Reader::Files(the_run_no_longer_collects),
+        "G2" => Reader::Files(|_, planted, tree| bytes_with_no_lines_arrived(planted, tree)),
+        "T1" => Reader::Site(|site, _, _| a_case_is_gone(site)),
+        "T2" => Reader::Site(|site, _, _| a_case_stopped_claiming(site)),
+        "T3" => Reader::Site(|site, _, _| a_case_is_turned_off(site)),
+        "T4" => Reader::Site(|site, _, _| a_slack_grew(site)),
+        "T5" => Reader::Site(|site, _, tree| an_expectation_moved(site, tree)),
+        "T6" => Reader::Site(|site, _, _| a_claim_stopped_naming_the_failure(site)),
+        "M1" => Reader::Site(|site, _, tree| a_double_stands_in_for_the_change(site, tree)),
+        "S1" => Reader::Site(|site, _, _| a_marker_for_work_is_in_shipped_code(site)),
+        "S2" => Reader::Site(|site, _, _| a_failure_goes_nowhere(site)),
+        "S3" => Reader::Site(|site, _, _| a_print_is_in_shipped_code(site)),
+        "D1" => Reader::Site(|site, _, _| a_dependency_pin_moved(site)),
+        "D2" => Reader::Site(|site, _, tree| an_import_crosses_a_layer(site, tree)),
+        "X1" => Reader::Site(|site, _, _| a_credential_is_written_down(site)),
+        "X2" => Reader::Site(|site, planted, _| the_change_reached_past_its_scope(site, planted)),
+        "C1" => Reader::Site(|site, _, _| a_guardrail_was_rewritten(site)),
+        "C2" => Reader::Site(|site, _, tree| an_ignore_reaches_the_source(site, tree)),
+        "C3" => Reader::Site(|site, _, _| a_workflow_was_rewritten(site)),
+        "G1" => Reader::Site(|site, _, _| a_merge_was_left_half_finished(site)),
+        _ => return None,
+    })
 }
 
 /// One case's site: the file the shape was written into, read on both sides.

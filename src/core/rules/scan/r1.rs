@@ -15,6 +15,12 @@
 //! change or a call's parentheses. Everything else is prose, and prose is not
 //! this rule's business.
 //!
+//! A markdown link is two things written together, text and a destination, and
+//! only the destination is a claim about the tree. It is resolved from the
+//! directory of the document that writes it, the way a reader's click resolves
+//! it, and it names one place exactly, never a file of that name somewhere
+//! else. A URL and an anchor in the same page are not places in this tree.
+//!
 //! A citation is read whole. The `:line` or `:start-end` written on the end of
 //! a path is part of what the document claimed, so a path that resolves is
 //! still answered: a line past the end of the file is reported with the length
@@ -35,7 +41,7 @@
 use std::collections::BTreeSet;
 
 use crate::core::config::Config;
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Level, Message, Region, Stamp};
 use crate::core::glob;
 use crate::core::syntax;
 use crate::core::tree::{CommandListing, Tree, TreeFile};
@@ -51,7 +57,7 @@ fn is_document(path: &str) -> bool {
     DOCUMENTS.iter().any(|pattern| glob::matches(pattern, path))
 }
 
-pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Finding> {
+pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Detection> {
     let extensions = tree.extensions();
     let known = known_identifiers(tree);
     let mut findings = Vec::new();
@@ -67,10 +73,12 @@ pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Finding> {
         // the whole repository when the paragraph had named a smaller place.
         let mut anchors: Vec<Option<Anchor>> = vec![None; citations.len()];
         for (index, citation) in citations.iter().enumerate() {
-            if citation.kind != Kind::Path {
-                continue;
-            }
-            match place(tree, &citation.text, &extensions) {
+            let resolved = match citation.kind {
+                Kind::Path => place(tree, &citation.text, &extensions),
+                Kind::Link => linked(tree, &file.path, &citation.text),
+                Kind::Command | Kind::Symbol => continue,
+            };
+            match resolved {
                 Place::Found(anchor) => {
                     if let Some(complaint) = line_complaint(&anchor, &citation.text) {
                         findings.push(finding(&file.path, citation.line, &complaint));
@@ -85,7 +93,7 @@ pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Finding> {
         }
         for (index, citation) in citations.iter().enumerate() {
             let unresolved = match &citation.kind {
-                Kind::Path => continue,
+                Kind::Path | Kind::Link => continue,
                 Kind::Command => command_complaint(tree, &citation.text),
                 Kind::Symbol => symbol_complaint(
                     &known,
@@ -163,6 +171,9 @@ struct Citation {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Kind {
     Path,
+    /// The destination of a markdown link, which is a path relative to the
+    /// document that writes it.
+    Link,
     Command,
     Symbol,
 }
@@ -174,16 +185,15 @@ struct Complaint {
     /// it to a place is a claim weeder can hold to that place; a name standing
     /// on its own is answered by the whole repository, and prose writes those
     /// by the hundred, so it is reported and left quiet.
-    level: Level,
+    stamp: Stamp,
     what: String,
     why: String,
     next: String,
 }
 
-fn finding(path: &str, line: u32, complaint: &Complaint) -> Finding {
-    Finding {
-        rule: "R1".to_string(),
-        level: complaint.level,
+fn finding(path: &str, line: u32, complaint: &Complaint) -> Detection {
+    Detection {
+        stamp: complaint.stamp,
         path: path.to_string(),
         region: Some(Region {
             start_line: line,
@@ -195,7 +205,6 @@ fn finding(path: &str, line: u32, complaint: &Complaint) -> Finding {
             next: complaint.next.clone(),
         },
         fix: None,
-        suppressed: None,
     }
 }
 
@@ -245,7 +254,7 @@ fn place<'a>(tree: &'a Tree, cited: &str, extensions: &BTreeSet<String>) -> Plac
             return Place::Found(under(tree, &prefix, &prefix));
         }
         return Place::Gone(Complaint {
-            level: Level::Warn,
+            stamp: Stamp::Rule,
             what: format!("the docs cite `{cited}`, and nothing in the tree is under `{prefix}`."),
             why: "a pattern rooted at a directory that is gone matches nothing, so whoever follows the doc finds an empty answer rather than an error.".to_string(),
             next: format!("point it at the directory `{prefix}` became, or drop the sentence."),
@@ -269,7 +278,7 @@ fn place<'a>(tree: &'a Tree, cited: &str, extensions: &BTreeSet<String>) -> Plac
             return Place::Prose;
         }
         return Place::Gone(Complaint {
-            level: Level::Warn,
+            stamp: Stamp::Rule,
             what: format!("the docs cite the path `{cited}`, and the tree holds nothing there."),
             why: "a reader following the path finds nothing, and a tool given it fails on a file that has moved or gone.".to_string(),
             next: "cite where the file is now, or delete the reference.".to_string(),
@@ -296,7 +305,7 @@ fn place<'a>(tree: &'a Tree, cited: &str, extensions: &BTreeSet<String>) -> Plac
         });
     }
     Place::Gone(Complaint {
-        level: Level::Warn,
+        stamp: Stamp::Rule,
         what: format!("the docs cite the file `{cited}`, and no file in the tree carries that name."),
         why: "a reader looking for the file finds none, and the doc describes a repository that no longer exists.".to_string(),
         next: "cite the file the repository has, or delete the reference.".to_string(),
@@ -315,6 +324,56 @@ fn under<'a>(tree: &'a Tree, prefix: &str, display: &str) -> Anchor<'a> {
         directory: true,
         display: display.to_string(),
     }
+}
+
+/// Whether the place a link points at is there. A link is written relative to
+/// the document it sits in and names exactly one place, so it is resolved from
+/// that document's directory and never by a bare name wherever it sits. A
+/// destination that climbs out of the repository names nothing this tree
+/// answers for.
+fn linked<'a>(tree: &'a Tree, document: &str, destination: &str) -> Place<'a> {
+    let Some(path) = joined(document, destination) else {
+        return Place::Prose;
+    };
+    if path.is_empty() {
+        return Place::Prose;
+    }
+    if let Some(file) = tree.files.iter().find(|file| file.path == path) {
+        return Place::Found(Anchor {
+            files: vec![file],
+            directory: false,
+            display: file.path.clone(),
+        });
+    }
+    if tree.holds_under(&path) {
+        return Place::Found(under(tree, &path, destination));
+    }
+    Place::Gone(Complaint {
+        stamp: Stamp::Rule,
+        what: format!("the docs link to `{destination}`, and the tree holds nothing there."),
+        why: "a reader who follows the link lands on nothing, and the page still draws it as though it went somewhere.".to_string(),
+        next: "point the link at where the file is now, or take the link out.".to_string(),
+    })
+}
+
+/// A link's destination as a path from the root of the repository, read from
+/// the directory of the document that writes it. `None` where it climbs above
+/// the root.
+fn joined(document: &str, destination: &str) -> Option<String> {
+    let mut parts: Vec<&str> = document
+        .rsplit_once('/')
+        .map(|(directory, _)| directory.split('/').collect())
+        .unwrap_or_default();
+    for segment in destination.split('/') {
+        match segment {
+            "" | "." => {}
+            ".." => {
+                parts.pop()?;
+            }
+            name => parts.push(name),
+        }
+    }
+    Some(parts.join("/"))
 }
 
 /// The line a citation into a resolved file names, when the file is not that
@@ -339,7 +398,7 @@ fn line_complaint(anchor: &Anchor, cited: &str) -> Option<Complaint> {
     }
     let path = &file.path;
     Some(Complaint {
-        level: Level::Warn,
+        stamp: Stamp::Rule,
         what: format!("the docs cite `{cited}`, and `{path}` is {count} lines long."),
         why: "a citation past the end of a file lands nowhere, and the lines it was written against have moved somewhere this one does not say.".to_string(),
         next: format!("read `{path}` and cite the line the text sits on now, or drop the number."),
@@ -451,7 +510,7 @@ fn command_complaint(tree: &Tree, cited: &str) -> Vec<Complaint> {
                 // to judge.
                 if !listing.subcommands.is_empty() {
                     complaints.push(Complaint {
-                        level: Level::Warn,
+                        stamp: Stamp::Rule,
                         what: format!("the docs cite `{cited}`, and `{}` has no subcommand `{word}`.", path.join(" ")),
                         why: "the command as written fails the moment anyone runs it, and the doc is the only place it still exists.".to_string(),
                         next: format!("run `{} --help` and cite a subcommand it prints.", path.join(" ")),
@@ -474,7 +533,7 @@ fn command_complaint(tree: &Tree, cited: &str) -> Vec<Complaint> {
             continue;
         }
         complaints.push(Complaint {
-            level: Level::Warn,
+            stamp: Stamp::Rule,
             what: format!("the docs cite `{cited}`, and `{}` has no flag `{flag}`.", path.join(" ")),
             why: "the command as written is refused the moment anyone runs it, and a reader has no way to tell that from the doc.".to_string(),
             next: format!("run `{} --help` and cite a flag it prints.", path.join(" ")),
@@ -522,7 +581,7 @@ fn symbol_complaint(
             return Vec::new();
         }
         return vec![Complaint {
-            level: Level::Note,
+            stamp: Stamp::Override(Level::Note),
             what: format!("the docs cite the symbol `{cited}`, and the code declares and uses no `{name}`."),
             why: "a name that only the documentation still knows sends a reader looking for code that was renamed or deleted.".to_string(),
             next: "cite the name the code carries now, or delete the reference.".to_string(),
@@ -541,7 +600,7 @@ fn symbol_complaint(
         format!("the file `{}`", anchor.display)
     };
     vec![Complaint {
-        level: Level::Warn,
+        stamp: Stamp::Rule,
         what: format!("the docs cite `{cited}` beside {place}, and neither it nor the rest of the tree declares `{name}`."),
         why: "a name the paragraph pins to a place is a claim about that place, and a reader who goes there finds nothing of the kind.".to_string(),
         next: format!("cite the name {place} carries now, or delete the reference."),
@@ -577,12 +636,20 @@ fn citations(document: &str) -> Vec<Citation> {
         if is_heading(trimmed) {
             section += 1;
         }
-        for piece in split_line(line) {
+        let pieces = match definition(line) {
+            Some(destination) => vec![Piece::Link(destination)],
+            None => split_line(line),
+        };
+        for piece in pieces {
             let cited = match piece {
                 Piece::Span(span) => span_citations(&span),
                 Piece::Prose(prose) => prose_paths(&prose)
                     .into_iter()
                     .map(|token| (Kind::Path, token))
+                    .collect(),
+                Piece::Link(destination) => local_destination(&destination)
+                    .map(|path| (Kind::Link, path))
+                    .into_iter()
                     .collect(),
             };
             for (kind, text) in cited {
@@ -628,21 +695,37 @@ fn fence_opener(line: &str) -> Option<String> {
     None
 }
 
-/// One run of a line: what a code span holds, or the prose between two of them.
+/// One run of a line: what a code span holds, the prose between two of them,
+/// or where a link written in that prose points.
 enum Piece {
     Span(String),
     Prose(String),
+    Link(String),
 }
 
 /// A line split into the runs it is written from, in the order it writes them.
 /// A span opens on a run of backticks and closes on a run of the same length;
-/// an unclosed run is not a span, and what follows it is still prose.
+/// an unclosed run is not a span, and what follows it is still prose. A link's
+/// text stays prose, and its destination is a run of its own, so the two are
+/// never read as one token.
 fn split_line(line: &str) -> Vec<Piece> {
     let characters: Vec<char> = line.chars().collect();
     let mut pieces = Vec::new();
     let mut prose = String::new();
     let mut index = 0;
     while index < characters.len() {
+        let opens_destination = characters[index] == ']'
+            && characters.get(index + 1) == Some(&'(')
+            && characters[..index].contains(&'[');
+        if opens_destination {
+            if let Some((destination, end)) = inline_destination(&characters, index + 2) {
+                prose.push(']');
+                pieces.push(Piece::Prose(std::mem::take(&mut prose)));
+                pieces.push(Piece::Link(destination));
+                index = end;
+                continue;
+            }
+        }
         if characters[index] != '`' {
             prose.push(characters[index]);
             index += 1;
@@ -693,6 +776,136 @@ fn closing(characters: &[char], from: usize, width: usize) -> Option<usize> {
         }
     }
     None
+}
+
+/// The destination of an inline link, read from just inside its `(`, and where
+/// the link ends. A destination is written bare, with its own parentheses
+/// balanced, or between angle brackets, and a title in quotes or parentheses
+/// may follow it before the `)` that closes the link. `None` where what follows
+/// is not a link after all.
+fn inline_destination(characters: &[char], from: usize) -> Option<(String, usize)> {
+    let blank = |at: usize| characters.get(at).is_some_and(|c| c.is_whitespace());
+    let mut index = from;
+    while blank(index) {
+        index += 1;
+    }
+    let mut destination = String::new();
+    if characters.get(index) == Some(&'<') {
+        index += 1;
+        while let Some(character) = characters.get(index) {
+            index += 1;
+            if *character == '>' {
+                break;
+            }
+            destination.push(*character);
+        }
+    } else {
+        let mut depth = 0_usize;
+        while let Some(character) = characters.get(index) {
+            match character {
+                ')' if depth == 0 => break,
+                ')' => depth -= 1,
+                '(' => depth += 1,
+                character if character.is_whitespace() => break,
+                _ => {}
+            }
+            destination.push(*character);
+            index += 1;
+        }
+    }
+    while blank(index) {
+        index += 1;
+    }
+    let close = match characters.get(index) {
+        Some('"') => Some('"'),
+        Some('\'') => Some('\''),
+        Some('(') => Some(')'),
+        _ => None,
+    };
+    if let Some(close) = close {
+        index += 1;
+        while characters.get(index).is_some_and(|c| *c != close) {
+            index += 1;
+        }
+        index += 1;
+        while blank(index) {
+            index += 1;
+        }
+    }
+    (characters.get(index) == Some(&')')).then_some((destination, index + 1))
+}
+
+/// The destination a reference definition gives its label: `[label]: dest`,
+/// indented at most three spaces, with an optional title after it. A footnote
+/// is written the same way with a caret, and points at text rather than at a
+/// place.
+fn definition(line: &str) -> Option<String> {
+    let indent = line.len() - line.trim_start_matches(' ').len();
+    if indent > 3 {
+        return None;
+    }
+    let rest = line[indent..].strip_prefix('[')?;
+    let (label, rest) = rest.split_once("]:")?;
+    if label.trim().is_empty() || label.starts_with('^') || label.contains('[') {
+        return None;
+    }
+    let rest = rest.trim_start();
+    let destination = match rest.strip_prefix('<') {
+        Some(inside) => inside.split_once('>')?.0,
+        None => rest.split_whitespace().next()?,
+    };
+    Some(destination.to_string())
+}
+
+/// The path a link's destination names in this repository, with its fragment
+/// and query taken off, or `None` where it names no such place: a URL, a mail
+/// address, an anchor in the same document, a path from the root of a site.
+fn local_destination(destination: &str) -> Option<String> {
+    let destination = destination.trim();
+    let scheme = destination.split_once(':').is_some_and(|(scheme, _)| {
+        scheme
+            .chars()
+            .next()
+            .is_some_and(|c| c.is_ascii_alphabetic())
+            && scheme
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || matches!(c, '+' | '.' | '-'))
+    });
+    if scheme
+        || destination.starts_with(['#', '/', '~'])
+        || destination.contains(['<', '>', '{', '}'])
+    {
+        return None;
+    }
+    let path = destination.split(['#', '?']).next().unwrap_or(destination);
+    (!path.is_empty()).then(|| decoded(path))
+}
+
+/// A path with the `%` escapes a link writes a space or a bracket in turned
+/// back into the characters they stand for. An escape that is not two hex
+/// digits is left as it is written.
+fn decoded(path: &str) -> String {
+    let bytes = path.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        let escape = (bytes[index] == b'%')
+            .then(|| bytes.get(index + 1..index + 3))
+            .flatten()
+            .and_then(|hex| std::str::from_utf8(hex).ok())
+            .and_then(|hex| u8::from_str_radix(hex, 16).ok());
+        match escape {
+            Some(byte) => {
+                out.push(byte);
+                index += 3;
+            }
+            None => {
+                out.push(bytes[index]);
+                index += 1;
+            }
+        }
+    }
+    String::from_utf8(out).unwrap_or_else(|_| path.to_string())
 }
 
 /// What a code span cites, and under which authority. A span cites nothing weeder

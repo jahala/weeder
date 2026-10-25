@@ -37,8 +37,19 @@ fn columns(line: &str) -> Vec<&str> {
     line.split_whitespace().collect()
 }
 
+/// The rows of a table: the lines that name a finding, rather than the lines
+/// indented under one or the count that ends it.
+fn rows(table: &str) -> Vec<&str> {
+    let mut lines: Vec<&str> = table.lines().collect();
+    lines.pop();
+    lines
+        .into_iter()
+        .filter(|line| !line.starts_with(' '))
+        .collect()
+}
+
 #[test]
-fn table_carries_level_rule_path_line_and_the_what_on_one_line_per_finding() {
+fn table_carries_the_what_on_the_row_and_the_why_and_next_under_it() {
     let findings = vec![
         finding(
             "T1",
@@ -57,7 +68,11 @@ fn table_carries_level_rule_path_line_and_the_what_on_one_line_per_finding() {
     ];
     let table = render_table(&findings);
     let lines: Vec<&str> = table.lines().collect();
-    assert_eq!(lines.len(), 3, "one line per finding, then the count");
+    assert_eq!(
+        lines.len(),
+        7,
+        "a row, its why and its next per finding, then the count:\n{table}"
+    );
 
     assert_eq!(
         columns(lines[0])[..3],
@@ -66,11 +81,69 @@ fn table_carries_level_rule_path_line_and_the_what_on_one_line_per_finding() {
     assert!(lines[0].ends_with("a test case disappeared from a changed test file."));
     assert!(
         !lines[0].contains("the suite no longer asks"),
-        "the table carries the what alone"
+        "the row carries the what, and the why sits under it:\n{table}"
+    );
+    let column = lines[0].find("T1").expect("the row names its rule");
+    assert_eq!(
+        lines[1],
+        format!(
+            "{}why   the suite no longer asks the question it used to ask.",
+            " ".repeat(column)
+        ),
+        "the why is indented under the row, beneath the rule:\n{table}"
+    );
+    assert_eq!(
+        lines[2],
+        format!(
+            "{}next  restore it, or record why it went.",
+            " ".repeat(column)
+        ),
+        "the next action follows the why:\n{table}"
     );
 
-    assert_eq!(columns(lines[1])[..3], ["warning", "S3", "src/parser.rs:4"]);
-    assert!(lines[1].ends_with("a debug leftover reached production code."));
+    assert_eq!(columns(lines[3])[..3], ["warning", "S3", "src/parser.rs:4"]);
+    assert!(lines[3].ends_with("a debug leftover reached production code."));
+    assert!(lines[4].trim_start().starts_with("why "));
+    assert!(lines[5].trim_start().starts_with("next "));
+}
+
+#[test]
+fn a_long_why_wraps_under_its_row_rather_than_running_on() {
+    let mut long = finding(
+        "T2",
+        Level::Block,
+        "tests/test_format.py",
+        3,
+        "2 assertions went out of this file.",
+    );
+    long.message.why = "a case that checks nothing passes whatever the code does, so the suite reports green over behaviour held by nobody, and the next change to that behaviour lands unwatched.".to_string();
+    let table = render_table(&[long.clone()]);
+    let lines: Vec<&str> = table.lines().collect();
+    let text = lines[0].find("T2").expect("the row names its rule") + "why   ".len();
+    let why: Vec<&str> = lines[1..]
+        .iter()
+        .take_while(|line| !line.trim_start().starts_with("next"))
+        .copied()
+        .collect();
+    assert!(
+        why.len() > 1,
+        "a why longer than a line wraps onto more than one:\n{table}"
+    );
+    assert!(
+        why.iter().all(|line| line.chars().count() <= text + 72),
+        "no wrapped line runs past the width:\n{table}"
+    );
+    assert!(
+        why[1..]
+            .iter()
+            .all(|line| line[..text].trim().is_empty() && !line[text..].starts_with(' ')),
+        "each continuation starts where the why's text does:\n{table}"
+    );
+    let joined = std::iter::once(&why[0][text..])
+        .chain(why[1..].iter().map(|line| &line[text..]))
+        .collect::<Vec<&str>>()
+        .join(" ");
+    assert_eq!(joined, long.message.why, "wrapping loses no word");
 }
 
 #[test]
@@ -84,9 +157,8 @@ fn table_orders_findings_by_level_then_path_then_line() {
         finding("G1", Level::Block, "src/a.rs", 3, "a conflict marker."),
     ];
     let table = render_table(&findings);
-    let order: Vec<String> = table
-        .lines()
-        .take(6)
+    let order: Vec<String> = rows(&table)
+        .into_iter()
         .map(|line| {
             let cells = columns(line);
             format!("{} {}", cells[0], cells[2])

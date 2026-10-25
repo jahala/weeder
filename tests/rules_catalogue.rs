@@ -69,11 +69,11 @@ fn rules_as_json_carries_the_same_catalogue() {
 /// What `Config::default()` says this rule's level is, in the word `weeder rules`
 /// should have printed for it.
 fn expected_level(rule: &Rule, defaults: &Config) -> &'static str {
-    match defaults.rules.get(rule.id) {
-        Some(RuleSetting::Block) => "block",
-        Some(RuleSetting::Warn) => "warn",
-        Some(RuleSetting::On) => "on",
-        Some(RuleSetting::Off) | None => "off",
+    match defaults.setting(rule) {
+        RuleSetting::Block => "block",
+        RuleSetting::Warn => "warn",
+        RuleSetting::On => "on",
+        RuleSetting::Off => "off",
     }
 }
 

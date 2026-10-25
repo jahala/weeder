@@ -13,11 +13,11 @@
 use crate::core::change::Change;
 use crate::core::classify::{classify_file, FileKind};
 use crate::core::config::Config;
-use crate::core::finding::{Finding, Level, Message};
+use crate::core::finding::{Detection, Level, Message, Stamp};
 use crate::core::glob;
 use crate::core::rules::check::Judgement;
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     changes
         .iter()
@@ -25,20 +25,22 @@ pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
         .collect()
 }
 
-fn workflow(change: &Change, config: &Config) -> Option<Finding> {
+fn workflow(change: &Change, config: &Config) -> Option<Detection> {
     let path = change.path()?;
     if classify_file(path, "").kind != FileKind::Workflow {
         return None;
     }
     let promoted = glob::matches_any(&config.guardrail_paths, path);
-    Some(Finding {
-        rule: "C3".to_string(),
-        level: if promoted { Level::Block } else { Level::Warn },
+    Some(Detection {
+        stamp: if promoted {
+            Stamp::Override(Level::Block)
+        } else {
+            Stamp::Rule
+        },
         path: path.to_string(),
         region: None,
         message: message(promoted),
         fix: None,
-        suppressed: None,
     })
 }
 

@@ -2,8 +2,7 @@
 # Evidence for calibration: the report prints, permanently and dated, the
 # false-positive count and share under the classes in use before the ruling of
 # 2026-09-06 beside the count and share under it, read from the record the day
-# was written down in, and the after side of that record is what the ledger
-# counts today.
+# was written down in.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
@@ -27,16 +26,14 @@ date = re.search(r'^date\s*=\s*"([^"]+)"', record, re.M).group(1)
 before_count, before_share = field("before", "false_positives"), float(field("before", "share_percent"))
 after_count, after_share = field("after", "false_positives"), float(field("after", "share_percent"))
 complaints = []
-# The verdict sentence carries the count and share the ledger gives today, and
-# that is the record's after side, or the record is stale.
+# The verdict sentence carries the count and share the ledger gives today. The
+# record is the day the question changed, dated, and it is not held equal to
+# today: a rule that stops a false block moves today's share and must not have
+# to rewrite what that day counted. That happened on 2026-09-23, when T1 stopped
+# blocking a loop over cases and the share went from 0.63 to 0.47.
 verdict = re.search(r"it blocked (\d+), of which (\d+) were block-level false positives, ([0-9.]+) percent", report)
 if not verdict:
     complaints.append("the verdict sentence does not carry a blocked count, a false-positive count and a share")
-else:
-    if verdict.group(2) != after_count:
-        complaints.append(f"the ledger counts {verdict.group(2)} false positives today and the record's after side says {after_count}")
-    if abs(float(verdict.group(3)) - after_share) > 0.005:
-        complaints.append(f"the ledger's share is {verdict.group(3)} today and the record's after side says {after_share:.2f}")
 # Both numbers, with the date, in one sentence a reader meets before any table.
 first_part = report.split("\n## ", 1)[0]
 wanted = [date, f"{before_count} false positives", f"{before_share:.2f} percent", f"{after_count}", f"{after_share:.2f} percent"]

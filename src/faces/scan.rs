@@ -26,7 +26,7 @@ use crate::core::sarif::{self, Context, EXIT_CLEAN, EXIT_COULD_NOT_RUN, RULES_DO
 use crate::core::specimen;
 use crate::core::syntax::Mask;
 use crate::core::tree::{CommandListing, Tree, TreeFile};
-use crate::faces::{read_config, Answer, Format};
+use crate::faces::{read_config, readable, Answer, Format};
 use crate::seams::{exec, fs, git, reader};
 
 /// How long weeder waits for a command whose help it was told to read. A help
@@ -175,7 +175,7 @@ fn read_file(root: &Path, path: String) -> Result<TreeFile, String> {
     // a file of the tree, and reads as one with nothing in it.
     let content = git::file_in_tree(root, &path)
         .map_err(|error| error.to_string())?
-        .and_then(|blob| blob.text());
+        .and_then(|blob| readable(&path, &blob));
     let classification = content
         .as_deref()
         .map(|content| classify_file(&path, content));
@@ -275,7 +275,7 @@ fn refresh(root: &Path, version: &str) -> Result<Vec<String>, String> {
         };
         let Some(content) = git::file_in_tree(root, &path)
             .map_err(|error| error.to_string())?
-            .and_then(|blob| blob.text())
+            .and_then(|blob| readable(&path, &blob))
         else {
             continue;
         };

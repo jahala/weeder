@@ -134,12 +134,13 @@ pub fn write(
 }
 
 /// The sentence the section opens with: what was measured, and whether the
-/// block-level rules cleared the bar in every language.
+/// rules the bar holds cleared it in every language.
 fn opening(rows: &[Row], cases: &[&Case]) -> String {
     const BAR: f64 = 95.0;
+    let held = barred();
     let blocking: Vec<&Row> = rows
         .iter()
-        .filter(|row| BARRED.contains(&row.rule.as_str()))
+        .filter(|row| held.contains(&row.rule.as_str()))
         .collect();
     let short: Vec<String> = blocking
         .iter()
@@ -148,9 +149,9 @@ fn opening(rows: &[Row], cases: &[&Case]) -> String {
         .collect();
     let verdict = if short.is_empty() {
         format!(
-            "Every rule that blocks, {}, catches at least {BAR:.0} percent of the anti-patterns \
-             planted for it, in each of ts, py, rs and go.",
-            BARRED.join(", ")
+            "Every rule the recall bar holds, {}, catches at least {BAR:.0} percent of the \
+             anti-patterns planted for it, in each of ts, py, rs and go.",
+            held.join(", ")
         )
     } else {
         format!(
@@ -173,8 +174,20 @@ fn opening(rows: &[Row], cases: &[&Case]) -> String {
     )
 }
 
-/// The rules the loop holds to 95 percent.
-const BARRED: &[&str] = &["T1", "T3", "S1", "X1", "C1", "G1"];
+/// The file that names the rules the recall bar holds. `scripts/check/recall-bar.sh`
+/// reads the same file, so the sentence and the check it is held to name the
+/// same rules.
+const BAR_FILE: &str = include_str!("../../recall-bar.txt");
+
+/// The rules the bar holds to 95 percent, in the order the bar file names them.
+/// A line that opens with `#` is the file talking about itself.
+fn barred() -> Vec<&'static str> {
+    BAR_FILE
+        .lines()
+        .filter(|line| !line.trim_start().starts_with('#'))
+        .flat_map(str::split_whitespace)
+        .collect()
+}
 
 fn corpus_table(outcomes: &[Outcome]) -> String {
     let mut table = String::from(
@@ -525,6 +538,48 @@ mod tests {
         assert!(
             !written.contains("No case was missed"),
             "a run with a miss in it read as one with none: {written}"
+        );
+    }
+
+    fn met(rule: &str, lang: Language) -> Row {
+        Row {
+            rule: rule.to_string(),
+            level: "block".to_string(),
+            lang,
+            cases: 20,
+            hits: 20,
+            unplantable: 0,
+        }
+    }
+
+    /// The sentence may claim only what the bar measures: the rules the bar
+    /// file names, every one of them, and nothing about the rules that block
+    /// and are not held to it.
+    #[test]
+    fn the_opening_names_exactly_the_rules_the_bar_holds() {
+        let held = barred();
+        assert_eq!(held, ["T1", "T3", "S1", "X1", "C1", "G1"]);
+        let mut rows: Vec<Row> = Vec::new();
+        for rule in &held {
+            for lang in Language::ALL {
+                rows.push(met(rule, lang));
+            }
+        }
+        rows.push(Row {
+            hits: 11,
+            ..met("D2", Language::Go)
+        });
+        let written = opening(&rows, &[]);
+        assert!(
+            written.starts_with(&format!(
+                "Every rule the recall bar holds, {}, catches at least 95 percent",
+                held.join(", ")
+            )),
+            "the sentence names the bar's rules and no others: {written}"
+        );
+        assert!(
+            !written.contains("rule that blocks") && !written.contains("D2"),
+            "a rule that blocks outside the bar is not claimed for: {written}"
         );
     }
 

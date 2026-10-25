@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T6:ts:tend2:42c840a73:test/verify.test.ts:176", "sha256": "53cc854e83907753799a66e79bc60609d55921ad906122751b7fa0d98dc7ed54", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 53cc854e83907753799a66e79bc60609d55921ad906122751b7fa0d98dc7ed54\nVerdict: miss\nReasoning: The injector planted a weakened error assertion at test/verify.test.ts:176, read back and confirmed present (T6 ts has zero unplantable), and weeder did not report T6 there."}

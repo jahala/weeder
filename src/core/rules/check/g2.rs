@@ -9,14 +9,14 @@
 //! would teach a reviewer to look away.
 
 use crate::core::change::{Change, READABLE};
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::rules::check::Judgement;
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     judged.changes.iter().filter_map(added).collect()
 }
 
-fn added(change: &Change) -> Option<Finding> {
+fn added(change: &Change) -> Option<Detection> {
     if !change.is_addition() {
         return None;
     }
@@ -60,10 +60,9 @@ impl Blob {
     }
 }
 
-fn finding(path: &str, change: &Change, blob: Blob) -> Finding {
-    Finding {
-        rule: "G2".to_string(),
-        level: Level::Warn,
+fn finding(path: &str, change: &Change, blob: Blob) -> Detection {
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: change.first_edit().map(|line| Region {
             start_line: line,
@@ -76,6 +75,5 @@ fn finding(path: &str, change: &Change, blob: Blob) -> Finding {
                 .to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }

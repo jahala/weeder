@@ -84,9 +84,9 @@ reasoning = "T2 says test/renderer-fresh.test.ts went from 5 assertions to 4, an
 
 [[commit]]
 repo = "tend2"
-sha = "3adc642ce1dff47cd24b397f2988a05749d716de"
-classification = "false-positive"
-reasoning = "T1 says a case disappeared from test/renderer-fresh.test.ts, 2 declared down to 1, and that the behaviour it held is unwatched. The case was not deleted: it became a loop over the sibling directories, so the file runs one it() declaration over several inputs. The declaration count fell and the coverage did not."
+sha = "2bb9d83f23bf2837d8842c437fd8949d36ac9391"
+classification = "acceptable"
+reasoning = "T2 says spikes/loop-hole/tests/briefing-v3.spec.ts went from 23 claims to 19, and it did: the case loops over the section headings, and each empty section used to be held to its heading and two lines of 'cleared the floor' text, where now it is held to the heading's absence. The commit makes empty sections elide, and the case was rewritten to demand exactly that, with a new claim that the scaffolding text is gone. The behaviour changed and the test follows it; nothing is watched less. First blocked on 2026-09-23, when T2 began counting a claim once per case its loop runs it for."
 
 [[commit]]
 repo = "tend2"

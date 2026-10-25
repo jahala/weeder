@@ -19,7 +19,7 @@
 use std::collections::BTreeMap;
 
 use crate::core::config::DependencyDirection;
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::glob;
 use crate::core::read::Import;
 use crate::core::rules::check::Judgement;
@@ -31,7 +31,7 @@ const CODE_EXTENSIONS: &[&str] = &["ts", "tsx", "js", "jsx", "mjs", "cjs", "py",
 /// weeder reads, together with the punctuation a statement wraps them in.
 const SEPARATORS: [char; 9] = ['/', ':', '.', '{', '}', ',', ' ', '"', '\''];
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let layers = &judged.config.layers;
     if layers.is_empty() {
         return Vec::new();
@@ -214,10 +214,9 @@ fn is_extension(word: &str) -> bool {
     CODE_EXTENSIONS.contains(&word)
 }
 
-fn finding(path: &str, import: &Import, from: &str, to: &str) -> Finding {
-    Finding {
-        rule: "D2".to_string(),
-        level: Level::Block,
+fn finding(path: &str, import: &Import, from: &str, to: &str) -> Detection {
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: Some(Region {
             start_line: import.start_line,
@@ -229,6 +228,5 @@ fn finding(path: &str, import: &Import, from: &str, to: &str) -> Finding {
             next: format!("move what `{from}` needs to where it may reach it, or state the direction in [deps] allow and say why."),
         },
         fix: None,
-        suppressed: None,
     }
 }

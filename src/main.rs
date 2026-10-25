@@ -123,6 +123,11 @@ struct InstallArgs {
     /// leaves the hooks reading weeder.toml every time git runs them.
     #[arg(long, value_name = "branch")]
     protect: Vec<String>,
+    /// Point git at weeder's hooks even where it runs another directory's hooks
+    /// today. Those stop running until weeder guard uninstall puts the setting
+    /// back.
+    #[arg(long)]
+    replace: bool,
 }
 
 #[derive(Debug, Args)]
@@ -164,7 +169,8 @@ struct CheckArgs {
     /// Write SARIF or a table, rather than choosing by what stdout is.
     #[arg(long, value_enum, value_name = "format")]
     format: Option<CheckFormat>,
-    /// Read weeder.toml from here instead of the repository root.
+    /// Read weeder.toml from here instead of from the base the change is
+    /// judged against.
     #[arg(long, value_name = "path")]
     config: Option<PathBuf>,
     /// The message of the commit being prepared, for its Weeder-allow trailers.
@@ -367,6 +373,7 @@ fn run_guard(args: GuardArgs) -> Answer {
                 hooks_dir: args.hooks_dir,
                 protect: args.protect,
                 binary,
+                replace: args.replace,
             })
         }
         GuardCommand::Status => guard::Command::Status,

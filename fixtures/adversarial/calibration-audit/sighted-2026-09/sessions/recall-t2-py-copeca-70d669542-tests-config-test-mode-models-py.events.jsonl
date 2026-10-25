@@ -1,2 +1,0 @@
-{"type": "input", "case": "recall:T2:py:copeca:70d669542:tests/config/test_mode_models.py", "sha256": "83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered report SHA-256: 83831fef070cc1152e1c25d1a17dfc0886b2cc6c24f954dbe37775897a350829\nVerdict: miss\nReasoning: Deleting the assertion on line 66 of a changed test file is exactly T2's shape, and weeder reported nothing at that site."}

@@ -2,18 +2,19 @@
 //!
 //! One rule lives here, and it reads a [`Trial`] the face ran rather than a
 //! diff or a tree. The shape is the one the other two faces keep: the detector
-//! is pure and stamps its catalogue default, and `evaluate` puts the configured
-//! level in its place, or drops the rule where a repository turned it off.
+//! is pure and stamps its rule's level, and `evaluate` names the rule and puts
+//! the configured level in its place, or drops the rule where a repository
+//! turned it off.
 
 use crate::core::bite::Trial;
 use crate::core::catalogue;
 use crate::core::config::Config;
-use crate::core::finding::Finding;
-use crate::core::rules::configured_level;
+use crate::core::finding::{Detection, Finding};
+use crate::core::rules::report;
 
 pub mod b1;
 
-type Detector = fn(&Trial) -> Vec<Finding>;
+type Detector = fn(&Trial) -> Vec<Detection>;
 
 /// The detectors weeder has on this face.
 const DETECTORS: &[(&str, Detector)] = &[("B1", b1::evaluate)];
@@ -25,13 +26,7 @@ pub fn evaluate(trial: &Trial, config: &Config) -> Vec<Finding> {
         let Some(rule) = catalogue::rule(id) else {
             continue;
         };
-        let Some(level) = configured_level(rule, config) else {
-            continue;
-        };
-        for mut finding in detect(trial) {
-            finding.level = level;
-            findings.push(finding);
-        }
+        findings.extend(report(rule, config, || detect(trial)));
     }
     findings
 }

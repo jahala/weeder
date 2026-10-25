@@ -45,17 +45,18 @@ fn dishonest_test() -> String {
 }
 
 /// A repository holding that file in both places, staged and unjudged, with
-/// whatever `weeder.toml` the test wants it to state.
+/// whatever `weeder.toml` the test wants its base to state: a change is judged
+/// under the law it starts from.
 fn repository(config: Option<&str>) -> Repo {
     let repo = Repo::init();
     repo.write(
         "src/format.ts",
         "export const format = (text: string) => text;\n",
     );
-    repo.commit("the state the change starts from");
     if let Some(config) = config {
         repo.write("weeder.toml", config);
     }
+    repo.commit("the state the change starts from");
     repo.write(SPECIMEN, &dishonest_test());
     repo.write(SOURCE, &dishonest_test());
     repo.stage_all();
@@ -175,10 +176,10 @@ fn an_excluded_path_is_not_evidence_a_rule_reads_about_another_file() {
     let ignoring = |config: Option<&str>| {
         let repo = Repo::init();
         repo.write(SPECIMEN, &dishonest_test());
-        repo.commit("the specimen is in the repository");
         if let Some(config) = config {
             repo.write("weeder.toml", config);
         }
+        repo.commit("the specimen is in the repository");
         repo.write(".gitignore", "fixtures/\n");
         repo.stage_all();
         let run = repo.weeder(&["check", "--format", "sarif"]);

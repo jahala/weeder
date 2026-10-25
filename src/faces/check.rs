@@ -12,6 +12,10 @@
 //! either way, and the index and a range keep their own meanings, because an
 //! index holds what it holds and a history has no working tree in it.
 //!
+//! Every mode is judged under `weeder.toml` as the base of its range carries it,
+//! `HEAD` or the base ref, and never under the copy the change holds: a law the
+//! judged change could write would let it switch the judge off.
+//!
 //! A run that cannot reach a judgement, no repository, an unreadable ref, a
 //! config weeder cannot parse, leaves with exit 3 and says why on stderr. A gate
 //! that could not run must never look like a gate that passed.
@@ -22,7 +26,7 @@ use std::path::{Path, PathBuf};
 use crate::core::change::{self, Change, Side};
 use crate::core::classify::{classify_file, FileKind};
 use crate::core::config::Config;
-use crate::core::diff::{added_file, parse_diff, FileDiff};
+use crate::core::diff::{added_file, parse_diff, removed_file, FileDiff};
 use crate::core::finding::{Finding, Level};
 use crate::core::glob;
 use crate::core::hierarchy::{self, Hierarchy};
@@ -36,7 +40,9 @@ use crate::core::suppress::{
     InlineSuppressionError, Suppression, SuppressionSource, MARKER,
 };
 use crate::core::syntax::Mask;
-use crate::faces::{blobs, gather, read_config, side, Answer, Format, Source, Untracked};
+use crate::faces::{
+    blobs, gather, read_law, readable, side, written_law, Answer, Format, Source, Untracked,
+};
 use crate::seams::{fs, git, reader};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -68,7 +74,7 @@ pub struct Request {
     /// agent's own line and is never honoured here, whatever this says.
     pub honour_trailers: bool,
     pub format: Format,
-    /// Read `weeder.toml` from here instead of the repository root.
+    /// Read `weeder.toml` from here instead of from the base of the range.
     pub config: Option<PathBuf>,
     /// The message of the commit being prepared, for its `Weeder-allow:` trailers.
     /// A pre-commit gate has no commit to read, so a hook hands the message in.
@@ -105,8 +111,9 @@ pub fn verdict(request: &Request) -> Verdict {
 
 fn judge(request: &Request) -> Result<Verdict, String> {
     let root = git::repository_root(&request.cwd).map_err(|error| error.to_string())?;
-    let config = read_config(&root, request.config.as_deref())?;
     let range = range(request)?;
+    // The law comes from where the range starts, never from what it judges.
+    let config = read_law(&root, &range.base, request.config.as_deref())?;
     // Asked before anything is judged: a run that cannot do what it was asked
     // never happened, and refusing after the work is a refusal that cost time.
     let untracked = reads_untracked(request, &range)?;
@@ -117,14 +124,20 @@ fn judge(request: &Request) -> Result<Verdict, String> {
     // The specimens leave here, before anything reads them: a file no rule
     // judges has no suppression to honour and no malformed one to complain
     // about either. What it has is a note, so the exclusion is in the log.
-    let (judged, mut excluded) = set_aside(judged, &config.specimens);
+    let SetAside {
+        kept,
+        departed,
+        mut excluded,
+    } = set_aside(judged, &config.specimens);
 
-    let mut changes = gather(&root, &range.base, &range.after, judged)?;
+    let mut changes = gather(&root, &range.base, &range.after, kept)?;
+    changes.extend(departures(&root, &range, &departed)?);
     if untracked {
         let (arrived, set_aside) = arrivals(&root, &config.specimens)?;
         changes.extend(arrived);
         excluded.extend(set_aside);
     }
+    written_law(&changes)?;
     // Read after the change is whole, so an allowance written beside a line of
     // a file nobody staged counts the way one in a staged file does.
     let (inline, malformed) = parse_inline_suppressions(changes.iter().map(|change| &change.diff));
@@ -312,10 +325,11 @@ fn arrivals(root: &Path, specimens: &[String]) -> Result<(Vec<Change>, Vec<Strin
         let Some(blob) = git::file_in_tree(root, &path).map_err(|error| error.to_string())? else {
             continue;
         };
+        let after = side(&path, &blob);
         arrived.push(Change {
-            diff: added_file(&path, blob.text().as_deref()),
+            diff: added_file(&path, after.content.as_deref()),
             before: Side::default(),
-            after: side(&path, &blob),
+            after,
         });
     }
     Ok((arrived, excluded))
@@ -334,22 +348,64 @@ fn read_diff(root: &Path, range: &Range) -> Result<String, String> {
     diff.map_err(|error| error.to_string())
 }
 
+/// What `set_aside` made of a change: the files weeder judges as git wrote them,
+/// the files that moved out of the judged tree into a specimen directory, by the
+/// path they left, and the specimen paths it was told to leave alone.
+struct SetAside {
+    kept: Vec<FileDiff>,
+    departed: Vec<String>,
+    excluded: Vec<String>,
+}
+
 /// The changed files weeder judges, and the paths it was told to leave alone.
 /// A specimen is skipped by every rule at once: the file never reaches a
 /// detector, so no rule can be the one that read it anyway.
-fn set_aside(judged: Vec<FileDiff>, specimens: &[String]) -> (Vec<FileDiff>, Vec<String>) {
-    let mut kept = Vec::new();
-    let mut excluded = Vec::new();
+///
+/// A file is a specimen only where every path it has is one. A file that moved
+/// into a specimen directory left the tree weeder judges, and a test that leaves
+/// the suite that way is a test deleted, so it is judged as the deletion of the
+/// path it left, and the path it arrived at is noted like any other specimen.
+fn set_aside(judged: Vec<FileDiff>, specimens: &[String]) -> SetAside {
+    let mut aside = SetAside {
+        kept: Vec::new(),
+        departed: Vec::new(),
+        excluded: Vec::new(),
+    };
+    let skipped = |path: &Option<String>| {
+        path.as_deref()
+            .map(|path| specimen::skipped(specimens, path))
+    };
     for file in judged {
-        match file
-            .path()
-            .filter(|path| specimen::skipped(specimens, path))
-        {
-            Some(path) => excluded.push(path.to_string()),
-            None => kept.push(file),
+        match (skipped(&file.old_path), skipped(&file.new_path)) {
+            (Some(false), Some(true)) => {
+                aside.excluded.extend(file.new_path);
+                aside.departed.extend(file.old_path);
+            }
+            (Some(true), Some(true) | None) | (None, Some(true)) => {
+                aside.excluded.extend(file.path().map(ToString::to_string));
+            }
+            _ => aside.kept.push(file),
         }
     }
-    (kept, excluded)
+    aside
+}
+
+/// The files that left the judged tree for a specimen directory, each as the
+/// deletion it is from where weeder stands: the side it had at the base, and
+/// every line of it taken out.
+fn departures(root: &Path, range: &Range, departed: &[String]) -> Result<Vec<Change>, String> {
+    let leaving: Vec<FileDiff> = departed
+        .iter()
+        .map(|path| removed_file(path, Some("")))
+        .collect();
+    Ok(gather(root, &range.base, &range.after, leaving)?
+        .into_iter()
+        .zip(departed)
+        .map(|(change, path)| Change {
+            diff: removed_file(path, change.before.content.as_deref()),
+            ..change
+        })
+        .collect())
 }
 
 /// The paths this run allows the change to touch. `--scope` is what the caller
@@ -433,7 +489,7 @@ fn hierarchy(
 
     let mut tree = Hierarchy::default();
     for (path, blob) in named.iter().zip(blobs(root, after, &named)?) {
-        let Some(content) = blob.and_then(|blob| blob.text()) else {
+        let Some(content) = blob.and_then(|blob| readable(path, &blob)) else {
             continue;
         };
         if !change::reads_as_code(Some(content.len() as u64))

@@ -1,9 +1,9 @@
 //! The scan-face detectors, and the level each one reports at.
 //!
-//! A detector is pure: it reads the tree the face gathered and returns findings
-//! carrying the rule's catalogue default level. `evaluate` replaces that level
-//! with the one the config sets, and drops the rules it turns off. A finding a
-//! detector deliberately reported at some other level keeps it, which is how R1
+//! A detector is pure: it reads the tree the face gathered and returns
+//! detections stamped with its rule's level or with an override of its own.
+//! `evaluate` names each one's rule from this table, settles its level against
+//! the config, and drops the rules the config turns off. An override is how R1
 //! tells a citation a paragraph vouched for from a name standing on its own.
 //! No scan finding blocks whatever level it carries, so what the config decides
 //! here is mostly whether a rule runs at all.
@@ -12,8 +12,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::core::catalogue;
 use crate::core::config::Config;
-use crate::core::finding::Finding;
-use crate::core::rules::{configured_level, reported_at};
+use crate::core::finding::{Detection, Finding};
+use crate::core::rules::report;
 use crate::core::syntax;
 use crate::core::tree::{Tree, TreeFile};
 
@@ -23,7 +23,7 @@ pub mod r3;
 pub mod r4;
 pub mod r5;
 
-type Detector = fn(&Tree, &Config) -> Vec<Finding>;
+type Detector = fn(&Tree, &Config) -> Vec<Detection>;
 
 /// The detectors weeder has on this face, in catalogue order.
 const DETECTORS: &[(&str, Detector)] = &[
@@ -46,13 +46,7 @@ pub fn evaluate(tree: &Tree, config: &Config, only: &[String]) -> Vec<Finding> {
         let Some(rule) = catalogue::rule(id) else {
             continue;
         };
-        let Some(level) = configured_level(rule, config) else {
-            continue;
-        };
-        for mut finding in detect(tree, config) {
-            finding.level = reported_at(&finding, rule, level);
-            findings.push(finding);
-        }
+        findings.extend(report(rule, config, || detect(tree, config)));
     }
     findings
 }

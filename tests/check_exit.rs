@@ -28,10 +28,11 @@ fn a_clean_diff_exits_zero() {
 #[test]
 fn warnings_alone_exit_zero() {
     let repo = Repo::init();
-    // The config file is itself a guardrail, so writing one is a C1 finding.
-    // Both rules warn here, which is what makes this a run with warnings and
+    // A change is judged under the law its base carries, so the law that makes
+    // G1 warn lands first, and the change after it is a run with warnings and
     // nothing above them.
-    repo.write("weeder.toml", "[rules]\nG1 = \"warn\"\nC1 = \"warn\"\n");
+    repo.write("weeder.toml", "[rules]\nG1 = \"warn\"\n");
+    repo.commit("the law lands");
     repo.write("src/parser.ts", &conflicted_parser(None));
     repo.stage_all();
 

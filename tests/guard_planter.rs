@@ -252,13 +252,20 @@ fn planted(hook: &str) -> Repo {
 
 /// The binary the stem's hook names, at the path the stem keeps it. It is the
 /// weeder under test, copied there, so the hook reaches a real program by a path
-/// weeder's own install would never write.
+/// weeder's own install would never write. git is what runs it, and git cannot
+/// be asked to wait out a busy copy, so the copy is run once here first: after
+/// that run no process holds it open for writing, and git's exec of it is never
+/// refused. `common::run_a_copy` says why.
 fn stem_binary(repo: &Repo) {
     let path = repo.root().join(STEM_BINARY);
     let directory = path.parent().expect("the binary sits in a directory");
     std::fs::create_dir_all(directory).expect("a directory for the binary");
-    std::fs::copy(common::binary(), &path).expect("weeder should copy");
-    common::make_runnable(&path);
+    let ran = common::run_a_copy(&path, repo.root(), &["--version"]);
+    assert!(
+        ran.status.success(),
+        "the stem's copy of weeder runs: {}",
+        String::from_utf8_lossy(&ran.stderr)
+    );
 }
 
 fn write_hook(repo: &Repo, path: &str, body: &str) {

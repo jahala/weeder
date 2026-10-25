@@ -66,6 +66,23 @@ pub fn classify_file(path: impl AsRef<Path>, content: &str) -> Classification {
     }
 }
 
+/// Whether a file is text by what its path says it is, whatever its bytes hold:
+/// source in a language weeder reads, a guardrail, a manifest, a workflow.
+///
+/// git calls a file binary when it holds one NUL byte, and a file git calls
+/// binary shows no lines. A NUL in a comment is one keystroke, so for these files
+/// the path decides and the bytes are read as the text they are. Any other file
+/// with a NUL in it is left to be the blob it looks like.
+#[must_use]
+pub fn reads_as_text(path: impl AsRef<Path>) -> bool {
+    let classification = classify_file(path, "");
+    classification.lang != Lang::Other
+        || matches!(
+            classification.kind,
+            FileKind::Guardrail | FileKind::Manifest | FileKind::Workflow
+        )
+}
+
 fn normalize(path: &Path) -> String {
     path.components()
         .collect::<PathBuf>()

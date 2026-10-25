@@ -1,0 +1,2 @@
+{"type": "input", "case": "blocked:tend2:2bb9d83f23", "sha256": "53cc854e83907753799a66e79bc60609d55921ad906122751b7fa0d98dc7ed54", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 53cc854e83907753799a66e79bc60609d55921ad906122751b7fa0d98dc7ed54\nVerdict: acceptable\nReasoning: The assertion drop from 23 to 19 is real, but it follows an intentional behavior change\u2014empty sections elide\u2014with the test rewritten to demand that new behavior, so nothing is watched less."}

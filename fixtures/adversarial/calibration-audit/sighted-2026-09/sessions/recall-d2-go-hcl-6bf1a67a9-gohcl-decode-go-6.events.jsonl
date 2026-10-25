@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:D2:go:hcl:6bf1a67a9:gohcl/decode.go:6", "sha256": "53cc854e83907753799a66e79bc60609d55921ad906122751b7fa0d98dc7ed54", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 53cc854e83907753799a66e79bc60609d55921ad906122751b7fa0d98dc7ed54\nVerdict: miss\nReasoning: gohcl importing hcldec is a genuine forbidden boundary since hcldec imports gohcl, forming a cycle, and weeder did not fire D2 at decode.go:6."}

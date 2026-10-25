@@ -13,12 +13,12 @@
 //! grows, and a count of digits accepts more as it shrinks.
 
 use crate::core::change::Replacement;
-use crate::core::finding::{Finding, Level, Message, Region};
+use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::rules::check::vocab::{names, numbers, skeleton, slack, Name, Number, Sense};
 use crate::core::rules::check::Judgement;
 use crate::core::syntax::Mask;
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     let mut findings = Vec::new();
     for change in changes {
@@ -109,7 +109,7 @@ struct Widening {
     now: String,
 }
 
-fn finding(path: &str, line: u32, widening: &Widening) -> Finding {
+fn finding(path: &str, line: u32, widening: &Widening) -> Detection {
     let Widening { sense, was, now } = widening;
     let what = match sense {
         Sense::Precision => {
@@ -117,9 +117,8 @@ fn finding(path: &str, line: u32, widening: &Widening) -> Finding {
         }
         _ => format!("a test now allows more than it did: `{was}` became `{now}`."),
     };
-    Finding {
-        rule: "T4".to_string(),
-        level: Level::Warn,
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: Some(Region {
             start_line: line,
@@ -131,6 +130,5 @@ fn finding(path: &str, line: u32, widening: &Widening) -> Finding {
             next: "put the number back, or say in the change what made the old one wrong.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }

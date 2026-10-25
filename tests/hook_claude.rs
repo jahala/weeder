@@ -56,6 +56,7 @@ fn a_commit_over_an_index_that_blocks_is_denied_with_the_findings_as_the_reason(
         reason.contains("weeder hook refused"),
         "the reason says which gate refused and what to do:\n{reason}"
     );
+    carries_why_and_next(reason);
 }
 
 #[test]
@@ -159,6 +160,7 @@ fn a_stop_over_a_tree_that_blocks_is_blocked_and_a_clean_one_is_allowed() {
         reason.contains("weeder hook refused"),
         "the reason says which gate refused and what to do:\n{reason}"
     );
+    carries_why_and_next(reason);
 
     repo.write("src/parser.ts", RESOLVED);
     let allowed = repo.weeder_reading(&["hook", "claude"], &stop_event(&repo, false));
@@ -377,4 +379,19 @@ fn deny_reason(stdout: &str) -> String {
         .as_str()
         .unwrap_or_else(|| panic!("a denial carries its reason:\n{stdout}"))
         .to_string()
+}
+
+/// Whether a refusal carries the finding's why and its next action beside what
+/// it found, as the table writes them, so the agent reading the refusal is told
+/// what to do and not only what is wrong.
+fn carries_why_and_next(reason: &str) {
+    let flat = reason.split_whitespace().collect::<Vec<&str>>().join(" ");
+    assert!(
+        flat.contains("why the file carries both sides of a merge nobody finished"),
+        "the reason says why the finding matters:\n{reason}"
+    );
+    assert!(
+        flat.contains("next finish the merge, delete the markers, and stage the file again."),
+        "the reason says what to do next:\n{reason}"
+    );
 }

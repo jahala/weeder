@@ -11,7 +11,7 @@ pub mod scan;
 use std::path::Path;
 
 use crate::core::change::{self, Change, Side};
-use crate::core::classify::{classify_file, FileKind};
+use crate::core::classify::{classify_file, reads_as_text, FileKind};
 use crate::core::config::{parse_config, Config};
 use crate::core::diff::FileDiff;
 use crate::core::read::TestShape;
@@ -43,6 +43,46 @@ pub fn read_config(root: &Path, from: Option<&Path>) -> Result<Config, String> {
             path.display()
         )
     })
+}
+
+/// The law a change is judged under: `weeder.toml` as the base of the judged
+/// range carries it, and the defaults where the base carries none. The change
+/// itself never supplies it, staged, unstaged or committed, because a law the
+/// judged change can write is no law; a change to `weeder.toml` takes effect
+/// once it has landed. `--config` is the one exception, an explicit choice made
+/// by whoever runs weeder rather than by the change.
+pub fn read_law(root: &Path, base: &str, from: Option<&Path>) -> Result<Config, String> {
+    if from.is_some() {
+        return read_config(root, from);
+    }
+    let text = git::file_at_base(root, base, CONFIG_FILE)
+        .map_err(|error| error.to_string())?
+        .map(|blob| String::from_utf8_lossy(&blob.bytes).into_owned());
+    parse_config(text.as_deref()).map_err(|error| {
+        format!(
+            "{CONFIG_FILE} at {base} is not valid: {error}. a change is judged under the law its base carries, so repair that key in a commit of its own, or pass --config to name a law for this run."
+        )
+    })
+}
+
+/// The law a change writes, where it writes one, parsed the way its base's law
+/// was. A `weeder.toml` that does not parse would otherwise land unread and
+/// leave every judgement after it unable to run, so the change that writes it is
+/// the one that hears about it.
+pub fn written_law(changes: &[Change]) -> Result<(), String> {
+    let Some(change) = changes
+        .iter()
+        .find(|change| change.diff.new_path.as_deref() == Some(CONFIG_FILE))
+    else {
+        return Ok(());
+    };
+    parse_config(change.after.content.as_deref())
+        .map(|_| ())
+        .map_err(|error| {
+            format!(
+                "{CONFIG_FILE} as this change writes it is not valid: {error}. fix that key, or drop it for the default."
+            )
+        })
 }
 
 /// How a face writes what it found.
@@ -113,10 +153,26 @@ pub fn gather(
         .into_iter()
         .zip(before)
         .zip(after)
-        .map(|((diff, before), after)| Change {
-            diff,
-            before,
-            after,
+        .map(|((diff, before), after)| {
+            // git is asked for the text of every change, so no attribute can
+            // hide a hunk. A blob's hunks are its bytes cut at every newline,
+            // which nobody wrote as lines, so a change whose side is a blob is
+            // judged as the blob it is, the way git would have written it.
+            let judged_side = if diff.new_path.is_some() {
+                &after
+            } else {
+                &before
+            };
+            let diff = if judged_side.is_blob() {
+                diff.without_lines()
+            } else {
+                diff
+            };
+            Change {
+                diff,
+                before,
+                after,
+            }
         })
         .collect())
 }
@@ -160,12 +216,24 @@ pub(crate) fn blobs(
     .map_err(|error| error.to_string())
 }
 
+/// A file's bytes as the text a rule reads, or `None` where they carry no lines.
+///
+/// A file whose path says it is text is read as text whatever its bytes hold:
+/// git takes one NUL for a binary file, and a NUL in a comment must not be how a
+/// stub or a secret goes unread. Any other file with a NUL in it is the blob it
+/// looks like. A byte that is not utf-8 is replaced, as everywhere weeder reads a
+/// file, because a rule matches ascii shapes.
+pub(crate) fn readable(path: &str, blob: &Blob) -> Option<String> {
+    (!blob.is_binary() || reads_as_text(path))
+        .then(|| String::from_utf8_lossy(&blob.bytes).into_owned())
+}
+
 /// One side of one file, as the bytes git handed over. A file whose bytes are
 /// not text has no lines for a rule to judge, and still has a path and a
 /// weight, which is what G2 asks about.
 pub(crate) fn side(path: &str, blob: &Blob) -> Side {
     let (size, binary) = (Some(blob.size()), blob.is_binary());
-    let Some(content) = blob.text() else {
+    let Some(content) = readable(path, blob) else {
         return Side {
             classification: Some(classify_file(path, "")),
             size,

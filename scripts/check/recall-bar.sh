@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# Evidence for recall.tend2.html c2: recall for the rules that block — T1, T3,
-# S1, X1, C1 and G1 — is at or above 95 percent in each of ts, py, rs and go,
-# and every warn-level rule's recall is reported beside them.
+# Evidence for recall.tend2.html c2: recall for the rules the bar holds, the ones
+# xtask/recall-bar.txt names, is at or above 95 percent in each of ts, py, rs and
+# go, and every warn-level rule's recall is reported beside them. The generator
+# names the same file in the sentence the section opens with, and this script
+# holds that sentence to it too.
 #
 # The campaign is run here rather than read, for the same reason c1 runs it: a
 # bar checked against a number somebody typed is not a bar. What the file is
@@ -49,7 +51,13 @@ complaints = []
 
 BAR = 95.0
 AIM = 80.0
-BLOCKING = ["T1", "T3", "S1", "X1", "C1", "G1"]
+# The rules the bar holds, read from the one file the generator reads them from.
+BLOCKING = [
+    word
+    for line in open("xtask/recall-bar.txt", encoding="utf-8")
+    if not line.lstrip().startswith("#")
+    for word in line.split()
+]
 LANGUAGES = ["ts", "py", "rs", "go"]
 
 catalogue = json.loads(
@@ -67,6 +75,17 @@ if section is None:
     print(f"{report_path} carries no recall section", file=sys.stderr)
     raise SystemExit(1)
 section = section.group(1)
+
+# The opening sentence claims the bar for a list of rules, and that list is the
+# one held here, no more and no fewer.
+claimed = re.search(r"Every rule the recall bar holds, (.*?), catches at least", section)
+if claimed is None:
+    if "The bar is not met" not in section:
+        complaints.append("the recall section opens with neither the bar's rules nor a miss of it")
+elif [rule.strip() for rule in claimed.group(1).split(",")] != BLOCKING:
+    complaints.append(
+        f"the opening sentence names {claimed.group(1)}, and the bar holds {', '.join(BLOCKING)}"
+    )
 
 rows = {}
 for line in section.splitlines():
@@ -189,7 +208,7 @@ worst = min(
     if rule in BLOCKING and row["cases"] > 0
 )
 print(
-    f"every rule that blocks is at or above {BAR:.0f}% in all four languages "
+    f"every rule the bar holds ({', '.join(BLOCKING)}) is at or above {BAR:.0f}% in all four languages "
     f"(worst: {worst[1]} at {worst[0]:.1f}%); "
     f"{len(warning_rules)} warn-level rules reported"
     + (f", {len(under)} of them under the {AIM:.0f}% aim: " + ", ".join(under) if under else "")

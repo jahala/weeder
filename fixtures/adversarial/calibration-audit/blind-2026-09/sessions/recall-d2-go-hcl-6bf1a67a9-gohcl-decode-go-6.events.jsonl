@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-d2-go-hcl-6bf1a67a9-gohcl-decode-go-6.md", "sha256": "2f71e49b32cac4e36f54f79153db36839025b04caf5d61f9748b76a58b8faf49", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered packet SHA-256: 2f71e49b32cac4e36f54f79153db36839025b04caf5d61f9748b76a58b8faf49\nVerdict: miss\nReasoning: The diff adds `hcldec` to gohcl/decode.go's imports, matching the planted shape, but weeder reported no findings there."}

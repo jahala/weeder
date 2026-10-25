@@ -13,7 +13,7 @@
 
 use crate::core::change::Change;
 use crate::core::classify::FileKind;
-use crate::core::finding::{Finding, Level, Message};
+use crate::core::finding::{Detection, Message, Stamp};
 use crate::core::rules::check::Judgement;
 
 /// The directories a suite keeps its recorded expectations in, whichever
@@ -33,7 +33,7 @@ const EXPECTATION_EXTENSIONS: &[&str] = &["snap", "golden", "approved"];
 /// The word an approval file carries in front of its extension: `page.approved.txt`.
 const APPROVED: &str = "approved";
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     let production: Vec<&str> = changes
         .iter()
@@ -84,14 +84,13 @@ fn is_expectation(path: &str) -> bool {
         || extensions.contains(&APPROVED)
 }
 
-fn finding(path: &str, alongside: &str, production: usize) -> Finding {
+fn finding(path: &str, alongside: &str, production: usize) -> Detection {
     let others = match production {
         1 => String::new(),
         more => format!(" and {} more", more - 1),
     };
-    Finding {
-        rule: "T5".to_string(),
-        level: Level::Warn,
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: None,
         message: Message {
@@ -102,6 +101,5 @@ fn finding(path: &str, alongside: &str, production: usize) -> Finding {
             next: "read the new expectation as a diff and say in the change why the new output is the right one.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }

@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T6:ts:tend2:8d939ec15:test/route.test.ts:143", "sha256": "53cc854e83907753799a66e79bc60609d55921ad906122751b7fa0d98dc7ed54", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 53cc854e83907753799a66e79bc60609d55921ad906122751b7fa0d98dc7ed54\nVerdict: miss\nReasoning: The planted shape, an error assertion weakened by dropping the error's name, is T6's shape and was reported uncaught at that site."}

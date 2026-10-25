@@ -16,18 +16,18 @@
 //! else the tree holds, so it is put in front of the reviewer rather than used
 //! to stop the change.
 
-use crate::core::finding::{Finding, Level, Message};
+use crate::core::finding::{Detection, Level, Message, Stamp};
 use crate::core::rules::check::collect::{self, Hidden};
 use crate::core::rules::check::Judgement;
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     collect::one_per_test(&judged.collection.hidden)
         .iter()
         .map(finding)
         .collect()
 }
 
-fn finding(hidden: &Hidden) -> Finding {
+fn finding(hidden: &Hidden) -> Detection {
     let what = if hidden.named {
         format!(
             "{} was taken out of the run by {}.",
@@ -41,12 +41,11 @@ fn finding(hidden: &Hidden) -> Finding {
             hidden.at()
         )
     };
-    Finding {
-        rule: "T8".to_string(),
-        level: if hidden.named {
-            Level::Block
+    Detection {
+        stamp: if hidden.named {
+            Stamp::Rule
         } else {
-            Level::Warn
+            Stamp::Override(Level::Warn)
         },
         path: hidden.test.clone(),
         region: None,
@@ -56,6 +55,5 @@ fn finding(hidden: &Hidden) -> Finding {
             next: "collect the test again, delete it, or write why it is left out in a `Weeder-allow: T8` trailer.".to_string(),
         },
         fix: None,
-        suppressed: None,
     }
 }

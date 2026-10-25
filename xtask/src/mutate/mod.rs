@@ -344,8 +344,8 @@ pub struct Plan {
 
 impl Plan {
     fn new(request: &Request, sources: &[Working]) -> Plan {
-        let rules: Vec<String> = inject::RULES
-            .iter()
+        let rules: Vec<String> = inject::rules()
+            .into_iter()
             .filter(|rule| {
                 request.rules.is_empty()
                     || request

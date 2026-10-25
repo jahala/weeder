@@ -10,7 +10,7 @@
 
 use crate::core::change::Change;
 use crate::core::diff::LineKind;
-use crate::core::finding::{Finding, Fix, Level, Message, Region};
+use crate::core::finding::{Detection, Fix, Message, Region, Stamp};
 use crate::core::rules::check::Judgement;
 
 /// How many times a marker repeats its character.
@@ -20,7 +20,7 @@ const BASE: char = '|';
 const SEPARATOR: char = '=';
 const THEIRS: char = '>';
 
-pub fn evaluate(judged: &Judgement) -> Vec<Finding> {
+pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     let mut findings = Vec::new();
     for change in changes {
@@ -86,11 +86,10 @@ fn new_content(change: &Change) -> impl Iterator<Item = &str> {
         .map(|line| line.text.as_str())
 }
 
-fn finding(path: &str, start_line: u32, found: char) -> Finding {
+fn finding(path: &str, start_line: u32, found: char) -> Detection {
     let marker: String = std::iter::repeat_n(found, WIDTH).collect();
-    Finding {
-        rule: "G1".to_string(),
-        level: Level::Block,
+    Detection {
+        stamp: Stamp::Rule,
         path: path.to_string(),
         region: Some(Region {
             start_line,
@@ -105,6 +104,5 @@ fn finding(path: &str, start_line: u32, found: char) -> Finding {
             description: "delete the conflict marker line.".to_string(),
             replacement: None,
         }),
-        suppressed: None,
     }
 }

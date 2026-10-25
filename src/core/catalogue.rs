@@ -65,7 +65,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Block,
         short_description: "Assertions were dropped from a changed test file",
-        full_description: "The assertion count of a changed test file fell between HEAD and the working tree, and no allowance carries a reason for it. An assertion the same change makes in another test file moved rather than went, and is left out of the count and of what the finding claims.",
+        full_description: "The assertion count of a changed test file fell between HEAD and the working tree, and no allowance carries a reason for it. An assertion inside a parametrized case or a loop counts once for each case the file writes down, so a table that loses a row loses a claim. A fall that leaves claims under a new loop whose cases the file does not write down is reported as a warning rather than a block, since that loop may run every assertion that left and only a person can say whether it does. An assertion the same change makes in another test file moved rather than went, and is left out of the count and of what the finding claims.",
         network: Network::None,
     },
     Rule {
@@ -233,7 +233,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Scan,
         default_level: Level::Warn,
         short_description: "The docs cite something that no longer exists",
-        full_description: "A path, command, flag or symbol cited in the repository's markdown does not resolve against the tree.",
+        full_description: "A path, command, flag or symbol cited in the repository's markdown does not resolve against the tree. A link is judged by its destination alone, read from the directory of the document that writes it.",
         network: Network::None,
     },
     Rule {

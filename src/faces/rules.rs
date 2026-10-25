@@ -44,7 +44,7 @@ struct Row {
 fn row(rule: &Rule, defaults: &Config) -> Row {
     Row {
         id: rule.id.to_string(),
-        level: level_word(defaults.rules.get(rule.id)).to_string(),
+        level: level_word(defaults.setting(rule)).to_string(),
         face: face_word(rule.face).to_string(),
         network: rule.network.spelled(),
         finding: rule.short_description.to_string(),
@@ -52,14 +52,13 @@ fn row(rule: &Rule, defaults: &Config) -> Row {
     }
 }
 
-/// Check rules carry a level, scan rules are on or off. A rule the config never
-/// heard of is off: weeder will not run what it cannot configure.
-fn level_word(setting: Option<&RuleSetting>) -> &'static str {
+/// Check rules carry a level, scan rules are on or off.
+fn level_word(setting: RuleSetting) -> &'static str {
     match setting {
-        Some(RuleSetting::Block) => "block",
-        Some(RuleSetting::Warn) => "warn",
-        Some(RuleSetting::On) => "on",
-        Some(RuleSetting::Off) | None => "off",
+        RuleSetting::Block => "block",
+        RuleSetting::Warn => "warn",
+        RuleSetting::On => "on",
+        RuleSetting::Off => "off",
     }
 }
 
