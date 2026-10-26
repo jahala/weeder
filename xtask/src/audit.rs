@@ -26,10 +26,25 @@ use std::path::{Path, PathBuf};
 /// The agreement every sample has to reach for the verdict to stand unqualified.
 pub const AGREEMENT_BAR: f64 = 90.0;
 
-/// The smallest sample the verdict may rest on. The audit loop draws at least
-/// twenty of each; calibration writes the sentence, so calibration checks that
-/// the sample under it is the one that was asked for.
+/// The smallest sample the verdict may rest on, unless the sample is a census.
+/// The audit loop draws twenty of each population, or all of a population
+/// smaller than that; calibration writes the sentence, so calibration checks
+/// that the sample under it is the one that was asked for.
 pub const SAMPLE_FLOOR: usize = 20;
+
+/// The cases a sample was drawn from, as the measurement counts them.
+///
+/// It comes from the run that writes the report, never from the re-grade: a
+/// re-grade that called nineteen cases the whole of a population of twenty-five
+/// would otherwise stand on its own say-so.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Population {
+    /// The sample's name as a re-grade's agreement table writes it.
+    pub sample: String,
+    pub cases: usize,
+    /// What all of it is, in the words the report prints beside a census.
+    pub whole: String,
+}
 
 /// One sample the re-grade drew.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -37,6 +52,8 @@ pub struct Sample {
     pub name: String,
     pub regraded: usize,
     pub agreed: usize,
+    /// What the sample was drawn from, where the run reading it knows.
+    pub population: Option<Population>,
 }
 
 impl Sample {
@@ -47,11 +64,34 @@ impl Sample {
         self.agreed as f64 * 100.0 / self.regraded as f64
     }
 
-    /// Whether one sample on its own is enough to rest a verdict on.
+    /// Whether the sample is every case its population holds, where that is
+    /// fewer than the floor. At or above the floor a sample is held to the
+    /// floor, and whether it is also whole changes nothing.
+    pub fn census(&self) -> bool {
+        self.regraded < SAMPLE_FLOOR
+            && self
+                .population
+                .as_ref()
+                .is_some_and(|population| population.cases == self.regraded)
+    }
+
+    /// Whether one sample on its own is enough to rest a verdict on: at least
+    /// the floor, or a census, and at the bar either way.
     pub fn stands(&self) -> bool {
-        self.regraded >= SAMPLE_FLOOR
+        (self.regraded >= SAMPLE_FLOOR || self.census())
             && self.agreed <= self.regraded
             && self.agreement() >= AGREEMENT_BAR
+    }
+
+    /// How many cases were re-graded and, where they are all there is, that
+    /// they are: `19 cases, every blocked commit the report holds`.
+    pub fn cases(&self) -> String {
+        match &self.population {
+            Some(population) if self.census() => {
+                format!("{} cases, {}", self.regraded, population.whole)
+            }
+            _ => format!("{} cases", self.regraded),
+        }
     }
 }
 
@@ -162,17 +202,17 @@ impl Audit {
             .iter()
             .filter(|sample| !sample.stands())
             .map(|sample| {
-                if sample.regraded < SAMPLE_FLOOR {
+                if sample.regraded < SAMPLE_FLOOR && !sample.census() {
                     format!(
                         "{} is {} cases and the sample floor is {SAMPLE_FLOOR}",
                         sample.name, sample.regraded
                     )
                 } else {
                     format!(
-                        "{} agrees on {:.1} percent of {} cases",
+                        "{} agrees on {:.1} percent of {}",
                         sample.name,
                         sample.agreement(),
-                        sample.regraded
+                        sample.cases()
                     )
                 }
             })
@@ -314,8 +354,9 @@ fn is_audit_record(name: &str) -> bool {
 /// Every re-grade the repository carries, read as one: the verdict drops its
 /// qualification only when every audit file agrees at the bar on every sample,
 /// so a blind re-grade under the bar keeps the verdict pending however well a
-/// sighted one did. Each sample is named by the file it came from.
-pub fn read_all(root: &Path) -> Audit {
+/// sighted one did. Each sample is named by the file it came from, and told
+/// the population of the same name it was drawn from.
+pub fn read_all(root: &Path, populations: &[Population]) -> Audit {
     let docs = root.join("docs");
     let mut names: Vec<String> = std::fs::read_dir(&docs)
         .map(|entries| {
@@ -338,22 +379,26 @@ pub fn read_all(root: &Path) -> Audit {
         .iter()
         .map(|name| (docs.join(name), format!("docs/{name}")))
         .collect();
-    gather(&files, true)
+    gather(&files, populations, true)
 }
 
 /// Read the re-grades a caller names, which is how a suite probes the wording
 /// against files it wrote itself. A file that is not there is not an error: the
 /// re-grade is work that happens after the calibration, and its absence is
 /// exactly what the provisional wording is for.
-pub fn read_many(files: &[(PathBuf, String)]) -> Audit {
-    gather(files, false)
+pub fn read_many(files: &[(PathBuf, String)], populations: &[Population]) -> Audit {
+    gather(files, populations, false)
 }
 
 /// The files, read into the one audit the report is written from. Samples are
 /// named by the file they came from only where more than one file was read for
 /// the repository's own record, because a reader of the shipped report has to
 /// know which re-grade a share came off.
-fn gather(files: &[(PathBuf, String)], name_samples_by_file: bool) -> Audit {
+fn gather(
+    files: &[(PathBuf, String)],
+    populations: &[Population],
+    name_samples_by_file: bool,
+) -> Audit {
     let label = files
         .iter()
         .map(|(_, label)| label.clone())
@@ -367,7 +412,7 @@ fn gather(files: &[(PathBuf, String)], name_samples_by_file: bool) -> Audit {
         records.push(Record {
             label: label.clone(),
             sight: declared_sight(&text),
-            samples: samples(&text),
+            samples: samples(&text, populations),
             blocked: blocked_rows(&text),
         });
     }
@@ -496,8 +541,10 @@ fn plain(cell: &str) -> String {
 
 /// The samples in the agreement table: `| <sample> | <re-graded> | <agreed> |`,
 /// and whatever else the row carries after those three cells is the auditor's
-/// own arithmetic, which is recomputed rather than believed.
-fn samples(text: &str) -> Vec<Sample> {
+/// own arithmetic, which is recomputed rather than believed. A sample is told
+/// the population whose name it carries; one whose name matches none is held
+/// to the floor alone.
+fn samples(text: &str, populations: &[Population]) -> Vec<Sample> {
     let mut samples = Vec::new();
     for line in text.lines() {
         let line = line.trim();
@@ -520,10 +567,15 @@ fn samples(text: &str) -> Vec<Sample> {
         if name.is_empty() {
             continue;
         }
+        let population = populations
+            .iter()
+            .find(|population| population.sample.eq_ignore_ascii_case(&name))
+            .cloned();
         samples.push(Sample {
             name,
             regraded,
             agreed,
+            population,
         });
     }
     samples

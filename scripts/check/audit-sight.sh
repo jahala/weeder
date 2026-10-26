@@ -216,6 +216,7 @@ carries "no re-grade at all" "No re-grade is recorded" "$none"
 # wrote.
 python3 - "$report" "$audit" <<'PY' || status=1
 import os
+import re
 import sys
 
 report_path, audit_path = sys.argv[1:3]
@@ -242,6 +243,24 @@ def declaration(text):
     return None
 
 
+def populations(report):
+    """How many cases each sample is drawn from, read off the report's own
+    tables: the blocked commits in the pooled row of its totals, and the misses
+    its recall section lists. A sample under the floor stands only as a census,
+    every case its population holds."""
+    found = {}
+    pooled = re.search(r"^\| \*\*pooled\*\* \| \*\*\d+\*\* \| \*\*(\d+)\*\* \|", report, re.M)
+    if pooled:
+        found["blocked commits"] = int(pooled.group(1))
+    misses = re.search(r"^### Every miss\n(.*?)(?=^### |^<!-- recall:end -->|\Z)", report, re.M | re.S)
+    if misses:
+        found["recall cases"] = len(re.findall(r"^- [A-Z][0-9] · ", misses.group(1), re.M))
+    return found
+
+
+POPULATION = populations(report)
+
+
 def samples(text):
     found = []
     for line in text.splitlines():
@@ -252,7 +271,7 @@ def samples(text):
         if len(cells) < 3:
             continue
         try:
-            found.append((int(cells[1]), int(cells[2])))
+            found.append((cells[0].strip("*").strip().lower(), int(cells[1]), int(cells[2])))
         except ValueError:
             continue
     return found
@@ -260,10 +279,11 @@ def samples(text):
 
 def stands(found):
     return bool(found) and all(
-        regraded >= SAMPLE_FLOOR
+        regraded > 0
+        and (regraded >= SAMPLE_FLOOR or regraded == POPULATION.get(name))
         and agreed <= regraded
         and agreed * 100.0 / regraded >= AGREEMENT_BAR
-        for regraded, agreed in found
+        for name, regraded, agreed in found
     )
 
 

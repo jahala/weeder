@@ -208,8 +208,30 @@ def regrade(paths):
         return None
     samples = []
     for path, text in found:
-        samples.extend((f"{name} in {path}", regraded, agreed) for name, regraded, agreed in one_file(text))
+        samples.extend(
+            (f"{name} in {path}", regraded, agreed, name.lower())
+            for name, regraded, agreed in one_file(text)
+        )
     return samples
+
+
+# What each sample is drawn from, counted here rather than read off the
+# generator: the blocked commits the repositories above add up to, and the
+# misses the recall section lists. A sample under the floor stands only as a
+# census, every case its population holds.
+misses = re.search(r"^### Every miss\n(.*?)(?=^### |^<!-- recall:end -->|\Z)", report, re.M | re.S)
+POPULATION = {"blocked commits": pooled["blocked"]}
+if misses:
+    POPULATION["recall cases"] = len(re.findall(r"^- [A-Z][0-9] · ", misses.group(1), re.M))
+
+
+def sample_stands(regraded, agreed, kind):
+    return (
+        regraded > 0
+        and (regraded >= SAMPLE_FLOOR or regraded == POPULATION.get(kind))
+        and agreed <= regraded
+        and agreed * 100.0 / regraded >= AGREEMENT_BAR
+    )
 
 
 def one_file(text):
@@ -233,10 +255,7 @@ def one_file(text):
 
 samples = regrade(audit_path)
 confirmed = bool(samples) and all(
-    regraded >= SAMPLE_FLOOR
-    and agreed <= regraded
-    and agreed * 100.0 / regraded >= AGREEMENT_BAR
-    for _, regraded, agreed in samples
+    sample_stands(regraded, agreed, kind) for _, regraded, agreed, kind in samples
 )
 
 verdict = next((line for line in report.splitlines()[1:] if line.strip()), "")
@@ -258,18 +277,14 @@ if ships and not confirmed and not provisional:
             f"{name} agrees on {agreed * 100.0 / regraded:.1f} percent of {regraded} cases"
             if regraded
             else f"{name} re-graded nothing"
-            for name, regraded, agreed in samples
-            if not (
-                regraded >= SAMPLE_FLOOR
-                and agreed <= regraded
-                and agreed * 100.0 / regraded >= AGREEMENT_BAR
-            )
+            for name, regraded, agreed, kind in samples
+            if not sample_stands(regraded, agreed, kind)
         )
     )
     complaints.append(
         f"the file says `{CONFIRMED}` with no re-grade behind it: {why}. the verdict stays pending "
         f"until a second party agrees at or above {AGREEMENT_BAR:.0f} percent on every sample of at "
-        f"least {SAMPLE_FLOOR} cases."
+        f"least {SAMPLE_FLOOR} cases, or on every case of a population smaller than that."
     )
 if ships and confirmed and provisional:
     complaints.append(
@@ -301,7 +316,7 @@ json.dump(
                 "agreed": agreed,
                 "agreement_percent": rounded(agreed, regraded),
             }
-            for name, regraded, agreed in samples
+            for name, regraded, agreed, _ in samples
         ],
         "repos": [
             {

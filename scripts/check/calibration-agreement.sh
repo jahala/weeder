@@ -56,13 +56,32 @@ def table_cells(line):
     return cells
 
 
-def seeded_sample(items, seed, label, count=20):
+SAMPLE_SIZE = 20
+
+
+def seeded_sample(items, seed, label, count=SAMPLE_SIZE):
+    # A population under twenty is drawn whole: the slice takes all of it.
     return sorted(
         items,
         key=lambda item: hashlib.sha256(
             f"{seed}\0{label}\0{item['key']}".encode("utf-8")
         ).hexdigest(),
     )[:count]
+
+
+def populations(report):
+    """How many cases each sample is drawn from, read off the report's own
+    tables: the blocked commits in the pooled row of its totals, and the misses
+    its recall section lists. A sample under twenty stands only as a census,
+    every case its population holds."""
+    found = {}
+    pooled = re.search(r"^\| \*\*pooled\*\* \| \*\*\d+\*\* \| \*\*(\d+)\*\* \|", report, re.M)
+    if pooled:
+        found["blocked commits"] = int(pooled.group(1))
+    misses = re.search(r"^### Every miss\n(.*?)(?=^### |^<!-- recall:end -->|\Z)", report, re.M | re.S)
+    if misses:
+        found["recall cases"] = len(re.findall(r"^- [A-Z][0-9] · ", misses.group(1), re.M))
+    return found
 
 
 def parse_report(report):
@@ -252,8 +271,12 @@ def check_audit(audit, blocked, recall):
                 f"{audit['path']} agreement row for {sample_name} is {actual}, expected {expected}"
             )
         count, agreed = expected
-        if count < 20:
-            complaints.append(f"{audit['path']} {sample_name} sample has {count} cases; twenty are required")
+        whole = population.get(sample_name)
+        if count < SAMPLE_SIZE and count != whole:
+            complaints.append(
+                f"{audit['path']} {sample_name} sample has {count} cases of the {whole} the report holds; "
+                "twenty are required, or every one of them"
+            )
 
     extra_blocked = set(audit["blocked"]) - {item["key"] for item in blocked_sample}
     extra_recall = set(audit["recall"]) - {item["key"] for item in recall_sample}
@@ -266,10 +289,11 @@ def check_audit(audit, blocked, recall):
 
 report = read(REPORT)
 blocked, recall = parse_report(report)
-if len(blocked) < 20:
-    complaints.append(f"{REPORT} names only {len(blocked)} blocked commits; twenty are required")
-if len(recall) < 20:
-    complaints.append(f"{REPORT} names only {len(recall)} recall cases; twenty are required")
+population = populations(report)
+if not blocked:
+    complaints.append(f"{REPORT} names no blocked commits to sample")
+if not recall:
+    complaints.append(f"{REPORT} names no recall cases to sample")
 
 sighted = parse_audit(SIGHTED, read(SIGHTED))
 blind = parse_audit(BLIND, read(BLIND))

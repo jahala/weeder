@@ -546,3 +546,25 @@ pub fn cleared() -> (Repo, Bench) {
     .expect("the ledger should be writable");
     (repo, bench)
 }
+
+/// A repository whose last `count` commits each take one case out of the same
+/// file, so every one of them blocks, with every block classified: a population
+/// of blocked commits a suite can size, cleared of false positives so only the
+/// re-grade decides what the first paragraph says.
+pub fn cleared_population(count: usize) -> (Repo, Bench) {
+    let repo = Repo::init();
+    repo.write("src/lib.rs", "pub fn one() -> u32 {\n    1\n}\n");
+    repo.write("tests/unit.rs", &suite(count + 1));
+    repo.commit("the repository begins");
+    let mut ledger = String::new();
+    for left in (1..=count).rev() {
+        repo.write("tests/unit.rs", &suite(left));
+        let sha = repo.commit(&format!("one case fewer, {left} left"));
+        ledger.push_str(&format!(
+            "[[commit]]\nrepo = \"probe\"\nsha = \"{sha}\"\nclassification = \"true-positive\"\nreasoning = \"a case really did go\"\n\n"
+        ));
+    }
+    let bench = Bench::new();
+    std::fs::write(bench.judgements(), ledger).expect("the ledger should be writable");
+    (repo, bench)
+}

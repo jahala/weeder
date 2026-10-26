@@ -243,10 +243,10 @@ impl<'a> Report<'a> {
                         .iter()
                         .map(|sample| {
                             format!(
-                                "{} at {:.1} percent of {} cases",
+                                "{} at {:.1} percent of {}",
                                 sample.name,
                                 sample.agreement(),
-                                sample.regraded
+                                sample.cases()
                             )
                         })
                         .collect();
