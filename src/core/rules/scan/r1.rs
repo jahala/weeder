@@ -35,8 +35,11 @@
 //! One thing weeder cannot see: which repository a sentence is about. A document
 //! describing another tool cites that tool's files and names, and they resolve
 //! against this tree and fail. The shape tests above cut most of it, a
-//! placeholder, an elision, a directory this tree has never had, and what is
-//! left is why `[rules] R1 = "off"` exists.
+//! placeholder, an elision, a directory this tree has never had. A name the
+//! docs cite on purpose and the tree will never hold, a file written at run
+//! time or another program's variable, is the repository's to list in
+//! `[docs] external`, and what is left after that is why `[rules] R1 = "off"`
+//! exists.
 
 use std::collections::BTreeSet;
 
@@ -57,8 +60,9 @@ fn is_document(path: &str) -> bool {
     DOCUMENTS.iter().any(|pattern| glob::matches(pattern, path))
 }
 
-pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Detection> {
+pub fn evaluate(tree: &Tree, config: &Config) -> Vec<Detection> {
     let extensions = tree.extensions();
+    let external = &config.doc_external;
     let known = known_identifiers(tree);
     let mut findings = Vec::new();
 
@@ -74,7 +78,7 @@ pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Detection> {
         let mut anchors: Vec<Option<Anchor>> = vec![None; citations.len()];
         for (index, citation) in citations.iter().enumerate() {
             let resolved = match citation.kind {
-                Kind::Path => place(tree, &citation.text, &extensions),
+                Kind::Path => place(tree, &citation.text, &extensions, external),
                 Kind::Link => linked(tree, &file.path, &citation.text),
                 Kind::Command | Kind::Symbol => continue,
             };
@@ -88,6 +92,13 @@ pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Detection> {
                 Place::Gone(complaint) => {
                     findings.push(finding(&file.path, citation.line, &complaint));
                 }
+                Place::Ambiguous(paths) => {
+                    findings.push(finding(
+                        &file.path,
+                        citation.line,
+                        &ambiguity(&citation.text, &paths),
+                    ));
+                }
                 Place::Prose => {}
             }
         }
@@ -95,6 +106,11 @@ pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Detection> {
             let unresolved = match &citation.kind {
                 Kind::Path | Kind::Link => continue,
                 Kind::Command => command_complaint(tree, &citation.text),
+                Kind::Symbol
+                    if outside(external, &[&citation.text, symbol_name(&citation.text)]) =>
+                {
+                    continue
+                }
                 Kind::Symbol => symbol_complaint(
                     &known,
                     anchoring(&citations, &anchors, index),
@@ -214,6 +230,8 @@ enum Place<'a> {
     Found(Anchor<'a>),
     /// The tree holds nothing there, and here is why that matters.
     Gone(Complaint),
+    /// The citation is the tail of several tracked paths, and these are they.
+    Ambiguous(Vec<String>),
     /// Not a citation this rule resolves: a shape prose writes as often as
     /// code does.
     Prose,
@@ -235,6 +253,70 @@ struct Anchor<'a> {
 
 /// Whether a cited path is still there, and what it points at when it is.
 ///
+/// A brace pattern spells several places at once, `fake-{claude,codex}.sh`, and
+/// it is answered by every place it spells: it resolves when each of them does,
+/// and what it is reported for is the ones that do not.
+fn place<'a>(
+    tree: &'a Tree,
+    cited: &str,
+    extensions: &BTreeSet<String>,
+    external: &[String],
+) -> Place<'a> {
+    let (written, _) = split_place(cited);
+    let Some(spelled) = braced(written) else {
+        return one_place(tree, cited, written, extensions, external);
+    };
+    let Some(spelled) = spelled else {
+        return Place::Prose;
+    };
+    let mut files: Vec<&TreeFile> = Vec::new();
+    let mut directory = false;
+    let mut missing = Vec::new();
+    let mut ambiguous = Vec::new();
+    let mut prose = false;
+    for expansion in &spelled {
+        match one_place(tree, expansion, expansion, extensions, external) {
+            Place::Found(anchor) => {
+                directory |= anchor.directory;
+                for file in anchor.files {
+                    if !files.iter().any(|held| held.path == file.path) {
+                        files.push(file);
+                    }
+                }
+            }
+            Place::Gone(_) => missing.push(format!("`{expansion}`")),
+            Place::Ambiguous(paths) => ambiguous.extend(paths),
+            Place::Prose => prose = true,
+        }
+    }
+    if !missing.is_empty() {
+        return Place::Gone(Complaint {
+            stamp: Stamp::Rule,
+            what: format!(
+                "the docs cite `{cited}`, and the tree holds nothing at {}.",
+                missing.join(", ")
+            ),
+            why: "a pattern names every place it spells, and a reader following it finds some of them gone.".to_string(),
+            next: "take the missing names out of the braces, or cite where they are now.".to_string(),
+        });
+    }
+    if !ambiguous.is_empty() {
+        ambiguous.sort();
+        ambiguous.dedup();
+        return Place::Ambiguous(ambiguous);
+    }
+    if prose {
+        return Place::Prose;
+    }
+    Place::Found(Anchor {
+        files,
+        directory,
+        display: written.to_string(),
+    })
+}
+
+/// One place a citation names, as [`place`] reads it once the braces are gone.
+///
 /// A citation that ends in a file extension names a file, and it is resolved
 /// wherever it points: a file that moved is the thing this rule exists to
 /// report. A citation that ends in a directory name is far weaker, prose is
@@ -243,9 +325,27 @@ struct Anchor<'a> {
 /// A path with a glob in it resolves on the directory it starts from, because
 /// weeder matches globs against paths and a pattern that matches nothing today may
 /// be the point of the sentence.
-fn place<'a>(tree: &'a Tree, cited: &str, extensions: &BTreeSet<String>) -> Place<'a> {
-    let (written, _) = split_place(cited);
+///
+/// A document is often written from inside a source root, `adapters/tmux.ts`
+/// for `src/adapters/tmux.ts`, so a path the root does not hold is asked of the
+/// tails of every tracked path, whole components only. One path ending that way
+/// is the place it means; several are reported by name, because a reader cannot
+/// tell which one the doc meant and neither can weeder.
+///
+/// A place the repository listed in `[docs] external` is outside the tree on
+/// purpose, and the tree is not asked about it at all.
+fn one_place<'a>(
+    tree: &'a Tree,
+    cited: &str,
+    written: &str,
+    extensions: &BTreeSet<String>,
+    external: &[String],
+) -> Place<'a> {
     let trimmed = written.trim_end_matches('/');
+    let file_name = trimmed.rsplit('/').next().unwrap_or(trimmed);
+    if outside(external, &[trimmed, file_name]) {
+        return Place::Prose;
+    }
     if let Some(prefix) = literal_prefix(trimmed) {
         if prefix.is_empty() || !about_this_tree(tree, &prefix) {
             return Place::Prose;
@@ -274,6 +374,24 @@ fn place<'a>(tree: &'a Tree, cited: &str, extensions: &BTreeSet<String>) -> Plac
             return Place::Found(under(tree, trimmed, written));
         }
         let named_file = extension_of(trimmed).is_some();
+        let ending = tails(tree, trimmed, written.ends_with('/'));
+        match &ending[..] {
+            [only] => {
+                return Place::Found(match tree.files.iter().find(|file| &file.path == only) {
+                    Some(file) => Anchor {
+                        files: vec![file],
+                        directory: false,
+                        display: file.path.clone(),
+                    },
+                    None => under(tree, only, only),
+                });
+            }
+            [] => {}
+            _ if named_file || about_this_tree(tree, trimmed) => {
+                return Place::Ambiguous(ending);
+            }
+            _ => return Place::Prose,
+        }
         if !named_file && !about_this_tree(tree, trimmed) {
             return Place::Prose;
         }
@@ -310,6 +428,133 @@ fn place<'a>(tree: &'a Tree, cited: &str, extensions: &BTreeSet<String>) -> Plac
         why: "a reader looking for the file finds none, and the doc describes a repository that no longer exists.".to_string(),
         next: "cite the file the repository has, or delete the reference.".to_string(),
     })
+}
+
+/// Every tracked place a path is the tail of, matched on whole components: the
+/// files whose path ends in it, unless the document wrote a directory, and the
+/// directories whose path ends in it. Sorted, and each named once.
+fn tails(tree: &Tree, path: &str, directory_only: bool) -> Vec<String> {
+    let file_tail = format!("/{path}");
+    let directory_tail = format!("/{path}/");
+    let mut places = BTreeSet::new();
+    for file in &tree.files {
+        if !directory_only && file.path.ends_with(&file_tail) {
+            places.insert(file.path.clone());
+        }
+        for (at, _) in file.path.match_indices(&directory_tail) {
+            places.insert(file.path[..at + file_tail.len()].to_string());
+        }
+    }
+    places.into_iter().collect()
+}
+
+/// The most places one brace pattern is read as. A pattern that spells more
+/// than this is describing a shape of name rather than listing the files it
+/// means, and is left to the prose it sits in.
+const MOST_EXPANSIONS: usize = 64;
+
+/// Every path a brace pattern spells: `None` where the text holds no group of
+/// alternatives, `Some(None)` where it spells more than [`MOST_EXPANSIONS`]. A
+/// pair of braces with no comma inside is a placeholder, `{id}`, and stays as
+/// it is written.
+fn braced(pattern: &str) -> Option<Option<Vec<String>>> {
+    first_group(pattern)?;
+    let mut spelled = Vec::new();
+    Some(expand(pattern, &mut spelled).then_some(spelled))
+}
+
+/// Expands the first group of alternatives in `pattern` and every group after
+/// it, adding each finished path to `spelled` once. `false` as soon as there
+/// are more than [`MOST_EXPANSIONS`] of them.
+fn expand(pattern: &str, spelled: &mut Vec<String>) -> bool {
+    let Some((open, close, alternatives)) = first_group(pattern) else {
+        if !spelled.iter().any(|held| held == pattern) {
+            spelled.push(pattern.to_string());
+        }
+        return spelled.len() <= MOST_EXPANSIONS;
+    };
+    let (head, tail) = (&pattern[..open], &pattern[close + 1..]);
+    alternatives
+        .iter()
+        .all(|alternative| expand(&format!("{head}{alternative}{tail}"), spelled))
+}
+
+/// The first `{...}` holding a comma at its own depth: where it opens, where it
+/// closes, and the alternatives between. Braces and commas are ascii, so every
+/// index here sits on a character boundary.
+fn first_group(pattern: &str) -> Option<(usize, usize, Vec<&str>)> {
+    let bytes = pattern.as_bytes();
+    let mut from = 0;
+    while let Some(offset) = bytes[from..].iter().position(|byte| *byte == b'{') {
+        let open = from + offset;
+        let mut depth = 0_usize;
+        let mut cuts = vec![open];
+        let mut close = None;
+        for (index, byte) in bytes.iter().enumerate().skip(open) {
+            match byte {
+                b'{' => depth += 1,
+                b'}' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        close = Some(index);
+                        break;
+                    }
+                }
+                b',' if depth == 1 => cuts.push(index),
+                _ => {}
+            }
+        }
+        let close = close?;
+        if cuts.len() > 1 {
+            cuts.push(close);
+            let alternatives = cuts
+                .windows(2)
+                .map(|pair| &pattern[pair[0] + 1..pair[1]])
+                .collect();
+            return Some((open, close, alternatives));
+        }
+        from = open + 1;
+    }
+    None
+}
+
+/// Whether `[docs] external` covers a citation, given the forms it can be
+/// read in: a path whole and by its file name, a symbol whole and by its last
+/// segment. An entry is a glob, so a plain name matches itself, and an entry
+/// that names a directory covers everything under it.
+fn outside(external: &[String], forms: &[&str]) -> bool {
+    external.iter().any(|entry| {
+        let entry = entry.trim().trim_end_matches('/');
+        let under = format!("{entry}/**");
+        forms
+            .iter()
+            .any(|form| glob::matches(entry, form) || glob::matches(&under, form))
+    })
+}
+
+/// The name a cited symbol is answered by: what follows its last `.` or `::`,
+/// without the parentheses of a call.
+fn symbol_name(cited: &str) -> &str {
+    cited
+        .trim_end_matches("()")
+        .rsplit(['.', ':'])
+        .next()
+        .unwrap_or(cited)
+}
+
+/// What R1 says about a citation that is the tail of several tracked paths.
+fn ambiguity(cited: &str, paths: &[String]) -> Complaint {
+    let named: Vec<String> = paths.iter().map(|path| format!("`{path}`")).collect();
+    Complaint {
+        stamp: Stamp::Rule,
+        what: format!(
+            "the docs cite the path `{cited}`, and {} tracked paths end that way: {}.",
+            paths.len(),
+            named.join(", ")
+        ),
+        why: "a reader cannot tell which one the doc means, and a tool given the path opens whichever it finds first.".to_string(),
+        next: "cite the one it means from the root of the repository.".to_string(),
+    }
 }
 
 /// Everything the tree holds under a directory, as the place a document named.
@@ -568,11 +813,7 @@ fn symbol_complaint(
     anchor: Option<&Anchor>,
     cited: &str,
 ) -> Vec<Complaint> {
-    let name = cited
-        .trim_end_matches("()")
-        .rsplit(['.', ':'])
-        .next()
-        .unwrap_or(cited);
+    let name = symbol_name(cited);
     if name.is_empty() {
         return Vec::new();
     }

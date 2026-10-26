@@ -39,6 +39,8 @@ another law for one run. `scan` judges the tree it is given, and reads the
 | `[entrypoints] cli` | the modules that are the command line itself, where printing is the product | S3 |
 | `[thresholds] todo_age_days` | how old a work marker may get | R3 |
 | `[thresholds] dependency_lag` | how far behind a pin may fall | R4 |
+| `[docs] commands` | the programs whose own `--help` a cited command and its flags are resolved against | R1 |
+| `[docs] external` | the names the docs cite on purpose that live outside the tree: file names, paths, globs, variables | R1 |
 | `[guard] protected` | the branches the git hooks refuse to rewrite | `weeder guard` |
 | `[guardrails] paths` | the path globs this repository holds at the constitution tier | C3 |
 
@@ -286,6 +288,10 @@ The cases are named from the test shape of each side of the test commit, so what
 A path, command, flag or symbol cited in the repository's markdown does not resolve against the tree. A link is judged by its destination alone, read from the directory of the document that writes it.
 
 A citation carries the line it names. A path that resolves is still wrong when the line is past the end of the file, and the finding says how long the file is. A bare name is answered by whatever the paragraph pinned it to: a path or a directory cited on the same line, or the last one that resolved under the same heading. That place is asked first, the rest of the tree second, and what neither answered is a warning naming the place, because a reader can go there and see. A name with nothing beside it is asked of the tree alone and reported as a note: prose is full of words that are nobody's symbol, and the loud half of this rule is the half a document vouched for.
+
+A path the root does not hold is asked of the tails of every tracked path, on whole components, because docs are often written from inside a source root: `adapters/tmux.ts` resolves to `src/adapters/tmux.ts` when that is the only path ending that way. A tail several paths end in is reported with the paths it could mean. A brace pattern such as `test/fixtures/fake-{claude,codex}.sh` resolves when every place it spells does, and is reported for the ones that do not.
+
+Some names are cited on purpose and never live in the tree: a file a program writes at run time, a variable another program reads. `[docs] external` lists them, as file names, paths, globs or variable names, and R1 reports none of them. A name the list does not cover is judged as before.
 
 <a id="R2"></a>
 ## R2: A public symbol has no references

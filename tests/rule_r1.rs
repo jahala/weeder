@@ -217,6 +217,96 @@ fn a_markdown_link_is_judged_by_its_destination_alone() {
 }
 
 #[test]
+fn a_path_written_from_a_source_root_resolves_by_its_tail_and_a_brace_pattern_by_its_expansions() {
+    let found = findings("tails", "fire");
+    assert_eq!(
+        found.len(),
+        4,
+        "an anchored name the file lacks, an ambiguous tail, one missing expansion and a tail cut inside a name, and R1 reported: {found:#?}"
+    );
+
+    let anchored = about(&found, "killPane");
+    assert_eq!(
+        anchored.level, "warning",
+        "`adapters/tmux.ts` is the tail of one tracked path, so it resolves and pins the name beside it: {}",
+        anchored.message
+    );
+    assert!(
+        anchored.message.contains("`src/adapters/tmux.ts`"),
+        "the finding should name the file the tail resolved to: {}",
+        anchored.message
+    );
+
+    let ambiguous = about(&found, "`util/index.ts`");
+    assert_eq!(ambiguous.level, "warning");
+    for meant in ["`src/util/index.ts`", "`test/util/index.ts`"] {
+        assert!(
+            ambiguous.message.contains(meant),
+            "an ambiguous tail is reported by the paths it could mean, and {meant} is one: {}",
+            ambiguous.message
+        );
+    }
+    assert!(
+        !ambiguous.message.contains("holds nothing there"),
+        "a tail several paths end in is not a path the tree lacks: {}",
+        ambiguous.message
+    );
+
+    let braces = about(&found, "fake-{claude,codex,gemini}.sh");
+    assert_eq!(braces.level, "warning");
+    assert!(
+        braces.message.contains("`test/fixtures/fake-gemini.sh`"),
+        "the expansion that is missing is named: {}",
+        braces.message
+    );
+    for present in [
+        "`test/fixtures/fake-claude.sh`",
+        "`test/fixtures/fake-codex.sh`",
+    ] {
+        assert!(
+            !braces.message.contains(present),
+            "{present} is in the tree, so the finding leaves it out: {}",
+            braces.message
+        );
+    }
+
+    let cut = about(&found, "`apters/tmux.ts`");
+    assert!(
+        cut.message.contains("holds nothing there"),
+        "a tail is matched on whole path components, so a cut inside a name resolves to nothing: {}",
+        cut.message
+    );
+}
+
+#[test]
+fn a_name_docs_external_lists_is_never_reported_and_one_it_does_not_list_still_is() {
+    let found = findings("external", "fire");
+    assert_eq!(
+        found.len(),
+        2,
+        "`[docs] external` covers a file name, a glob of paths, a variable and a glob of variables, and the two names it does not list are reported: {found:#?}"
+    );
+    let file = about(&found, "`bind.sh`");
+    assert_eq!(file.level, "warning");
+    let variable = about(&found, "`OPENCODE_CONFIG_DIR`");
+    assert_eq!(variable.level, "note");
+    for listed in [
+        "`meta.json`",
+        "`stop.sh`",
+        "state/hooks/notify.sh",
+        "GEMINI_MODEL",
+        "TMUX_PANE",
+    ] {
+        assert!(
+            found
+                .iter()
+                .all(|finding| !finding.message.contains(listed)),
+            "{listed} is a name the repository said lives outside the tree: {found:#?}"
+        );
+    }
+}
+
+#[test]
 fn nothing_is_reported_when_every_citation_still_resolves() {
     for lang in [
         "paths",
@@ -227,6 +317,8 @@ fn nothing_is_reported_when_every_citation_still_resolves() {
         "anchors",
         "directory",
         "links",
+        "tails",
+        "external",
     ] {
         let found = findings(lang, "silent");
         assert!(

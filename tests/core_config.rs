@@ -1,7 +1,7 @@
 mod common;
 
 use weeder::core::catalogue::{self, Rule};
-use weeder::core::{parse_config, RuleSetting};
+use weeder::core::{parse_config, Config, RuleSetting};
 
 fn rule(id: &str) -> &'static Rule {
     catalogue::rule(id).expect("the catalogue holds the rule")
@@ -101,6 +101,28 @@ fn config_errors_name_bad_keys_and_levels() {
     let two_spellings = parse_config(Some("[guard]\nprotected_branches = [\"main\"]\n"))
         .expect_err("only one spelling");
     assert!(two_spellings.to_string().contains("protected_branches"));
+}
+
+#[test]
+fn docs_external_names_what_lives_outside_the_tree_and_an_unknown_docs_key_is_refused() {
+    let config = parse_config(Some(
+        "[docs]\ncommands = [\"weeder\"]\nexternal = [\"stop.sh\", \"state/**\", \"GEMINI_MODEL\"]\n",
+    ))
+    .expect("both keys are weeder's");
+    assert_eq!(config.doc_commands, vec!["weeder"]);
+    assert_eq!(
+        config.doc_external,
+        vec!["stop.sh", "state/**", "GEMINI_MODEL"]
+    );
+    assert!(Config::default().doc_external.is_empty());
+
+    let misspelled = parse_config(Some("[docs]\nexternals = [\"stop.sh\"]\n"))
+        .expect_err("a key weeder does not read sets nothing, so it must fail");
+    assert!(misspelled.to_string().contains("externals"));
+
+    let blank = parse_config(Some("[docs]\nexternal = [\" \"]\n"))
+        .expect_err("a blank entry names nothing");
+    assert!(blank.to_string().contains("docs.external"));
 }
 
 #[test]

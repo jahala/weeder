@@ -1,0 +1,4 @@
+[docs]
+# Written at run time under the state directory, or read by the programs
+# this one drives. None of them is ever in the tree.
+external = ["stop.sh", "meta.json", "state/**", "GEMINI_MODEL", "TMUX_*"]
