@@ -230,7 +230,7 @@ fn file_gone(path: &str, cases: usize, moved: &Followed) -> Detection {
         Message {
             what: format!("a test file was deleted, and {} went with it.", counted(cases)),
             why: "a suite that is gone reports nothing, so whatever it covered is now covered by nobody.".to_string(),
-            next: "restore the file, or move its cases into the file that takes its place.".to_string(),
+            next: "restore the file, move its cases into the file that takes its place, or write why it went in a `Weeder-allow: T1` trailer.".to_string(),
         }
     } else {
         Message {
@@ -241,7 +241,7 @@ fn file_gone(path: &str, cases: usize, moved: &Followed) -> Detection {
                 counted(cases)
             ),
             why: "the cases that moved run where they landed; the ones left behind cannot fail any more, so the behaviour they held the code to is unwatched.".to_string(),
-            next: "send the rest after the others, or say in the change which behaviour stopped being worth a test.".to_string(),
+            next: "send the rest after the others, or say which behaviour stopped being worth a test in a `Weeder-allow: T1` trailer.".to_string(),
         }
     };
     Detection {
@@ -284,7 +284,7 @@ fn cases_gone(
         message: Message {
             what,
             why: "a case that is gone cannot fail, so the behaviour it held the code to is now unwatched.".to_string(),
-            next: "put the cases back, or say in the change which behaviour stopped being worth a test.".to_string(),
+            next: "put the cases back, or say which behaviour stopped being worth a test in a `Weeder-allow: T1` trailer.".to_string(),
         },
         fix: None,
     }

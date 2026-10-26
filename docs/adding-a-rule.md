@@ -146,6 +146,13 @@ If the rule blocks by default, add it and its fire languages to `BLOCKING` in
 and next, and to weeder's voice. The list is typed by hand, so nothing fails if
 you forget it.
 
+The next action of a blocking rule names the `Weeder-allow: <RULE>` trailer as
+the way through, because every face reads a trailer and no hook reads a marker
+on the line. G1 says "or write why they stay in a `Weeder-allow: G1` trailer".
+`tests/rule_messages.rs::every_block_level_next_names_the_trailer_and_none_teaches_the_line_marker`
+reads the blocking rules off the catalogue and their fire fixtures off the
+tree, so it fails if the message leaves the trailer out.
+
 ## The order, in one table
 
 | Step | File | Fails if forgotten |
@@ -158,3 +165,4 @@ you forget it.
 | 5 | `docs/rules.md` | `tests/docs_rules.rs` |
 | 6 | `xtask/src/mutate/inject.rs`, `xtask/src/mutate/shape.rs` | the test at the foot of `xtask/src/mutate/inject.rs` |
 | 7 | `tests/rule_messages.rs` | nothing |
+| 7 | the trailer in a blocking rule's next action | `tests/rule_messages.rs` |

@@ -441,7 +441,7 @@ impl Shape {
             message: Message {
                 what,
                 why: "a credential in a commit is a credential published, and deleting the line later leaves it in the history.".to_string(),
-                next: "take the value out, rotate it, and read the credential from the environment at run time.".to_string(),
+                next: "take the value out, rotate it, and read the credential from the environment at run time; a value that is no credential takes a `Weeder-allow: X1` trailer saying what it is.".to_string(),
             },
         }
     }

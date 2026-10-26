@@ -155,7 +155,7 @@ fn file_finding(change: &Change, from: &str, to: &str) -> Detection {
                 counted(cases)
             ),
             why: "a file the runner never opens reports nothing, and the tests inside it still read as present.".to_string(),
-            next: "rename it back inside the convention, or move its cases into a file the runner collects.".to_string(),
+            next: "rename it back inside the convention, move its cases into a file the runner collects, or write why it leaves in a `Weeder-allow: T7` trailer.".to_string(),
         },
         fix: None,
     }
@@ -175,7 +175,7 @@ fn case_finding(path: &str, from: &str, renamed: &Definition) -> Detection {
                 renamed.name
             ),
             why: "the body is still here and nothing calls it, so the case reads as present and never runs.".to_string(),
-            next: "give it back a name the runner collects, or call it from a case that has one.".to_string(),
+            next: "give it back a name the runner collects, call it from a case that has one, or write why it stopped running in a `Weeder-allow: T7` trailer.".to_string(),
         },
         fix: None,
     }

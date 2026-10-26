@@ -225,7 +225,7 @@ fn finding(path: &str, import: &Import, from: &str, to: &str) -> Detection {
         message: Message {
             what: format!("`{from}` imports `{to}`, which this repository's [deps] does not allow."),
             why: "the layers only hold while every arrow between them runs the way the repository says it does.".to_string(),
-            next: format!("move what `{from}` needs to where it may reach it, or state the direction in [deps] allow and say why."),
+            next: format!("move what `{from}` needs to where it may reach it, state the direction in [deps] allow, or say why it may cross in a `Weeder-allow: D2` trailer."),
         },
         fix: None,
     }

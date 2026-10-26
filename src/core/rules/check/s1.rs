@@ -337,7 +337,7 @@ fn finding(path: &str, found: &Found, tree: &Hierarchy) -> Detection {
                 "`{}` is declared on `{}` and nothing in the repository overrides it, and `{entry}` states `{}` to whatever reads this package, so the override may live in another repository.",
                 contract.method, contract.base, contract.base
             ),
-            "write it here, or allow the line with `weeder-allow S1:` naming the implementation that fills it in.".to_string(),
+            "write it here, or name the implementation that fills it in with a `Weeder-allow: S1` trailer.".to_string(),
         ),
         (Some(contract), None) => (
             Stamp::Rule,
@@ -370,4 +370,5 @@ fn finding(path: &str, found: &Found, tree: &Hierarchy) -> Detection {
 }
 
 /// What a reader is asked to do about a stub weeder will not settle for them.
-const TAKE_IT_BACK: &str = "finish the work, or take the line back out of the change.";
+const TAKE_IT_BACK: &str =
+    "finish the work, take the line back out of the change, or name what fills it in with a `Weeder-allow: S1` trailer.";

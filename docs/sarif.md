@@ -161,8 +161,8 @@ one line, so a one-line finding reads as `{ "startLine": 12 }`.
 error    T1  tests/parser.test.ts:12  A test case disappeared from a changed test file.
          why   a case that is gone cannot fail, so the behaviour it held the code to is
                now unwatched.
-         next  put the case back, or say in the change which behaviour stopped being
-               worth a test.
+         next  put the case back, or say which behaviour stopped being worth a test
+               in a `Weeder-allow: T1` trailer.
 warning  S3  src/parser.rs:4          A debug leftover reached production code.
          why   it prints on every run in production, where nobody is reading.
          next  delete it, or route it through the logger.

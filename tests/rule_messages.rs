@@ -5,10 +5,18 @@
 //! them can also hand back the edit that clears the finding, a marker and a
 //! conflict marker are both a line that should not be there, and that arrives
 //! as a SARIF fix deleting exactly the line the change added.
+//!
+//! Where a block-level finding offers a way through, it names the one every
+//! face honours: a `Weeder-allow:` trailer on the commit. A marker on the line
+//! is read by plain `check` alone, never by a hook and never under `--strict`,
+//! so a finding that taught it would send an agent to write something that
+//! changes nothing, and then to try again (#68).
 
 mod common;
 
-use common::{fixture, Repo};
+use common::{fixture, fixture_root, Repo};
+use weeder::core::catalogue::{self, Face};
+use weeder::core::Level;
 
 /// The words weeder's voice does not use, whatever a rule has found.
 const NEVER: [&str; 12] = [
@@ -136,6 +144,77 @@ fn a_marker_and_a_conflict_marker_carry_the_edit_that_takes_the_line_back_out() 
         }
     }
     assert_eq!(proven, FIXED, "both rules that carry a fix are read");
+}
+
+#[test]
+fn every_block_level_next_names_the_trailer_and_none_teaches_the_line_marker() {
+    let blocking: Vec<&str> = catalogue::rules()
+        .iter()
+        .filter(|rule| rule.face == Face::Check && rule.default_level == Level::Block)
+        .map(|rule| rule.id)
+        .collect();
+    assert!(
+        blocking.len() >= BLOCKING.len(),
+        "the catalogue blocks on at least the rules this file types by hand"
+    );
+
+    for rule in blocking {
+        let trailer = format!("`Weeder-allow: {rule}");
+        let marker = format!("weeder-allow {rule}");
+        let cases = fire_cases(rule);
+        assert!(
+            !cases.is_empty(),
+            "{rule}: a block-level rule has a fire fixture to read its message from"
+        );
+        for case in cases {
+            let run = fire(rule, &case);
+            let blocked: Vec<String> = results(&run)
+                .iter()
+                .filter(|result| result["ruleId"] == rule && result["level"] == "error")
+                .map(|result| {
+                    result["message"]["text"]
+                        .as_str()
+                        .expect("a result carries a message")
+                        .to_string()
+                })
+                .collect();
+            assert!(
+                !blocked.is_empty(),
+                "{rule}/{case}: the fire fixture blocks on its own rule"
+            );
+            for message in blocked {
+                let parts = sentences(&message);
+                let next = parts.last().expect("a message has a next action");
+                assert!(
+                    next.contains(&trailer),
+                    "{rule}/{case}: the next action names the {trailer} <reason>` trailer, \
+                     the allowance every face reads: {message}"
+                );
+                assert!(
+                    !message.contains(&marker),
+                    "{rule}/{case}: no hook and no --strict run honours `{marker}:` on a \
+                     line, so the message does not teach it: {message}"
+                );
+            }
+        }
+    }
+}
+
+/// The fixture folders a rule keeps a fire case in, read off the tree, so a
+/// language or a folder added tomorrow is read too.
+fn fire_cases(rule: &str) -> Vec<String> {
+    let mut cases: Vec<String> = std::fs::read_dir(fixture_root().join(rule))
+        .unwrap_or_else(|error| panic!("{rule}: the rule's fixtures should be readable: {error}"))
+        .map(|entry| entry.expect("a fixture entry should be readable").path())
+        .filter(|path| path.join("fire").is_dir())
+        .filter_map(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .map(str::to_string)
+        })
+        .collect();
+    cases.sort();
+    cases
 }
 
 fn fire(rule: &str, case: &str) -> Repo {

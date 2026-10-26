@@ -133,7 +133,7 @@ fn guardrail(path: &str) -> Detection {
         message: Message {
             what: "a guardrail file was changed.".to_string(),
             why: "this file decides what the checks do, so a change here can switch a gate off while every test still passes.".to_string(),
-            next: "revert it, or land the guardrail change on its own so a person reads it.".to_string(),
+            next: "revert it, or land the guardrail change on its own with a `Weeder-allow: C1` trailer saying why, so a person reads it.".to_string(),
         },
         fix: None,
     }
@@ -150,7 +150,7 @@ fn limits(path: &str, line: u32) -> Detection {
         message: Message {
             what: "the hard-limits section of the instructions was changed.".to_string(),
             why: "these are the limits the work is held to, and an agent that edits them is widening what it is allowed to do.".to_string(),
-            next: "revert the section, or land the change to the limits on its own so a person reads it.".to_string(),
+            next: "revert the section, or land the change to the limits on its own with a `Weeder-allow: C1` trailer saying why, so a person reads it.".to_string(),
         },
         fix: None,
     }
