@@ -185,6 +185,54 @@ fn pre_commit_defers_where_weeder_installed_nothing_at_all() {
 }
 
 #[test]
+fn a_stage_in_the_hooks_directory_git_keeps_is_the_stage_in_every_worktree() {
+    // With core.hooksPath unset, git runs the hooks in the shared git
+    // directory from every worktree. A linked worktree has a private git
+    // directory of its own with no hooks in it, and the stage is not there.
+    let repo = Repo::init();
+    let elsewhere = tempfile::TempDir::new().expect("a temp directory for the second worktree");
+    let second = elsewhere.path().join("second");
+    let second_path = second.to_str().expect("a temp path is text");
+    repo.git(&["worktree", "add", "-b", "second", second_path]);
+
+    let common = repo.git(&["rev-parse", "--path-format=absolute", "--git-common-dir"]);
+    let hooks = Path::new(common.trim()).join("hooks");
+    std::fs::create_dir_all(&hooks).expect("git's own hooks directory");
+    let binary = common::shell_word(&common::binary().display().to_string());
+    for (hook, invocation) in [
+        ("pre-commit", "guard pre-commit"),
+        ("commit-msg", "guard commit-msg -- \"$@\""),
+    ] {
+        let path = hooks.join(hook);
+        std::fs::write(&path, format!("#!/bin/sh\nexec {binary} {invocation}\n"))
+            .expect("the hook should be writable");
+        common::make_runnable(&path);
+    }
+
+    for (worktree, name) in [(repo.root(), "main"), (second.as_path(), "second")] {
+        let path = worktree.join(format!("src/{name}.ts"));
+        std::fs::create_dir_all(path.parent().expect("a directory")).expect("src");
+        std::fs::write(&path, common::conflicted_parser(None)).expect("the file is writable");
+        assert_eq!(common::git_in(worktree, &["add", "-A"]).code, 0);
+        let allowed = common::git_in(
+            worktree,
+            &[
+                "commit",
+                "-m",
+                &allowing("G1", "the marker is the test's, planted on purpose"),
+            ],
+        );
+        assert_eq!(
+            allowed.code,
+            0,
+            "pre-commit finds the commit-msg stage git runs in the {name} worktree, and the \
+             trailer is read there: {}",
+            allowed.output()
+        );
+    }
+}
+
+#[test]
 fn status_names_the_stage_another_planter_wrote_and_is_content_with_it() {
     let repo = planted(&the_stage());
 
