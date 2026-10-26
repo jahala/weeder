@@ -420,6 +420,87 @@ fn install_refuses_to_move_git_away_from_a_hooks_path_another_tool_set() {
 }
 
 #[test]
+fn install_into_the_hooks_directory_git_already_runs_silences_nothing() {
+    let repo = Repo::init();
+    let own = git_hooks(&repo);
+    let theirs = own.join("post-merge");
+    let theirs_says = "#!/bin/sh\necho a hook of their own\n";
+    std::fs::write(&theirs, theirs_says).expect("their hook should be writable");
+    common::make_runnable(&theirs);
+
+    let named = own.display().to_string();
+    let run = repo.weeder(&["guard", "install", "--hooks-dir", &named]);
+    assert_eq!(
+        run.code, 0,
+        "git already runs this directory, so writing beside their hook stops nothing\n{}{}",
+        run.stdout, run.stderr
+    );
+    assert_eq!(read(&theirs), theirs_says, "their hook is as it was");
+    for hook in HOOKS {
+        assert!(own.join(hook).is_file(), "{hook} is written beside it");
+    }
+    let status = repo.weeder(&["guard", "status"]);
+    assert_eq!(
+        status.code, 0,
+        "the install is live\n{}{}",
+        status.stdout, status.stderr
+    );
+}
+
+#[test]
+fn install_never_writes_over_a_hook_of_the_same_name_that_does_not_call_weeder() {
+    let repo = Repo::init();
+    let own = git_hooks(&repo);
+    let theirs = own.join("pre-push");
+    let theirs_says = "#!/bin/sh\n./scripts/guard-push.sh\n";
+    std::fs::write(&theirs, theirs_says).expect("their hook should be writable");
+    common::make_runnable(&theirs);
+    let named = own.display().to_string();
+
+    let refused = repo.weeder(&["guard", "install", "--hooks-dir", &named]);
+    assert_eq!(
+        refused.code, 3,
+        "installing would overwrite their pre-push, so it is refused\n{}{}",
+        refused.stdout, refused.stderr
+    );
+    assert!(
+        refused.stderr.contains("pre-push") && refused.stderr.contains("weeder guard pre-push"),
+        "the refusal names the hook and the call to add to it: {}",
+        refused.stderr
+    );
+    assert_eq!(read(&theirs), theirs_says, "their hook is as it was");
+    assert!(
+        !own.join("pre-commit").exists(),
+        "a refused install writes nothing"
+    );
+    assert_ne!(
+        repo.try_git(&HOOKS_PATH).code,
+        0,
+        "the setting was never written"
+    );
+
+    // The person does what the refusal says, and the hook is the stage now.
+    let calling = format!(
+        "#!/bin/sh\n./scripts/guard-push.sh\nexec {} guard pre-push -- \"$@\"\n",
+        common::shell_word(&common::binary().display().to_string())
+    );
+    std::fs::write(&theirs, &calling).expect("their hook should be writable");
+    let run = repo.weeder(&["guard", "install", "--hooks-dir", &named]);
+    assert_eq!(run.code, 0, "{}{}", run.stdout, run.stderr);
+    assert_eq!(
+        read(&theirs),
+        calling,
+        "a hook that calls weeder is left as it is"
+    );
+    let status = repo.weeder(&["guard", "status"]);
+    assert_eq!(
+        status.code, 0,
+        "their pre-push is the stage, and the rest are weeder's\n{}{}",
+        status.stdout, status.stderr
+    );
+}
+
+#[test]
 fn install_refuses_to_silence_the_hooks_git_keeps_of_its_own() {
     let repo = Repo::init();
     let theirs = repo.root().join(".git/hooks/pre-push");
@@ -527,6 +608,15 @@ fn status_reports_every_hook_live_after_install() {
         "status reports the setting that makes git look there:\n{}",
         run.stdout
     );
+}
+
+/// The hooks directory git keeps of its own, in the git directory every
+/// worktree shares, made if git did not.
+fn git_hooks(repo: &Repo) -> PathBuf {
+    let common = repo.git(&["rev-parse", "--path-format=absolute", "--git-common-dir"]);
+    let hooks = PathBuf::from(common.trim()).join("hooks");
+    std::fs::create_dir_all(&hooks).expect("git's own hooks directory");
+    hooks
 }
 
 fn read(path: &Path) -> String {

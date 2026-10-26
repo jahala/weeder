@@ -137,8 +137,11 @@ HEAD every time git runs them. `pre-push` and `pre-rebase` take the same
 running whatever it ran before: another tool's directory, such as `.husky`, or
 the hooks in `.git/hooks` when nothing is set. `install` refuses with exit 3 where
 that would silence a hook, and names the directory. Call weeder from a hook
-there instead, or pass `--replace` to switch git anyway; `uninstall` puts the
-setting back.
+there instead, install with `--hooks-dir` naming the directory git already runs,
+or pass `--replace` to switch git anyway; `uninstall` puts the setting back.
+In whatever directory it writes, `install` never writes over a hook it did not
+write: one that already calls the same `weeder guard` stage is kept as that
+stage, and any other is refused by name with the call to add to it.
 
 ### The trailer flow
 

@@ -179,15 +179,22 @@ fn install(root: &Path, install: &Install) -> Result<Answer, String> {
         }
     }
     let directory = root.join(&named);
+    let (kept, refusal) = occupied(&directory, &named)?;
+    if let Some(refusal) = refusal {
+        return Err(refusal);
+    }
     fs::create_dir_all(&directory).map_err(|error| error.to_string())?;
 
     let mut written = Vec::new();
     for hook in Hook::ALL {
+        written.push(format!("{named}/{}", hook.name()));
+        if kept.contains(&hook) {
+            continue;
+        }
         let path = directory.join(hook.name());
         let script = guard::script(hook, &install.binary, &install.protect);
         fs::write(&path, &script).map_err(|error| error.to_string())?;
         fs::make_executable(&path).map_err(|error| error.to_string())?;
-        written.push(format!("{named}/{}", hook.name()));
     }
 
     let records = records(root)?;
@@ -218,6 +225,14 @@ fn install(root: &Path, install: &Install) -> Result<Answer, String> {
             hook.name(),
             hook.refuses()
         ));
+        if kept.contains(&hook) {
+            stdout.push_str(&format!(
+                "{:<10}  through the {} hook already there, which calls weeder guard {} and is left as it is\n",
+                "",
+                hook.name(),
+                hook.name()
+            ));
+        }
     }
     stdout.push_str(&protection(root, &install.protect)?);
     Ok(Answer {
@@ -249,6 +264,12 @@ fn displaced(root: &Path, named: &str) -> Result<Option<String>, String> {
         }));
     }
     let own = common_dir(root)?.join("hooks");
+    // Writing into the directory git already runs points git where it looks
+    // today, so it stops nothing. A hook there of a name weeder writes is the
+    // install's own question, asked of every directory: see `occupied`.
+    if same_place(root, &own.display().to_string(), named) {
+        return Ok(None);
+    }
     let mut live = Vec::new();
     for name in GIT_HOOKS {
         let path = own.join(name);
@@ -272,6 +293,49 @@ fn displaced(root: &Path, named: &str) -> Result<Option<String>, String> {
         "git runs {} from {shown}, and setting {HOOKS_PATH_KEY} to {named} would stop git running anything there. call weeder from those hooks, or run weeder guard install --replace to switch git to {named}; weeder guard uninstall unsets {HOOKS_PATH_KEY} again, which hands git back to them.",
         live.join(", ")
     )))
+}
+
+/// What already sits in the directory under the names weeder writes. A bundle of
+/// weeder's own is rewritten. A hook of another hand that already calls the same
+/// `weeder guard` stage is that stage, so it is kept as it is and the first half
+/// of the answer names it. Anything else is somebody's hook, and writing over it
+/// would delete it, so the second half is the refusal naming each one and the
+/// call to add to it. Nothing is written before this is answered.
+fn occupied(directory: &Path, named: &str) -> Result<(Vec<Hook>, Option<String>), String> {
+    let mut kept = Vec::new();
+    let mut theirs = Vec::new();
+    for hook in Hook::ALL {
+        let path = directory.join(hook.name());
+        let Some(script) = fs::read_if_present(&path).map_err(|error| error.to_string())? else {
+            continue;
+        };
+        if guard::binary_named(&script).is_some() {
+            continue;
+        }
+        if guard::invokes(hook, &script) {
+            kept.push(hook);
+        } else {
+            theirs.push(hook);
+        }
+    }
+    if theirs.is_empty() {
+        return Ok((kept, None));
+    }
+    let refusals: Vec<String> = theirs
+        .iter()
+        .map(|hook| {
+            let name = hook.name();
+            let arguments = if *hook == Hook::PreCommit {
+                ""
+            } else {
+                " -- \"$@\""
+            };
+            format!(
+                "{named}/{name} is a hook weeder did not write, and it calls no stage of weeder's, so installing would write over it. add `weeder guard {name}{arguments}` to it and install again, which leaves it as it is, or move it aside."
+            )
+        })
+        .collect();
+    Ok((kept, Some(refusals.join(" "))))
 }
 
 /// Whether two ways of naming a hooks directory name the same one: written the
