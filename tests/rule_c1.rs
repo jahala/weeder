@@ -159,7 +159,14 @@ fn rank(line: &str) -> Option<usize> {
 #[test]
 fn c1_stays_silent_on_weeders_own_hooks_and_fires_once_one_is_edited() {
     let repo = Repo::init();
-    let installed = repo.weeder(&["guard", "install", "--protect", "main"]);
+    let installed = repo.weeder(&[
+        "guard",
+        "install",
+        "--hooks-dir",
+        ".githooks",
+        "--protect",
+        "main",
+    ]);
     assert_eq!(
         installed.code, 0,
         "install runs clean\n{}",

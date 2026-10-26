@@ -190,12 +190,13 @@ fn a_tag_on_a_commit_the_remote_already_has_carries_nothing_new_to_judge() {
     );
 }
 
-/// The same repository with weeder's own hooks installed and published along with
-/// it, which is the state a project is in once it has adopted weeder.
+/// The same repository with weeder's own hooks installed in the tree and
+/// published along with it, which is the state a project is in once it has
+/// adopted weeder and chosen to carry its hooks.
 fn guarded() -> (Repo, Repo) {
     let remote = Repo::bare();
     let repo = Repo::init();
-    repo.weeder(&["guard", "install"]);
+    repo.weeder(&["guard", "install", "--hooks-dir", ".githooks"]);
     // The hooks are guardrail paths, and C1 knows weeder's own bundle byte for
     // byte, so the commit and the push that first carry them go through the
     // very hooks they install.

@@ -122,18 +122,28 @@ hooks themselves; git runs the last four, and you run the first three.
 | `pre-push` | judge what is being pushed, and keep protected branches from being rewritten. git writes the refs on stdin |
 | `pre-rebase` | refuse rewriting a protected branch |
 
-`install` takes `--hooks-dir <dir>` to write the hooks somewhere other than
-`.githooks`, and `--protect <branch>` to name a branch the hooks refuse to
-rewrite. Repeat `--protect` for more than one; leaving it out leaves the hooks
-reading `weeder.toml` at HEAD every time git runs them. `pre-push` and `pre-rebase` take
-the same `--protect` flag, spelled as the installed bundle spells it.
+`install` writes the hooks into `weeder-hooks` in the git directory every
+worktree shares and sets `core.hooksPath` to that absolute path, so one install
+guards every worktree and no file lands in the tree. A repository installed
+before keeps the directory it has. `--hooks-dir <dir>` writes the hooks
+somewhere else, such as `.githooks` to commit them; git resolves a relative path
+in each worktree's own root, so a worktree runs only the hooks its own checkout
+holds. Hooks in a directory a commit can carry run the `weeder` on `PATH` and
+name no path of the installing machine; hooks anywhere else name the binary
+that installed them, and fall back to `PATH`. `--protect <branch>` names a branch the hooks refuse to rewrite. Repeat
+it for more than one; leaving it out leaves the hooks reading `weeder.toml` at
+HEAD every time git runs them. `pre-push` and `pre-rebase` take the same
+`--protect` flag, spelled as the installed bundle spells it.
 
 `core.hooksPath` is one setting, so pointing it at weeder's hooks stops git
 running whatever it ran before: another tool's directory, such as `.husky`, or
 the hooks in `.git/hooks` when nothing is set. `install` refuses with exit 3 where
 that would silence a hook, and names the directory. Call weeder from a hook
-there instead, or pass `--replace` to switch git anyway; `uninstall` puts the
-setting back.
+there instead, install with `--hooks-dir` naming the directory git already runs,
+or pass `--replace` to switch git anyway; `uninstall` puts the setting back.
+In whatever directory it writes, `install` never writes over a hook it did not
+write: one that already calls the same `weeder guard` stage is kept as that
+stage, and any other is refused by name with the call to add to it.
 
 ### The trailer flow
 

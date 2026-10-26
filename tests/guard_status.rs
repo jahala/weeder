@@ -24,7 +24,7 @@ fn status_says_so_when_guard_has_installed_nothing() {
 #[test]
 fn status_names_a_hook_that_is_missing() {
     let repo = installed();
-    std::fs::remove_file(repo.root().join(".githooks/pre-push")).expect("the hook is on disk");
+    std::fs::remove_file(repo.hooks_dir().join("pre-push")).expect("the hook is on disk");
 
     let run = repo.weeder(&["guard", "status"]);
 
@@ -50,7 +50,7 @@ fn status_names_a_hook_git_cannot_run() {
     use std::os::unix::fs::PermissionsExt;
 
     let repo = installed();
-    let hook = repo.root().join(".githooks/pre-commit");
+    let hook = repo.hooks_dir().join("pre-commit");
     std::fs::set_permissions(&hook, std::fs::Permissions::from_mode(0o644))
         .expect("the hook's mode is the test's to change");
 
@@ -71,7 +71,7 @@ fn status_names_a_hook_git_cannot_run() {
 #[test]
 fn status_reads_a_hook_that_is_there_as_one_git_runs() {
     let repo = installed();
-    let hook = repo.root().join(".githooks/pre-commit");
+    let hook = repo.hooks_dir().join("pre-commit");
     assert!(hook.is_file(), "the hook install wrote is on disk");
 
     let run = repo.weeder(&["guard", "status"]);

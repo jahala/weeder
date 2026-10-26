@@ -8,16 +8,13 @@ mod common;
 
 use common::{conflicted_parser, Repo};
 
-/// A repository with the hooks installed and already committed.
-///
-/// `install` writes the hooks into the working tree so a clone gets them. A
-/// hook is a guardrail path, but C1 knows the bundle weeder writes byte for byte,
-/// so the commit that first carries the hooks goes through the gate the hooks
-/// themselves run: adopting weeder is an ordinary commit.
+/// A repository with the hooks installed where `install` puts them when told
+/// nowhere: beside the shared git directory, outside the tree, so there is
+/// nothing to commit before git runs them.
 fn guarded() -> Repo {
     let repo = Repo::init();
-    repo.weeder(&["guard", "install"]);
-    repo.commit("weeder guard installed");
+    let run = repo.weeder(&["guard", "install"]);
+    assert_eq!(run.code, 0, "install runs clean\n{}", run.stderr);
     repo
 }
 

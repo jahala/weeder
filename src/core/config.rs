@@ -53,6 +53,11 @@ pub struct Config {
     /// against, by reading each one's own `--help`. Empty leaves a cited
     /// command alone: weeder has no authority to resolve it against.
     pub doc_commands: Vec<String>,
+    /// `[docs] external`: the names the docs cite on purpose that live outside
+    /// the tree, a file written at run time, another program's environment
+    /// variable. Each is a file name, a path or a glob of either, or a symbol,
+    /// and R1 never reports a citation one of them covers.
+    pub doc_external: Vec<String>,
     /// `[guard] protected`: branches guard refuses to rewrite or push non-fast-forward to.
     pub protected_branches: Vec<String>,
     /// `[guardrails] paths`: the path globs this repository holds at the
@@ -102,6 +107,7 @@ impl Default for Config {
                 dependency_lag: 3,
             },
             doc_commands: Vec::new(),
+            doc_external: Vec::new(),
             protected_branches: vec!["main".to_string(), "master".to_string()],
             guardrail_paths: Vec::new(),
         }
@@ -193,6 +199,17 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
                 }
             }
             config.doc_commands = commands;
+        }
+        if let Some(external) = docs.external {
+            if let Some(blank) = external.iter().find(|name| name.trim().is_empty()) {
+                return Err(ConfigError {
+                    key: "docs.external".to_string(),
+                    message: format!(
+                        "`{blank}` names nothing. write the file name, path, glob or variable the docs cite"
+                    ),
+                });
+            }
+            config.doc_external = external;
         }
     }
     if let Some(guard) = raw.guard {
@@ -353,6 +370,7 @@ struct RawThresholds {
 #[serde(deny_unknown_fields)]
 struct RawDocs {
     commands: Option<Vec<String>>,
+    external: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]

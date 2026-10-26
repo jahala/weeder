@@ -87,11 +87,18 @@ impl Hook {
     }
 }
 
+/// What a bundle names as its binary when it runs the weeder on `PATH`. A hooks
+/// directory a commit can carry gets this rather than a path: any path written
+/// there is the installer's own, published with the commit and wrong on every
+/// other machine and runner that checks it out.
+pub const ON_PATH: &str = "weeder";
+
 /// The bundle `install` writes for a hook: a POSIX shell script that finds the
 /// weeder binary and hands git's own arguments to the matching `weeder guard`
-/// subcommand. It names the binary by the absolute path weeder resolved at
-/// install time and falls back to `PATH`, so a binary that moved is an error
-/// git prints rather than a gate that quietly stops running.
+/// subcommand. Given a path, it names the binary by the absolute path weeder
+/// resolved at install time and falls back to `PATH`; given [`ON_PATH`], it
+/// asks `PATH` alone. Either way a binary that is not there is an error git
+/// prints rather than a gate that quietly stops running.
 pub fn script(hook: Hook, binary: &Path, protected: &[String]) -> String {
     let named = binary.display().to_string();
     let mut call = format!("exec \"$weeder\" guard {}", hook.name());
@@ -102,6 +109,28 @@ pub fn script(hook: Hook, binary: &Path, protected: &[String]) -> String {
     }
     if hook.reads_its_arguments() {
         call.push_str(" -- \"$@\"");
+    }
+
+    if named == ON_PATH {
+        return format!(
+            "#!/bin/sh\n\
+             # weeder guard, the law in git. `weeder guard install` wrote this file;\n\
+             # `weeder guard uninstall` takes it away and puts back what was here.\n\
+             {BINARY_MARKER} {ON_PATH}\n\
+             set -eu\n\
+             \n\
+             weeder=\"$(command -v {ON_PATH} || true)\"\n\
+             if [ -z \"$weeder\" ]; then\n\
+             \tprintf '%s\\n' {complaint} >&2\n\
+             \texit 1\n\
+             fi\n\
+             \n\
+             {call}\n",
+            complaint = quote(&format!(
+                "weeder guard: the {} hook runs the weeder on PATH, and there is none on PATH here. install weeder, or put it on the PATH git runs hooks with.",
+                hook.name()
+            )),
+        );
     }
 
     format!(

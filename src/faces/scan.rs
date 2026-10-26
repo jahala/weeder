@@ -165,6 +165,7 @@ fn gather(root: &Path, config: &Config) -> Result<(Tree, Vec<String>), String> {
             now: now(),
             commands,
             snapshot,
+            set_aside: excluded.clone(),
         },
         excluded,
     ))
