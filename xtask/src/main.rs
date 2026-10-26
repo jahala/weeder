@@ -139,18 +139,6 @@ fn run_calibrate(args: &CalibrateArgs) -> Result<(), Box<dyn Error>> {
         .clone()
         .unwrap_or_else(|| root().join(first_run::DEFAULT_PATH));
     let first = first_run::read(&first_path, &labelled(&first_path))?;
-    // The files a caller points at, which is how the suites probe the wording;
-    // otherwise every audit the repository carries.
-    let audit = if args.audit.is_empty() {
-        audit::read_all(&root())
-    } else {
-        let named: Vec<(PathBuf, String)> = args
-            .audit
-            .iter()
-            .map(|path| (path.clone(), labelled(path)))
-            .collect();
-        audit::read_many(&named)
-    };
     let scratch = tempfile::tempdir()?;
 
     let mut measurements = Vec::new();
@@ -165,6 +153,40 @@ fn run_calibrate(args: &CalibrateArgs) -> Result<(), Box<dyn Error>> {
         )?);
         rates.push(suppressions::measure(repo, scratch.path())?);
     }
+
+    let canonical = root().join("docs/calibration-2026-09.md");
+    let existing = std::fs::read_to_string(&canonical).unwrap_or_default();
+    // What each sample is drawn from, counted by this run: every blocked commit
+    // it found, and every miss the recall section it carries names. A re-grade
+    // of all of a population under the floor is a census, and the re-grade is
+    // never the one that says so.
+    let populations = [
+        audit::Population {
+            sample: "blocked commits".to_string(),
+            cases: measurements
+                .iter()
+                .map(|measurement| measurement.blocked.len())
+                .sum(),
+            whole: "every blocked commit the report holds".to_string(),
+        },
+        audit::Population {
+            sample: "recall cases".to_string(),
+            cases: audit_packet::misses(&existing),
+            whole: "every recall miss the report holds".to_string(),
+        },
+    ];
+    // The files a caller points at, which is how the suites probe the wording;
+    // otherwise every audit the repository carries.
+    let audit = if args.audit.is_empty() {
+        audit::read_all(&root(), &populations)
+    } else {
+        let named: Vec<(PathBuf, String)> = args
+            .audit
+            .iter()
+            .map(|path| (path.clone(), labelled(path)))
+            .collect();
+        audit::read_many(&named, &populations)
+    };
 
     let split = Split::measure(&first, &measurements);
     // The ruling's record belongs to the repository's own corpus: a run over
@@ -184,9 +206,8 @@ fn run_calibrate(args: &CalibrateArgs) -> Result<(), Box<dyn Error>> {
         audit: &audit,
     };
     let outcome = report.outcome();
-    let canonical = root().join("docs/calibration-2026-09.md");
     let out = args.out.clone().unwrap_or_else(|| canonical.clone());
-    write(&out, &with_recall(&report.render(), &canonical))?;
+    write(&out, &with_recall(&report.render(), &existing))?;
 
     if let Some(path) = &args.findings {
         write(path, &findings_json(&measurements))?;
@@ -274,12 +295,12 @@ fn root() -> PathBuf {
 
 /// The precision half with the recall half kept beneath it. `cargo xtask mutate`
 /// writes its section between markers in the calibration file and this
-/// measurement never reads a case of it; whatever section the file in the tree
-/// carries is carried again, so the two measurements share one file without
-/// either writing over the other.
-fn with_recall(rendered: &str, canonical: &Path) -> String {
-    let existing = std::fs::read_to_string(canonical).unwrap_or_default();
-    match mutate::recall_section(&existing) {
+/// measurement judges no case of it, only counting its misses as the recall
+/// sample's population; whatever section the file in the tree carries is
+/// carried again, so the two measurements share one file without either
+/// writing over the other.
+fn with_recall(rendered: &str, existing: &str) -> String {
+    match mutate::recall_section(existing) {
         Some(section) => format!("{rendered}\n{section}\n"),
         None => rendered.to_string(),
     }

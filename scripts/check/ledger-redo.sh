@@ -379,6 +379,33 @@ def declares_blind(text):
     return False
 
 
+def populations(report):
+    """How many cases each sample is drawn from, read off the report's own
+    tables: the blocked commits in the pooled row of its totals, and the misses
+    its recall section lists. A sample under the floor stands only as a census,
+    every case its population holds."""
+    found = {}
+    pooled = re.search(r"^\| \*\*pooled\*\* \| \*\*\d+\*\* \| \*\*(\d+)\*\* \|", report, re.M)
+    if pooled:
+        found["blocked commits"] = int(pooled.group(1))
+    misses = re.search(r"^### Every miss\n(.*?)(?=^### |^<!-- recall:end -->|\Z)", report, re.M | re.S)
+    if misses:
+        found["recall cases"] = len(re.findall(r"^- [A-Z][0-9] · ", misses.group(1), re.M))
+    return found
+
+
+POPULATION = populations(report)
+
+
+def sample_stands(regraded, agreed, kind):
+    return (
+        regraded > 0
+        and (regraded >= SAMPLE_FLOOR or regraded == POPULATION.get(kind))
+        and agreed <= regraded
+        and agreed * 100.0 / regraded >= AGREEMENT_BAR
+    )
+
+
 # Ruling of 2026-09-06: the bar is read on the blind re-grade alone. The
 # sighted one is recorded beside it, checked for its arithmetic by
 # calibration-agreement.sh, and never decides.
@@ -387,11 +414,13 @@ for path in [one for one in audit_path.split(":") if one and os.path.exists(one)
     text = open(path, encoding="utf-8").read()
     if not declares_blind(text):
         continue
-    drawn.extend((f"{name} in {path}", regraded, agreed) for name, regraded, agreed in samples(text))
+    drawn.extend(
+        (f"{name} in {path}", regraded, agreed, name.lower())
+        for name, regraded, agreed in samples(text)
+    )
 
 stands = bool(drawn) and all(
-    regraded >= SAMPLE_FLOOR and agreed <= regraded and agreed * 100.0 / regraded >= AGREEMENT_BAR
-    for _, regraded, agreed in drawn
+    sample_stands(regraded, agreed, kind) for _, regraded, agreed, kind in drawn
 )
 
 prose = "\n".join(
@@ -409,12 +438,8 @@ if not stands and not untrusted:
         f"{name} agrees on {agreed * 100.0 / regraded:.1f} percent of {regraded} cases"
         if regraded
         else f"{name} re-graded nothing"
-        for name, regraded, agreed in drawn
-        if not (
-            regraded >= SAMPLE_FLOOR
-            and agreed <= regraded
-            and agreed * 100.0 / regraded >= AGREEMENT_BAR
-        )
+        for name, regraded, agreed, kind in drawn
+        if not sample_stands(regraded, agreed, kind)
     ) or "no re-grade drew a sample"
     complaints.append(
         "the re-grade is under the bar and the first sentence does not say the classification is "

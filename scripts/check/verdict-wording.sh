@@ -212,9 +212,23 @@ for one_path in audit_paths:
         except ValueError:
             continue
 
+# What each sample is drawn from, read off the report's own tables: the blocked
+# commits in the pooled row of its totals, and the misses its recall section
+# lists. A sample under twenty stands only as a census, every case of one.
+population = {}
+pooled = re.search(r"^\| \*\*pooled\*\* \| \*\*\d+\*\* \| \*\*(\d+)\*\* \|", report, re.M)
+if pooled:
+    population["blocked commits"] = int(pooled.group(1))
+misses = re.search(r"^### Every miss\n(.*?)(?=^### |^<!-- recall:end -->|\Z)", report, re.M | re.S)
+if misses:
+    population["recall cases"] = len(re.findall(r"^- [A-Z][0-9] · ", misses.group(1), re.M))
+
 stands = bool(samples) and all(
-    regraded >= 20 and agreed <= regraded and agreed * 100.0 / regraded >= 90.0
-    for _, regraded, agreed in samples
+    regraded > 0
+    and (regraded >= 20 or regraded == population.get(name.lower()))
+    and agreed <= regraded
+    and agreed * 100.0 / regraded >= 90.0
+    for name, regraded, agreed in samples
 )
 if sentence.startswith("weeder does not ship as a gate:"):
     print("the calibration does not clear the bar, so the re-grade decides nothing about its wording")
