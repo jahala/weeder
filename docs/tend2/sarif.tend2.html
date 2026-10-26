@@ -20,7 +20,7 @@ When stdout is a terminal, or `--format table` is given, one line per finding: l
 
 ## Tests
 - [x] (code) `sarif::render` output validates against `schemas/sarif-schema-2.1.0.json` for an empty log, a single finding, many findings across levels, a finding with a fix, a suppressed finding, and a could-not-run log · tests/sarif_schema.rs @d499977 · by cli
-- [x] (code) each result carries rule id and index, the level mapping (block→error, warn→warning, suppressed→note), a repo-relative uri with a region, a what/why/next message, `fixes` when mechanical, and `suppressions` with the reason when suppressed; the tool component lists every catalogue rule with its default level · tests/sarif_shape.rs @72595fa · by cli
+- [x] (code) each result carries rule id and index, the level mapping (block→error, warn→warning, suppressed→note), a repo-relative uri with a region, a what/why/next message, `fixes` when mechanical, and `suppressions` with the reason when suppressed; the tool component declares the rules its results and suppressions name, each with its default level, and a log with no results declares none · tests/sarif_shape.rs @f94d556 · by cli
 - [x] (code) the table renders one line per finding in level-then-path-then-line order and ends with a count per level · tests/sarif_table.rs @8d8cf1d · by cli
 - [x] (code) `docs/sarif.md` names every convention above and, for each, the test function that pins it; a script checks each named test exists · scripts/check/docs-sarif.sh @22b48dc · by cli
 
@@ -32,5 +32,6 @@ When stdout is a terminal, or `--format table` is given, one line per finding: l
 - 2026-09-05 built by pleach node `sarif` (claude/opus, codex audit) in one attempt, 13 minutes; smoke and audit green; landed through `pleach land` as 3bba154. Conductor review found nothing to fix
 - 2026-09-05 decided by the worker and kept: SARIF's `helpUri` is `format: uri`, so the `docs/rules.md#<id>` this loop named cannot be written relative. The face hands `render` a documentation base (the checkout as a `file:` URI, or a published URL) and weeder resolves against it; with no base it writes no `helpUri` rather than an invalid one. `docs/sarif.md` records it
 - 2026-09-05 the rule catalogue (`src/core/catalogue.rs`) was born here rather than on check-face: the tool component needs every rule with its default level, and one table now feeds `Config::default()`, `weeder rules` and the SARIF driver
+- 2026-10-26 the tool component no longer lists the whole catalogue (#66): an agent reads every run through a pipe, and an empty run cost it about 300 lines of rule descriptions. SARIF 2.1.0 asks only that `ruleIndex` points into what is declared, and `weeder rules --format json` stays the place for the whole catalogue. The check above is reworded to match and re-earned
 </script>
 <script src="loop.js"></script>

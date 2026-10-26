@@ -89,6 +89,9 @@ index 8888888..9999999 100644
     assert_eq!(files[2].hunks[0].lines[2].new_line, Some(2));
     assert_eq!(files[2].hunks[1].lines[1].old_line, Some(21));
     assert_eq!(files[2].hunks[1].lines[2].new_line, Some(21));
+    // A mode that did not change is written on the index line alone.
+    assert_eq!(files[2].old_mode.as_deref(), Some("100644"));
+    assert_eq!(files[2].new_mode.as_deref(), Some("100644"));
 
     assert_eq!(files[3].change, ChangeKind::Renamed);
     assert_eq!(files[3].old_path.as_deref(), Some("src/old.rs"));

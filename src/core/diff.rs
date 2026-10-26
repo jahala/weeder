@@ -225,6 +225,14 @@ pub fn parse_diff(input: &str) -> Result<Vec<FileDiff>, DiffError> {
             } else if let Some(rest) = current.strip_prefix("new mode ") {
                 file.new_mode = Some(rest.to_string());
                 saw_mode = true;
+            } else if let Some(rest) = current.strip_prefix("index ") {
+                // `index <old>..<new> <mode>`: where the mode did not change,
+                // this is the only line that says what it is, and a rule may
+                // ask whether the file is a program.
+                if let Some((_, mode)) = rest.split_once(' ') {
+                    file.old_mode.get_or_insert_with(|| mode.to_string());
+                    file.new_mode.get_or_insert_with(|| mode.to_string());
+                }
             } else if let Some(rest) = current.strip_prefix("rename from ") {
                 rename_from = Some(unquoted_path(rest));
                 file.change = ChangeKind::Renamed;

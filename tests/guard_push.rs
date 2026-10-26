@@ -145,12 +145,58 @@ fn a_branch_that_is_not_protected_is_yours_to_rewrite() {
     );
 }
 
-/// The same repository with weeder's own hooks installed and published along with
-/// it, which is the state a project is in once it has adopted weeder.
+#[test]
+fn a_tag_on_a_commit_the_remote_already_has_carries_nothing_new_to_judge() {
+    let (repo, remote) = guarded();
+    // The law sets a fixture directory aside, and the fixture inside it carries
+    // a work marker S1 would refuse anywhere else. The law is committed under
+    // the trailer that allows a guardrail change.
+    repo.write(
+        "weeder.toml",
+        "[scope]\nspecimens = [\"fixtures/adversarial\"]\n",
+    );
+    repo.commit(
+        "Set the fixtures aside\n\nWeeder-allow: C1 the law this repository is judged under",
+    );
+    // A range is judged under the law its base carries, so the law lands on the
+    // remote before the work that leans on it.
+    let law = repo.try_git(&["push", "origin", "main"]);
+    assert_eq!(law.code, 0, "the law goes through: {}", law.output());
+    repo.write(
+        "fixtures/adversarial/stub/src/parse.py",
+        "def parse(text):\n    raise NotImplementedError  # TODO\n",
+    );
+    repo.commit("A fixture that looks dishonest on purpose");
+    let branch = repo.try_git(&["push", "origin", "main"]);
+    assert_eq!(
+        branch.code,
+        0,
+        "the branch goes through: {}",
+        branch.output()
+    );
+
+    repo.git(&["tag", "-a", "v1", "-m", "the first release"]);
+    let tag = repo.try_git(&["push", "origin", "v1"]);
+
+    assert_eq!(
+        tag.code,
+        0,
+        "every commit under the tag is already on the remote, so the push carries nothing to judge: {}",
+        tag.output()
+    );
+    assert!(
+        remote.git(&["tag", "--list", "v1"]).contains("v1"),
+        "the remote carries the tag"
+    );
+}
+
+/// The same repository with weeder's own hooks installed in the tree and
+/// published along with it, which is the state a project is in once it has
+/// adopted weeder and chosen to carry its hooks.
 fn guarded() -> (Repo, Repo) {
     let remote = Repo::bare();
     let repo = Repo::init();
-    repo.weeder(&["guard", "install"]);
+    repo.weeder(&["guard", "install", "--hooks-dir", ".githooks"]);
     // The hooks are guardrail paths, and C1 knows weeder's own bundle byte for
     // byte, so the commit and the push that first carry them go through the
     // very hooks they install.

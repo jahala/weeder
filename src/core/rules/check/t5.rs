@@ -10,6 +10,13 @@
 //! the expectation moved with it, in the same change, which is the shape of an
 //! expectation that was made to agree rather than checked. The finding lands on
 //! the expectation and names the production file it moved alongside.
+//!
+//! Two kinds of file live where expectations live and are none. A file the
+//! change adds was never agreed with anything: it was born with the test that
+//! reads it, which is the order the law asks for. And a test double, a program
+//! the tests run in place of a real one, changes with the code by design and
+//! holds no recorded output to drift. weeder knows a program by what makes one:
+//! the execute bit git records, or a shebang on the first line.
 
 use crate::core::change::Change;
 use crate::core::classify::FileKind;
@@ -46,11 +53,38 @@ pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
 
     changes
         .iter()
+        .filter(|change| !change.is_addition() && !is_program(change))
         .filter_map(|change| {
             let path = change.path()?;
             is_expectation(path).then(|| finding(path, alongside, production.len()))
         })
         .collect()
+}
+
+/// The mode git records for a file it will run.
+const EXECUTABLE: &str = "100755";
+
+/// What a script opens with to name the program that runs it.
+const SHEBANG: &str = "#!";
+
+/// Whether the file is a program rather than a record: git keeps it executable,
+/// or its first line names an interpreter. The side that still has the file is
+/// the one asked, so a double the change deletes is still a double.
+fn is_program(change: &Change) -> bool {
+    let mode = change
+        .diff
+        .new_mode
+        .as_deref()
+        .or(change.diff.old_mode.as_deref());
+    if mode == Some(EXECUTABLE) {
+        return true;
+    }
+    let side = if change.after.content.is_some() {
+        &change.after
+    } else {
+        &change.before
+    };
+    side.text().starts_with(SHEBANG)
 }
 
 /// Whether the change is to production code. An expectation that happens to be

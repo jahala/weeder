@@ -91,8 +91,34 @@ def judged_content_only(path, text):
     return complaints
 
 
+SAMPLE_SIZE = 20
+AGREEMENT_BAR = 90
+
+
+def populations(report):
+    """How many cases each sample is drawn from, read off the report's own
+    tables: the blocked commits in the pooled row of its totals, and the misses
+    its recall section lists. The re-grade draws twenty of each, or all of a
+    population smaller than that."""
+    found = {}
+    pooled = re.search(r"^\| \*\*pooled\*\* \| \*\*\d+\*\* \| \*\*(\d+)\*\* \|", report, re.M)
+    if pooled:
+        found["blocked commits"] = int(pooled.group(1))
+    misses = re.search(r"^### Every miss\n(.*?)(?=^### |^<!-- recall:end -->|\Z)", report, re.M | re.S)
+    if misses:
+        found["recall cases"] = len(re.findall(r"^- [A-Z][0-9] · ", misses.group(1), re.M))
+    return found
+
+
 audit = read(AUDIT)
 report = read(REPORT)
+population = populations(report)
+for sample_name in ("blocked commits", "recall cases"):
+    if sample_name not in population:
+        complaints.append(f"{REPORT} does not say how many {sample_name} it holds")
+# One packet per sampled case: twenty of each population, or every case of one
+# smaller than that.
+expected_packets = sum(min(SAMPLE_SIZE, cases) for cases in population.values())
 seed = field(audit, "Seed")
 model = field(audit, "Model")
 # The agreement is a number about a population: this one was read by a provider
@@ -120,8 +146,8 @@ with tempfile.TemporaryDirectory() as tmp:
     else:
         kept = sorted(CASE_DIR.glob("*.md"))
         fresh = sorted(regenerated_dir.glob("*.md"))
-        if len(kept) != 40:
-            complaints.append(f"{CASE_DIR} carries {len(kept)} case packets, not 40")
+        if len(kept) != expected_packets:
+            complaints.append(f"{CASE_DIR} carries {len(kept)} case packets, not {expected_packets}")
         if [path.name for path in kept] != [path.name for path in fresh]:
             complaints.append(f"{CASE_DIR} case names differ from regenerated packets")
         for kept_path, fresh_path in zip(kept, fresh):
@@ -193,10 +219,16 @@ if CASE_DIR.exists():
                     complaints.append(f"{session_path} records forbidden {forbidden_key}")
 
 # The audit stands when every sample in its own agreement table is at the bar
-# on at least twenty cases; the agreement script recomputes those rows, and
-# this one reads them. While it does not stand, the report has to say so.
+# on at least twenty cases, or on every case of a population smaller than that;
+# the agreement script recomputes those rows, and this one reads them. While it
+# does not stand, the report has to say so.
 rows = re.findall(r"^\| ([a-z ]+) \| (\d+) \| (\d+) \| [0-9.]+% \|$", audit, re.M)
-stands = bool(rows) and all(int(n) >= 20 and int(a) * 100 >= 90 * int(n) for _, n, a in rows)
+stands = bool(rows) and all(
+    int(n) > 0
+    and (int(n) >= SAMPLE_SIZE or int(n) == population.get(name.strip()))
+    and int(a) * 100 >= AGREEMENT_BAR * int(n)
+    for name, n, a in rows
+)
 if not stands and "untrusted" not in first_prose_sentence(report).lower():
     complaints.append(f"{REPORT}'s first prose sentence must say the classification is untrusted while the fair blind audit is under the bar")
 

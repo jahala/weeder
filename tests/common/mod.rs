@@ -343,6 +343,20 @@ impl Repo {
         self.git(&["rev-parse", "HEAD"]).trim().to_string()
     }
 
+    /// The directory git runs this repository's hooks from: `core.hooksPath`,
+    /// resolved against the root of the worktree the way git resolves it.
+    pub fn hooks_dir(&self) -> PathBuf {
+        let setting = self.git(&["config", "--get", "core.hooksPath"]);
+        self.root().join(setting.trim())
+    }
+
+    /// Where `weeder guard install` writes when it is told nowhere: beside the
+    /// git directory every worktree of the repository shares.
+    pub fn shared_hooks_dir(&self) -> PathBuf {
+        let common = self.git(&["rev-parse", "--path-format=absolute", "--git-common-dir"]);
+        PathBuf::from(common.trim()).join("weeder-hooks")
+    }
+
     /// The message of the commit being prepared. It lives in the git dir, outside
     /// the tree, and every `weeder check` this repo runs passes it with `--message-file`.
     pub fn pending_message(&self, message: &str) {
@@ -390,6 +404,27 @@ impl Repo {
             String::from_utf8_lossy(&output.stderr)
         );
         String::from_utf8_lossy(&output.stdout).to_string()
+    }
+
+    /// git, in this repository, with something added to its environment, where
+    /// the test is asking whether it worked: a hook git runs inherits the PATH
+    /// given here, which is how a test asks what a hook finds on it.
+    pub fn try_git_with(&self, arguments: &[&str], environment: &[(&str, &str)]) -> Run {
+        let mut command = isolated(Command::new("git"));
+        for (name, value) in environment {
+            command.env(name, value);
+        }
+        let output = command
+            .arg("-C")
+            .arg(self.root())
+            .args(arguments)
+            .output()
+            .expect("git should be on PATH");
+        Run {
+            code: code(output.status),
+            stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+            stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+        }
     }
 
     /// git, in this repository, where the test is asking whether it worked. A
@@ -955,7 +990,11 @@ fn expand(contents: &str) -> String {
 /// The caller's git configuration, their hooks and their template directory stay
 /// out of a fixture, so a test proves weeder rather than the machine it runs on.
 fn isolated(mut command: Command) -> Command {
+    // A hook a commit can carry runs the weeder on PATH, so the binary under
+    // test stands in front of whatever weeder this machine has installed. A
+    // test asking what a hook does without one sets PATH again after this.
     command
+        .env("PATH", path_with_weeder())
         .env("GIT_CONFIG_GLOBAL", "/dev/null")
         .env("GIT_CONFIG_SYSTEM", "/dev/null")
         .env("GIT_CONFIG_NOSYSTEM", "1")

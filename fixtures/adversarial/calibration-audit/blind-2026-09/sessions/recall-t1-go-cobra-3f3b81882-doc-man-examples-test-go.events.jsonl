@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t1-go-cobra-3f3b81882-doc-man-examples-test-go.md", "sha256": "763412ba5ed3cd062685841c933b01034d009df8bd839dff8184a3812a297456", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered packet SHA-256: 763412ba5ed3cd062685841c933b01034d009df8bd839dff8184a3812a297456\nVerdict: miss\nReasoning: The diff deletes the `ExampleGenManTree` example function, a test, matching rule T1's shape, but weeder reported no findings there."}

@@ -170,7 +170,6 @@ fn the_commit_the_hook_sees_is_judged_on_the_index_and_not_on_the_untracked_stub
 fn the_pre_commit_hook_guard_installs_still_judges_the_index_alone() {
     let repo = Repo::init();
     repo.weeder(&["guard", "install"]);
-    repo.commit("weeder guard installed");
     repo.write("src/format.ts", FORMAT);
     repo.commit("the formatter");
     let before = repo.head();

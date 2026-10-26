@@ -461,6 +461,12 @@ fn regenerate_an_expectation(lang: Language, tree: &Tree, seed: u64) -> Option<M
         let Some(text) = tree.text(path) else {
             continue;
         };
+        // A script with a shebang is a test double the suite runs, not a
+        // recording it compares against, and rewriting one plants nothing T5
+        // is about.
+        if text.starts_with("#!") {
+            continue;
+        }
         let Some(last) = text.lines().rev().find(|line| !line.trim().is_empty()) else {
             continue;
         };

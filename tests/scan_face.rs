@@ -265,7 +265,7 @@ fn the_table_reads_like_the_one_check_writes() {
 }
 
 #[test]
-fn the_log_declares_the_scan_rules_and_no_others() {
+fn the_log_declares_the_scan_rules_its_results_name_and_no_others() {
     let repo = untidy_repository();
     let run = repo.weeder(&["scan", "--format", "sarif"]);
     let log: Value = serde_json::from_str(&run.stdout).expect("a log");
@@ -275,14 +275,25 @@ fn the_log_declares_the_scan_rules_and_no_others() {
         .iter()
         .map(|rule| rule["id"].as_str().unwrap_or_default().to_string())
         .collect();
+    let named: Vec<String> = log["runs"][0]["results"]
+        .as_array()
+        .expect("a log carries its results")
+        .iter()
+        .map(|result| result["ruleId"].as_str().unwrap_or_default().to_string())
+        .collect();
+    assert!(
+        !named.is_empty(),
+        "the untidy repository has to say something"
+    );
     let expected: Vec<String> = catalogue::rules()
         .iter()
         .filter(|rule| rule.face == Face::Scan)
         .map(|rule| rule.id.to_string())
+        .filter(|id| named.contains(id))
         .collect();
     assert_eq!(
         declared, expected,
-        "a scan log declares what a scan looks for, and a check rule was never among them"
+        "a scan log declares the scan rules its results name, and a check rule was never among them"
     );
 }
 

@@ -67,7 +67,7 @@ fn finding(path: &str, radius: &str) -> Detection {
         message: Message {
             what: "a file outside the scope this run was given was changed.".to_string(),
             why: format!("nobody asked for this edit, and {radius}."),
-            next: "revert the file, or widen the scope on purpose so the change is the one that was asked for.".to_string(),
+            next: "revert the file, widen the scope on purpose so the change is the one that was asked for, or say why it was touched in a `Weeder-allow: X2` trailer.".to_string(),
         },
         fix: None,
     }

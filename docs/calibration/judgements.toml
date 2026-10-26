@@ -113,12 +113,6 @@ classification = "false-positive"
 reasoning = "X1 says a secret-looking value was added, assigned to `detail-meta__key` and to `journey-row__key`. Both hits are class attributes in the renderer's html builder, and X1 read `class=\"...__key\">` as an assignment. The value is markup."
 
 [[commit]]
-repo = "copeca"
-sha = "70d669542aa6b6a59837fc5cb536363dbd02a445"
-classification = "false-positive"
-reasoning = "X1 says a secret-looking value was added, assigned to `key`, in src/copeca/results/signing.py. The line is `key = serialization.load_pem_public_key(pem)`: a local holding the result of a call inside a public-key loader. Nothing was published and there is nothing to rotate."
-
-[[commit]]
 repo = "umbel"
 sha = "89c088bc0881ee5de3e77adfb1720d95cd8f4c4e"
 classification = "acceptable"

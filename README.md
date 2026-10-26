@@ -11,15 +11,18 @@ $ weeder check
 error  G1  src/parser.ts:2  a merge conflict marker (<<<<<<<) was added.
        why   the file carries both sides of a merge nobody finished, so it does not
              parse and does not run.
-       next  finish the merge, delete the markers, and stage the file again.
+       next  finish the merge, delete the markers, and stage the file again, or write
+             why they stay in a `Weeder-allow: G1` trailer.
 error  G1  src/parser.ts:4  a merge conflict marker (=======) was added.
        why   the file carries both sides of a merge nobody finished, so it does not
              parse and does not run.
-       next  finish the merge, delete the markers, and stage the file again.
+       next  finish the merge, delete the markers, and stage the file again, or write
+             why they stay in a `Weeder-allow: G1` trailer.
 error  G1  src/parser.ts:6  a merge conflict marker (>>>>>>>) was added.
        why   the file carries both sides of a merge nobody finished, so it does not
              parse and does not run.
-       next  finish the merge, delete the markers, and stage the file again.
+       next  finish the merge, delete the markers, and stage the file again, or write
+             why they stay in a `Weeder-allow: G1` trailer.
 3 errors, 0 warnings, 0 notes
 ```
 
@@ -62,9 +65,12 @@ until then the tarball is the install.
 Installing the binary guards nothing yet. weeder judges a repository once one of three places
 calls it, and each one is set up on purpose.
 
-In git, per repository. This writes hooks into `.githooks` and points git at them, so every
-commit and push is judged. It refuses where another tool already owns the hooks, such as husky,
-and names the way forward.
+In git, per repository. This writes hooks into `weeder-hooks` in the git directory every
+worktree shares, and points git at them by absolute path, so every commit and push is judged in
+every worktree of the repository. It refuses where another tool already owns the hooks, such as
+husky, and names the way forward. To carry the hooks in the tree instead, pass
+`--hooks-dir .githooks`; git then runs them only in the worktrees whose checkout holds them, and
+they run the `weeder` on PATH, so a commit carrying them names no path on your machine.
 
 ```bash
 cd your-repository

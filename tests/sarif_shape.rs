@@ -256,16 +256,64 @@ fn a_suppressed_result_carries_the_reason_as_an_in_source_justification() {
 }
 
 #[test]
-fn tool_component_lists_every_catalogue_rule_with_its_default_level() {
-    let log = json(&[], &context());
+fn tool_component_declares_only_the_rules_its_results_name_with_their_default_levels() {
+    // An empty log declares nothing. A run through a pipe with nothing to say
+    // is read by an agent, and the whole catalogue is several hundred lines of
+    // it for no result at all (#66). `weeder rules` prints the catalogue.
+    let empty = json(&[], &context());
+    assert_eq!(
+        empty["runs"][0]["tool"]["driver"]["rules"],
+        Value::Array(Vec::new()),
+        "a log with no results declares no rules"
+    );
+
+    // A suppressed result names its rule as surely as a reported one does.
+    let mut suppressed = finding("T3", Level::Note, "tests/a.test.ts", region(2, 2));
+    suppressed.suppressed = Some(Suppression {
+        rule: "T3".to_string(),
+        reason: "the upstream suite is quarantined until it is rewritten".to_string(),
+        path: Some("tests/a.test.ts".to_string()),
+        line: Some(2),
+        source: SuppressionSource::CommitTrailer,
+        original_level: Some(Level::Block),
+    });
+    let findings = vec![
+        finding("R2", Level::Warn, "src/parser.rs", region(9, 9)),
+        finding("S1", Level::Block, "src/parser.rs", region(40, 40)),
+        finding("S1", Level::Block, "src/lexer.rs", region(3, 3)),
+        finding("T1", Level::Block, "tests/b.test.ts", region(1, 1)),
+        suppressed,
+    ];
+    let log = json(&findings, &context());
     let rules = log["runs"][0]["tool"]["driver"]["rules"]
         .as_array()
         .expect("the driver lists rules");
-    assert_eq!(rules.len(), catalogue::rules().len());
-    assert!(!rules.is_empty(), "the catalogue is not empty");
 
-    for (rendered, rule) in rules.iter().zip(catalogue::rules()) {
-        assert_eq!(rendered["id"], Value::from(rule.id));
+    let named: Vec<&str> = catalogue::rules()
+        .iter()
+        .map(|rule| rule.id)
+        .filter(|id| findings.iter().any(|finding| finding.rule == *id))
+        .collect();
+    assert_eq!(
+        rules
+            .iter()
+            .map(|rule| rule["id"].as_str().expect("a descriptor has an id"))
+            .collect::<Vec<&str>>(),
+        named,
+        "each rule a result names, once, in catalogue order, and no other"
+    );
+    assert!(
+        catalogue::rules()
+            .iter()
+            .any(|rule| rule.face == Face::Check && !named.contains(&rule.id)),
+        "the catalogue holds rules this log leaves out, or the test proves nothing"
+    );
+
+    for rendered in rules {
+        let rule = catalogue::rules()
+            .iter()
+            .find(|rule| rendered["id"] == rule.id)
+            .expect("a declared rule is a catalogue rule");
         assert_eq!(
             rendered["shortDescription"]["text"],
             Value::from(rule.short_description)
@@ -291,18 +339,18 @@ fn tool_component_lists_every_catalogue_rule_with_its_default_level() {
         );
     }
 
-    assert!(
-        catalogue::rules()
-            .iter()
-            .any(|rule| rule.face == Face::Check),
-        "the catalogue holds check rules"
-    );
-    assert!(
-        catalogue::rules()
-            .iter()
-            .any(|rule| rule.face == Face::Scan),
-        "the catalogue holds scan rules"
-    );
+    for result in log["runs"][0]["results"]
+        .as_array()
+        .expect("results is an array")
+    {
+        let index = result["ruleIndex"]
+            .as_u64()
+            .expect("a declared rule has an index") as usize;
+        assert_eq!(
+            rules[index]["id"], result["ruleId"],
+            "ruleIndex points into the rules this log declares"
+        );
+    }
 }
 
 #[test]

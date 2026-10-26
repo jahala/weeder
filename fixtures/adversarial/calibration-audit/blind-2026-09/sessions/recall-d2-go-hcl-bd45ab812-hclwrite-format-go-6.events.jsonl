@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-d2-go-hcl-bd45ab812-hclwrite-format-go-6.md", "sha256": "03c45517b3876f8436ff05b4fa3ce63a00d5e35f7a7f8ee9e46d4ec255c7a02b", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered packet SHA-256: 03c45517b3876f8436ff05b4fa3ce63a00d5e35f7a7f8ee9e46d4ec255c7a02b\nVerdict: miss\nReasoning: The diff adds `github.com/hashicorp/hcl/v2/integrationtest` to `hclwrite/format.go` imports, matching D2's shape, but weeder reported only C3 elsewhere."}

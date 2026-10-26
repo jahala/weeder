@@ -391,7 +391,9 @@ fn carries_why_and_next(reason: &str) {
         "the reason says why the finding matters:\n{reason}"
     );
     assert!(
-        flat.contains("next finish the merge, delete the markers, and stage the file again."),
+        flat.contains(
+            "next finish the merge, delete the markers, and stage the file again, or write why they stay in a `Weeder-allow: G1` trailer."
+        ),
         "the reason says what to do next:\n{reason}"
     );
 }

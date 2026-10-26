@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T1:go:cobra:3f3b81882:doc/man_examples_test.go", "sha256": "da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e\nVerdict: miss\nReasoning: Deleting `ExampleGenManTree` from a `_test.go` file removes a Go example test, which T1's deleted-test shape covers, yet weeder reported nothing there."}

@@ -5,9 +5,10 @@
 //! its name and its disorder rather than by any prefix at all. The lines weeder
 //! must report are read off the fixture here by the shapes this file planted.
 //!
-//! The neighbour is the three ways a line looks like this and is not: a short
-//! value under a key name, a placeholder waiting to be filled in, and the
-//! digests a lockfile is made of.
+//! The neighbour is the four ways a line looks like this and is not: a short
+//! value under a key name, a placeholder waiting to be filled in, the digests a
+//! lockfile is made of, and a key name given a read of the environment or any
+//! other expression rather than a literal (#62).
 //!
 //! The two paths reach different files. A stamped token is a credential
 //! wherever it lands, a note, a page, a log, so the prefix path reads every
@@ -258,6 +259,93 @@ fn the_name_and_disorder_path_still_reads_source_in_every_language() {
             finding.message
         );
     }
+}
+
+/// What each language's neighbour reads from the environment, and the name it
+/// assigns the read to. The name is the one the fire fixture gives a disordered
+/// literal, so the same name is silent with a read behind it and blocks with a
+/// value behind it.
+const ENVIRONMENT: [(&str, &str, &str); 4] = [
+    ("ts", "sessionToken", "process.env.ANTHROPIC_AUTH_TOKEN"),
+    (
+        "py",
+        "SESSION_TOKEN",
+        "os.environ[\"ANTHROPIC_AUTH_TOKEN\"]",
+    ),
+    (
+        "rs",
+        "SESSION_TOKEN",
+        "std::env::var(\"ANTHROPIC_AUTH_TOKEN\")",
+    ),
+    ("go", "APIToken", "os.Getenv(\"ANTHROPIC_AUTH_TOKEN\")"),
+];
+
+#[test]
+fn a_key_like_name_given_a_read_of_the_environment_is_silent_and_given_a_literal_blocks() {
+    for ((name, path), (lang, assigned, read)) in LANGUAGES.into_iter().zip(ENVIRONMENT) {
+        assert_eq!(name, lang, "the two tables walk the languages in one order");
+        let honest = fixture_file("X1", name, "silent/after", path);
+        assert!(
+            honest
+                .lines()
+                .any(|line| line.contains(assigned) && line.contains(read))
+                || honest
+                    .lines()
+                    .zip(honest.lines().skip(1))
+                    .any(|(first, second)| first.contains(assigned) && second.contains(read)),
+            "{name}: the neighbour assigns `{read}` to `{assigned}`, or it is not the neighbour"
+        );
+        assert!(
+            honest.lines().any(looks_assigned_without_quotes),
+            "{name}: the neighbour also gives a key-like name a long, disordered expression \
+             that is no literal, or the silence below says nothing about one"
+        );
+
+        let silent = fixture("X1", name, "silent").weeder(&["check"]);
+        let credentials: Vec<Finding> = silent
+            .findings()
+            .into_iter()
+            .filter(|finding| finding.rule == "X1")
+            .collect();
+        assert_eq!(
+            credentials,
+            Vec::new(),
+            "{name}: a read of the environment holds no value, and an expression is not a literal"
+        );
+
+        let fire = fixture("X1", name, "fire").weeder(&["check"]);
+        let named = fire
+            .findings()
+            .into_iter()
+            .find(|finding| {
+                finding.rule == "X1" && finding.message.contains(&format!("`{assigned}`"))
+            })
+            .unwrap_or_else(|| {
+                panic!("{name}: a disordered literal assigned to `{assigned}` is reported")
+            });
+        assert_eq!(named.level, "error", "{name}: and it blocks");
+    }
+}
+
+/// Whether a line gives a key-like name a value that is long and disordered
+/// enough to read as a credential, written as an expression rather than inside
+/// quotes. The shape that made X1 report `process.env.ANTHROPIC_AUTH_TOKEN`.
+fn looks_assigned_without_quotes(line: &str) -> bool {
+    line.match_indices('=').any(|(at, _)| {
+        let named = line[..at]
+            .split(|character: char| {
+                !(character.is_alphanumeric() || character == '_' || character == '-')
+            })
+            .any(holds_key_word);
+        let value: String = line[at + 1..]
+            .trim_start()
+            .chars()
+            .take_while(|character| {
+                character.is_ascii_alphanumeric() || matches!(character, '_' | '.')
+            })
+            .collect();
+        named && value.chars().count() >= 20 && entropy(&value) > 4.0
+    })
 }
 
 /// Whether a line writes a name, an assignment and a value long and disordered

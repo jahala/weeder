@@ -116,7 +116,8 @@ enum GuardCommand {
 
 #[derive(Debug, Args)]
 struct InstallArgs {
-    /// Write the hooks here instead of .githooks.
+    /// Write the hooks here instead of weeder-hooks in the git directory every
+    /// worktree shares. A relative path is resolved in each worktree's own root.
     #[arg(long, value_name = "dir")]
     hooks_dir: Option<PathBuf>,
     /// A branch the hooks refuse to rewrite. Repeat it for more; leaving it out

@@ -22,8 +22,8 @@ A static binary that judges what an agent produced and refuses dishonest growth:
 
 The adversary is the agent whose change is judged. It has the same file-system and git access as the person it works for. It controls:
 
-- every tracked and untracked file in the working tree, including `weeder.toml`, `.gitattributes` and the hooks directory;
-- the git directory: `.git/info/attributes`, `.git/info/exclude`, `.git/config`, index flags such as skip-worktree;
+- every tracked and untracked file in the working tree, including `weeder.toml`, `.gitattributes` and a hooks directory kept in the tree;
+- the git directory: `.git/info/attributes`, `.git/info/exclude`, `.git/config`, the `weeder-hooks` directory `guard install` writes by default, index flags such as skip-worktree;
 - commit messages, including `Weeder-allow:` trailers;
 - the commands it runs, in any spelling the shell accepts.
 
@@ -54,7 +54,7 @@ So the wall is CI running `weeder check --base <protected branch> --strict` from
 | Never panics on input | proven for the diff parser and classifier | `tests/core_hostile.rs` (proptest). `syntax::Mask` is not fuzzed |
 | T-1: the law comes from a state the change did not write | proven | `check` and every hook read `weeder.toml` at the base of the range (`read_law` in `src/faces/mod.rs`); `tests/check_law_source.rs` drives the CI, `--staged`, guard and harness forms |
 | T-2: git shows weeder every changed line | proven | every diff runs with `--text`, and a file whose path says it is text is read as text whatever its bytes hold (`readable` in `src/faces/mod.rs`); `tests/check_binary_blind.rs` hides a stub, a secret, a skip and a conflict marker three ways in four languages |
-| T-3: the hooks that run weeder are weeder's | **open, fails open** | hooks live in the working tree; `guard status` trusts their contents |
+| T-3: the hooks that run weeder are weeder's | **open, fails open** | by default the hooks live in `weeder-hooks` in the shared git directory, outside the tree a change edits, so a diff can no longer rewrite them and land through them; a repository that passes `--hooks-dir .githooks` keeps them in the tree. Still open: any process on the machine can write the git directory or point `core.hooksPath` elsewhere, and `guard status` trusts the hooks' contents |
 | T-4: a harness hook sees every commit | **open** | `PreToolUse` matches the program `git` by its literal name; `Stop` judges against `HEAD` only |
 | `bite` proves a test fails without its change | unshipped by measurement | `docs/bite-2026-09.md` |
 

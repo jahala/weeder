@@ -8,12 +8,14 @@
 //! is a credential whatever file it landed in. A key block and a signed token
 //! carry their own unmistakable frame.
 //!
-//! The second path is name and disorder together. A value assigned to something
-//! called a key, a secret, a token, a password or a credential, long enough to be
-//! one and disordered enough that no person typed it as prose, is a secret. Both
-//! halves are needed: a long random string under a plain name is a fixture, a
-//! short readable string under a key name is a setting, and the digests filling
-//! a lockfile are named for what they are and never for a credential.
+//! The second path is name and disorder together. A quoted literal assigned to
+//! something called a key, a secret, a token, a password or a credential, long
+//! enough to be one and disordered enough that no person typed it as prose, is a
+//! secret. Both halves are needed: a long random string under a plain name is a
+//! fixture, a short readable string under a key name is a setting, and the
+//! digests filling a lockfile are named for what they are and never for a
+//! credential. The literal is needed too, because `token = process.env.TOKEN`
+//! reads the credential at run time, which is the safe form, and holds no value.
 //!
 //! That second path only runs where weeder knows the grammar. Telling a name from
 //! a value takes a language that has assignments in it; a page, a stylesheet and
@@ -285,9 +287,8 @@ fn split_words(name: &str) -> Vec<String> {
     words
 }
 
-/// Every assignment a line writes: what stands in front of the punctuation that
-/// joins them, and the value behind it. The value is a quoted literal where the
-/// format quotes, and the bare word where it does not.
+/// Every assignment of a literal a line writes: what stands in front of the
+/// punctuation that joins them, and the quoted value behind it.
 fn assignments(line: &str) -> Vec<(&str, &str)> {
     let mut found = Vec::new();
     let bytes = line.as_bytes();
@@ -316,20 +317,23 @@ fn assignments(line: &str) -> Vec<(&str, &str)> {
     found
 }
 
-/// The value an assignment gives: what a quote encloses, or the bare word.
+/// The value an assignment gives, where it gives a literal: what a quote
+/// encloses.
+///
+/// Anything else on the right is an expression, and an expression holds no
+/// credential. `process.env.ANTHROPIC_AUTH_TOKEN` is long and mixed enough to
+/// read as one, and it is the read at run time this rule's own advice asks
+/// for. Source writes every literal it carries inside quotes, so a value with
+/// none around it is a name, a call or a path to a field, and never the secret.
 fn value_after(tail: &str) -> Option<&str> {
     let trimmed = tail.trim_start();
-    let mut characters = trimmed.char_indices();
-    let (_, first) = characters.next()?;
-    if matches!(first, '"' | '\'' | '`') {
-        let opened = first.len_utf8();
-        let end = trimmed[opened..].find(first)?;
-        return Some(&trimmed[opened..opened + end]);
+    let first = trimmed.chars().next()?;
+    if !matches!(first, '"' | '\'' | '`') {
+        return None;
     }
-    let end = trimmed
-        .find(|character: char| !is_token(character))
-        .unwrap_or(trimmed.len());
-    (end > 0).then(|| &trimmed[..end])
+    let opened = first.len_utf8();
+    let end = trimmed[opened..].find(first)?;
+    Some(&trimmed[opened..opened + end])
 }
 
 /// The opaque runs a line is made of: the alphabets every credential is written
@@ -437,7 +441,7 @@ impl Shape {
             message: Message {
                 what,
                 why: "a credential in a commit is a credential published, and deleting the line later leaves it in the history.".to_string(),
-                next: "take the value out, rotate it, and read the credential from the environment at run time.".to_string(),
+                next: "take the value out, rotate it, and read the credential from the environment at run time; a value that is no credential takes a `Weeder-allow: X1` trailer saying what it is.".to_string(),
             },
         }
     }

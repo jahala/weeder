@@ -486,9 +486,22 @@ pub fn merge_base(root: &Path, left: &str, right: &str) -> Result<Option<String>
     }
 }
 
+/// Whether every commit `tip` reaches is already on some remote, so a push of it
+/// carries no commit the remote lacks. A tag on a released commit is the usual
+/// case. `rev-list` prints nothing both for that and for a history the remotes
+/// never saw, through `unpublished_boundary`, so this is asked first.
+pub fn is_published(root: &Path, tip: &str) -> Result<bool, GitError> {
+    let output = run(
+        root,
+        &["rev-list", "--max-count=1", tip, "--not", "--remotes"],
+    )?;
+    Ok(output.trim().is_empty())
+}
+
 /// The commit just outside what `tip` adds to everything the remotes already
-/// carry, where a branch no remote has seen begins. `None` when the whole
-/// history is still unpublished.
+/// carry, where a branch no remote has seen begins. `None` when there is no
+/// such commit: either the whole history is unpublished, or none of it is,
+/// which `is_published` tells apart.
 pub fn unpublished_boundary(root: &Path, tip: &str) -> Result<Option<String>, GitError> {
     let output = run(root, &["rev-list", "--boundary", tip, "--not", "--remotes"])?;
     Ok(output
@@ -509,10 +522,16 @@ pub fn current_branch(root: &Path) -> Result<Option<String>, GitError> {
     }
 }
 
-/// This repository's own directory, where weeder keeps what must never reach a
-/// commit and never travel with a clone.
-pub fn git_dir(root: &Path) -> Result<PathBuf, GitError> {
-    let path = run(root, &["rev-parse", "--absolute-git-dir"])?;
+/// The git directory every worktree of this repository shares, as an absolute
+/// path: where its configuration, its own hooks and weeder's record live, none
+/// of which reaches a commit or travels with a clone. In the main worktree it is
+/// the git directory itself; a linked worktree has a private one of its own
+/// under it, which holds none of those.
+pub fn common_dir(root: &Path) -> Result<PathBuf, GitError> {
+    let path = run(
+        root,
+        &["rev-parse", "--path-format=absolute", "--git-common-dir"],
+    )?;
     Ok(PathBuf::from(path.trim_end()))
 }
 

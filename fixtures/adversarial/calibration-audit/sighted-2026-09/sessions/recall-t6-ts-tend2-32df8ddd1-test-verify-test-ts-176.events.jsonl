@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T6:ts:tend2:32df8ddd1:test/verify.test.ts:176", "sha256": "da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e\nVerdict: miss\nReasoning: The planted T6 shape, an error assertion no longer naming its error, is genuinely present at test/verify.test.ts:176 and weeder did not report it there."}

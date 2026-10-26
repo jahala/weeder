@@ -98,7 +98,7 @@ fn finding(path: &str, start_line: u32, found: char) -> Detection {
         message: Message {
             what: format!("a merge conflict marker ({marker}) was added."),
             why: "the file carries both sides of a merge nobody finished, so it does not parse and does not run.".to_string(),
-            next: "finish the merge, delete the markers, and stage the file again.".to_string(),
+            next: "finish the merge, delete the markers, and stage the file again, or write why they stay in a `Weeder-allow: G1` trailer.".to_string(),
         },
         fix: Some(Fix {
             description: "delete the conflict marker line.".to_string(),

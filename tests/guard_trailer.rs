@@ -37,12 +37,13 @@ const REASON: &str = "the stem plants its own hook, and the owner asked for it";
 
 /// A repository with the four hooks installed and already committed.
 ///
-/// `install` writes them into the working tree so a clone gets them, and a hook
-/// is a guardrail path; C1 knows the bundle weeder writes byte for byte, so the
-/// commit that first carries all four goes through the four hooks it installs.
+/// `--hooks-dir .githooks` writes them into the working tree so a clone gets
+/// them, and a hook is a guardrail path; C1 knows the bundle weeder writes byte
+/// for byte, so the commit that first carries all four goes through the four
+/// hooks it installs.
 fn guarded() -> Repo {
     let repo = Repo::init();
-    let run = repo.weeder(&["guard", "install"]);
+    let run = repo.weeder(&["guard", "install", "--hooks-dir", ".githooks"]);
     assert_eq!(run.code, 0, "install runs clean\n{}", run.stderr);
     repo.commit("weeder guard installed");
     repo
