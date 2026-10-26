@@ -89,7 +89,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Warn,
         short_description: "Expected values were regenerated",
-        full_description: "Snapshot, golden or fixture files changed in a diff that also changes production code, so the expectation moved to meet the code.",
+        full_description: "Snapshot, golden or fixture files that were already there changed in a diff that also changes production code, so the expectation moved to meet the code. A file the same change adds, and a test double the tests run, a file git keeps executable or one that opens with a shebang, are not expectations.",
         network: Network::None,
     },
     Rule {

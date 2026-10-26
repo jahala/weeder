@@ -146,7 +146,7 @@ A removed and an added line in one hunk hold the same approximate assertion or t
 
 `check` · warns by default
 
-Snapshot, golden or fixture files changed in a diff that also changes production code, so the expectation moved to meet the code.
+Snapshot, golden or fixture files that were already there changed in a diff that also changes production code, so the expectation moved to meet the code. A file the same change adds, and a test double the tests run, a file git keeps executable or one that opens with a shebang, are not expectations.
 
 <a id="T6"></a>
 ## T6: An error assertion was weakened
