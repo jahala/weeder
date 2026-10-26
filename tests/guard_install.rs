@@ -216,6 +216,99 @@ fn an_install_already_at_githooks_keeps_its_directory() {
 }
 
 #[test]
+fn hooks_written_into_the_tree_name_weeder_by_path_and_no_path_of_this_machine() {
+    let repo = Repo::init();
+    let run = repo.weeder(&["guard", "install", "--hooks-dir", ".githooks"]);
+    assert_eq!(run.code, 0, "{}", run.stderr);
+
+    let installer = common::binary().display().to_string();
+    let home = std::env::var("HOME").unwrap_or_default();
+    for hook in HOOKS {
+        let script = read(&repo.root().join(".githooks").join(hook));
+        assert!(
+            !script.contains(&installer),
+            "{hook} is a file a commit carries, so it names no path of the machine that \
+             installed it:\n{script}"
+        );
+        assert!(
+            home.is_empty() || !script.contains(&home),
+            "{hook} names nothing under the installer's home:\n{script}"
+        );
+        assert_eq!(
+            binary_named(&script),
+            PathBuf::from("weeder"),
+            "{hook} runs the weeder on PATH"
+        );
+    }
+
+    let status = repo.weeder_with(
+        &["guard", "status"],
+        &[("PATH", &common::path_with_weeder())],
+    );
+    assert_eq!(
+        status.code, 0,
+        "weeder is on PATH, so every hook is live\n{}{}",
+        status.stdout, status.stderr
+    );
+}
+
+/// What a hook that names weeder by PATH does on a machine whose PATH has none:
+/// git runs it, it says so, and the commit stops. The PATH here holds git and
+/// the shell alone, which takes a stand-in script for git, and Windows starts
+/// no script as a program, so this half is unix's; the half above is not.
+#[cfg(unix)]
+#[test]
+fn a_hook_that_names_weeder_by_path_stops_the_commit_where_path_has_none() {
+    let repo = Repo::init();
+    let run = repo.weeder(&["guard", "install", "--hooks-dir", ".githooks"]);
+    assert_eq!(run.code, 0, "{}", run.stderr);
+    repo.commit("weeder guard installed");
+
+    let bare = tempfile::TempDir::new().expect("a directory for a PATH without weeder");
+    common::link_git(bare.path());
+    let without = format!("{}:/bin", bare.path().display());
+    let with = common::path_with_weeder();
+
+    let status = repo.weeder_with(&["guard", "status"], &[("PATH", &without)]);
+    assert_eq!(
+        status.code, 2,
+        "no weeder on PATH is a miss\n{}{}",
+        status.stdout, status.stderr
+    );
+    assert!(
+        status.stdout.contains("PATH"),
+        "status says it looked on PATH:\n{}",
+        status.stdout
+    );
+
+    repo.write(
+        "src/parser.ts",
+        "export const parse = (input: string) => input;\n",
+    );
+    repo.stage_all();
+    let refused = repo.try_git_with(&["commit", "-m", "the parser"], &[("PATH", &without)]);
+    assert_ne!(
+        refused.code,
+        0,
+        "a hook that cannot find weeder stops the commit rather than waving it through: {}",
+        refused.output()
+    );
+    assert!(
+        refused.output().contains("PATH"),
+        "the hook says where it looked:\n{}",
+        refused.output()
+    );
+
+    let landed = repo.try_git_with(&["commit", "-m", "the parser"], &[("PATH", &with)]);
+    assert_eq!(
+        landed.code,
+        0,
+        "with weeder on PATH the same hook runs it: {}",
+        landed.output()
+    );
+}
+
+#[test]
 fn install_writes_where_it_is_told_to() {
     let repo = Repo::init();
     let run = repo.weeder(&["guard", "install", "--hooks-dir", ".hooks/weeder"]);
@@ -506,12 +599,7 @@ fn install_refuses_to_silence_the_hooks_git_keeps_of_its_own() {
     let theirs = repo.root().join(".git/hooks/pre-push");
     std::fs::write(&theirs, "#!/bin/sh\ngit lfs pre-push \"$@\"\n")
         .expect("their hook should be writable");
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&theirs, std::fs::Permissions::from_mode(0o755))
-            .expect("their hook should be executable");
-    }
+    common::make_runnable(&theirs);
 
     let run = repo.weeder(&["guard", "install"]);
     assert_eq!(

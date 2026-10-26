@@ -172,6 +172,20 @@ pub fn make_executable(_path: &Path) -> Result<(), FsError> {
     Ok(())
 }
 
+/// Where a program of this name is on `PATH`, the way a shell finds it: in the
+/// first directory holding a file of that name this machine will run, with the
+/// platform's executable suffix tried too where it has one.
+pub fn on_path(name: &str) -> Option<std::path::PathBuf> {
+    let path = std::env::var_os("PATH")?;
+    let suffixed = format!("{name}{}", std::env::consts::EXE_SUFFIX);
+    std::env::split_paths(&path).find_map(|directory| {
+        [name, suffixed.as_str()]
+            .into_iter()
+            .map(|file| directory.join(file))
+            .find(|candidate| is_executable(candidate))
+    })
+}
+
 /// A path with every symlink and `..` resolved, or `None` where nothing is
 /// there. Two spellings of one directory compare equal once both have been
 /// through here.

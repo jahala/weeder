@@ -184,6 +184,11 @@ fn install(root: &Path, install: &Install) -> Result<Answer, String> {
         return Err(refusal);
     }
     fs::create_dir_all(&directory).map_err(|error| error.to_string())?;
+    let binary = if committable(root, &directory)? {
+        PathBuf::from(guard::ON_PATH)
+    } else {
+        install.binary.clone()
+    };
 
     let mut written = Vec::new();
     for hook in Hook::ALL {
@@ -192,7 +197,7 @@ fn install(root: &Path, install: &Install) -> Result<Answer, String> {
             continue;
         }
         let path = directory.join(hook.name());
-        let script = guard::script(hook, &install.binary, &install.protect);
+        let script = guard::script(hook, &binary, &install.protect);
         fs::write(&path, &script).map_err(|error| error.to_string())?;
         fs::make_executable(&path).map_err(|error| error.to_string())?;
     }
@@ -295,6 +300,24 @@ fn displaced(root: &Path, named: &str) -> Result<Option<String>, String> {
     )))
 }
 
+/// Whether a hooks directory is one a commit can carry: inside the worktree and
+/// outside the git directory. Hooks there name weeder by `PATH`, because a path
+/// written into them is the installer's own, published with the commit and wrong
+/// on every machine that checks it out. Hooks anywhere else name the binary that
+/// installed them, which nothing publishes, and which still runs when git is
+/// started with a thinner `PATH` than a shell has.
+fn committable(root: &Path, directory: &Path) -> Result<bool, String> {
+    let common = common_dir(root)?;
+    let (Some(directory), Some(root), Some(common)) = (
+        fs::canonical(directory),
+        fs::canonical(root),
+        fs::canonical(&common),
+    ) else {
+        return Ok(false);
+    };
+    Ok(directory.starts_with(&root) && !directory.starts_with(&common))
+}
+
 /// What already sits in the directory under the names weeder writes. A bundle of
 /// weeder's own is rewritten. A hook of another hand that already calls the same
 /// `weeder guard` stage is that stage, so it is kept as it is and the first half
@@ -393,6 +416,15 @@ fn status(root: &Path) -> Result<Answer, String> {
             continue;
         }
         match written_by_weeder {
+            Some(guard::ON_PATH) => match fs::on_path(guard::ON_PATH) {
+                Some(found) => live.push(format!(
+                    "{entry:<24}  live  weeder on PATH, {}",
+                    found.display()
+                )),
+                None => misses.push(format!(
+                    "{entry} runs the weeder on PATH, and there is none on PATH here. install weeder, or put it on the PATH git runs hooks with."
+                )),
+            },
             Some(binary) => {
                 if !fs::is_executable(Path::new(binary)) {
                     misses.push(format!(

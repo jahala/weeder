@@ -406,6 +406,27 @@ impl Repo {
         String::from_utf8_lossy(&output.stdout).to_string()
     }
 
+    /// git, in this repository, with something added to its environment, where
+    /// the test is asking whether it worked: a hook git runs inherits the PATH
+    /// given here, which is how a test asks what a hook finds on it.
+    pub fn try_git_with(&self, arguments: &[&str], environment: &[(&str, &str)]) -> Run {
+        let mut command = isolated(Command::new("git"));
+        for (name, value) in environment {
+            command.env(name, value);
+        }
+        let output = command
+            .arg("-C")
+            .arg(self.root())
+            .args(arguments)
+            .output()
+            .expect("git should be on PATH");
+        Run {
+            code: code(output.status),
+            stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+            stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+        }
+    }
+
     /// git, in this repository, where the test is asking whether it worked. A
     /// commit or a push a hook refuses leaves with a code, and that code is the
     /// answer the test came for.
@@ -969,7 +990,11 @@ fn expand(contents: &str) -> String {
 /// The caller's git configuration, their hooks and their template directory stay
 /// out of a fixture, so a test proves weeder rather than the machine it runs on.
 fn isolated(mut command: Command) -> Command {
+    // A hook a commit can carry runs the weeder on PATH, so the binary under
+    // test stands in front of whatever weeder this machine has installed. A
+    // test asking what a hook does without one sets PATH again after this.
     command
+        .env("PATH", path_with_weeder())
         .env("GIT_CONFIG_GLOBAL", "/dev/null")
         .env("GIT_CONFIG_SYSTEM", "/dev/null")
         .env("GIT_CONFIG_NOSYSTEM", "1")

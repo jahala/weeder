@@ -128,7 +128,9 @@ guards every worktree and no file lands in the tree. A repository installed
 before keeps the directory it has. `--hooks-dir <dir>` writes the hooks
 somewhere else, such as `.githooks` to commit them; git resolves a relative path
 in each worktree's own root, so a worktree runs only the hooks its own checkout
-holds. `--protect <branch>` names a branch the hooks refuse to rewrite. Repeat
+holds. Hooks in a directory a commit can carry run the `weeder` on `PATH` and
+name no path of the installing machine; hooks anywhere else name the binary
+that installed them, and fall back to `PATH`. `--protect <branch>` names a branch the hooks refuse to rewrite. Repeat
 it for more than one; leaving it out leaves the hooks reading `weeder.toml` at
 HEAD every time git runs them. `pre-push` and `pre-rebase` take the same
 `--protect` flag, spelled as the installed bundle spells it.

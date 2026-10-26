@@ -66,7 +66,8 @@ In git, per repository. This writes hooks into `weeder-hooks` in the git directo
 worktree shares, and points git at them by absolute path, so every commit and push is judged in
 every worktree of the repository. It refuses where another tool already owns the hooks, such as
 husky, and names the way forward. To carry the hooks in the tree instead, pass
-`--hooks-dir .githooks`; git then runs them only in the worktrees whose checkout holds them.
+`--hooks-dir .githooks`; git then runs them only in the worktrees whose checkout holds them, and
+they run the `weeder` on PATH, so a commit carrying them names no path on your machine.
 
 ```bash
 cd your-repository
