@@ -238,11 +238,11 @@ fn uninstall_takes_only_the_files_weeders_marker_names() {
     );
 }
 
-/// A repository with weeder's four hooks installed and committed, and the
-/// commit-msg one replaced by the hook another planter wrote there.
+/// A repository with weeder's four hooks installed in the tree and committed,
+/// and the commit-msg one replaced by the hook another planter wrote there.
 fn planted(hook: &str) -> Repo {
     let repo = Repo::init();
-    let run = repo.weeder(&["guard", "install"]);
+    let run = repo.weeder(&["guard", "install", "--hooks-dir", ".githooks"]);
     assert_eq!(run.code, 0, "install runs clean\n{}", run.stderr);
     repo.commit("weeder guard installed");
     stem_binary(&repo);

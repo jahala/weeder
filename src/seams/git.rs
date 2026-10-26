@@ -522,10 +522,16 @@ pub fn current_branch(root: &Path) -> Result<Option<String>, GitError> {
     }
 }
 
-/// This repository's own directory, where weeder keeps what must never reach a
-/// commit and never travel with a clone.
-pub fn git_dir(root: &Path) -> Result<PathBuf, GitError> {
-    let path = run(root, &["rev-parse", "--absolute-git-dir"])?;
+/// The git directory every worktree of this repository shares, as an absolute
+/// path: where its configuration, its own hooks and weeder's record live, none
+/// of which reaches a commit or travels with a clone. In the main worktree it is
+/// the git directory itself; a linked worktree has a private one of its own
+/// under it, which holds none of those.
+pub fn common_dir(root: &Path) -> Result<PathBuf, GitError> {
+    let path = run(
+        root,
+        &["rev-parse", "--path-format=absolute", "--git-common-dir"],
+    )?;
     Ok(PathBuf::from(path.trim_end()))
 }
 

@@ -62,9 +62,11 @@ until then the tarball is the install.
 Installing the binary guards nothing yet. weeder judges a repository once one of three places
 calls it, and each one is set up on purpose.
 
-In git, per repository. This writes hooks into `.githooks` and points git at them, so every
-commit and push is judged. It refuses where another tool already owns the hooks, such as husky,
-and names the way forward.
+In git, per repository. This writes hooks into `weeder-hooks` in the git directory every
+worktree shares, and points git at them by absolute path, so every commit and push is judged in
+every worktree of the repository. It refuses where another tool already owns the hooks, such as
+husky, and names the way forward. To carry the hooks in the tree instead, pass
+`--hooks-dir .githooks`; git then runs them only in the worktrees whose checkout holds them.
 
 ```bash
 cd your-repository

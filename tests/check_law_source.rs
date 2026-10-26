@@ -169,7 +169,6 @@ fn the_working_tree_is_judged_under_head_s_law_too() {
 fn git_commit_through_the_guard_refuses_a_staged_skip_under_an_unstaged_law() {
     let repo = Repo::init();
     repo.weeder(&["guard", "install"]);
-    repo.commit("weeder guard installed");
     staged_skip_under_an_unstaged_law(&repo);
     let before = repo.head();
 

@@ -28,7 +28,7 @@ fn install_writes_every_hook_and_points_git_at_them() {
     assert_eq!(run.code, 0, "install runs clean\n{}", run.stderr);
 
     for hook in HOOKS {
-        let path = repo.root().join(".githooks").join(hook);
+        let path = repo.shared_hooks_dir().join(hook);
         let script = read(&path);
         assert!(
             script.starts_with("#!/bin/sh"),
@@ -69,10 +69,150 @@ fn install_writes_every_hook_and_points_git_at_them() {
     }
 
     assert_eq!(
-        repo.git(&HOOKS_PATH).trim(),
-        ".githooks",
+        resolved(&repo.hooks_dir()),
+        resolved(&repo.shared_hooks_dir()),
         "git runs its hooks from where weeder wrote them"
     );
+}
+
+#[test]
+fn install_told_nowhere_writes_beside_the_shared_git_directory_and_names_it_absolutely() {
+    let repo = Repo::init();
+    let run = repo.weeder(&["guard", "install"]);
+    assert_eq!(run.code, 0, "install runs clean\n{}", run.stderr);
+
+    let setting = repo.git(&HOOKS_PATH).trim().to_string();
+    assert!(
+        Path::new(&setting).is_absolute(),
+        "git resolves a relative hooks path against each worktree's own root, so only an \
+         absolute one names the same directory in every worktree: {setting}"
+    );
+    assert_eq!(
+        resolved(Path::new(&setting)),
+        resolved(&repo.shared_hooks_dir()),
+        "the hooks sit beside the git directory every worktree shares"
+    );
+    for hook in HOOKS {
+        assert!(
+            repo.shared_hooks_dir().join(hook).is_file(),
+            "{hook} is written there"
+        );
+    }
+    assert!(
+        repo.git(&["status", "--porcelain", "--untracked-files=all"])
+            .trim()
+            .is_empty(),
+        "nothing is written into the tree a change edits"
+    );
+}
+
+#[test]
+fn one_install_guards_every_worktree_of_the_repository() {
+    let repo = Repo::init();
+    let elsewhere = tempfile::TempDir::new().expect("a temp directory for the second worktree");
+    let second = elsewhere.path().join("second");
+    let second_path = second.to_str().expect("a temp path is text");
+    repo.git(&["worktree", "add", "-b", "second", second_path]);
+
+    let run = repo.weeder(&["guard", "install"]);
+    assert_eq!(run.code, 0, "install runs clean\n{}", run.stderr);
+
+    let status = common::weeder_in(&second, &["guard", "status"]);
+    assert_eq!(
+        status.code, 0,
+        "the second worktree runs the hooks the first one installed\n{}{}",
+        status.stdout, status.stderr
+    );
+    assert!(
+        status.stdout.contains("weeder guard is live."),
+        "status says so:\n{}",
+        status.stdout
+    );
+
+    // The proof is git's own: a commit in the second worktree goes through the
+    // hook, and the hook refuses what blocks.
+    std::fs::create_dir_all(second.join("src")).expect("a directory for the file");
+    std::fs::write(
+        second.join("src/parser.ts"),
+        common::conflicted_parser(None),
+    )
+    .expect("the file should be writable");
+    assert_eq!(common::git_in(&second, &["add", "-A"]).code, 0);
+    let refused = common::git_in(&second, &["commit", "-m", "the merge, half finished"]);
+    assert_ne!(
+        refused.code,
+        0,
+        "git in the second worktree runs weeder's pre-commit hook: {}",
+        refused.output()
+    );
+    assert!(
+        refused.output().contains("G1"),
+        "the hook says what it refused:\n{}",
+        refused.output()
+    );
+}
+
+#[test]
+fn an_install_made_in_a_second_worktree_guards_the_first() {
+    let repo = Repo::init();
+    let elsewhere = tempfile::TempDir::new().expect("a temp directory for the second worktree");
+    let second = elsewhere.path().join("second");
+    let second_path = second.to_str().expect("a temp path is text");
+    repo.git(&["worktree", "add", "-b", "second", second_path]);
+
+    let run = common::weeder_in(&second, &["guard", "install"]);
+    assert_eq!(run.code, 0, "install runs clean\n{}", run.stderr);
+
+    let status = repo.weeder(&["guard", "status"]);
+    assert_eq!(
+        status.code, 0,
+        "the record and the hooks are the repository's, not the worktree's\n{}{}",
+        status.stdout, status.stderr
+    );
+
+    let uninstalled = repo.weeder(&["guard", "uninstall"]);
+    assert_eq!(uninstalled.code, 0, "{}", uninstalled.stderr);
+    assert_ne!(
+        repo.try_git(&HOOKS_PATH).code,
+        0,
+        "uninstall from either worktree takes the setting away again"
+    );
+    for hook in HOOKS {
+        assert!(
+            !repo.shared_hooks_dir().join(hook).exists(),
+            "{hook} is gone"
+        );
+    }
+}
+
+#[test]
+fn an_install_already_at_githooks_keeps_its_directory() {
+    let repo = Repo::init();
+    let first = repo.weeder(&["guard", "install", "--hooks-dir", ".githooks"]);
+    assert_eq!(first.code, 0, "{}", first.stderr);
+
+    let again = repo.weeder(&["guard", "install"]);
+    assert_eq!(again.code, 0, "{}", again.stderr);
+    assert_eq!(
+        repo.git(&HOOKS_PATH).trim(),
+        ".githooks",
+        "a repository that chose to carry its hooks keeps carrying them"
+    );
+    for hook in HOOKS {
+        assert!(
+            repo.root().join(".githooks").join(hook).is_file(),
+            "{hook} is written where it was before"
+        );
+    }
+    assert!(
+        !repo.shared_hooks_dir().exists(),
+        "nothing is written to a second directory git never runs"
+    );
+    assert_eq!(repo.weeder(&["guard", "status"]).code, 0);
+
+    let uninstalled = repo.weeder(&["guard", "uninstall"]);
+    assert_eq!(uninstalled.code, 0, "{}", uninstalled.stderr);
+    assert!(!repo.root().join(".githooks/pre-commit").exists());
 }
 
 #[test]
@@ -101,14 +241,14 @@ fn install_bakes_the_branches_it_was_told_to_protect_into_the_hooks() {
     repo.weeder(&["guard", "install", "--protect", "release/*"]);
 
     for hook in ["pre-push", "pre-rebase"] {
-        let script = read(&repo.root().join(".githooks").join(hook));
+        let script = read(&repo.hooks_dir().join(hook));
         assert!(
             script.contains("--protect 'release/*'"),
             "{hook} carries the branches this install named:\n{script}"
         );
     }
     for hook in ["pre-commit", TRAILER_STAGE] {
-        let script = read(&repo.root().join(".githooks").join(hook));
+        let script = read(&repo.hooks_dir().join(hook));
         assert!(
             !script.contains("--protect"),
             "an index has no branch to protect:\n{script}"
@@ -121,7 +261,7 @@ fn the_commit_msg_hook_is_handed_the_file_git_writes_the_message_in() {
     let repo = Repo::init();
     repo.weeder(&["guard", "install"]);
 
-    let script = read(&repo.root().join(".githooks").join(TRAILER_STAGE));
+    let script = read(&repo.hooks_dir().join(TRAILER_STAGE));
     assert!(
         script.contains(&format!("guard {TRAILER_STAGE} -- \"$@\"")),
         "the hook passes git's own argument through, and without it there is no message to read \
@@ -133,8 +273,7 @@ fn the_commit_msg_hook_is_handed_the_file_git_writes_the_message_in() {
 fn status_names_a_missing_commit_msg_and_refuses_to_call_the_rest_the_law() {
     let repo = Repo::init();
     repo.weeder(&["guard", "install"]);
-    std::fs::remove_file(repo.root().join(".githooks").join(TRAILER_STAGE))
-        .expect("the hook is on disk");
+    std::fs::remove_file(repo.hooks_dir().join(TRAILER_STAGE)).expect("the hook is on disk");
 
     let run = repo.weeder(&["guard", "status"]);
 
@@ -154,8 +293,10 @@ fn status_names_a_missing_commit_msg_and_refuses_to_call_the_rest_the_law() {
 
 #[test]
 fn the_commit_that_first_carries_the_four_goes_through_the_hooks_it_installs() {
+    // A repository that carries its hooks in the tree asks for that by name;
+    // told nowhere, install writes outside the tree and there is nothing to commit.
     let repo = Repo::init();
-    let run = repo.weeder(&["guard", "install"]);
+    let run = repo.weeder(&["guard", "install", "--hooks-dir", ".githooks"]);
     assert_eq!(run.code, 0, "install runs clean\n{}", run.stderr);
 
     repo.stage_all();
@@ -205,7 +346,7 @@ fn install_records_the_hooks_path_that_was_there_and_uninstall_puts_it_back() {
     );
     for hook in HOOKS {
         assert!(
-            !repo.root().join(".githooks").join(hook).exists(),
+            !repo.shared_hooks_dir().join(hook).exists(),
             "{hook} is gone"
         );
     }
@@ -260,13 +401,16 @@ fn install_refuses_to_move_git_away_from_a_hooks_path_another_tool_set() {
         "git still runs the hooks it ran before"
     );
     assert!(
-        !repo.root().join(".githooks").exists(),
+        !repo.shared_hooks_dir().exists(),
         "a refused install writes nothing"
     );
 
     let replaced = repo.weeder(&["guard", "install", "--replace"]);
     assert_eq!(replaced.code, 0, "{}", replaced.stderr);
-    assert_eq!(repo.git(&HOOKS_PATH).trim(), ".githooks");
+    assert_eq!(
+        resolved(&repo.hooks_dir()),
+        resolved(&repo.shared_hooks_dir())
+    );
     repo.weeder(&["guard", "uninstall"]);
     assert_eq!(
         repo.git(&HOOKS_PATH).trim(),
@@ -325,10 +469,10 @@ fn uninstall_removes_only_the_files_it_wrote() {
     let repo = Repo::init();
     repo.weeder(&["guard", "install"]);
 
-    let theirs = repo.root().join(".githooks/post-commit");
+    let theirs = repo.hooks_dir().join("post-commit");
     let theirs_says = "#!/bin/sh\necho a hook of their own\n";
     std::fs::write(&theirs, theirs_says).expect("their hook should be writable");
-    let replaced = repo.root().join(".githooks/pre-push");
+    let replaced = repo.hooks_dir().join("pre-push");
     let replaced_says = "#!/bin/sh\necho this one is mine now\n";
     std::fs::write(&replaced, replaced_says).expect("the replacement should be writable");
 
@@ -346,7 +490,7 @@ fn uninstall_removes_only_the_files_it_wrote() {
         "a hook someone replaced is theirs now"
     );
     assert!(
-        !repo.root().join(".githooks/pre-commit").exists(),
+        !repo.shared_hooks_dir().join("pre-commit").exists(),
         "the hooks weeder did write are gone"
     );
     assert!(

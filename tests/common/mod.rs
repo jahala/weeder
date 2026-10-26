@@ -343,6 +343,20 @@ impl Repo {
         self.git(&["rev-parse", "HEAD"]).trim().to_string()
     }
 
+    /// The directory git runs this repository's hooks from: `core.hooksPath`,
+    /// resolved against the root of the worktree the way git resolves it.
+    pub fn hooks_dir(&self) -> PathBuf {
+        let setting = self.git(&["config", "--get", "core.hooksPath"]);
+        self.root().join(setting.trim())
+    }
+
+    /// Where `weeder guard install` writes when it is told nowhere: beside the
+    /// git directory every worktree of the repository shares.
+    pub fn shared_hooks_dir(&self) -> PathBuf {
+        let common = self.git(&["rev-parse", "--path-format=absolute", "--git-common-dir"]);
+        PathBuf::from(common.trim()).join("weeder-hooks")
+    }
+
     /// The message of the commit being prepared. It lives in the git dir, outside
     /// the tree, and every `weeder check` this repo runs passes it with `--message-file`.
     pub fn pending_message(&self, message: &str) {

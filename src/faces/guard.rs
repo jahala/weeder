@@ -21,15 +21,19 @@ use crate::core::suppress::TRAILER;
 use crate::faces::{check, read_law, Answer};
 use crate::seams::{fs, git};
 
-/// Where git is told to look, unless `--hooks-dir` names somewhere else. It sits
-/// in the working tree, so a clone can install the same hooks without inventing
-/// its own path.
-const DEFAULT_HOOKS_DIR: &str = ".githooks";
+/// Where git is told to look, unless `--hooks-dir` names somewhere else or an
+/// earlier install already chose: this directory inside the git directory every
+/// worktree shares, named by its absolute path. git resolves a relative
+/// `core.hooksPath` against each worktree's own root, and the setting is shared,
+/// so a directory inside one worktree is a directory the others do not have.
+/// Outside the tree, the hooks are also out of reach of the diff they judge.
+const SHARED_HOOKS_DIR: &str = "weeder-hooks";
 /// The setting that decides which directory git runs hooks from. It is the whole
 /// mechanism: one directory to install into, one setting for `status` to check.
 const HOOKS_PATH_KEY: &str = "core.hooksPath";
-/// Where guard keeps what it must put back. It lives in the git directory, so it
-/// never reaches a commit and never travels with a clone.
+/// Where guard keeps what it must put back. It lives in the git directory every
+/// worktree shares, beside the setting it records, so it never reaches a commit,
+/// never travels with a clone, and is the same record from every worktree.
 const RECORD_DIR: &str = "weeder";
 const PREVIOUS_HOOKS_PATH: &str = "previous-hooks-path";
 const INSTALLED_HOOKS: &str = "installed-hooks";
@@ -96,7 +100,8 @@ pub struct CommitMsg {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Install {
     /// Where the hooks are written, relative to the repository root unless it is
-    /// an absolute path.
+    /// an absolute path. `None` keeps the directory an earlier install chose, or
+    /// writes beside the shared git directory where there was none.
     pub hooks_dir: Option<PathBuf>,
     /// The branches the installed hooks protect. Empty leaves them reading
     /// `weeder.toml` at the moment git runs them.
@@ -159,11 +164,15 @@ fn install(root: &Path, install: &Install) -> Result<Answer, String> {
         ));
     }
 
-    let named = install
-        .hooks_dir
-        .clone()
-        .unwrap_or_else(|| PathBuf::from(DEFAULT_HOOKS_DIR));
-    let named = named.display().to_string();
+    let named = match &install.hooks_dir {
+        Some(directory) => directory.display().to_string(),
+        None => match installed(root)? {
+            // A repository that already chose a directory keeps it, so a second
+            // install refreshes the hooks and moves nothing.
+            Some(entries) => directory_of(&entries).to_string(),
+            None => format!("{}/{SHARED_HOOKS_DIR}", common_dir(root)?.display()),
+        },
+    };
     if !install.replace {
         if let Some(refusal) = displaced(root, &named)? {
             return Err(refusal);
@@ -198,6 +207,11 @@ fn install(root: &Path, install: &Install) -> Result<Answer, String> {
     git::config_set(root, HOOKS_PATH_KEY, &named).map_err(|error| error.to_string())?;
 
     let mut stdout = format!("weeder guard is installed: git runs its hooks from {named}.\n");
+    stdout.push_str(if Path::new(&named).is_absolute() {
+        "every worktree of this repository runs them.\n"
+    } else {
+        "the path is relative, so git resolves it in each worktree's own root, and a worktree runs only the hooks its own copy holds.\n"
+    });
     for hook in Hook::ALL {
         stdout.push_str(&format!(
             "{:<10}  refuses {}\n",
@@ -234,9 +248,7 @@ fn displaced(root: &Path, named: &str) -> Result<Option<String>, String> {
             )
         }));
     }
-    let own = git::git_dir(root)
-        .map_err(|error| error.to_string())?
-        .join("hooks");
+    let own = common_dir(root)?.join("hooks");
     let mut live = Vec::new();
     for name in GIT_HOOKS {
         let path = own.join(name);
@@ -560,9 +572,7 @@ fn reads_the_message(root: &Path) -> Result<bool, String> {
 fn hooks_directory(root: &Path) -> Result<PathBuf, String> {
     match git::config_get(root, HOOKS_PATH_KEY).map_err(|error| error.to_string())? {
         Some(setting) if !setting.trim().is_empty() => Ok(root.join(setting.trim())),
-        _ => Ok(git::git_dir(root)
-            .map_err(|error| error.to_string())?
-            .join("hooks")),
+        _ => Ok(common_dir(root)?.join("hooks")),
     }
 }
 
@@ -792,17 +802,22 @@ fn installed(root: &Path) -> Result<Option<Vec<String>>, String> {
 }
 
 fn records(root: &Path) -> Result<PathBuf, String> {
-    let directory = git::git_dir(root).map_err(|error| error.to_string())?;
-    Ok(directory.join(RECORD_DIR))
+    Ok(common_dir(root)?.join(RECORD_DIR))
 }
 
-/// The directory the recorded hooks sit in, as the record spells it.
+fn common_dir(root: &Path) -> Result<PathBuf, String> {
+    git::common_dir(root).map_err(|error| error.to_string())
+}
+
+/// The directory the recorded hooks sit in, as the record spells it. Every
+/// entry is a directory and a hook's name, and both callers hand over at least
+/// one, so the empty answer is one no record produces.
 fn directory_of(installed: &[String]) -> &str {
     installed
         .first()
-        .and_then(|entry| entry.rsplit_once('/'))
-        .map(|(directory, _)| directory)
-        .unwrap_or(DEFAULT_HOOKS_DIR)
+        .and_then(|entry| Path::new(entry).parent())
+        .and_then(Path::to_str)
+        .unwrap_or("")
 }
 
 /// Whether a `core.hooksPath` setting names the directory guard installed into.
