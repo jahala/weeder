@@ -24,3 +24,5 @@ try {
   // The wrapper could not run weeder, which is weeder's own "could not run" code.
   process.exit(3);
 }
+
+# Automated fix for issue #85: [scope] specimens accepts only weeder's own fixtures/adversarial, so no other repository can use it
