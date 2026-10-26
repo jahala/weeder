@@ -155,6 +155,10 @@ fn run_calibrate(args: &CalibrateArgs) -> Result<(), Box<dyn Error>> {
     }
 
     let canonical = root().join("docs/calibration-2026-09.md");
+    // A file that cannot be read carries no recall section, which is the state
+    // before `cargo xtask mutate` has ever run: the report is written without
+    // one, and a recall population of nothing lets no recall sample stand, so
+    // the failure leaves the verdict pending rather than lifting it.
     let existing = std::fs::read_to_string(&canonical).unwrap_or_default();
     // What each sample is drawn from, counted by this run: every blocked commit
     // it found, and every miss the recall section it carries names. A re-grade
