@@ -1,8 +1,8 @@
 # calibration: weeder over real history, 2026-09
 
-weeder ships as a gate, pending the independent re-grade: over 635 commits of real history in 5 repositories it blocked 20, of which 3 were block-level false positives, 0.47 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level, and the classification under it untrusted until a re-grade agrees at the bar. The re-grade behind it is a sighted one: docs/calibration-audit-2026-09.md declares `Blind: no`, so its auditor could read the builder's class beside each case before judging. The blind re-grade in docs/calibration-audit-blind-2026-09.md is under the bar, so no blind agreement stands behind this number yet.
+weeder ships as a gate, pending the independent re-grade: over 635 commits of real history in 5 repositories it blocked 19, of which 2 were block-level false positives, 0.31 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level, and the classification under it untrusted until a re-grade agrees at the bar. The re-grade behind it is a sighted one: docs/calibration-audit-2026-09.md declares `Blind: no`, so its auditor could read the builder's class beside each case before judging. The blind re-grade in docs/calibration-audit-blind-2026-09.md is under the bar, so no blind agreement stands behind this number yet.
 
-The classification under that number is the builder's own, and the re-grade is under the 90 percent bar: blocked commits in docs/calibration-audit-blind-2026-09.md agrees on 80.0 percent of 20 cases. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing. The floor under that share is 0.94 percent, 6 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 0.47 percent, 3 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table. Both numbers stay in this file: under the three classes in use before the ruling of 2026-09-06 the same 23 blocked commits counted 7 false positives, 1.10 percent, and under it, where a blocked commit is claim-true or claim-false and `acceptable` is a label the audit never counts, they count 4, 0.63 percent. The definition changed on that date and the question was corrected, not the goalpost moved.
+The classification under that number is the builder's own, and the re-grade is under the 90 percent bar: blocked commits in docs/calibration-audit-blind-2026-09.md agrees on 78.9 percent of 19 cases, every blocked commit the report holds. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing. The floor under that share is 0.79 percent, 5 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 0.31 percent, 2 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table. Both numbers stay in this file: under the three classes in use before the ruling of 2026-09-06 the same 23 blocked commits counted 7 false positives, 1.10 percent, and under it, where a blocked commit is claim-true or claim-false and `acceptable` is a label the audit never counts, they count 4, 0.63 percent. The definition changed on that date and the question was corrected, not the goalpost moved.
 
 ## How this was measured
 
@@ -61,7 +61,7 @@ The window ends at `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905`, fetched from `htt
 | `d422a325fc` refactor(install): fold entry style into ConfigFormat as JsonLocal variant | T2 | acceptable | T2 says src/install.rs went from 66 assertions to 65, and it did. The one that went checked the entry_style field this commit folds into ConfigFormat, and the JsonLocal match that replaces it is asserted in the same case. |
 | `bd36a43637` index: drop inert SymbolIndex plumbing | T1 | acceptable | T1 says src/index/symbol.rs went with 6 cases, and it did. SymbolIndex was allocated and threaded through the searches and never consulted, and this commit deletes the type; the cases exercised the dead allocator, so what they covered stopped existing in the same breath. A file of tests leaving the tree is worth reading either way. |
 
-## pleach, 152 commits judged, 1 blocked, 21 warned
+## pleach, 152 commits judged, 1 blocked, 18 warned
 
 The window ends at `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9`, fetched from `https://github.com/jahala/pleach.git`: the last 153 commits reaching it that are not merges, 152 of which have a parent to be judged against.
 
@@ -82,13 +82,11 @@ The window ends at `51035a5c827b1a8c2f49049f07487dcfac9036c6`, fetched from `htt
 | `2bb9d83f23` fix(loop-hole): briefing signal density — dismiss once, empty sections elide, unique headers (sonnet, SYN-D, chain-gated) | T2 | acceptable | T2 says spikes/loop-hole/tests/briefing-v3.spec.ts went from 23 claims to 19, and it did: the case loops over the section headings, and each empty section used to be held to its heading and two lines of 'cleared the floor' text, where now it is held to the heading's absence. The commit makes empty sections elide, and the case was rewritten to demand exactly that, with a new claim that the scaffolding text is gone. The behaviour changed and the test follows it; nothing is watched less. First blocked on 2026-09-23, when T2 began counting a claim once per case its loop runs it for. |
 | `52b97e43ce` feat(loop-hole): refusal hygiene — sanitized one-line reasons + child stderr (rate limits read as rate limits); .loop-scratch gitignored | X1 | false positive | X1 says a secret-looking value was added, assigned to `detail-meta__key` and to `journey-row__key`. Both hits are class attributes in the renderer's html builder, and X1 read `class="...__key">` as an assignment. The value is markup. |
 
-## copeca, 25 commits judged, 1 blocked, 7 warned
+## copeca, 25 commits judged, 0 blocked, 7 warned
 
 The window ends at `fc9c5b9e5f34085755c10746f1d46fd46edf2945`, fetched from `https://github.com/jahala/copeca.git`: the last 26 commits reaching it that are not merges, 25 of which have a parent to be judged against. Fewer than 50 commits were judged, so this repository is reported and not judged on its own share.
 
-| Commit | Rules at block level | Classification | Why |
-|---|---|---|---|
-| `70d669542a` Audit remediation, corpus 16→52, multi-CLI runners + OSS publishing prep | X1 | false positive | X1 says a secret-looking value was added, assigned to `key`, in src/copeca/results/signing.py. The line is `key = serialization.load_pem_public_key(pem)`: a local holding the result of a call inside a public-key loader. Nothing was published and there is nothing to rotate. |
+Nothing blocked.
 
 ## umbel, 58 commits judged, 4 blocked, 13 warned
 
@@ -106,23 +104,23 @@ The window ends at `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d`, fetched from `htt
 | Repo | Commits judged | Blocked | Warned | True positive | Acceptable | False positive | False-positive share |
 |---|---|---|---|---|---|---|---|
 | tilth | 200 | 8 | 80 | 1 | 7 | 0 | 0.00% |
-| pleach | 152 | 1 | 21 | 0 | 0 | 1 | 0.66% |
+| pleach | 152 | 1 | 18 | 0 | 0 | 1 | 0.66% |
 | tend2 | 200 | 6 | 23 | 0 | 5 | 1 | 0.50% |
-| copeca | 25 | 1 | 7 | 0 | 0 | 1 | 4.00% |
+| copeca | 25 | 0 | 7 | 0 | 0 | 0 | 0.00% |
 | umbel | 58 | 4 | 13 | 2 | 2 | 0 | 0.00% |
-| **pooled** | **635** | **20** | **144** | **3** | **14** | **3** | **0.47%** |
+| **pooled** | **635** | **19** | **141** | **3** | **14** | **2** | **0.31%** |
 
-The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 0.47 percent of 635 commits, and 0 commits weeder could not judge.
+The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 0.31 percent of 635 commits, and 0 commits weeder could not judge.
 
-Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 176 of them at block level still, 78 at warn level, 1 at note level and 77 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files; 9 moved from T1 at block level to T5 at warn level, all of them on test files.
+Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 175 of them at block level still, 74 at warn level, 1 at note level and 82 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files; 5 moved from T1 at block level to T5 at warn level, all of them on test files.
 
-Too few commits to carry a share of their own, reported and not judged alone: copeca (25 commits, 4.00 percent). Their commits and their false positives are both in the pooled total.
+Too few commits to carry a share of their own, reported and not judged alone: copeca (25 commits, 0.00 percent). Their commits and their false positives are both in the pooled total.
 
 ## What the rules moved since the first run
 
 A rule that splits in two is supposed to take friction off the gate while keeping the finding. Until the same files are read twice that is a claim. Every file whose answer changed is here with the rule that refused it, the kind weeder gives the file, and the loudest thing weeder says about it now.
 
-173 of the first run's block-level findings are refused by the same rule at the same level and are left out of this table; the 159 whose answer changed are all in it.
+172 of the first run's block-level findings are refused by the same rule at the same level and are left out of this table; the 160 whose answer changed are all in it.
 
 | Repo | Commit | File | Kind | Blocked then by | Says now | At |
 |---|---|---|---|---|---|---|
@@ -131,6 +129,7 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 | copeca | `70d669542a` | `.github/workflows/dependency-review.yml` | workflow | C1 | C3 | warn |
 | copeca | `70d669542a` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
 | copeca | `70d669542a` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
+| copeca | `70d669542a` | `src/copeca/results/signing.py` | prod | X1 | nothing | nothing |
 | copeca | `e8584ab6af` | `docs/tend/features/accuracy-blind-claims.tend.html` | other | X1 | nothing | nothing |
 | copeca | `e8584ab6af` | `docs/tend/features/contamination-erodes-trust.tend.html` | other | X1 | nothing | nothing |
 | copeca | `e8584ab6af` | `docs/tend/features/copeca-analysis-reporting.tend.html` | other | X1 | nothing | nothing |
@@ -180,10 +179,10 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 | tend2 | `08529d5f56` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tend2 | `08529d5f56` | `tests/bash/builtins.sh` | test | T1 | nothing | nothing |
 | tend2 | `08529d5f56` | `tests/bash/custom-verb-fallback.sh` | test | T1 | nothing | nothing |
-| tend2 | `08529d5f56` | `tests/bash/fixtures/builtins-fixture.tend.html` | test | T1 | T5 | warn |
-| tend2 | `08529d5f56` | `tests/bash/fixtures/fallback-fixture.tend.html` | test | T1 | T5 | warn |
-| tend2 | `08529d5f56` | `tests/bash/fixtures/run-fixture.tend.html` | test | T1 | T5 | warn |
-| tend2 | `08529d5f56` | `tests/bash/fixtures/whitespace-marker-fixture.tend.html` | test | T1 | T5 | warn |
+| tend2 | `08529d5f56` | `tests/bash/fixtures/builtins-fixture.tend.html` | test | T1 | nothing | nothing |
+| tend2 | `08529d5f56` | `tests/bash/fixtures/fallback-fixture.tend.html` | test | T1 | nothing | nothing |
+| tend2 | `08529d5f56` | `tests/bash/fixtures/run-fixture.tend.html` | test | T1 | nothing | nothing |
+| tend2 | `08529d5f56` | `tests/bash/fixtures/whitespace-marker-fixture.tend.html` | test | T1 | nothing | nothing |
 | tend2 | `08529d5f56` | `tests/bash/run-verb.sh` | test | T1 | nothing | nothing |
 | tend2 | `08529d5f56` | `tests/bash/whitespace-marker.sh` | test | T1 | nothing | nothing |
 | tend2 | `08529d5f56` | `tests/fixtures/audit-emit/non-discriminating/docs/tend/features/__fixture__.tend.html` | test | T1 | T5 | warn |
@@ -290,11 +289,10 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 
 Every block whose claim was not true of the change, under the rule that made it. This is the list the rule loops work from.
 
-**X1**, 3 blocks
+**X1**, 2 blocks
 
 - pleach `624529b3a9` feat(loop): the hygiene gate — empty-diff, secrets, deletion tripwire (§E), X1 says a private key block was added to src/core/hygiene.ts and to test/unit/hygiene.test.ts, and that a credential in a commit is a credential published. Both hits are the regular expression that pleach's own secret detector matches a private key header with, and its fixture. There is no credential to rotate.
 - tend2 `52b97e43ce` feat(loop-hole): refusal hygiene — sanitized one-line reasons + child stderr (rate limits read as rate limits); .loop-scratch gitignored, X1 says a secret-looking value was added, assigned to `detail-meta__key` and to `journey-row__key`. Both hits are class attributes in the renderer's html builder, and X1 read `class="...__key">` as an assignment. The value is markup.
-- copeca `70d669542a` Audit remediation, corpus 16→52, multi-CLI runners + OSS publishing prep, X1 says a secret-looking value was added, assigned to `key`, in src/copeca/results/signing.py. The line is `key = serialization.load_pem_public_key(pem)`: a local holding the result of a call inside a public-key loader. Nothing was published and there is nothing to rotate.
 
 ## Precision and the allowance rate
 
@@ -305,7 +303,7 @@ Precision is the share of blocks that were not false positives. The allowance ra
 | tilth | 100.0% | 1 | 0.0 per 100 commits (guard not installed) |
 | pleach | 0.0% | 0 | 0.0 per 100 commits (guard not installed) |
 | tend2 | 83.3% | 0 | 0.0 per 100 commits (guard not installed) |
-| copeca | 0.0% | 0 | 0.0 per 100 commits (guard not installed) |
+| copeca | no blocks | 0 | 0.0 per 100 commits (guard not installed) |
 | umbel | 100.0% | 2 | 0.0 per 100 commits (guard not installed) |
 
 No repository wrote an allowance before it installed guard.
@@ -319,14 +317,14 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 | S1 | 2 | 2 | 0 | 0 | 0.00% |
 | T1 | 8 | 1 | 7 | 0 | 0.00% |
 | T2 | 10 | 1 | 9 | 0 | 0.00% |
-| X1 | 3 | 0 | 0 | 3 | 100.00% |
+| X1 | 2 | 0 | 0 | 2 | 100.00% |
 
 
 <!-- recall:begin -->
 
 ## Recall
 
-Every rule the recall bar holds, T1, T3, S1, X1, C1, G1, catches at least 95 percent of the anti-patterns planted for it, in each of ts, py, rs and go. 2907 cases were planted one anti-pattern at a time in real commits, and 2879 of them were caught on the site they were planted in.
+Every rule the recall bar holds, T1, T3, S1, X1, C1, G1, catches at least 95 percent of the anti-patterns planted for it, in each of ts, py, rs and go. 2892 cases were planted one anti-pattern at a time in real commits, and 2864 of them were caught on the site they were planted in.
 
 The campaign is `cargo xtask mutate`. For each case it checks out a real commit of a corpus repository, plants one anti-pattern in its tree with a scanner that knows nothing about weeder's detectors, and runs `weeder check --base <parent> --strict`. A case counts as caught only where the rule fires on the file the shape was planted in, on the lines it was planted on where it has lines. A site the unmutated commit already fires that rule on is passed over, so no hit is inherited from the commit itself.
 
@@ -339,8 +337,8 @@ The campaign is `cargo xtask mutate`. For each case it checks out a real commit 
 | hcl | `https://github.com/hashicorp/hcl.git` | `6abbb088cdb82416d1b3d9fcbaab29534133567a` | 200 | 380 |
 | pleach | `https://github.com/jahala/pleach.git` | `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9` | 21 | 294 |
 | tend2 | `https://github.com/jahala/tend.git` | `51035a5c827b1a8c2f49049f07487dcfac9036c6` | 76 | 294 |
-| tilth | `https://github.com/jahala/tilth.git` | `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905` | 191 | 1040 |
-| umbel | `https://github.com/jahala/umbel.git` | `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d` | 34 | 294 |
+| tilth | `https://github.com/jahala/tilth.git` | `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905` | 191 | 1039 |
+| umbel | `https://github.com/jahala/umbel.git` | `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d` | 58 | 280 |
 
 The garden five are the repositories calibration measures precision on, read from `docs/calibration/corpus.toml` at the commits it pins them at. They carry no Go between them and weeder judges Go, so the Go column is measured on two Go projects that `docs/calibration/corpus-go.toml` pins the same way, read exactly as the five are.
 
@@ -348,7 +346,7 @@ Every window ends at the pin. A commit pushed to one of these sources later is o
 
 Files the injector planted nothing in, counted once for each commit they were read at:
 
-- added by the commit, so nothing in it was there to change: 343
+- added by the commit, so nothing in it was there to change: 448
 - carrying a NUL byte, which git writes no text diff for: 164
 - saying a generator wrote it: 713
 
@@ -372,8 +370,8 @@ Files the injector planted nothing in, counted once for each commit they were re
 | T4 | warn | py | 14 | 14 | 0 | 0 | 100.0% |
 | T4 | warn | rs | 40 | 39 | 1 | 0 | 97.5% |
 | T4 | warn | go | 0 | 0 | 0 | 0 | no cases |
-| T5 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
-| T5 | warn | py | 17 | 17 | 0 | 0 | 100.0% |
+| T5 | warn | ts | 28 | 28 | 0 | 0 | 100.0% |
+| T5 | warn | py | 16 | 16 | 0 | 0 | 100.0% |
 | T5 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
 | T5 | warn | go | 20 | 20 | 0 | 0 | 100.0% |
 | T6 | warn | ts | 42 | 28 | 14 | 0 | 66.7% |

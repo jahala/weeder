@@ -19,16 +19,21 @@ cargo xtask audit-packet --seed "$seed" --dir "$scratch/b" >/dev/null
 count_a="$(ls "$scratch/a"/*.md | wc -l | tr -d ' ')"
 count_b="$(ls "$scratch/b"/*.md | wc -l | tr -d ' ')"
 [ "$count_a" = "$count_b" ] || { echo "an empty cache gave $count_a case packets and the machine's cache gave $count_b" >&2; exit 1; }
-[ "$count_a" = "40" ] || { echo "$count_a case packets, not 40" >&2; exit 1; }
+kept="fixtures/adversarial/calibration-audit/blind-2026-09/cases"
+# How many there should be is the census rule's, held by audit-transcript.sh and
+# audit-fairness.sh from the report's own tables; here a set of none would
+# compare equal to a tree of none, so none is refused.
+count_kept="$(ls "$kept"/*.md 2>/dev/null | wc -l | tr -d ' ')"
+[ "$count_a" -gt 0 ] || { echo "the generator wrote no case packets for seed $seed" >&2; exit 1; }
+[ "$count_a" = "$count_kept" ] || { echo "$count_a case packets derived, and the tree keeps $count_kept" >&2; exit 1; }
 if ! diff -qr "$scratch/a" "$scratch/b" >/dev/null; then
   echo "the case packets differ between an empty cache and the machine's cache:" >&2
   diff -qr "$scratch/a" "$scratch/b" >&2 | head -10
   exit 1
 fi
-kept="fixtures/adversarial/calibration-audit/blind-2026-09/cases"
 if ! diff -qr "$scratch/a" "$kept" >/dev/null; then
   echo "the packets in the tree differ from what an empty cache derives for seed $seed:" >&2
   diff -qr "$scratch/a" "$kept" >&2 | head -10
   exit 1
 fi
-echo "40 case packets derive the same bytes from an empty cache, the machine's cache and the tree, for seed $seed"
+echo "$count_a case packets derive the same bytes from an empty cache, the machine's cache and the tree, for seed $seed"

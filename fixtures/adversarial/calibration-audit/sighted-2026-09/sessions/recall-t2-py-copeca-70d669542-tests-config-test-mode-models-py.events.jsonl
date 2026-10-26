@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T2:py:copeca:70d669542:tests/config/test_mode_models.py", "sha256": "da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e\nVerdict: miss\nReasoning: An assertion was deleted from a changed Python test file, matching T2's shape, and weeder did not report it at the planted site."}

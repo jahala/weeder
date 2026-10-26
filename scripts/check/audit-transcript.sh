@@ -115,9 +115,26 @@ for directory in (CASE_DIR, SESSION_DIR):
     if not directory.is_dir():
         complaints.append(f"{directory} is missing")
 
+def expected_packets(report):
+    """One packet per sampled case, read off the report's own tables: twenty of
+    each population, or every case of a population smaller than that, as the
+    census ruling of 2026-10-26 has it."""
+    counts = []
+    pooled = re.search(r"^\| \*\*pooled\*\* \| \*\*\d+\*\* \| \*\*(\d+)\*\* \|", report, re.M)
+    if pooled:
+        counts.append(int(pooled.group(1)))
+    misses = re.search(r"^### Every miss\n(.*?)(?=^### |^<!-- recall:end -->|\Z)", report, re.M | re.S)
+    if misses:
+        counts.append(len(re.findall(r"^- [A-Z][0-9] · ", misses.group(1), re.M)))
+    return sum(min(20, count) for count in counts) if len(counts) == 2 else None
+
+
 case_paths = sorted(CASE_DIR.glob("*.md")) if CASE_DIR.is_dir() else []
-if len(case_paths) != 40:
-    complaints.append(f"{CASE_DIR} carries {len(case_paths)} case packets, not 40")
+wanted = expected_packets(REPORT.read_text(encoding="utf-8")) if REPORT.is_file() else None
+if wanted is None:
+    complaints.append(f"{REPORT} does not say how many blocked commits and misses it holds")
+elif len(case_paths) != wanted:
+    complaints.append(f"{CASE_DIR} carries {len(case_paths)} case packets, not {wanted}")
 
 for case_path in case_paths:
     expected_hash = packet_hash(case_path)

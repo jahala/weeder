@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t6-ts-tend2-2a0e93933-test-verify-test-ts-176.md", "sha256": "2a82526faee38e4a385330ccf4d6dcabf2e8db955115cc86591b443adceb17c8", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered packet SHA-256: 2a82526faee38e4a385330ccf4d6dcabf2e8db955115cc86591b443adceb17c8\nVerdict: miss\nReasoning: The assertion changed from `toThrow(/description/)` to `toThrow()`, weakening it by removing the named error; weeder reported no finding there."}
