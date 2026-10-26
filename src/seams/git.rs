@@ -486,9 +486,22 @@ pub fn merge_base(root: &Path, left: &str, right: &str) -> Result<Option<String>
     }
 }
 
+/// Whether every commit `tip` reaches is already on some remote, so a push of it
+/// carries no commit the remote lacks. A tag on a released commit is the usual
+/// case. `rev-list` prints nothing both for that and for a history the remotes
+/// never saw, through `unpublished_boundary`, so this is asked first.
+pub fn is_published(root: &Path, tip: &str) -> Result<bool, GitError> {
+    let output = run(
+        root,
+        &["rev-list", "--max-count=1", tip, "--not", "--remotes"],
+    )?;
+    Ok(output.trim().is_empty())
+}
+
 /// The commit just outside what `tip` adds to everything the remotes already
-/// carry, where a branch no remote has seen begins. `None` when the whole
-/// history is still unpublished.
+/// carry, where a branch no remote has seen begins. `None` when there is no
+/// such commit: either the whole history is unpublished, or none of it is,
+/// which `is_published` tells apart.
 pub fn unpublished_boundary(root: &Path, tip: &str) -> Result<Option<String>, GitError> {
     let output = run(root, &["rev-list", "--boundary", tip, "--not", "--remotes"])?;
     Ok(output

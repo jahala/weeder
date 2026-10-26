@@ -721,8 +721,10 @@ fn judgement(
 
 /// What the pushed commits are judged against: the commit the remote ref points
 /// at, or, where the two have diverged, the last commit they share. A ref no
-/// remote has yet is judged from where its unpublished commits begin, and a
-/// history that has never been pushed anywhere is judged whole.
+/// remote has yet is judged from where its unpublished commits begin, a ref whose
+/// commits every one of are already on a remote carries nothing new and is
+/// judged from its own tip, and a history that has never been pushed anywhere is
+/// judged whole.
 fn base_for(root: &Path, pushed: &PushRef) -> Result<String, String> {
     if !pushed.creates() {
         let shared = git::merge_base(root, &pushed.remote_sha, &pushed.local_sha)
@@ -730,6 +732,10 @@ fn base_for(root: &Path, pushed: &PushRef) -> Result<String, String> {
         if let Some(shared) = shared {
             return Ok(shared);
         }
+    }
+    if git::is_published(root, &pushed.local_sha).map_err(|error| error.to_string())? {
+        // A tag names a tag object; the range is between commits.
+        return git::resolve_ref(root, &pushed.local_sha).map_err(|error| error.to_string());
     }
     Ok(git::unpublished_boundary(root, &pushed.local_sha)
         .map_err(|error| error.to_string())?
