@@ -24,6 +24,8 @@ mod common;
 use common::{fixture, fixture_file, path_with_weeder, Finding};
 
 /// R1's findings on a fixture, with weeder on PATH so a cited command resolves.
+/// A fixture that sets specimens aside also draws the note naming each path no
+/// rule read, which is the scan face's to say and not R1's, so it is left out.
 fn findings(lang: &str, case: &str) -> Vec<Finding> {
     let repo = fixture("R1", lang, case);
     let run = repo.weeder_with(
@@ -36,6 +38,9 @@ fn findings(lang: &str, case: &str) -> Vec<Finding> {
         run.code, run.stderr
     );
     run.findings()
+        .into_iter()
+        .filter(|finding| finding.rule != "SPECIMEN")
+        .collect()
 }
 
 /// The one finding a fire fixture is built to produce.
@@ -307,6 +312,22 @@ fn a_name_docs_external_lists_is_never_reported_and_one_it_does_not_list_still_i
 }
 
 #[test]
+fn a_path_set_aside_as_a_specimen_is_still_there_and_one_that_is_not_is_reported() {
+    let found = findings("specimens", "fire");
+    assert_eq!(
+        found.len(),
+        1,
+        "the specimen directory is in the repository and the file cited inside it is not, and R1 reported: {found:#?}"
+    );
+    let finding = about(&found, "subtract.ts");
+    assert!(
+        finding.message.contains("holds nothing there"),
+        "a file no specimen holds is as missing as any other: {}",
+        finding.message
+    );
+}
+
+#[test]
 fn nothing_is_reported_when_every_citation_still_resolves() {
     for lang in [
         "paths",
@@ -319,6 +340,7 @@ fn nothing_is_reported_when_every_citation_still_resolves() {
         "links",
         "tails",
         "external",
+        "specimens",
     ] {
         let found = findings(lang, "silent");
         assert!(

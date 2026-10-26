@@ -333,7 +333,9 @@ fn place<'a>(
 /// tell which one the doc meant and neither can weeder.
 ///
 /// A place the repository listed in `[docs] external` is outside the tree on
-/// purpose, and the tree is not asked about it at all.
+/// purpose, and the tree is not asked about it at all. A place `[scope]
+/// specimens` set aside is in the repository and unread: it is there, and it
+/// pins nothing, because no rule read what it holds.
 fn one_place<'a>(
     tree: &'a Tree,
     cited: &str,
@@ -343,11 +345,11 @@ fn one_place<'a>(
 ) -> Place<'a> {
     let trimmed = written.trim_end_matches('/');
     let file_name = trimmed.rsplit('/').next().unwrap_or(trimmed);
-    if outside(external, &[trimmed, file_name]) {
+    if outside(external, &[trimmed, file_name]) || tree.sets_aside(trimmed) {
         return Place::Prose;
     }
     if let Some(prefix) = literal_prefix(trimmed) {
-        if prefix.is_empty() || !about_this_tree(tree, &prefix) {
+        if prefix.is_empty() || !about_this_tree(tree, &prefix) || tree.sets_aside(&prefix) {
             return Place::Prose;
         }
         if tree.holds_under(&prefix) {
