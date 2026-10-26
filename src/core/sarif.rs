@@ -28,8 +28,9 @@ pub enum Outcome {
     CouldNotRun { reason: String },
 }
 
-/// What a face knows and the core does not: the binary's version, the rules in
-/// play, where they are documented, and whether the run got that far.
+/// What a face knows and the core does not: the binary's version, the rules it
+/// runs, where they are documented, and whether the run got that far. The log
+/// declares those of its rules that a result names.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Context {
     pub tool_version: String,
@@ -239,15 +240,25 @@ pub struct SarifSuppression {
 }
 
 /// Findings and what the face knows, as one SARIF run.
+///
+/// The tool component declares the rules the results name and no others, in
+/// catalogue order. SARIF asks no more of it, and every run an agent makes
+/// arrives through a pipe as this log: the whole catalogue is several hundred
+/// lines read for a run that found nothing. `weeder rules` prints all of it.
 pub fn render(findings: &[Finding], context: &Context) -> Log {
-    let rules = context
+    let declared: Vec<Rule> = context
         .catalogue
+        .iter()
+        .filter(|rule| findings.iter().any(|finding| finding.rule == rule.id))
+        .copied()
+        .collect();
+    let rules = declared
         .iter()
         .map(|rule| descriptor(rule, context.docs_base.as_deref()))
         .collect();
     let mut results: Vec<SarifResult> = findings
         .iter()
-        .map(|finding| result(finding, &context.catalogue))
+        .map(|finding| result(finding, &declared))
         .collect();
     results.sort_by(|left, right| sort_key(left).cmp(&sort_key(right)));
     let invocation = match &context.outcome {

@@ -13,8 +13,8 @@ the test fails, so a consumer never has to guess what weeder meant.
 |---|---|---|
 | one run per invocation | `$schema`, `version` `2.1.0`, and exactly one entry in `runs` | `tests/sarif_shape.rs::log_holds_one_run_with_the_schema_uri_and_version` |
 | the tool component | `runs[0].tool.driver` with `name` `weeder` and the binary's `version` | `tests/sarif_shape.rs::log_holds_one_run_with_the_schema_uri_and_version` |
-| the rules array | every catalogue rule as a reporting descriptor: `id`, `shortDescription`, `fullDescription`, `defaultConfiguration.level`, and `helpUri` | `tests/sarif_shape.rs::tool_component_lists_every_catalogue_rule_with_its_default_level` |
-| rule id and index | `ruleId` and the `ruleIndex` of that rule in the tool component | `tests/sarif_shape.rs::result_carries_its_rule_id_and_the_index_of_that_rule_in_the_tool_component` |
+| the rules array | each rule a result names, once and in catalogue order, as a reporting descriptor: `id`, `shortDescription`, `fullDescription`, `defaultConfiguration.level`, and `helpUri`; a log with no results declares none | `tests/sarif_shape.rs::tool_component_declares_only_the_rules_its_results_name_with_their_default_levels` |
+| rule id and index | `ruleId` and the `ruleIndex` of that rule among the rules the log declares | `tests/sarif_shape.rs::result_carries_its_rule_id_and_the_index_of_that_rule_in_the_tool_component` |
 | the level mapping | block is `error`, warn is `warning`, a suppressed finding weeder honoured is `note`; under `--strict` a finding keeps its level and still carries its `suppressions` entry | `tests/sarif_shape.rs::levels_map_block_to_error_warn_to_warning_and_a_suppressed_finding_to_note` |
 | the message | `message.text` reads what was found, why it matters, then the next action, in that order | `tests/sarif_shape.rs::message_reads_what_then_why_then_next` |
 | the location | one `physicalLocation` per result, with a repo-relative `artifactLocation.uri` | `tests/sarif_shape.rs::location_is_a_repo_relative_uri_with_a_region` |
@@ -31,7 +31,7 @@ the test fails, so a consumer never has to guess what weeder meant.
 | schema validity | a finding with a fix validates | `tests/sarif_schema.rs::finding_with_a_fix_validates_against_the_vendored_schema` |
 | schema validity | a suppressed finding validates | `tests/sarif_schema.rs::suppressed_finding_validates_against_the_vendored_schema` |
 | schema validity | a could-not-run log validates | `tests/sarif_schema.rs::could_not_run_log_validates_against_the_vendored_schema` |
-| the table's lines | one line per finding: level, rule id, `path:line`, then the message's what | `tests/sarif_table.rs::table_carries_level_rule_path_line_and_the_what_on_one_line_per_finding` |
+| the table's lines | a row per finding: level, rule id, `path:line`, then the message's what; under it why and next, each wrapped at 72 characters | `tests/sarif_table.rs::table_carries_the_what_on_the_row_and_the_why_and_next_under_it` and `tests/sarif_table.rs::a_long_why_wraps_under_its_row_rather_than_running_on` |
 | the table's order | block findings first, then warnings, then notes; inside a level by path, then line | `tests/sarif_table.rs::table_orders_findings_by_level_then_path_then_line` |
 | the table's counts | a last line counting each level | `tests/sarif_table.rs::table_ends_with_a_count_per_level` |
 | the table holds nothing else | an empty run renders the count line alone | `tests/sarif_table.rs::an_empty_run_renders_the_count_line_and_nothing_else` |
@@ -63,7 +63,7 @@ the test fails, so a consumer never has to guess what weeder meant.
       "results": [
         {
           "ruleId": "T3",
-          "ruleIndex": 2,
+          "ruleIndex": 0,
           "level": "error",
           "message": { "text": "A skip marker was added to a test case. The suite still passes because the case no longer runs. Remove the marker, or record a reason with weeder-allow." },
           "locations": [
@@ -101,8 +101,13 @@ the test fails, so a consumer never has to guess what weeder meant.
 
 The catalogue in `src/core/catalogue.rs` is the one source for rule ids, their default levels and
 their descriptions. `Config::default()` reads it, `weeder rules` prints it, and the tool component
-lists it, so the three cannot drift. A run reports every catalogue rule, whatever the config turned
-off, because a consumer reading one log should see the whole law weeder knows.
+takes its descriptors from it, so the three cannot drift.
+
+The tool component declares only the rules the log's results name, a suppressed result included,
+each once and in catalogue order. A log with no results declares none. SARIF 2.1.0 asks no more,
+and every run an agent makes arrives through a pipe as this log, so the whole catalogue would be
+several hundred lines read for a run that found nothing. `weeder rules --format json` is where the
+whole law weeder knows is printed. Each result's `ruleIndex` points into the declared list.
 
 `defaultConfiguration.level` carries the catalogue default, not the level the config settled on. The
 level a result actually carries lives on the result.

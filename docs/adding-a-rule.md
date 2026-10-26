@@ -15,8 +15,8 @@ short description, a full description of what it reads to decide, and
 `Network::None`.
 
 The catalogue is the single source for the rule. `weeder rules` prints it,
-every SARIF log lists it, and a repository that leaves the rule out of
-`[rules]` gets its default level.
+a SARIF log declares it whenever a result names it, and a repository that
+leaves the rule out of `[rules]` gets its default level.
 
 Pick the default level with one principle from `docs/architecture.md`: only a
 finding that admits one reading blocks. A line that opens with seven `<` has no
