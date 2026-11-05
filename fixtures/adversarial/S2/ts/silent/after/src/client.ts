@@ -15,6 +15,11 @@ export function load(name: string): string {
   }
 }
 
+export function parse(text: string): void {
+  try { JSON.parse(text); } catch (error) { report("parse failed", error); }
+  try { JSON.parse(text); } catch { /* a malformed cache is rebuilt on the next read */ }
+}
+
 export function flush(): Promise<void> {
   return drain().catch((error) => {
     // the queue empties again on the next tick, and the caller has moved on

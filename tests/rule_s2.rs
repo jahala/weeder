@@ -22,7 +22,15 @@ const SHAPES: [(&str, &str, &[&str]); 4] = [
     (
         "ts",
         "src/client.ts",
-        &["} catch (error) {", "return drain().catch(() => {});"],
+        &[
+            "} catch (error) {",
+            "return drain().catch(() => {});",
+            // The same handler written on one line, with and without its
+            // binding, and with a block after it (#75).
+            "try { JSON.parse(text); } catch {}",
+            "try { JSON.parse(text); } catch (error) {}",
+            "try { JSON.parse(text); } catch {} finally { post(text); }",
+        ],
     ),
     ("py", "src/client.py", &["except Exception:", "except:"]),
     (
