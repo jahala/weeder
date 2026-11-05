@@ -367,7 +367,10 @@ pub fn render_table(findings: &[Finding]) -> String {
         // with the same why and next, names that row instead of saying it again:
         // one conflict block is three markers and one fact. The log keeps every
         // result whole, because a consumer reads a result on its own.
-        if let Some(first) = rows[..index].iter().find(|earlier| says_the_same(earlier, row)) {
+        if let Some(first) = rows[..index]
+            .iter()
+            .find(|earlier| says_the_same(earlier, row))
+        {
             table.push_str(&format!(
                 "{indent}{:<LABEL_WIDTH$}{} for why and next\n",
                 "see", first.place
