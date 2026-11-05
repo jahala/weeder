@@ -113,7 +113,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Block,
         short_description: "A configuration line took a test out of the run",
-        full_description: "An added or changed line of the runner's settings stops an existing test file from being collected, read from the settings file's kind and name rather than from any product. A line that names the file, or a pattern matching one, blocks; a line that narrows what the runner reads leaves the hidden set to be worked out, and warns. A setting whose value is built rather than written is reported unreadable instead of guessed at.",
+        full_description: "An added or changed line of the runner's settings stops an existing test file under the settings file's own directory from being collected, read from the settings file's kind and name rather than from any product. A setup, teardown or coverage setting chooses no test file. A line that names the file, or a pattern matching one, blocks; a line that narrows what the runner reads leaves the hidden set to be worked out, and warns. A setting whose value is built rather than written is reported unreadable instead of guessed at.",
         network: Network::None,
     },
     Rule {

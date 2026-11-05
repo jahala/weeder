@@ -170,7 +170,7 @@ A test file or case was renamed out of the naming convention its runner collects
 
 `check` · blocks by default
 
-An added or changed line of the runner's settings stops an existing test file from being collected, read from the settings file's kind and name rather than from any product. A line that names the file, or a pattern matching one, blocks; a line that narrows what the runner reads leaves the hidden set to be worked out, and warns. A setting whose value is built rather than written is reported unreadable instead of guessed at.
+An added or changed line of the runner's settings stops an existing test file under the settings file's own directory from being collected, read from the settings file's kind and name rather than from any product. A setup, teardown or coverage setting chooses no test file. A line that names the file, or a pattern matching one, blocks; a line that narrows what the runner reads leaves the hidden set to be worked out, and warns. A setting whose value is built rather than written is reported unreadable instead of guessed at.
 
 The settings a repository writes are found the way its manifest is: by what the classifier makes of the file and by the name its ecosystem gives it. What a key means is read from the words it is spelled with — `ignore`, `exclude`, `deselect` on one side, `path`, `files`, `match`, `include` on the other — and a key counts as being about the run only where the key, the table it sits under, or the file's own name says so. A gate written at the top of a suite, on a condition an ordinary run never sets, is the same exclusion written inside the file it hides. `weeder check --strict` refuses the run, at exit 3, where a setting weeder cannot read is among the lines the change wrote.
 
