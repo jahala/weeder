@@ -643,3 +643,82 @@ fn a_line_that_quotes_an_example_and_carries_a_credential_still_blocks() {
     );
     assert_eq!(run.code, 2, "a credential blocks\n{}", run.stderr);
 }
+
+// ---------------------------------------------------------------------------
+// A sentence under a key-like name (#93)
+// ---------------------------------------------------------------------------
+
+/// The name each language's neighbour gives a sentence, the warning a form
+/// shows when what was pasted is not a token. The name says token and the value
+/// is long and mixed enough to pass for disorder, so only its spaces say it is
+/// prose.
+const PROSE_NAMES: [(&str, &str); 4] = [
+    ("ts", "GITHUB_TOKEN_WARNING"),
+    ("py", "GITHUB_TOKEN_WARNING"),
+    ("rs", "GITHUB_TOKEN_WARNING"),
+    ("go", "GitHubTokenWarning"),
+];
+
+/// How many words separated by spaces make a value read as prose. A credential
+/// is one run of characters; a scheme and a credential, `Bearer` and its token,
+/// are two.
+const PROSE_WORDS: usize = 3;
+
+#[test]
+fn a_sentence_under_a_key_like_name_is_silent_and_a_disordered_value_under_it_blocks() {
+    for ((name, path), (lang, assigned)) in LANGUAGES.into_iter().zip(PROSE_NAMES) {
+        assert_eq!(name, lang, "the two tables walk the languages in one order");
+        let honest = fixture_file("X1", name, "silent/after", path);
+        let line = honest
+            .lines()
+            .find(|line| line.contains(assigned))
+            .unwrap_or_else(|| panic!("{name}: the neighbour assigns a sentence to `{assigned}`"));
+        let sentence = quoted(line).unwrap_or_else(|| panic!("{name}: {line} quotes a value"));
+        assert!(
+            holds_key_word(assigned)
+                && sentence.chars().count() >= 20
+                && entropy(sentence) > 4.0
+                && sentence.split_whitespace().count() >= PROSE_WORDS,
+            "{name}: the sentence has to be long and mixed enough to read as disorder, \
+             under a key-like name, or its silence proves nothing"
+        );
+
+        let silent = fixture("X1", name, "silent").weeder(&["check"]);
+        let flagged: Vec<Finding> = silent
+            .findings()
+            .into_iter()
+            .filter(|finding| finding.rule == "X1")
+            .collect();
+        assert_eq!(
+            flagged,
+            Vec::new(),
+            "{name}: a sentence is prose whatever the name it is assigned to says"
+        );
+
+        // The same line with a disordered value in place of the sentence. The
+        // value is read off the fire fixture, so this file never spells one.
+        let disordered = fixture_file("X1", name, "fire/after", path)
+            .lines()
+            .find(|line| line.contains(DISORDERED))
+            .and_then(quoted)
+            .map(ToString::to_string)
+            .unwrap_or_else(|| panic!("{name}: the fire fixture assigns a disordered value"));
+        let repo = common::Repo::init();
+        repo.write(path, &honest.replace(sentence, &disordered));
+        let run = repo.weeder(&["check"]);
+        let named = run
+            .findings()
+            .into_iter()
+            .find(|finding| {
+                finding.rule == "X1" && finding.message.contains(&format!("`{assigned}`"))
+            })
+            .unwrap_or_else(|| {
+                panic!(
+                    "{name}: a disordered value under `{assigned}` is reported\n{}",
+                    run.stderr
+                )
+            });
+        assert_eq!(named.level, "error", "{name}: and it blocks");
+        assert_eq!(run.code, 2, "{name}: a credential blocks");
+    }
+}

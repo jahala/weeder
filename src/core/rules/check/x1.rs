@@ -12,7 +12,8 @@
 //! something called a key, a secret, a token, a password or a credential, long
 //! enough to be one and disordered enough that no person typed it as prose, is a
 //! secret. Both halves are needed: a long random string under a plain name is a
-//! fixture, a short readable string under a key name is a setting, and the
+//! fixture, a short readable string under a key name is a setting, a sentence
+//! under a key name is the message a form shows about one (#93), and the
 //! digests filling a lockfile are named for what they are and never for a
 //! credential. The literal is needed too, because `token = process.env.TOKEN`
 //! reads the credential at run time, which is the safe form, and holds no value.
@@ -126,6 +127,11 @@ const ENTROPY_BITS: f64 = 4.0;
 /// issues a credential with a bracket in it.
 const SLOT_CHARACTERS: &[char] = &['<', '>', '{', '}'];
 
+/// How many words separated by spaces make a value read as prose. A credential
+/// is one run of characters, and a scheme in front of one, `Bearer` and its
+/// token, makes two; a sentence long enough to pass for disorder has more.
+const PROSE_WORDS: usize = 3;
+
 pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     let mut findings = Vec::new();
@@ -213,6 +219,11 @@ fn named_and_disordered(line: &str) -> Option<String> {
             continue;
         }
         if value.contains(SLOT_CHARACTERS) {
+            continue;
+        }
+        // A sentence carries as many kinds of character as a key does, and its
+        // spaces are what no issued credential has.
+        if value.split_whitespace().count() >= PROSE_WORDS {
             continue;
         }
         // An example under a name that says `secret` is still an example; the

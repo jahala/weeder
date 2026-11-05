@@ -19,3 +19,5 @@ pub fn auth_token(config: &Config) -> String {
     let auth_token = config.credentials.anthropic_auth_token.clone();
     auth_token
 }
+
+pub const GITHUB_TOKEN_WARNING: &str = "That doesn't look like a GitHub token. Are you sure?";
