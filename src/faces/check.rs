@@ -40,6 +40,7 @@ use crate::core::suppress::{
     InlineSuppressionError, Suppression, SuppressionSource, MARKER,
 };
 use crate::core::syntax::Mask;
+use crate::core::unread;
 use crate::faces::{
     blobs, gather, read_law, readable, side, written_law, Answer, Format, Source, Untracked,
 };
@@ -166,6 +167,7 @@ fn judge(request: &Request) -> Result<Verdict, String> {
         collection: &collection,
     });
     findings.extend(excluded.iter().map(|path| specimen::notice(path)));
+    findings.extend(unread::notice(&unread_paths(&changes)));
     if request.strict {
         if let Some(unreadable) = malformed.first() {
             return Err(refusal(unreadable));
@@ -406,6 +408,16 @@ fn departures(root: &Path, range: &Range, departed: &[String]) -> Result<Vec<Cha
             ..change
         })
         .collect())
+}
+
+/// The changed files written in a language weeder carries no rules for, which
+/// no detector judged a line of.
+fn unread_paths(changes: &[Change]) -> Vec<&str> {
+    changes
+        .iter()
+        .filter_map(Change::path)
+        .filter(|path| reader::is_unread_code(Path::new(path)))
+        .collect()
 }
 
 /// The paths this run allows the change to touch. `--scope` is what the caller

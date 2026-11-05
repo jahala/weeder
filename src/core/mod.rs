@@ -19,6 +19,7 @@ pub mod specimen;
 pub mod suppress;
 pub mod syntax;
 pub mod tree;
+pub mod unread;
 
 pub use bite::{Trial, Verdict};
 pub use catalogue::{Face, Rule};

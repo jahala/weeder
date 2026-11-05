@@ -58,6 +58,12 @@ exclusion covers is reported once, at note level, under the id `SPECIMEN`: the
 log says which files no rule read, and `check` still leaves with whatever the
 files it did read deserve.
 
+`check` also says, once per run, which changed files it did not read: code in a
+language weeder has no rules for, a shell script, a makefile, Java. The note
+carries the id `UNREAD`, counts the files by extension, and stops nothing. The
+rules judge TypeScript, JavaScript, Python, Rust and Go, and a change made only of
+other code would otherwise end in a clean count over lines no rule read.
+
 ### How a finding's level is settled
 
 Most findings carry their rule's level: the one listed below, or the one

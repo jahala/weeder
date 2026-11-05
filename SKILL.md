@@ -33,6 +33,12 @@ A file you wrote and never staged is judged too, as the added file it is. `git
 diff` never lists one, so weeder reads them off the working tree itself; the
 files your ignore rules hide are not part of the tree and are not read.
 
+The rules read TypeScript, JavaScript, Python, Rust and Go. A changed file in any
+other language, a shell script, a makefile, Java, reaches no rule, so `check`
+adds one note per run under the id `UNREAD`, counting those files by extension.
+It stops nothing. A clean count beside it means the files weeder read were clean,
+and the rest are yours to read.
+
 | Flag | What it does |
 |---|---|
 | `--base <ref>` | judge the tree against this ref instead of HEAD |
