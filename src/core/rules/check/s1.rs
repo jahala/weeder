@@ -8,7 +8,10 @@
 //!
 //! An unfinished signal: the token a language keeps for a body nobody wrote
 //! (`todo!`, `unimplemented!`, `NotImplementedError`), or a throw, a raise or a
-//! panic whose message, read as letters alone, says the same thing.
+//! panic whose message, read as letters alone, says the same thing. An error
+//! of that name is a signal only where a body raises, throws or returns it;
+//! the code that imports it, checks a failure against it or catches it is
+//! answering for a placeholder written somewhere else.
 //!
 //! A body that does nothing: a function whose whole body is the language's word
 //! for "no statements", `pass`, `...`, a bare return, a return of the language's
@@ -42,7 +45,7 @@ use crate::core::hierarchy::{self, Hierarchy};
 use crate::core::read::{Definition, DefinitionKind, Outline};
 use crate::core::rules::check::idiom;
 use crate::core::rules::check::Judgement;
-use crate::core::syntax::{words, Mask};
+use crate::core::syntax::{words, Mask, Word};
 
 /// The words that mark work left for later, written as they are meant to be
 /// found: in capitals, so the same word in a sentence is prose and the shouted
@@ -50,14 +53,28 @@ use crate::core::syntax::{words, Mask};
 /// three are written here and nowhere else in this repository.
 const WORK_MARKERS: &[&str] = &["TODO", "FIXME", "XXX"];
 
-/// The tokens a language keeps for a body nobody wrote. `todo` counts only as a
-/// macro, because it is also an ordinary name for an ordinary thing.
-const UNFINISHED_TOKENS: &[&str] = &["unimplemented", "NotImplemented", "NotImplementedError"];
-const UNFINISHED_MACRO: &str = "todo";
+/// The errors a language names a body nobody wrote with. Code that imports one,
+/// checks a failure against one or catches one is answering for a placeholder
+/// somewhere else (#94), so a name counts only where a body hands it out: right
+/// after a keyword in [`HANDING_OUT`], with nothing between them but the words
+/// in [`BETWEEN`] and the path it is reached through.
+const UNFINISHED_TOKENS: &[&str] = &["NotImplemented", "NotImplementedError"];
+
+/// The macros a language keeps for a body nobody wrote. Each is an ordinary
+/// name for an ordinary thing too, so it counts only as a macro.
+const UNFINISHED_MACROS: &[&str] = &["todo", "unimplemented"];
 
 /// The keywords that hand a failure to the caller rather than returning one.
 /// A message given to one of these is the code describing itself.
 const RAISING: &[&str] = &["throw", "raise", "panic"];
+
+/// The keywords a body hands its answer out with: the ones that raise, and the
+/// one that returns.
+const HANDING_OUT: &[&str] = &["throw", "raise", "panic", "return"];
+
+/// The words that may stand between a keyword handing an answer out and the
+/// error it hands: `throw new`, `return Err(`, Go's `return nil,`.
+const BETWEEN: &[&str] = &["new", "Err", "nil"];
 
 /// A message that says the work is not done, with everything but its letters
 /// taken out, so spelling and punctuation stop mattering.
@@ -179,9 +196,12 @@ fn stub_on(mask: &Mask, line: u32) -> Option<Stub> {
 
     let code = mask.code(line);
     let spoken = words(&code);
-    if let Some(word) = spoken.iter().find(|word| {
-        (UNFINISHED_TOKENS.contains(&word.text) && !word.is_member())
-            || (word.text == UNFINISHED_MACRO && word.after == Some('!'))
+    if let Some(word) = spoken.iter().enumerate().find_map(|(at, word)| {
+        let handed = UNFINISHED_TOKENS.contains(&word.text)
+            && !word.is_member()
+            && handed_out(&code, &spoken[..at]);
+        let macro_call = UNFINISHED_MACROS.contains(&word.text) && word.after == Some('!');
+        (handed || macro_call).then_some(word)
     }) {
         // A macro is quoted back with the `!` that makes it one, so the reader
         // is shown the thing they wrote rather than the name inside it.
@@ -197,6 +217,25 @@ fn stub_on(mask: &Mask, line: u32) -> Option<Stub> {
         return Some(Stub::announcement());
     }
     None
+}
+
+/// Whether the words written before an error's name on its line hand it out:
+/// read back from the name, a keyword in [`HANDING_OUT`] reached across nothing
+/// but the words in [`BETWEEN`] and a path's segments (`Error::`). An import,
+/// an `instanceof`, an `isinstance(` and a `catch` reach no such keyword, and
+/// neither does `return error instanceof NotImplemented`, whose answer is the
+/// check rather than the error.
+fn handed_out(code: &str, before: &[Word<'_>]) -> bool {
+    for word in before.iter().rev() {
+        if HANDING_OUT.contains(&word.text) {
+            return true;
+        }
+        let segment = code[word.end..].trim_start().starts_with("::");
+        if !(BETWEEN.contains(&word.text) || segment) {
+            return false;
+        }
+    }
+    false
 }
 
 /// Whether a message, read as letters alone, says the work is not done.
