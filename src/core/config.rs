@@ -64,6 +64,10 @@ pub struct Config {
     /// constitution tier. weeder ships a set of those it recognises everywhere;
     /// this is where a repository names the ones only it can know. C3 reads it.
     pub guardrail_paths: Vec<String>,
+    /// `[guardrails] sections`: the headings of `AGENTS.md` and `CLAUDE.md`
+    /// a repository states its law under, beside the ones weeder recognises in
+    /// every repository. C1 reads them.
+    pub guardrail_sections: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -110,6 +114,7 @@ impl Default for Config {
             doc_external: Vec::new(),
             protected_branches: vec!["main".to_string(), "master".to_string()],
             guardrail_paths: Vec::new(),
+            guardrail_sections: Vec::new(),
         }
     }
 }
@@ -220,6 +225,17 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
     if let Some(guardrails) = raw.guardrails {
         if let Some(paths) = guardrails.paths {
             config.guardrail_paths = paths;
+        }
+        if let Some(sections) = guardrails.sections {
+            if let Some(blank) = sections.iter().find(|title| title.trim().is_empty()) {
+                return Err(ConfigError {
+                    key: "guardrails.sections".to_string(),
+                    message: format!(
+                        "`{blank}` names no heading. write the words the heading of the guarded section says"
+                    ),
+                });
+            }
+            config.guardrail_sections = sections;
         }
     }
 
@@ -383,4 +399,5 @@ struct RawGuard {
 #[serde(deny_unknown_fields)]
 struct RawGuardrails {
     paths: Option<Vec<String>>,
+    sections: Option<Vec<String>>,
 }

@@ -43,6 +43,7 @@ another law for one run. `scan` judges the tree it is given, and reads the
 | `[docs] external` | the names the docs cite on purpose that live outside the tree: file names, paths, globs, variables | R1 |
 | `[guard] protected` | the branches the git hooks refuse to rewrite | `weeder guard` |
 | `[guardrails] paths` | the path globs this repository holds at the constitution tier | C3 |
+| `[guardrails] sections` | the headings of `AGENTS.md` and `CLAUDE.md` whose sections state this repository's law, beside the ones saying hard limits, non-negotiables or never, matched as words in any case | C1 |
 
 `weeder check --scope <glob>` names the scope for one run and takes precedence
 over `[scope] allow`. A run given neither allows every path, so X2 has nothing
@@ -234,7 +235,7 @@ A changed file matches no scope glob the run allows, and the finding names what 
 
 `check` · blocks by default
 
-A change touched a harness settings file, a git hook, `weeder.toml`, or the hard-limits section of `AGENTS.md` or `CLAUDE.md`.
+A change touched a harness settings file, a git hook, `weeder.toml`, or a section of `AGENTS.md` or `CLAUDE.md` whose heading says hard limits, non-negotiables or never, or names one of `[guardrails] sections`.
 
 <a id="C2"></a>
 ## C2: An ignore file was broadened over source or tests

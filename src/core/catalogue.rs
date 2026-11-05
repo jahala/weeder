@@ -185,7 +185,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Block,
         short_description: "A guardrail file was edited",
-        full_description: "A change touched a harness settings file, a git hook, `weeder.toml`, or the hard-limits section of `AGENTS.md` or `CLAUDE.md`.",
+        full_description: "A change touched a harness settings file, a git hook, `weeder.toml`, or a section of `AGENTS.md` or `CLAUDE.md` whose heading says hard limits, non-negotiables or never, or names one of `[guardrails] sections`.",
         network: Network::None,
     },
     Rule {

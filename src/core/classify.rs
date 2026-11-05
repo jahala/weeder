@@ -115,6 +115,7 @@ fn is_guardrail(path: &str) -> bool {
     path == "weeder.toml"
         || path == "AGENTS.md"
         || path == "CLAUDE.md"
+        || path == ".claude/CLAUDE.md"
         || path.starts_with(".codex/")
         || path.starts_with(".githooks/")
         || path == ".gemini/settings.json"

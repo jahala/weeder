@@ -200,3 +200,127 @@ fn c1_stays_silent_on_weeders_own_hooks_and_fires_once_one_is_edited() {
     );
     assert!(edited.findings().iter().all(|finding| finding.rule == "C1"));
 }
+
+/// An instructions file whose law lives under `heading`: a limit, a paragraph
+/// of prose in a section after it.
+fn instructions(heading: &str, limit: &str) -> String {
+    format!(
+        "# How this repository works\n\n{heading}\n\n- {limit}\n- Delete with the trash command.\n\n## Style\n\nWrite in plain sentences.\n"
+    )
+}
+
+/// The line `instructions` writes its first limit on.
+const LIMIT_LINE: u64 = 5;
+
+/// The limit the instructions state, and the opposite a change rewrites it to.
+const LIMIT: &str = "Never force a push to the trunk.";
+const WIDENED: &str = "Force a push to the trunk whenever it helps.";
+
+/// A repository whose instructions file states its law under `heading`, with
+/// the first limit then rewritten into its opposite.
+fn widened(path: &str, heading: &str, law: Option<&str>) -> Repo {
+    let repo = Repo::init();
+    if let Some(law) = law {
+        repo.write("weeder.toml", law);
+    }
+    repo.write(path, &instructions(heading, LIMIT));
+    repo.commit("the instructions");
+    repo.write(path, &instructions(heading, WIDENED));
+    repo
+}
+
+/// The headings a repository states its law under without telling weeder,
+/// each in the words such headings use (#77).
+const DEFAULT_HEADINGS: [&str; 4] = [
+    "## Hard limits",
+    "## How agents work here (non-negotiables, full detail in ENGINEERING.md)",
+    "### Non-negotiable",
+    "## Never do these",
+];
+
+#[test]
+fn c1_guards_a_section_titled_hard_limits_non_negotiables_or_never_by_default() {
+    for heading in DEFAULT_HEADINGS {
+        for path in ["CLAUDE.md", "AGENTS.md", ".claude/CLAUDE.md"] {
+            let run = widened(path, heading, None).weeder(&["check"]);
+            let finding = run
+                .findings()
+                .into_iter()
+                .find(|finding| finding.rule == "C1")
+                .unwrap_or_else(|| {
+                    panic!(
+                        "{path} under `{heading}`: a limit rewritten is reported\n{}",
+                        run.output()
+                    )
+                });
+            assert_eq!(finding.path, path, "the file is named");
+            assert_eq!(
+                finding.line,
+                Some(LIMIT_LINE),
+                "{path} under `{heading}`: the limit's line"
+            );
+            assert_eq!(finding.level, "error", "C1 blocks");
+            assert_eq!(
+                run.code, 2,
+                "{path} under `{heading}`: and the change stops"
+            );
+        }
+    }
+}
+
+#[test]
+fn c1_guards_a_section_the_repository_names_under_guardrails_sections() {
+    let heading = "## House rules";
+    let unnamed = widened("AGENTS.md", heading, None).weeder(&["check"]);
+    assert!(
+        unnamed
+            .findings()
+            .iter()
+            .all(|finding| finding.rule != "C1"),
+        "a heading nobody named is prose, or naming it proves nothing: {}",
+        unnamed.output()
+    );
+
+    let law = "[guardrails]\nsections = [\"house rules\"]\n";
+    let named = widened("AGENTS.md", heading, Some(law)).weeder(&["check"]);
+    let finding = named
+        .findings()
+        .into_iter()
+        .find(|finding| finding.rule == "C1")
+        .unwrap_or_else(|| panic!("a section weeder.toml names is guarded\n{}", named.output()));
+    assert_eq!(finding.line, Some(LIMIT_LINE), "on the limit's own line");
+    assert_eq!(named.code, 2, "and the change stops");
+
+    let elsewhere = Repo::init();
+    elsewhere.write("weeder.toml", law);
+    elsewhere.write("AGENTS.md", &instructions(heading, LIMIT));
+    elsewhere.commit("the instructions");
+    elsewhere.write(
+        "AGENTS.md",
+        &instructions(heading, LIMIT).replace("plain sentences", "short sentences"),
+    );
+    let prose = elsewhere.weeder(&["check"]);
+    assert_eq!(
+        prose.findings(),
+        Vec::new(),
+        "a paragraph outside the named section is still prose"
+    );
+}
+
+#[test]
+fn a_blank_guardrails_section_is_refused() {
+    let repo = Repo::init();
+    repo.write("weeder.toml", "[guardrails]\nsections = [\" \"]\n");
+    repo.commit("a law naming nothing");
+    let run = repo.weeder(&["check"]);
+    assert_eq!(
+        run.code, 3,
+        "a section named by nothing is refused\n{}",
+        run.stderr
+    );
+    assert!(
+        run.stderr.contains("guardrails.sections"),
+        "the refusal names the key: {}",
+        run.stderr
+    );
+}
