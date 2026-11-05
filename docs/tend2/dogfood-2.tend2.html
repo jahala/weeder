@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dogfood-2 · weeder</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<noscript>This page renders its markdown payload with JavaScript, enable JS, or read the raw payload in the page source.</noscript>
+<script type="text/markdown" id="loop">
+# dogfood-2 — the second round of issues from using weeder on real repositories
+**Goal.** The garden's repositories ran 0.3.0 and filed what it got wrong. Each item below was reproduced on the released 0.3.0 on 2026-11-05 (`.context/triage-2026-11-05.md` holds the commands and outputs). Four are false blocks, the costliest kind, since each one stops an honest commit and teaches an agent to write an allowance: X1 on an English sentence under a name with TOKEN in it (#93), S1 on code that imports or tests for a NotImplemented error (#94), S1 reading TypeScript's `todo !== null` as Rust's `todo!` (#95), and T1 reporting a test turned `.skip` as a test that disappeared, beside the T3 that is right (#74). Four are blocking rules missing what they exist for: X1 is blind to secrets in env, YAML and TOML files (#90), C1 guards only a section titled hard limits (#77), `check` says nothing about the bash it cannot read (#79), and S2 misses a one-line empty catch (#75). Four cost every agent context at the moment it is refused: a refused commit prints its findings twice (#78, #88), identical findings repeat their whole why and next (#83), T8 lists 235 tests as hidden by a `setupFiles` line (#96), and T5's next names no way through (#89). And no repository but weeder can keep its own fixtures out of the rules (#85), designed in #99.
+
+## Tests
+- [ ] (code) X1 is silent on a value that reads as prose (several words separated by spaces) assigned to a key-like name, in ts, py, rs and go, and a high-entropy literal under the same name still blocks (#93) · tests/rule_x1.rs
+- [ ] (code) X1 reads assignments in env, YAML, TOML and INI files, with the value as those files write it, unquoted included, and blocks a high-entropy value under a key-like name there; `password` and `passwd` are key-like names; a value that reads the environment (`${VAR}`) stays silent (#90) · tests/rule_x1.rs
+- [ ] (code) S1 is silent on an import of, a type check against, or a catch of a not-implemented error, and still blocks a body that raises or throws one, in ts, py, rs and go (#94) · tests/rule_s1.rs
+- [ ] (code) S1 matches each language's own stub markers only in that language, so `todo !== null` in TypeScript is silent and `todo!()` in Rust still blocks (#95) · tests/rule_s1.rs
+- [ ] (code) a test case turned skip, focus or todo is reported by T3 alone and not counted by T1 as disappeared, in ts, py, rs and go (#74) · tests/rule_t1.rs
+- [ ] (code) C1 guards a hard-rules section of AGENTS.md or CLAUDE.md under any heading the repository names in `[guardrails] sections`, and by default under headings that say hard limits, non-negotiables, or never; docs/rules.md lists the key (#77) · tests/rule_c1.rs
+- [ ] (code) S2 reports an empty catch written on one line, `catch {}` and `catch (e) {}`, as it does one spread over two (#75) · tests/rule_s2.rs
+- [ ] (code) T8 does not count a `setupFiles` or other setup entry as narrowing what the runner collects, and a runner config applies only to files under its own root (#96) · tests/rule_t8.rs
+- [ ] (code) T5's next names the `Weeder-allow: T5` trailer, as every other rule's does (#89) · tests/rule_messages.rs
+- [ ] (code) `check` reports, once per run as a note, the changed files in languages it does not read, by extension and count, so a change in bash alone is never judged clean in silence (#79) · tests/check_unread.rs
+- [ ] (code) a commit refused by the guard prints its findings once: pre-commit defers to commit-msg without printing what commit-msg will print (#78, #88) · tests/guard_trailer.rs
+- [ ] (code) identical findings, the same rule, why and next, in one run, print their why and next once, under the first, and the rest name it; SARIF keeps every result (#83) · tests/sarif_table.rs
+- [ ] (code) `[scope] exclude` and `[[overrides]]` work as #99 specifies, in any repository: gitignore-style globs from the root, the refusals it lists, one note per pattern with a count, a move into an excluded path still a deletion, `specimens` gone and weeder's own `weeder.toml` moved to `exclude` (#99, #85) · tests/config_exclude.rs
+- [ ] (code) README's examples protect the branch each repository actually uses, `master` here (#81) · scripts/check/readme.sh
+- [ ] (code) `cargo xtask calibrate` and `cargo xtask mutate` run again on the pinned corpus after these land, every new block classified, both bars hold, and both re-grades re-taken if the block set moved · scripts/check/calibration-bar.sh
+
+## Tried
+- 2026-11-05 shaped from the issues filed between 0.3.0 and today, triaged by reproducing each on the release. Left for a later round: R1 and R2 misreads in `scan`, which never blocks (#70, #71, #76, #82, #86, partly answered by `[[overrides]]` here), T4 pairing the wrong lines inside a new `describe` (#97), and M1 matching a double by its short name (#98). Bash as a fifth judged language (#79) is larger than this round; the note in check 10 makes the gap visible meanwhile. PR #87 was closed: it claimed #85 and changed one line of the npm wrapper into a syntax error
+</script>
+<script src="loop.js"></script>
