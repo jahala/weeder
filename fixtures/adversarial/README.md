@@ -24,7 +24,9 @@ table of the same three cases, their `-short/` twins that drop a row, and
 write down, new (a warning) and unchanged (a block), C3 has a `promoted/`
 whose `weeder.toml` names a workflow under `[guardrails] paths`, S1 has
 `handling/` for code that imports, checks against and catches a not-implemented
-error beside the one body that hands it out, and R1 has a `fire-bound/` whose
+error beside the one body that hands it out and `foreign/` for a variable
+called `todo` compared in each language beside that language's own marker, and
+R1 has a `fire-bound/` whose
 document cites the commands a scan must refuse to run.
 R1 keeps one folder per authority a citation is answered by: `paths/`,
 `commands/`, `flags/` and `symbols/` for the four, `lines/` for a citation that

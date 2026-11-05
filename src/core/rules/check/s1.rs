@@ -60,9 +60,15 @@ const WORK_MARKERS: &[&str] = &["TODO", "FIXME", "XXX"];
 /// in [`BETWEEN`] and the path it is reached through.
 const UNFINISHED_TOKENS: &[&str] = &["NotImplemented", "NotImplementedError"];
 
-/// The macros a language keeps for a body nobody wrote. Each is an ordinary
-/// name for an ordinary thing too, so it counts only as a macro.
+/// The macros Rust keeps for a body nobody wrote. Each is an ordinary name for
+/// an ordinary thing too, in Rust and in every other language: `todo !== null`
+/// in TypeScript is a variable compared with nothing (#95). So these count in
+/// Rust alone, and only as a macro called: the name, a `!` written against it,
+/// and the bracket that opens the call.
 const UNFINISHED_MACROS: &[&str] = &["todo", "unimplemented"];
+
+/// What may open a macro's arguments, right after its `!`.
+const MACRO_OPENERS: &[char] = &['(', '[', '{'];
 
 /// The keywords that hand a failure to the caller rather than returning one.
 /// A message given to one of these is the code describing itself.
@@ -142,7 +148,7 @@ fn stubs(change: &Change) -> Vec<Found> {
     let mask = change.after.mask();
     let mut found: Vec<(u32, Stub)> = change
         .added()
-        .filter_map(|(line, _)| Some((line, stub_on(mask, line)?)))
+        .filter_map(|(line, _)| Some((line, stub_on(lang, mask, line)?)))
         .collect();
     // A body that does nothing is found through the outline rather than line by
     // line, so it arrives out of order and may land on a line a marker already
@@ -185,7 +191,7 @@ fn contract_at(outline: &Outline, line: u32) -> Option<Contract> {
 }
 
 /// The stub an added line carries on its own, without the outline's help.
-fn stub_on(mask: &Mask, line: u32) -> Option<Stub> {
+fn stub_on(lang: Lang, mask: &Mask, line: u32) -> Option<Stub> {
     let outside = mask.outside_literals(line);
     if let Some(word) = words(&outside)
         .into_iter()
@@ -200,14 +206,18 @@ fn stub_on(mask: &Mask, line: u32) -> Option<Stub> {
         let handed = UNFINISHED_TOKENS.contains(&word.text)
             && !word.is_member()
             && handed_out(&code, &spoken[..at]);
-        let macro_call = UNFINISHED_MACROS.contains(&word.text) && word.after == Some('!');
-        (handed || macro_call).then_some(word)
+        let macro_call = lang == Lang::Rust
+            && UNFINISHED_MACROS.contains(&word.text)
+            && is_macro_call(&code, word);
+        (handed || macro_call).then_some((word, macro_call))
     }) {
         // A macro is quoted back with the `!` that makes it one, so the reader
         // is shown the thing they wrote rather than the name inside it.
-        let written = match word.after {
-            Some('!') => format!("{}!", word.text),
-            _ => word.text.to_string(),
+        let (word, macro_call) = word;
+        let written = if macro_call {
+            format!("{}!", word.text)
+        } else {
+            word.text.to_string()
         };
         return Some(Stub::token(&written));
     }
@@ -217,6 +227,16 @@ fn stub_on(mask: &Mask, line: u32) -> Option<Stub> {
         return Some(Stub::announcement());
     }
     None
+}
+
+/// Whether a word is a macro called: a `!` written against the name, and then
+/// the bracket that opens its arguments, with nothing but spaces between. `!=`
+/// and `!==` are a comparison.
+fn is_macro_call(code: &str, word: &Word<'_>) -> bool {
+    code[word.end..]
+        .strip_prefix('!')
+        .and_then(|rest| rest.trim_start().chars().next())
+        .is_some_and(|opener| MACRO_OPENERS.contains(&opener))
 }
 
 /// Whether the words written before an error's name on its line hand it out:
