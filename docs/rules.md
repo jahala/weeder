@@ -100,16 +100,18 @@ commit's message. An allowance must not outlive the change it was written for.
 The two ways differ in whose hand wrote them, and the git hooks are where that
 matters. `weeder guard commit-msg` judges the index with the message's trailers
 honoured, and is the deciding stage for any block-level finding a trailer may
-allow. `weeder guard pre-commit` runs before the message exists, so it honours
-nothing: it prints what blocks and names, for each rule, the exact trailer that
-would allow it, `Weeder-allow: <RULE> <reason>`, and says commit-msg is the stage
-that reads it. `weeder guard pre-push` honours a trailer again over the commits
+allow, and it prints the findings. `weeder guard pre-commit` runs before the
+message exists, so it honours nothing: it prints one line naming what blocks and,
+for each rule, the exact trailer that would allow it, `Weeder-allow: <RULE> <reason>`,
+and says commit-msg is the stage that reads it. The table comes once, from
+commit-msg, because the two stages judge one index. `weeder guard pre-push` honours a trailer again over the commits
 being pushed, because a commit carries the message it was allowed by.
 
 The deferral holds only while the stage is there to run. `weeder guard pre-commit`
 reads the directory git runs hooks from and takes any executable file that
 invokes `weeder guard commit-msg` as the stage, whoever installed it; with none
-there it refuses on its own rather than passing the verdict to nobody.
+there it refuses on its own rather than passing the verdict to nobody, and prints
+the table itself.
 
 A `weeder-allow` marker on a line is never honoured by a hook, at any stage. The
 line is the agent's to write and the commit message is the person's, and the

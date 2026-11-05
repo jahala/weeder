@@ -238,7 +238,8 @@ fn labelled(table: &str, label: &str) -> usize {
     table
         .lines()
         .filter(|line| {
-            line.get(..column).is_some_and(|indent| indent.trim().is_empty())
+            line.get(..column)
+                .is_some_and(|indent| indent.trim().is_empty())
                 && line[column..].starts_with(label)
         })
         .count()
@@ -252,11 +253,7 @@ fn findings_that_share_a_rule_why_and_next_print_them_once_under_the_first() {
         1,
         "the why is printed once, under the first:\n{table}"
     );
-    assert_eq!(
-        labelled(&table, "next "),
-        1,
-        "and so is the next:\n{table}"
-    );
+    assert_eq!(labelled(&table, "next "), 1, "and so is the next:\n{table}");
     let lines: Vec<&str> = table.lines().collect();
     assert!(
         lines[0].contains("docs/roadmap.md:3") && lines[1].trim_start().starts_with("why "),
@@ -311,10 +308,8 @@ fn findings_of_one_rule_that_say_different_things_each_keep_their_own_why() {
 #[test]
 fn the_sarif_log_keeps_every_result_whole() {
     let findings = the_same_three_times();
-    let log = weeder::core::sarif::render(
-        &findings,
-        &weeder::core::sarif::Context::new("0.0.0-test"),
-    );
+    let log =
+        weeder::core::sarif::render(&findings, &weeder::core::sarif::Context::new("0.0.0-test"));
     let results = &log.runs[0].results;
     assert_eq!(results.len(), 3, "SARIF keeps every result");
     assert!(
@@ -329,7 +324,10 @@ fn the_sarif_log_keeps_every_result_whole() {
 #[test]
 fn a_conflict_block_left_in_a_change_says_why_once_on_the_command_line() {
     let repo = common::Repo::init();
-    repo.write("src/parse.ts", "export const parse = (input: string) => [input];\n");
+    repo.write(
+        "src/parse.ts",
+        "export const parse = (input: string) => [input];\n",
+    );
     repo.commit("the parser");
     repo.write("src/parse.ts", &common::conflicted_parser(None));
     repo.stage_all();

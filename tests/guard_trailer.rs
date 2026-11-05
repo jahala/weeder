@@ -55,6 +55,19 @@ fn staged(repo: &Repo, contents: &str) {
     repo.stage_all();
 }
 
+/// How many times the hooks printed the finding's row. A refused commit runs
+/// two stages over one index, and a reader shown the same table twice has to
+/// work out which stage refused and whether there were twice as many findings
+/// (#78, #88).
+fn rows_naming_the_finding(said: &str) -> usize {
+    said.lines()
+        .filter(|line| {
+            let cells: Vec<&str> = line.split_whitespace().collect();
+            cells.len() > 2 && cells[1] == RULE && cells[2].starts_with(GUARDRAIL)
+        })
+        .count()
+}
+
 /// A message with its trailer, as a person writes one.
 fn allowing(rule: &str, reason: &str) -> String {
     format!("plant the stem's own hook\n\nWeeder-allow: {rule} {reason}\n")
@@ -236,6 +249,11 @@ fn pre_commit_refuses_on_its_own_when_the_stage_it_defers_to_cannot_run() {
         said.contains("weeder guard refused"),
         "pre-commit says it refused, rather than passing the question on:\n{said}"
     );
+    assert_eq!(
+        rows_naming_the_finding(&said),
+        1,
+        "and the stage that refused prints the finding, once:\n{said}"
+    );
     assert_eq!(repo.head(), before, "no commit was made");
 }
 
@@ -262,4 +280,76 @@ fn an_inline_marker_allows_nothing_because_the_line_is_the_agents_to_write() {
         "the finding is reported at its own level:\n{said}"
     );
     assert_eq!(repo.head(), before, "no commit was made");
+}
+
+#[test]
+fn a_refused_commit_prints_its_findings_once() {
+    let repo = guarded();
+    staged(&repo, PLANTED);
+
+    let refused = repo.try_git(&["commit", "-m", "plant the stem's own hook"]);
+
+    assert_ne!(
+        refused.code,
+        0,
+        "the commit is refused: {}",
+        refused.output()
+    );
+    let said = refused.output();
+    assert_eq!(
+        rows_naming_the_finding(&said),
+        1,
+        "two stages judged one index, and the finding is printed once:\n{said}"
+    );
+    assert_eq!(
+        said.matches("weeder guard refused").count(),
+        1,
+        "and one stage says it refused:\n{said}"
+    );
+}
+
+#[test]
+fn pre_commit_that_defers_prints_one_line_and_no_table() {
+    let repo = guarded();
+    staged(&repo, PLANTED);
+
+    let deferred = repo.try_git(&["hook", "run", "pre-commit"]);
+
+    assert_eq!(
+        deferred.code,
+        0,
+        "pre-commit leaves the verdict to commit-msg: {}",
+        deferred.output()
+    );
+    let said = deferred.output();
+    assert_eq!(
+        rows_naming_the_finding(&said),
+        0,
+        "the table is commit-msg's to print, so a hook that passes prints no error:\n{said}"
+    );
+    assert_eq!(
+        said.trim().lines().count(),
+        1,
+        "it says it deferred, in one line:\n{said}"
+    );
+    assert!(
+        said.contains(RULE) && said.contains("commit-msg"),
+        "the line names what blocks and the stage that decides:\n{said}"
+    );
+}
+
+#[test]
+fn an_allowed_commit_prints_its_findings_once() {
+    let repo = guarded();
+    staged(&repo, PLANTED);
+
+    let landed = repo.try_git(&["commit", "-m", &allowing(RULE, REASON)]);
+
+    assert_eq!(landed.code, 0, "the commit lands: {}", landed.output());
+    assert_eq!(
+        rows_naming_the_finding(&landed.output()),
+        1,
+        "the allowed finding is still shown, once, as the receipt:\n{}",
+        landed.output()
+    );
 }
