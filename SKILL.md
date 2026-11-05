@@ -52,7 +52,7 @@ no `weeder.toml` is judged at the catalogue's own levels. `--config` is the one
 way to name another law, and it is for whoever runs weeder, not for the change.
 
 ```bash
-weeder check --base origin/main --strict --format sarif > weeder.sarif
+weeder check --base origin/master --strict --format sarif > weeder.sarif
 weeder check --staged
 weeder check --scope 'src/parser/**' --scope 'tests/parser/**'
 weeder check --untracked exclude
@@ -168,7 +168,7 @@ agent's to write and the commit message is the person's. Write the trailer, or
 repair what the table names.
 
 ```bash
-weeder guard install --protect main --protect release
+weeder guard install --protect master --protect release
 weeder guard status
 weeder guard uninstall
 ```

@@ -74,9 +74,13 @@ they run the `weeder` on PATH, so a commit carrying them names no path on your m
 
 ```bash
 cd your-repository
-weeder guard install --protect main
+weeder guard install --protect master
 weeder guard status
 ```
+
+`--protect` takes the name of your repository's own default branch, which is `master` here.
+A name the repository does not have protects nothing, and nothing says so.
+`git symbolic-ref --short refs/remotes/origin/HEAD` prints yours, after `origin/`.
 
 In Claude Code, per machine or per project. Add this to `~/.claude/settings.json`, or to
 `.claude/settings.json` in a repository, so a commit over a blocking change is refused and a
@@ -109,9 +113,9 @@ protected branch, under the `weeder.toml` that branch carries.
 
 ```bash
 weeder check --staged
-weeder check --base origin/main --strict --format sarif
+weeder check --base origin/master --strict --format sarif
 weeder scan --format sarif
-weeder guard install --protect main
+weeder guard install --protect master
 weeder guard status
 weeder hook claude
 weeder rules --format json
