@@ -693,3 +693,54 @@ fn a_file_moved_from_one_specimen_directory_to_another_stays_set_aside() {
     );
     assert_eq!(run.code, 0);
 }
+
+/// Each language's skipped fixture: the suite whose cases are turned off,
+/// focused or left to do rather than deleted, and the marks it writes to do so.
+const SKIPPED: [(&str, &str, &[&str]); 4] = [
+    (
+        "ts",
+        "src/format.test.ts",
+        &[".skip(", ".only(", "xit(", ".todo("],
+    ),
+    ("py", "tests/test_format.py", &["@pytest.mark."]),
+    ("rs", "tests/format.rs", &["#[ignore"]),
+    ("go", "format_test.go", &["t.Skip"]),
+];
+
+#[test]
+fn a_case_turned_skip_focus_or_todo_is_t3_s_finding_and_not_a_case_gone() {
+    for (name, path, marks) in SKIPPED {
+        let source = fixture_file("T1", name, "skipped/after", path);
+        let marked: Vec<u64> = source
+            .lines()
+            .enumerate()
+            .filter(|(_, line)| marks.iter().any(|mark| line.contains(mark)))
+            .map(|(index, _)| index as u64 + 1)
+            .collect();
+        assert!(
+            marked.len() >= 2,
+            "{name}: the fixture turns cases off, or the silence proves nothing"
+        );
+
+        let run = fixture("T1", name, "skipped").weeder(&["check"]);
+        let findings = run.findings();
+        let deleted: Vec<_> = findings
+            .iter()
+            .filter(|finding| finding.rule == "T1")
+            .collect();
+        assert!(
+            deleted.is_empty(),
+            "{name}: a case turned off is still declared, so nothing disappeared: {deleted:#?}"
+        );
+        let skipped: Vec<u64> = findings
+            .iter()
+            .filter(|finding| finding.rule == "T3")
+            .filter_map(|finding| finding.line)
+            .collect();
+        assert_eq!(
+            skipped, marked,
+            "{name}: T3 reports every mark, which is the finding the change earned"
+        );
+        assert_eq!(run.code, 2, "{name}: and it blocks");
+    }
+}

@@ -17,7 +17,8 @@ for what it holds: T5 has a `silent-code/` for the half where the code moves
 without the expectation, T7 has `fire-case/` and `silent-case/` for the
 languages whose runners collect a case by the name it is declared under, T1 has
 `silent-table/` and `fire-table/` for the suite that moves its cases into a
-table and the one that leaves a case behind while it does, T2 has
+table and the one that leaves a case behind while it does, and `skipped/` for
+cases turned off, focused or left to do, which T3 reports and T1 does not, T2 has
 `parametrized/` and `looped/` for three assertions that become one run over a
 table of the same three cases, their `-short/` twins that drop a row, and
 `uncounted/` and `uncounted-kept/` for a loop over cases the file does not

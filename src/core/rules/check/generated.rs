@@ -35,6 +35,7 @@ use crate::core::change::Side;
 use crate::core::classify::Lang;
 use crate::core::read::TestUnit;
 use crate::core::rules::check::idiom::{self, Block};
+use crate::core::rules::check::t3;
 use crate::core::rules::check::vocab::{names, Suite};
 use crate::core::syntax::{is_identifier, words, Mask};
 
@@ -562,12 +563,25 @@ fn substance(mask: &Mask, line: u32) -> Vec<char> {
 
 /// The lines declaring a case the reader's shape does not carry: a title given
 /// as a name rather than as a literal, a function a decorator stands in front
-/// of. A declaration the reader did report is left to it.
+/// of, a case with a skip, focus or todo marker on it. A declaration the reader
+/// did report is left to it.
 fn unseen(lang: Lang, mask: &Mask, declared: &[&TestUnit]) -> Vec<u32> {
     (1..=mask.line_count())
         .filter(|line| !declared.iter().any(|case| case.start_line == *line))
-        .filter(|line| declares_a_case(lang, &mask.code(*line)))
+        .filter(|line| {
+            declares_a_case(lang, &mask.code(*line)) || declares_a_marked_case(lang, mask, *line)
+        })
         .collect()
+}
+
+/// Whether a line declares a case with a marker on it, `it.skip(`, `xit(`. The
+/// case is still declared, turned off or focused, and that is T3's finding to
+/// make; counted as gone, it was T1's false one too (#74). Only the languages
+/// that spell a case as a call lose it from the reader's shape: a decorator, an
+/// attribute and a call to the handle leave the declaration where it was.
+fn declares_a_marked_case(lang: Lang, mask: &Mask, line: u32) -> bool {
+    matches!(lang, Lang::TypeScript | Lang::JavaScript)
+        && t3::declares_a_marked_case(&mask.code(line), !mask.literals(line).trim().is_empty())
 }
 
 /// Whether a line declares a case, in the grammar of the language that wrote it.
