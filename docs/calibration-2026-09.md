@@ -1,8 +1,8 @@
 # calibration: weeder over real history, 2026-09
 
-weeder ships as a gate, pending the independent re-grade: over 635 commits of real history in 5 repositories it blocked 19, of which 2 were block-level false positives, 0.31 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level, and the classification under it untrusted until a re-grade agrees at the bar. The re-grade behind it is a sighted one: docs/calibration-audit-2026-09.md declares `Blind: no`, so its auditor could read the builder's class beside each case before judging. The blind re-grade in docs/calibration-audit-blind-2026-09.md is under the bar, so no blind agreement stands behind this number yet.
+weeder ships as a gate, pending the independent re-grade: over 635 commits of real history in 5 repositories it blocked 24, of which 1 were block-level false positives, 0.16 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level, and the classification under it untrusted until a re-grade agrees at the bar. The re-grade behind it is a sighted one: docs/calibration-audit-2026-09.md declares `Blind: no`, so its auditor could read the builder's class beside each case before judging. The blind re-grade in docs/calibration-audit-blind-2026-09.md is under the bar, so no blind agreement stands behind this number yet.
 
-The classification under that number is the builder's own, and the re-grade is under the 90 percent bar: blocked commits in docs/calibration-audit-blind-2026-09.md agrees on 78.9 percent of 19 cases, every blocked commit the report holds. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing. The floor under that share is 0.79 percent, 5 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 0.31 percent, 2 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table. Both numbers stay in this file: under the three classes in use before the ruling of 2026-09-06 the same 23 blocked commits counted 7 false positives, 1.10 percent, and under it, where a blocked commit is claim-true or claim-false and `acceptable` is a label the audit never counts, they count 4, 0.63 percent. The definition changed on that date and the question was corrected, not the goalpost moved.
+The classification under that number is the builder's own, and the re-grade is under the 90 percent bar: blocked commits in docs/calibration-audit-blind-2026-09.md agrees on 70.0 percent of 20 cases. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing. The floor under that share is 0.94 percent, 6 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 0.16 percent, 1 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table. Both numbers stay in this file: under the three classes in use before the ruling of 2026-09-06 the same 23 blocked commits counted 7 false positives, 1.10 percent, and under it, where a blocked commit is claim-true or claim-false and `acceptable` is a label the audit never counts, they count 4, 0.63 percent. The definition changed on that date and the question was corrected, not the goalpost moved.
 
 ## How this was measured
 
@@ -61,15 +61,17 @@ The window ends at `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905`, fetched from `htt
 | `d422a325fc` refactor(install): fold entry style into ConfigFormat as JsonLocal variant | T2 | acceptable | T2 says src/install.rs went from 66 assertions to 65, and it did. The one that went checked the entry_style field this commit folds into ConfigFormat, and the JsonLocal match that replaces it is asserted in the same case. |
 | `bd36a43637` index: drop inert SymbolIndex plumbing | T1 | acceptable | T1 says src/index/symbol.rs went with 6 cases, and it did. SymbolIndex was allocated and threaded through the searches and never consulted, and this commit deletes the type; the cases exercised the dead allocator, so what they covered stopped existing in the same breath. A file of tests leaving the tree is worth reading either way. |
 
-## pleach, 152 commits judged, 1 blocked, 18 warned
+## pleach, 152 commits judged, 3 blocked, 18 warned
 
 The window ends at `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9`, fetched from `https://github.com/jahala/pleach.git`: the last 153 commits reaching it that are not merges, 152 of which have a parent to be judged against.
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
 | `624529b3a9` feat(loop): the hygiene gate — empty-diff, secrets, deletion tripwire (§E) | X1 | false positive | X1 says a private key block was added to src/core/hygiene.ts and to test/unit/hygiene.test.ts, and that a credential in a commit is a credential published. Both hits are the regular expression that pleach's own secret detector matches a private key header with, and its fixture. There is no credential to rotate. |
+| `76207691f3` docs(tend): sync the garden to the adapters refactor | C1 | acceptable | C1 says the non-negotiables section of .claude/CLAUDE.md changed, and it did: the adapters refactor rewords the strict-downward-deps rule to name adapters beside seams and faces, and drops the rctrl binary from the requirements line. The seven rule headings are the same before and after, and none of them says less. First blocked on 2026-11-05, when C1 began reading a non-negotiables heading (#77). |
+| `2515d2ac88` docs(tend): audit garden features + refresh project docs | C1 | acceptable | C1 says the non-negotiables section of .claude/CLAUDE.md changed, and it did: this commit writes the section, seven rules from test-first to green-before-merge, into a file that had none. A law arriving is worth a person's eye, and nothing was loosened. First blocked on 2026-11-05 (#77). |
 
-## tend2, 200 commits judged, 6 blocked, 23 warned
+## tend2, 200 commits judged, 6 blocked, 24 warned
 
 The window ends at `51035a5c827b1a8c2f49049f07487dcfac9036c6`, fetched from `https://github.com/jahala/tend.git`: the last 200 commits reaching it that are not merges, 200 of which have a parent to be judged against.
 
@@ -77,10 +79,10 @@ The window ends at `51035a5c827b1a8c2f49049f07487dcfac9036c6`, fetched from `htt
 |---|---|---|---|
 | `067730ddd0` polish(audit): the obsolete-and-theater sweep — seven findings, all fixed | T2 | acceptable | T2 says test/renderer-fresh.test.ts went from 5 assertions to 4, and it did. The one that went demanded dist/loop.js and dist/loop.global.js be byte-identical, and this commit stops emitting the second file; the case still demands the GENERATED banner and the css header. An assertion cannot hold a file that is no longer built. |
 | `bf2754689c` polish(cli): one orientation command, one asset convention (#102) | T1 | acceptable | T1 says test/season.test.ts went with 4 cases, and it did. The season command it tested is removed by the same commit, which folds orientation into one command with its own tests, so the cases went where the feature went. A suite leaving the tree is worth a person's eye. |
-| `08529d5f56` sunset(v1): the legacy lane leaves the tree — @plotplot/tend2 ships tend2 only | T1 | acceptable | T1 says forty-odd test files went with thousands of cases, and they did. This is the v1 sunset: 240 files and 94763 lines out, the adapters, the CLI and the core they tested leaving in the same commit and recoverable at the v1-final tag. Nothing is less covered afterwards because nothing they covered is still shipped, and a deletion this size is what a gate should stop a reader on. |
+| `08529d5f56` sunset(v1): the legacy lane leaves the tree — @plotplot/tend2 ships tend2 only | C1, T1 | acceptable | T1 says forty-odd test files went with thousands of cases, and they did. This is the v1 sunset: 240 files and 94763 lines out, the adapters, the CLI and the core they tested leaving in the same commit and recoverable at the v1-final tag. Nothing is less covered afterwards because nothing they covered is still shipped, and a deletion this size is what a gate should stop a reader on. |
 | `78fed73b0c` cleanup: bare necessities — killed-spike tree, skein prototype, root screenshots, v1-map parkland removed (all in git history; paid facet cache untouched on disk); superseded docs to docs/archive; docs/bridge restored after its drift-guard caught the move (load-bearing spec, not history) | T1 | acceptable | T1 says the spikes/loop-hole test files went with their cases, and they did. The spike was killed: 50 of its non-test files go in the same commit, so the code under those cases left with them. |
 | `2bb9d83f23` fix(loop-hole): briefing signal density — dismiss once, empty sections elide, unique headers (sonnet, SYN-D, chain-gated) | T2 | acceptable | T2 says spikes/loop-hole/tests/briefing-v3.spec.ts went from 23 claims to 19, and it did: the case loops over the section headings, and each empty section used to be held to its heading and two lines of 'cleared the floor' text, where now it is held to the heading's absence. The commit makes empty sections elide, and the case was rewritten to demand exactly that, with a new claim that the scaffolding text is gone. The behaviour changed and the test follows it; nothing is watched less. First blocked on 2026-09-23, when T2 began counting a claim once per case its loop runs it for. |
-| `52b97e43ce` feat(loop-hole): refusal hygiene — sanitized one-line reasons + child stderr (rate limits read as rate limits); .loop-scratch gitignored | X1 | false positive | X1 says a secret-looking value was added, assigned to `detail-meta__key` and to `journey-row__key`. Both hits are class attributes in the renderer's html builder, and X1 read `class="...__key">` as an assignment. The value is markup. |
+| `0bfa87f287` docs(tend2): repo identity flip phase 1 — README/CLAUDE.md/docs re-rooted v2-first, v1 legacy lane preserved (sonnet, #47, chain-gated) | C1 | acceptable | C1 says the section under `Never delete docs or research` in CLAUDE.md changed, and its lines did: the v2-first restructure moved it under the v1 legacy section and demoted it from ### to ####. Its text is the same, word for word. First blocked on 2026-11-05 (#77); the first reading of that run also blocked an edit under `The cockpit, never one number`, which C1 no longer reads as law. |
 
 ## copeca, 25 commits judged, 0 blocked, 7 warned
 
@@ -88,31 +90,34 @@ The window ends at `fc9c5b9e5f34085755c10746f1d46fd46edf2945`, fetched from `htt
 
 Nothing blocked.
 
-## umbel, 58 commits judged, 4 blocked, 13 warned
+## umbel, 58 commits judged, 7 blocked, 11 warned
 
 The window ends at `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d`, fetched from `https://github.com/jahala/umbel.git`: the last 59 commits reaching it that are not merges, 58 of which have a parent to be judged against.
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
+| `ea995c590a` feat(tmux): give every worker its own socket (#59) | C1 | acceptable | C1 says the non-negotiable principles of CLAUDE.md changed, and they did: the commit adds one, that workers never live on the default tmux socket. A principle added makes the law stricter. First blocked on 2026-11-05 (#77). |
 | `89c088bc08` fix(test): stop reaping every tmux session on the machine (#58) | T2 | acceptable | T2 says test/integration/tmux.test.ts went from 18 assertions to 17, and it did. The one that went was `expect(Array.isArray(sessions)).toBe(true)` beside a `toEqual([])` that already implies it; the case now runs the adapter in a child process against an empty socket directory rather than killing every tmux server on the machine. It checks the same thing and destroys less. |
+| `7109a41bd9` refactor(rename): rctrl → umbel across the repo (#37) | C1 | acceptable | C1 says the non-negotiable principles of CLAUDE.md changed, and they did: the rename from rctrl to umbel rewrites every mention of the old name, inside the principles too, and changes nothing they require. First blocked on 2026-11-05 (#77). |
 | `059b4c4677` fix(codex): deliver hooks via global CODEX_HOME so worktree workers fire Stop (#34) | T2 | acceptable | T2 says test/unit/providers/codex.test.ts went from 33 assertions to 30, and it did. The ones that went pinned hooks.json in the worker's own cwd, which this commit replaces with a shared CODEX_HOME, and the replacement design is asserted in the same file and in two more test files the commit adds. |
 | `75523a16a3` feat(opencode): add OpenCode provider (bring-any-model lane) (#18) | S1 | true positive | S1 says a TODO reached production code at src/core/providers/opencode.ts. It is there, it reads `verify tool-call part shape against a real tool-using transcript and refine field extraction`, and the comment above it says the shapes are inferred. Unfinished parsing shipped as behaviour, which is what S1 is for. |
 | `cc3cc0c37c` feat(mcp): agent-context Phase 1 — actions/diff/read-truncate (#9) | S1 | true positive | S1 says a TODO reached production code at src/core/providers/codex.ts and at src/core/providers/gemini.ts. Both are there, and both say the tool-call event shape is unverified against a real transcript; the file's own comment admits tool extraction may be partial. The markers name work that did not happen before the code shipped. |
+| `e39da470b7` rctrl v0.1.0 — multi-CLI agent orchestrator over tmux | C1 | acceptable | C1 says the non-negotiable principles of CLAUDE.md changed, and they did, by arriving: this is the commit that first writes the file. Nothing was there to loosen. First blocked on 2026-11-05 (#77). |
 
 ## Totals
 
 | Repo | Commits judged | Blocked | Warned | True positive | Acceptable | False positive | False-positive share |
 |---|---|---|---|---|---|---|---|
 | tilth | 200 | 8 | 80 | 1 | 7 | 0 | 0.00% |
-| pleach | 152 | 1 | 18 | 0 | 0 | 1 | 0.66% |
-| tend2 | 200 | 6 | 23 | 0 | 5 | 1 | 0.50% |
+| pleach | 152 | 3 | 18 | 0 | 2 | 1 | 0.66% |
+| tend2 | 200 | 6 | 24 | 0 | 6 | 0 | 0.00% |
 | copeca | 25 | 0 | 7 | 0 | 0 | 0 | 0.00% |
-| umbel | 58 | 4 | 13 | 2 | 2 | 0 | 0.00% |
-| **pooled** | **635** | **19** | **141** | **3** | **14** | **2** | **0.31%** |
+| umbel | 58 | 7 | 11 | 2 | 5 | 0 | 0.00% |
+| **pooled** | **635** | **24** | **140** | **3** | **20** | **1** | **0.16%** |
 
-The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 0.31 percent of 635 commits, and 0 commits weeder could not judge.
+The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 0.16 percent of 635 commits, and 0 commits weeder could not judge.
 
-Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 175 of them at block level still, 74 at warn level, 1 at note level and 82 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files; 5 moved from T1 at block level to T5 at warn level, all of them on test files.
+Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 174 of them at block level still, 74 at warn level, 1 at note level and 83 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files; 5 moved from T1 at block level to T5 at warn level, all of them on test files.
 
 Too few commits to carry a share of their own, reported and not judged alone: copeca (25 commits, 0.00 percent). Their commits and their false positives are both in the pooled total.
 
@@ -120,7 +125,7 @@ Too few commits to carry a share of their own, reported and not judged alone: co
 
 A rule that splits in two is supposed to take friction off the gate while keeping the finding. Until the same files are read twice that is a claim. Every file whose answer changed is here with the rule that refused it, the kind weeder gives the file, and the loudest thing weeder says about it now.
 
-172 of the first run's block-level findings are refused by the same rule at the same level and are left out of this table; the 160 whose answer changed are all in it.
+171 of the first run's block-level findings are refused by the same rule at the same level and are left out of this table; the 161 whose answer changed are all in it.
 
 | Repo | Commit | File | Kind | Blocked then by | Says now | At |
 |---|---|---|---|---|---|---|
@@ -193,6 +198,7 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 | tend2 | `1e39b91c5f` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tend2 | `3adc642ce1` | `test/renderer-fresh.test.ts` | test | T1 | nothing | nothing |
 | tend2 | `40875df2c4` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
+| tend2 | `52b97e43ce` | `skein-experiment/shared/oo-render.js` | prod | X1 | nothing | nothing |
 | tend2 | `78fed73b0c` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tend2 | `78fed73b0c` | `spikes/loop-hole/tests/cluster-fixture.ts` | test | T1 | nothing | nothing |
 | tend2 | `78fed73b0c` | `spikes/loop-hole/tests/extract.spec.ts` | test | T1 | nothing | nothing |
@@ -289,10 +295,9 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 
 Every block whose claim was not true of the change, under the rule that made it. This is the list the rule loops work from.
 
-**X1**, 2 blocks
+**X1**, one block
 
 - pleach `624529b3a9` feat(loop): the hygiene gate — empty-diff, secrets, deletion tripwire (§E), X1 says a private key block was added to src/core/hygiene.ts and to test/unit/hygiene.test.ts, and that a credential in a commit is a credential published. Both hits are the regular expression that pleach's own secret detector matches a private key header with, and its fixture. There is no credential to rotate.
-- tend2 `52b97e43ce` feat(loop-hole): refusal hygiene — sanitized one-line reasons + child stderr (rate limits read as rate limits); .loop-scratch gitignored, X1 says a secret-looking value was added, assigned to `detail-meta__key` and to `journey-row__key`. Both hits are class attributes in the renderer's html builder, and X1 read `class="...__key">` as an assignment. The value is markup.
 
 ## Precision and the allowance rate
 
@@ -301,8 +306,8 @@ Precision is the share of blocks that were not false positives. The allowance ra
 | Repo | Block-level precision | True positives | Allowance rate |
 |---|---|---|---|
 | tilth | 100.0% | 1 | 0.0 per 100 commits (guard not installed) |
-| pleach | 0.0% | 0 | 0.0 per 100 commits (guard not installed) |
-| tend2 | 83.3% | 0 | 0.0 per 100 commits (guard not installed) |
+| pleach | 66.7% | 0 | 0.0 per 100 commits (guard not installed) |
+| tend2 | 100.0% | 0 | 0.0 per 100 commits (guard not installed) |
 | copeca | no blocks | 0 | 0.0 per 100 commits (guard not installed) |
 | umbel | 100.0% | 2 | 0.0 per 100 commits (guard not installed) |
 
@@ -314,10 +319,11 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 
 | Rule | Blocks | True positive | Acceptable | False positive | False-positive share of its blocks |
 |---|---|---|---|---|---|
+| C1 | 7 | 1 | 6 | 0 | 0.00% |
 | S1 | 2 | 2 | 0 | 0 | 0.00% |
 | T1 | 8 | 1 | 7 | 0 | 0.00% |
 | T2 | 10 | 1 | 9 | 0 | 0.00% |
-| X1 | 2 | 0 | 0 | 2 | 100.00% |
+| X1 | 1 | 0 | 0 | 1 | 100.00% |
 
 
 <!-- recall:begin -->

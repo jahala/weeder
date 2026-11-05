@@ -1,2 +1,0 @@
-{"type": "input", "case": "recall:D2:go:hcl:2efc26623:hclwrite/ast_body.go:6", "sha256": "da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered report SHA-256: da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e\nVerdict: miss\nReasoning: hclwrite importing integrationtest is a real forbidden-boundary crossing that D2 exists to catch, and weeder reported nothing at that site, so the shape was genuinely present and missed."}

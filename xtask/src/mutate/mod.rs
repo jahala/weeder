@@ -252,7 +252,13 @@ pub fn replay_case_in(
     }
     let diff = git::capture(&root, &arguments)?;
     restore(&root, &planted, &tree)?;
-    let findings = crate::calibrate::results(&answer.stdout)?;
+    // A packet carries judged content alone: the findings of catalogue rules. A
+    // run's own notes, what it set aside and what it could not read, are about
+    // the run rather than the change, and the audit seal does not cover them.
+    let findings = crate::calibrate::results(&answer.stdout)?
+        .into_iter()
+        .filter(|finding| weeder::core::catalogue::rule(&finding.rule).is_some())
+        .collect();
     Ok(Replay {
         diff: diff.trim_end_matches('\n').to_string(),
         shape: planted.shape,

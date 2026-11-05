@@ -1,0 +1,2 @@
+{"type": "input", "case": "blocked:pleach:2515d2ac88", "sha256": "0927501b826f9c61ebff9d366cd80c1a622b1a975bca84104ba80b90786beb49", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 0927501b826f9c61ebff9d366cd80c1a622b1a975bca84104ba80b90786beb49\nVerdict: acceptable\nReasoning: C1's claim is true: the commit writes the non-negotiables section into a file that had none, adding seven rules rather than loosening anything."}

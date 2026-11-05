@@ -1,2 +1,0 @@
-{"type": "input", "case": "blocked:umbel:cc3cc0c37c", "sha256": "da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered report SHA-256: da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e\nVerdict: true-positive\nReasoning: S1's claim holds: TODO markers in codex.ts and gemini.ts admit unverified tool-call parsing shipped as behaviour, naming work the commit did not finish."}

@@ -100,17 +100,15 @@ sha = "08529d5f566f3d4bc1a9de064d026282eb7a003f"
 classification = "acceptable"
 reasoning = "T1 says forty-odd test files went with thousands of cases, and they did. This is the v1 sunset: 240 files and 94763 lines out, the adapters, the CLI and the core they tested leaving in the same commit and recoverable at the v1-final tag. Nothing is less covered afterwards because nothing they covered is still shipped, and a deletion this size is what a gate should stop a reader on."
 
+[commit.rules.C1]
+classification = "true-positive"
+reasoning = "C1 says a section of CLAUDE.md that states its limits was changed, and it was: the v1 sunset cut the file from 266 lines to 36, and the section `Never delete docs or research` went with it. Nothing in the new file carries that rule; the one never-delete left is about a single paid data file. Whatever the sunset meant for v1's code, a rule for every agent left the instructions in passing. First blocked on 2026-11-05, when C1 began reading headings that open with never (#77)."
+
 [[commit]]
 repo = "tend2"
 sha = "78fed73b0c24080221ebbe6f06a17b1495be7376"
 classification = "acceptable"
 reasoning = "T1 says the spikes/loop-hole test files went with their cases, and they did. The spike was killed: 50 of its non-test files go in the same commit, so the code under those cases left with them."
-
-[[commit]]
-repo = "tend2"
-sha = "52b97e43ced4160b09f1e85be25f82b87a0595ae"
-classification = "false-positive"
-reasoning = "X1 says a secret-looking value was added, assigned to `detail-meta__key` and to `journey-row__key`. Both hits are class attributes in the renderer's html builder, and X1 read `class=\"...__key\">` as an assignment. The value is markup."
 
 [[commit]]
 repo = "umbel"
@@ -135,3 +133,39 @@ repo = "umbel"
 sha = "cc3cc0c37ca221f101ae39ebea2f2b5fc1cb031c"
 classification = "true-positive"
 reasoning = "S1 says a TODO reached production code at src/core/providers/codex.ts and at src/core/providers/gemini.ts. Both are there, and both say the tool-call event shape is unverified against a real transcript; the file's own comment admits tool extraction may be partial. The markers name work that did not happen before the code shipped."
+
+[[commit]]
+repo = "pleach"
+sha = "76207691f393cf01cf5346f5d2f8c2cb0ae14fac"
+classification = "acceptable"
+reasoning = "C1 says the non-negotiables section of .claude/CLAUDE.md changed, and it did: the adapters refactor rewords the strict-downward-deps rule to name adapters beside seams and faces, and drops the rctrl binary from the requirements line. The seven rule headings are the same before and after, and none of them says less. First blocked on 2026-11-05, when C1 began reading a non-negotiables heading (#77)."
+
+[[commit]]
+repo = "pleach"
+sha = "2515d2ac886e8caed674bff36981b711fe4e7a52"
+classification = "acceptable"
+reasoning = "C1 says the non-negotiables section of .claude/CLAUDE.md changed, and it did: this commit writes the section, seven rules from test-first to green-before-merge, into a file that had none. A law arriving is worth a person's eye, and nothing was loosened. First blocked on 2026-11-05 (#77)."
+
+[[commit]]
+repo = "tend2"
+sha = "0bfa87f2872dcbe8921d602b11b2968926f92416"
+classification = "acceptable"
+reasoning = "C1 says the section under `Never delete docs or research` in CLAUDE.md changed, and its lines did: the v2-first restructure moved it under the v1 legacy section and demoted it from ### to ####. Its text is the same, word for word. First blocked on 2026-11-05 (#77); the first reading of that run also blocked an edit under `The cockpit, never one number`, which C1 no longer reads as law."
+
+[[commit]]
+repo = "umbel"
+sha = "ea995c590a9653eca211c9d476b4d4ff08828820"
+classification = "acceptable"
+reasoning = "C1 says the non-negotiable principles of CLAUDE.md changed, and they did: the commit adds one, that workers never live on the default tmux socket. A principle added makes the law stricter. First blocked on 2026-11-05 (#77)."
+
+[[commit]]
+repo = "umbel"
+sha = "7109a41bd9df27c67eb600ccd7a357f7cb7b80fd"
+classification = "acceptable"
+reasoning = "C1 says the non-negotiable principles of CLAUDE.md changed, and they did: the rename from rctrl to umbel rewrites every mention of the old name, inside the principles too, and changes nothing they require. First blocked on 2026-11-05 (#77)."
+
+[[commit]]
+repo = "umbel"
+sha = "e39da470b7afa3fa26efe474a94361af236b7bb7"
+classification = "acceptable"
+reasoning = "C1 says the non-negotiable principles of CLAUDE.md changed, and they did, by arriving: this is the commit that first writes the file. Nothing was there to loosen. First blocked on 2026-11-05 (#77)."
