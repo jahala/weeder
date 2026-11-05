@@ -33,6 +33,7 @@ the test fails, so a consumer never has to guess what weeder meant.
 | schema validity | a could-not-run log validates | `tests/sarif_schema.rs::could_not_run_log_validates_against_the_vendored_schema` |
 | the table's lines | a row per finding: level, rule id, `path:line`, then the message's what; under it why and next, each wrapped at 72 characters | `tests/sarif_table.rs::table_carries_the_what_on_the_row_and_the_why_and_next_under_it` and `tests/sarif_table.rs::a_long_why_wraps_under_its_row_rather_than_running_on` |
 | the table's order | block findings first, then warnings, then notes; inside a level by path, then line | `tests/sarif_table.rs::table_orders_findings_by_level_then_path_then_line` |
+| the table's repeats | a finding with the same rule, why and next as a row above it prints one `see <path:line>` line in their place, naming that row; SARIF keeps every result whole | `tests/sarif_table.rs::findings_that_share_a_rule_why_and_next_print_them_once_under_the_first`, `tests/sarif_table.rs::findings_of_one_rule_that_say_different_things_each_keep_their_own_why`, `tests/sarif_table.rs::the_sarif_log_keeps_every_result_whole` and `tests/sarif_table.rs::a_conflict_block_left_in_a_change_says_why_once_on_the_command_line` |
 | the table's counts | a last line counting each level | `tests/sarif_table.rs::table_ends_with_a_count_per_level` |
 | the table holds nothing else | an empty run renders the count line alone | `tests/sarif_table.rs::an_empty_run_renders_the_count_line_and_nothing_else` |
 
@@ -173,6 +174,12 @@ Each row carries what was found. Under it, indented beneath the rule, come why i
 to do next, each wrapped at 72 characters. SARIF joins the same three into one message. Columns are
 padded to the widest cell so the message column lines up. The count line is always the last line,
 and an empty run is that line alone.
+
+A finding that says what a row above it already said, the same rule with the same why and next,
+keeps its own row and its own what, and carries one line under it instead of the two paragraphs:
+`see src/parse.ts:2 for why and next`. One conflict block is three markers and one fact, and a reader
+handed the same sentence three times learns to stop reading. The log is not folded: a consumer reads
+each result on its own, so each one carries its whole message.
 
 ## The order results come in
 

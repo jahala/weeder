@@ -1,3 +1,5 @@
+mod common;
+
 use weeder::core::sarif::render_table;
 use weeder::core::{Finding, Level, Message, Region, Suppression, SuppressionSource};
 
@@ -201,4 +203,154 @@ fn an_empty_run_renders_the_count_line_and_nothing_else() {
         table.lines().collect::<Vec<&str>>(),
         vec!["0 errors, 0 warnings, 0 notes"]
     );
+}
+
+/// Three findings of one rule that say one thing (#83): a conflict block left in
+/// a file reads as three G1 rows, and twelve lines saying the same sentence
+/// three times teach a reader to stop reading.
+fn the_same_three_times() -> Vec<Finding> {
+    ["<<<<<<<", "=======", ">>>>>>>"]
+        .iter()
+        .zip([3, 5, 7])
+        .map(|(marker, line)| {
+            let mut found = finding(
+                "G1",
+                Level::Block,
+                "docs/roadmap.md",
+                line,
+                &format!("a conflict marker {marker} was left in the file."),
+            );
+            found.message.why =
+                "the merge stopped with both sides in the file, and a file holding both says two things at once."
+                    .to_string();
+            found.message.next = "keep the side you mean and delete the markers.".to_string();
+            found
+        })
+        .collect()
+}
+
+/// How many lines of a table carry a label in the label column, which sits
+/// under the rule. A wrapped line of text can open with the same word, and it
+/// starts further in.
+fn labelled(table: &str, label: &str) -> usize {
+    let first = table.lines().next().unwrap_or_default();
+    let column = first.find("  ").map_or(0, |at| at + 2);
+    table
+        .lines()
+        .filter(|line| {
+            line.get(..column)
+                .is_some_and(|indent| indent.trim().is_empty())
+                && line[column..].starts_with(label)
+        })
+        .count()
+}
+
+#[test]
+fn findings_that_share_a_rule_why_and_next_print_them_once_under_the_first() {
+    let table = render_table(&the_same_three_times());
+    assert_eq!(
+        labelled(&table, "why "),
+        1,
+        "the why is printed once, under the first:\n{table}"
+    );
+    assert_eq!(labelled(&table, "next "), 1, "and so is the next:\n{table}");
+    let lines: Vec<&str> = table.lines().collect();
+    assert!(
+        lines[0].contains("docs/roadmap.md:3") && lines[1].trim_start().starts_with("why "),
+        "the first finding carries the why and the next:\n{table}"
+    );
+    let named: Vec<&str> = lines
+        .iter()
+        .filter(|line| line.trim_start().starts_with("see "))
+        .copied()
+        .collect();
+    assert_eq!(
+        named.len(),
+        2,
+        "each of the rest carries one line, naming the finding that says why:\n{table}"
+    );
+    assert!(
+        named.iter().all(|line| line.contains("docs/roadmap.md:3")),
+        "and the line it names is the first one's:\n{table}"
+    );
+    assert_eq!(
+        rows(&table).len(),
+        3,
+        "every finding keeps its own row and its own what:\n{table}"
+    );
+    assert_eq!(
+        table.lines().last().expect("the count"),
+        "3 errors, 0 warnings, 0 notes",
+        "and every one of them is counted"
+    );
+}
+
+#[test]
+fn findings_of_one_rule_that_say_different_things_each_keep_their_own_why() {
+    let mut findings = the_same_three_times();
+    findings[1].message.next = "a different next action entirely.".to_string();
+    let table = render_table(&findings);
+    assert_eq!(
+        labelled(&table, "why "),
+        2,
+        "the one whose next differs prints its own why and next:\n{table}"
+    );
+    let mut other_rule = the_same_three_times();
+    other_rule[2].rule = "S1".to_string();
+    let table = render_table(&other_rule);
+    assert_eq!(
+        labelled(&table, "why "),
+        2,
+        "the same words under another rule are another rule's to say:\n{table}"
+    );
+}
+
+#[test]
+fn the_sarif_log_keeps_every_result_whole() {
+    let findings = the_same_three_times();
+    let log =
+        weeder::core::sarif::render(&findings, &weeder::core::sarif::Context::new("0.0.0-test"));
+    let results = &log.runs[0].results;
+    assert_eq!(results.len(), 3, "SARIF keeps every result");
+    assert!(
+        results.iter().all(|result| {
+            result.message.text.contains("both sides in the file")
+                && result.message.text.contains("keep the side you mean")
+        }),
+        "each result carries its whole why and next, because a consumer reads one at a time"
+    );
+}
+
+#[test]
+fn a_conflict_block_left_in_a_change_says_why_once_on_the_command_line() {
+    let repo = common::Repo::init();
+    repo.write(
+        "src/parse.ts",
+        "export const parse = (input: string) => [input];\n",
+    );
+    repo.commit("the parser");
+    repo.write("src/parse.ts", &common::conflicted_parser(None));
+    repo.stage_all();
+
+    let table = repo.weeder(&["check", "--format", "table"]);
+    assert_eq!(table.code, 2, "a conflict blocks: {}", table.output());
+    let rows = rows(&table.stdout)
+        .into_iter()
+        .filter(|line| line.contains(" G1 "))
+        .count();
+    assert_eq!(rows, 3, "one row per marker:\n{}", table.stdout);
+    assert_eq!(
+        labelled(&table.stdout, "why "),
+        1,
+        "and one why for the three of them:\n{}",
+        table.stdout
+    );
+
+    let log = repo.weeder(&["check", "--format", "sarif"]);
+    let results: Vec<common::Finding> = log
+        .findings()
+        .into_iter()
+        .filter(|finding| finding.rule == "G1")
+        .collect();
+    assert_eq!(results.len(), 3, "the log keeps every result: {results:#?}");
 }

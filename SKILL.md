@@ -33,6 +33,12 @@ A file you wrote and never staged is judged too, as the added file it is. `git
 diff` never lists one, so weeder reads them off the working tree itself; the
 files your ignore rules hide are not part of the tree and are not read.
 
+The rules read TypeScript, JavaScript, Python, Rust and Go. A changed file in any
+other language, a shell script, a makefile, Java, reaches no rule, so `check`
+adds one note per run under the id `UNREAD`, counting those files by extension.
+It stops nothing. A clean count beside it means the files weeder read were clean,
+and the rest are yours to read.
+
 | Flag | What it does |
 |---|---|
 | `--base <ref>` | judge the tree against this ref instead of HEAD |
@@ -51,8 +57,18 @@ not, is judged like any other file and takes effect once it lands. A base with
 no `weeder.toml` is judged at the catalogue's own levels. `--config` is the one
 way to name another law, and it is for whoever runs weeder, not for the change.
 
+Two keys take paths away from the rules. `[scope] exclude` lists patterns no
+rule reads, gitignore-style from the root (`test/fixtures/`, `**/*.snap`), and
+each one that set files aside is reported as one `EXCLUDED` note with a count.
+`[[overrides]]` sets rule levels under some paths, `paths = ["docs/research/**"]`
+with `rules = { R1 = "off" }`, and the most specific pattern wins. These are a
+person's settings, not yours. Proposing one is a change to `weeder.toml`, which
+C1 blocks until a person signs it with a trailer, and it applies only after it
+lands. A finding you cannot fix is reported to the person, never excluded. A
+test moved into an excluded path is still judged as the test it deleted.
+
 ```bash
-weeder check --base origin/main --strict --format sarif > weeder.sarif
+weeder check --base origin/master --strict --format sarif > weeder.sarif
 weeder check --staged
 weeder check --scope 'src/parser/**' --scope 'tests/parser/**'
 weeder check --untracked exclude
@@ -149,11 +165,11 @@ stage, and any other is refused by name with the call to add to it.
 
 A guardrail change a person means is allowed by what that person writes on the
 commit, and the hooks are the two halves of reading it. `guard pre-commit` runs
-before a message exists, so it honours nothing: it prints what blocks and names,
-for each rule, the exact trailer that would allow it,
+before a message exists, so it honours nothing: it prints one line naming what
+blocks and, for each rule, the exact trailer that would allow it,
 `Weeder-allow: <RULE> <reason>`, and says commit-msg is the stage that reads it. `guard commit-msg`
-judges the same index with the message in hand, and is the deciding stage for
-anything a trailer may allow. `guard pre-push` honours the trailer again,
+judges the same index with the message in hand, prints the findings once, and is
+the deciding stage for anything a trailer may allow. `guard pre-push` honours the trailer again,
 because a commit carries the message it was allowed by.
 
 `guard pre-commit` defers only while there is a stage to defer to. The stage is
@@ -168,7 +184,7 @@ agent's to write and the commit message is the person's. Write the trailer, or
 repair what the table names.
 
 ```bash
-weeder guard install --protect main --protect release
+weeder guard install --protect master --protect release
 weeder guard status
 weeder guard uninstall
 ```

@@ -13,10 +13,10 @@
 # are the only ones there are.
 
 # The adversarial fixtures are written to look dishonest, so weeder reads none of
-# them. Every path this covers still comes back as a note, once for the path, so
-# the exclusion is as visible in the log as an allowance would be.
+# them. The pattern still comes back as a note counting the files it set aside,
+# so the exclusion is as visible in the log as an allowance would be.
 [scope]
-specimens = ["fixtures/adversarial"]
+exclude = ["fixtures/adversarial/"]
 
 [deps]
 layers = { core = ["src/core/**"], seams = ["src/seams/**"], faces = ["src/faces/**"] }

@@ -27,6 +27,7 @@ use crate::core::change::{self, Change, Side};
 use crate::core::classify::{classify_file, FileKind};
 use crate::core::config::Config;
 use crate::core::diff::{added_file, parse_diff, removed_file, FileDiff};
+use crate::core::exclude;
 use crate::core::finding::{Finding, Level};
 use crate::core::glob;
 use crate::core::hierarchy::{self, Hierarchy};
@@ -34,12 +35,12 @@ use crate::core::read::CallerSite;
 use crate::core::rules;
 use crate::core::rules::check::collect;
 use crate::core::sarif::{self, Context, EXIT_BLOCKED, EXIT_CLEAN, EXIT_COULD_NOT_RUN, RULES_DOC};
-use crate::core::specimen;
 use crate::core::suppress::{
     apply_suppressions, parse_commit_suppressions, parse_inline_suppressions,
     InlineSuppressionError, Suppression, SuppressionSource, MARKER,
 };
 use crate::core::syntax::Mask;
+use crate::core::unread;
 use crate::faces::{
     blobs, gather, read_law, readable, side, written_law, Answer, Format, Source, Untracked,
 };
@@ -121,19 +122,19 @@ fn judge(request: &Request) -> Result<Verdict, String> {
     let judged: Vec<FileDiff> = parse_diff(&diff).map_err(|error| {
         format!("weeder could not read the diff git produced: {error}. report it with the change that caused it.")
     })?;
-    // The specimens leave here, before anything reads them: a file no rule
-    // judges has no suppression to honour and no malformed one to complain
-    // about either. What it has is a note, so the exclusion is in the log.
+    // The excluded paths leave here, before anything reads them: a file no
+    // rule judges has no suppression to honour and no malformed one to
+    // complain about either. What it has is a note, so the exclusion is in the log.
     let SetAside {
         kept,
         departed,
         mut excluded,
-    } = set_aside(judged, &config.specimens);
+    } = set_aside(judged, &config);
 
     let mut changes = gather(&root, &range.base, &range.after, kept)?;
     changes.extend(departures(&root, &range, &departed)?);
     if untracked {
-        let (arrived, set_aside) = arrivals(&root, &config.specimens)?;
+        let (arrived, set_aside) = arrivals(&root, &config)?;
         changes.extend(arrived);
         excluded.extend(set_aside);
     }
@@ -142,13 +143,13 @@ fn judge(request: &Request) -> Result<Verdict, String> {
     // a file nobody staged counts the way one in a staged file does.
     let (inline, malformed) = parse_inline_suppressions(changes.iter().map(|change| &change.diff));
     let scope = scope(request, &config);
-    // The specimens leave the repository's paths too: a rule that reads what the
-    // tree holds, to resolve an import or to work out what a pattern hides,
-    // reads the same repository every other rule was handed.
+    // The excluded paths leave the repository's paths too: a rule that reads
+    // what the tree holds, to resolve an import or to work out what a pattern
+    // hides, reads the same repository every other rule was handed.
     let paths: Vec<String> = git::tracked_paths(&root)
         .map_err(|error| error.to_string())?
         .into_iter()
-        .filter(|path| !specimen::skipped(&config.specimens, path))
+        .filter(|path| !exclude::excluded(&config, path))
         .collect();
     let callers = callers(&root, &changes, &scope)?;
     let hierarchy = hierarchy(&root, &range.after, &changes, &paths)?;
@@ -165,7 +166,8 @@ fn judge(request: &Request) -> Result<Verdict, String> {
         hierarchy: &hierarchy,
         collection: &collection,
     });
-    findings.extend(excluded.iter().map(|path| specimen::notice(path)));
+    findings.extend(exclude::notices(&config, &excluded));
+    findings.extend(unread::notice(&unread_paths(&changes)));
     if request.strict {
         if let Some(unreadable) = malformed.first() {
             return Err(refusal(unreadable));
@@ -312,11 +314,11 @@ fn reads_untracked(request: &Request, range: &Range) -> Result<bool, String> {
 /// hunk a rule reads its lines from and the side a rule asks its weight and its
 /// shape of. They arrive in the order the seam lists them, which is sorted, so
 /// two runs over one tree write one log.
-fn arrivals(root: &Path, specimens: &[String]) -> Result<(Vec<Change>, Vec<String>), String> {
+fn arrivals(root: &Path, config: &Config) -> Result<(Vec<Change>, Vec<String>), String> {
     let mut arrived = Vec::new();
     let mut excluded = Vec::new();
     for path in git::untracked_files(root).map_err(|error| error.to_string())? {
-        if specimen::skipped(specimens, &path) {
+        if exclude::excluded(config, &path) {
             excluded.push(path);
             continue;
         }
@@ -349,8 +351,8 @@ fn read_diff(root: &Path, range: &Range) -> Result<String, String> {
 }
 
 /// What `set_aside` made of a change: the files weeder judges as git wrote them,
-/// the files that moved out of the judged tree into a specimen directory, by the
-/// path they left, and the specimen paths it was told to leave alone.
+/// the files that moved out of the judged tree into an excluded path, by the
+/// path they left, and the excluded paths it was told to leave alone.
 struct SetAside {
     kept: Vec<FileDiff>,
     departed: Vec<String>,
@@ -358,23 +360,21 @@ struct SetAside {
 }
 
 /// The changed files weeder judges, and the paths it was told to leave alone.
-/// A specimen is skipped by every rule at once: the file never reaches a
+/// An excluded file is skipped by every rule at once: the file never reaches a
 /// detector, so no rule can be the one that read it anyway.
 ///
-/// A file is a specimen only where every path it has is one. A file that moved
-/// into a specimen directory left the tree weeder judges, and a test that leaves
-/// the suite that way is a test deleted, so it is judged as the deletion of the
-/// path it left, and the path it arrived at is noted like any other specimen.
-fn set_aside(judged: Vec<FileDiff>, specimens: &[String]) -> SetAside {
+/// A file is excluded only where every path it has is. A file that moved into
+/// an excluded path left the tree weeder judges, and a test that leaves the
+/// suite that way is a test deleted, so it is judged as the deletion of the
+/// path it left, and the path it arrived at is noted like any other exclusion.
+fn set_aside(judged: Vec<FileDiff>, config: &Config) -> SetAside {
     let mut aside = SetAside {
         kept: Vec::new(),
         departed: Vec::new(),
         excluded: Vec::new(),
     };
-    let skipped = |path: &Option<String>| {
-        path.as_deref()
-            .map(|path| specimen::skipped(specimens, path))
-    };
+    let skipped =
+        |path: &Option<String>| path.as_deref().map(|path| exclude::excluded(config, path));
     for file in judged {
         match (skipped(&file.old_path), skipped(&file.new_path)) {
             (Some(false), Some(true)) => {
@@ -390,7 +390,7 @@ fn set_aside(judged: Vec<FileDiff>, specimens: &[String]) -> SetAside {
     aside
 }
 
-/// The files that left the judged tree for a specimen directory, each as the
+/// The files that left the judged tree for an excluded path, each as the
 /// deletion it is from where weeder stands: the side it had at the base, and
 /// every line of it taken out.
 fn departures(root: &Path, range: &Range, departed: &[String]) -> Result<Vec<Change>, String> {
@@ -406,6 +406,16 @@ fn departures(root: &Path, range: &Range, departed: &[String]) -> Result<Vec<Cha
             ..change
         })
         .collect())
+}
+
+/// The changed files written in a language weeder carries no rules for, which
+/// no detector judged a line of.
+fn unread_paths(changes: &[Change]) -> Vec<&str> {
+    changes
+        .iter()
+        .filter_map(Change::path)
+        .filter(|path| reader::is_unread_code(Path::new(path)))
+        .collect()
 }
 
 /// The paths this run allows the change to touch. `--scope` is what the caller

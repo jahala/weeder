@@ -153,7 +153,7 @@ fn a_tag_on_a_commit_the_remote_already_has_carries_nothing_new_to_judge() {
     // the trailer that allows a guardrail change.
     repo.write(
         "weeder.toml",
-        "[scope]\nspecimens = [\"fixtures/adversarial\"]\n",
+        "[scope]\nexclude = [\"fixtures/adversarial/\"]\n",
     );
     repo.commit(
         "Set the fixtures aside\n\nWeeder-allow: C1 the law this repository is judged under",

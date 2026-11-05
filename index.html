@@ -487,7 +487,7 @@ protected: main, master (as weeder.toml at HEAD has them).
         <div class="snips rise">
           <div class="snip"><span class="t-dim">fetch the release for your platform with its digest, and check it (aarch64-apple-darwin, x86_64-apple-darwin, x86_64-unknown-linux-musl or aarch64-unknown-linux-musl)</span>t=aarch64-apple-darwin; b=https://github.com/jahala/weeder/releases/latest/download; curl -fsSLO "$b/weeder-$t.tar.gz" -O "$b/weeder-$t.tar.gz.sha256" &amp;&amp; shasum -a 256 -c "weeder-$t.tar.gz.sha256"</div>
           <div class="snip"><span class="t-dim">unpack the executable and put it on your path</span>tar xzf "weeder-$t.tar.gz" weeder &amp;&amp; install -m 755 weeder ~/.local/bin/weeder</div>
-          <div class="snip"><span class="t-dim">then put the judgement inside git</span>weeder guard install --protect main</div>
+          <div class="snip"><span class="t-dim">then put the judgement inside git</span>weeder guard install --protect master</div>
         </div>
       </div>
     </div>

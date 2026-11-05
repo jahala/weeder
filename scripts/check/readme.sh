@@ -246,6 +246,34 @@ for command in cited_commands:
             )
         positional += 1
 
+# --- every branch the readme protects ------------------------------------------
+
+# An example a reader runs verbatim protects the branch it names, and a branch
+# the repository does not have is a trunk left unprotected in silence (#81). So
+# each branch `--protect` names, and each remote branch `--base` judges against,
+# has to be one this repository carries.
+branches = set()
+listed = subprocess.run(
+    ["git", "for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes"],
+    capture_output=True, text=True, check=True,
+).stdout.split()
+for ref in listed:
+    parts = ref.split("/")
+    branches.add("/".join(parts[2:]) if parts[1] == "heads" else "/".join(parts[3:]))
+protected = re.findall(r"--protect\s+([^\s`]+)", readme)
+based = re.findall(r"--base\s+origin/([^\s`]+)", readme)
+for branch in sorted(set(protected + based)):
+    # A value the shell or a workflow fills in names no branch of its own.
+    if branch.startswith("$"):
+        continue
+    if branch not in branches:
+        complaints.append(
+            f"README.md's examples name the branch `{branch}`, which this repository does not have. "
+            "name the branch it actually uses, or the example protects nothing"
+        )
+if not protected:
+    complaints.append("README.md shows no `weeder guard install --protect <branch>`, so no example names a branch")
+
 # The garden footer, until weeder has a page of its own to carry it.
 if "a plotplot garden tool" not in readme:
     complaints.append(

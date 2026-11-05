@@ -87,5 +87,5 @@ this repository carries no blob of its own to prove the point with.
 it holds the blind re-grade's case packets, verbatim hunks from the pinned corpus
 with weeder's own findings beside them, and the raw record of each auditor session.
 They are specimens in the same sense, real diffs that fired a rule, and they live
-under this root so that `[scope] specimens` keeps weeder from judging what it
+under this root so that `[scope] exclude` keeps weeder from judging what it
 already judged once. The matrix walks rule ids and never reads this directory.

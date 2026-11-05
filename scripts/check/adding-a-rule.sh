@@ -71,7 +71,7 @@ while IFS= read -r token; do
 done <<< "$cited"
 [ "$paths" -gt 0 ] || { echo "$doc cites no path at all" >&2; exit 1; }
 
-# The page cites the fixtures as a pattern, because R1 cannot see a specimen
+# The page cites the fixtures as a pattern, because R1 cannot see an excluded
 # path. The pattern is held to the rule it walks: G1 keeps every cell of it.
 cells=0
 for lang in ts py rs go; do
