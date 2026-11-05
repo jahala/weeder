@@ -43,7 +43,7 @@ another law for one run. `scan` judges the tree it is given, and reads the
 | `[docs] external` | the names the docs cite on purpose that live outside the tree: file names, paths, globs, variables | R1 |
 | `[guard] protected` | the branches the git hooks refuse to rewrite | `weeder guard` |
 | `[guardrails] paths` | the path globs this repository holds at the constitution tier | C3 |
-| `[guardrails] sections` | the headings of `AGENTS.md` and `CLAUDE.md` whose sections state this repository's law, beside the ones saying hard limits, non-negotiables or never, matched as words in any case | C1 |
+| `[guardrails] sections` | the headings of `AGENTS.md` and `CLAUDE.md` whose sections state this repository's law, beside the ones saying hard limits or non-negotiables, or opening with never, matched as words in any case | C1 |
 | `[[overrides]] paths` | the path patterns an override applies to, gitignore-style from the root | the rules it names |
 | `[[overrides]] rules` | a level per rule id under those paths, as `[rules]` spells them | the rules it names |
 
@@ -286,7 +286,7 @@ A changed file matches no scope glob the run allows, and the finding names what 
 
 `check` · blocks by default
 
-A change touched a harness settings file, a git hook, `weeder.toml`, or a section of `AGENTS.md` or `CLAUDE.md` whose heading says hard limits, non-negotiables or never, or names one of `[guardrails] sections`.
+A change touched a harness settings file, a git hook, `weeder.toml`, or a section of `AGENTS.md` or `CLAUDE.md` whose heading says hard limits or non-negotiables, or opens with never, or names one of `[guardrails] sections`.
 
 <a id="C2"></a>
 ## C2: An ignore file was broadened over source or tests

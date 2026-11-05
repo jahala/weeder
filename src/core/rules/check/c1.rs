@@ -34,7 +34,12 @@ const INSTRUCTIONS: &[&str] = &["AGENTS.md", "CLAUDE.md"];
 /// The words a heading says when the section under it states the law, in any
 /// repository. A repository that writes its own adds them in `[guardrails]
 /// sections`.
-const LAW_HEADINGS: &[&str] = &["hard limits", "non-negotiable", "non-negotiables", "never"];
+const LAW_HEADINGS: &[&str] = &["hard limits", "non-negotiable", "non-negotiables"];
+
+/// The words that state the law only when they open the heading. "Never do
+/// these" is a rule; "three signals, never one number" describes something
+/// else, and the calibration read one such heading as a block on 2026-11-05.
+const LAW_OPENERS: &[&str] = &["never"];
 
 pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let headings: Vec<String> = LAW_HEADINGS
@@ -120,10 +125,9 @@ fn sections(text: &str, headings: &[String]) -> Vec<Section> {
         .filter_map(|(index, line)| {
             let rank = heading_rank(line)?;
             let title = line.trim_start_matches('#').trim().to_lowercase();
-            headings
-                .iter()
-                .any(|heading| says(&title, heading))
-                .then_some((index, rank))
+            (headings.iter().any(|heading| says(&title, heading))
+                || LAW_OPENERS.iter().any(|opener| opens(&title, opener)))
+            .then_some((index, rank))
         })
         .map(|(index, rank)| {
             let last = lines
@@ -149,6 +153,17 @@ fn says(title: &str, words: &str) -> bool {
             let after = title[at + words.len()..].chars().next();
             !before.is_some_and(char::is_alphanumeric) && !after.is_some_and(char::is_alphanumeric)
         })
+}
+
+/// Whether a heading's title begins with the word: "never do these" begins
+/// with `never`, "never-ending" and "the cockpit, never one number" do not.
+fn opens(title: &str, word: &str) -> bool {
+    title.strip_prefix(word).is_some_and(|rest| {
+        !rest
+            .chars()
+            .next()
+            .is_some_and(|next| next.is_alphanumeric() || next == '-')
+    })
 }
 
 /// How deep a markdown heading sits, or `None` for a line that is not one.

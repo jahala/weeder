@@ -268,6 +268,23 @@ fn c1_guards_a_section_titled_hard_limits_non_negotiables_or_never_by_default() 
     }
 }
 
+/// A heading that says "never" in the middle of a description states no law.
+/// tend2 0bfa87f287 carries this one, and the calibration read it as a block
+/// on 2026-11-05: "never" opens a rule, as in "Never do these", and does not
+/// sit inside a title about something else.
+#[test]
+fn c1_leaves_a_heading_that_says_never_in_passing_alone() {
+    let heading = "### The cockpit, three signals, never one number";
+    for path in ["CLAUDE.md", "AGENTS.md", ".claude/CLAUDE.md"] {
+        let run = widened(path, heading, None).weeder(&["check"]);
+        assert!(
+            run.findings().iter().all(|finding| finding.rule != "C1"),
+            "{path} under `{heading}`: a descriptive heading guards nothing\n{}",
+            run.output()
+        );
+    }
+}
+
 #[test]
 fn c1_guards_a_section_the_repository_names_under_guardrails_sections() {
     let heading = "## House rules";
