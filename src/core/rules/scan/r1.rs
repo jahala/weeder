@@ -334,7 +334,7 @@ fn place<'a>(
 ///
 /// A place the repository listed in `[docs] external` is outside the tree on
 /// purpose, and the tree is not asked about it at all. A place `[scope]
-/// specimens` set aside is in the repository and unread: it is there, and it
+/// exclude` set aside is in the repository and unread: it is there, and it
 /// pins nothing, because no rule read what it holds.
 fn one_place<'a>(
     tree: &'a Tree,

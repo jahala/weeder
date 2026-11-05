@@ -115,7 +115,7 @@ pub struct Tree {
     /// What the registries last said, as the repository committed it. A scan
     /// never asks them itself.
     pub snapshot: Snapshot,
-    /// The paths `[scope] specimens` kept out of `files`. They are in the
+    /// The paths `[scope] exclude` kept out of `files`. They are in the
     /// repository and no rule reads them, so all a rule may ask of one is
     /// whether it is there.
     pub set_aside: Vec<String>,
@@ -123,7 +123,7 @@ pub struct Tree {
 
 impl Tree {
     /// Whether the repository carries this path, or anything under it, among
-    /// the paths set aside as specimens.
+    /// the paths `[scope] exclude` set aside.
     #[must_use]
     pub fn sets_aside(&self, path: &str) -> bool {
         let path = path.trim_end_matches('/');

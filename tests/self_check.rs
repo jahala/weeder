@@ -7,9 +7,9 @@
 //! may come back at block level.
 //!
 //! Two things earn that clean run, and both are written down rather than turned
-//! off. `[scope] specimens` excludes `fixtures/adversarial`, whose files are
-//! written to look dishonest on purpose; every path it covers is still reported,
-//! once, as a note. And `weeder.toml` carries an allowance for C1 with its reason,
+//! off. `[scope] exclude` sets `fixtures/adversarial/` aside, whose files are
+//! written to look dishonest on purpose; the pattern is still reported, once, as
+//! a note counting the files it covers. And `weeder.toml` carries an allowance for C1 with its reason,
 //! because a guardrail arriving with the repository that has never had one is
 //! not a gate being loosened. The third test here holds that allowance to its
 //! word: an ordinary edit to the same file still blocks.

@@ -86,9 +86,9 @@ weeder refuses conflict markers in its own tree, so G1's fixtures write
 placeholders that the test harness expands. The README at the root of the
 fixtures directory lists them, along with the other fixture conventions.
 
-`weeder.toml` names that directory under `[scope] specimens`, so weeder's own
+`weeder.toml` names that directory under `[scope] exclude`, so weeder's own
 scan never reads it. That is also why this page cites fixture paths as patterns:
-R1 cannot see a specimen path, and would report a concrete one as missing.
+R1 cannot see an excluded path, and would report a concrete one as missing.
 
 Write the fixtures before the detector, and watch the tests fail first. Three
 tests in `tests/catalogue_matrix.rs` hold them:

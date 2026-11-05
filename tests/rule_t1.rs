@@ -20,7 +20,7 @@
 //!
 //! Two more read the moves that only look like one. A case that arrives under
 //! its old name making fewer assertions is a case written over, and counts as
-//! gone. A test file moved into a `[scope] specimens` directory leaves the
+//! gone. A test file moved into a `[scope] exclude` directory leaves the
 //! tree weeder judges, and is judged as deleted from the path it left.
 //!
 //! Every number here is counted off the fixture by this file's own reading of
@@ -653,10 +653,10 @@ fn t1_judges_a_test_moved_into_a_specimen_directory_as_deleted() {
         assert_eq!(t1[0].level, "error", "{name}: T1 blocks");
         assert_eq!(run.code, 2, "{name}: {}", run.stderr);
         assert!(
-            findings
-                .iter()
-                .any(|finding| finding.rule == "SPECIMEN" && finding.path == moved),
-            "{name}: where it went is noted as the specimen it now is: {findings:#?}"
+            findings.iter().any(|finding| finding.rule == "EXCLUDED"
+                && finding.path == "fixtures/adversarial/"
+                && finding.message.contains("1 file")),
+            "{name}: where it went is noted as excluded, counted under the pattern: {findings:#?}"
         );
     }
 }
@@ -666,7 +666,7 @@ fn a_file_moved_from_one_specimen_directory_to_another_stays_set_aside() {
     let repo = common::Repo::init();
     repo.write(
         "weeder.toml",
-        "[scope]\nspecimens = [\"fixtures/adversarial\"]\n",
+        "[scope]\nexclude = [\"fixtures/adversarial/\"]\n",
     );
     let suite = fixture_file("T1", "ts", "moved/before", "src/parser.test.ts");
     repo.write("fixtures/adversarial/one/parser.test.ts", &suite);
@@ -687,7 +687,7 @@ fn a_file_moved_from_one_specimen_directory_to_another_stays_set_aside() {
         .collect();
     assert_eq!(
         rules,
-        vec!["SPECIMEN".to_string()],
+        vec!["EXCLUDED".to_string()],
         "a specimen that stays a specimen is noted and judged by nothing: {}",
         run.output()
     );

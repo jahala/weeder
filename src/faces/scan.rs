@@ -17,13 +17,13 @@ use crate::core::catalogue::{self, Face};
 use crate::core::change;
 use crate::core::classify::{classify_file, Lang};
 use crate::core::config::Config;
+use crate::core::exclude;
 use crate::core::finding::Finding;
 use crate::core::help;
 use crate::core::read::Outline;
 use crate::core::registry::{self, parse_snapshot, Registry, Snapshot, SNAPSHOT_PATH};
 use crate::core::rules;
 use crate::core::sarif::{self, Context, EXIT_CLEAN, EXIT_COULD_NOT_RUN, RULES_DOC};
-use crate::core::specimen;
 use crate::core::syntax::Mask;
 use crate::core::tree::{CommandListing, Tree, TreeFile};
 use crate::faces::{read_config, readable, Answer, Format};
@@ -91,7 +91,7 @@ fn judge(request: &Request) -> Result<Answer, String> {
     }
 
     let mut findings = rules::scan::evaluate(&tree, &config, &wanted);
-    findings.extend(excluded.iter().map(|path| specimen::notice(path)));
+    findings.extend(exclude::notices(&config, &excluded));
     Ok(Answer {
         // A scan never blocks. It reports the state a repository is in, and no
         // reading of that state is a reason to stop a change from landing.
@@ -134,22 +134,20 @@ fn runs(id: &str, config: &Config, wanted: &[String]) -> bool {
     if !wanted.is_empty() && !wanted.iter().any(|asked| asked == id) {
         return false;
     }
-    catalogue::rule(id)
-        .and_then(|rule| rules::configured_level(rule, config))
-        .is_some()
+    catalogue::rule(id).is_some_and(|rule| config.on_anywhere(rule))
 }
 
 /// The repository as it sits, with everything a rule needs already read, and the
-/// paths `[scope] specimens` kept out of it. This is the one place a scan
+/// paths `[scope] exclude` kept out of it. This is the one place a scan
 /// touches a disk, a clock or another process.
 ///
-/// A specimen never enters the tree, so no scan rule can read it: not as the
+/// An excluded file never enters the tree, so no scan rule can read it: not as the
 /// file it judges, and not as the evidence it judges another file by.
 fn gather(root: &Path, config: &Config) -> Result<(Tree, Vec<String>), String> {
     let (paths, excluded): (Vec<String>, Vec<String>) = git::tree_files(root)
         .map_err(|error| error.to_string())?
         .into_iter()
-        .partition(|path| !specimen::skipped(&config.specimens, path));
+        .partition(|path| !exclude::excluded(config, path));
     let files = paths
         .into_iter()
         .map(|path| read_file(root, path))

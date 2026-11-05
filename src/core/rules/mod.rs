@@ -14,45 +14,54 @@ pub mod check;
 pub mod scan;
 
 /// What one rule's detector found, as the findings it is reported as. The
-/// detector runs only where the config leaves its rule on.
+/// detector runs only where the config leaves its rule on for some path, and
+/// each finding is settled against what the config writes for its own path.
 pub fn report(
     rule: &Rule,
     config: &Config,
     detect: impl FnOnce() -> Vec<Detection>,
 ) -> Vec<Finding> {
-    if configured_level(rule, config).is_none() {
+    if !config.on_anywhere(rule) {
         return Vec::new();
     }
     detect()
         .into_iter()
         .filter_map(|detection| {
-            reported_at(detection.stamp, rule, config)
+            let written = config.written_at(rule.id, &detection.path);
+            reported_at(detection.stamp, rule, written)
                 .map(|level| detection.reported(rule.id, level))
         })
         .collect()
 }
 
-/// The level one finding is reported at, or `None` when the config turns its
-/// rule off.
+/// The level one finding is reported at, or `None` when what the repository
+/// wrote for it, `written`, turns its rule off.
 ///
 /// A finding stamped with its rule's level reports at the catalogue default,
-/// or at the level `[rules]` writes for the rule: that is what `[rules]` is
-/// for. A detector that asked for a level of its own keeps it, because it knows
-/// something the config does not: D1 louder on a manifest the run was never
-/// scoped for, R1 quieter on a name no paragraph pinned to a place. A level
-/// the repository wrote still caps it, so `D1 = "warn"` blocks nothing.
-pub fn reported_at(stamp: Stamp, rule: &Rule, config: &Config) -> Option<Level> {
-    let level = configured_level(rule, config)?;
-    Some(match (stamp, config.rules.get(rule.id)) {
+/// or at the level `[rules]` or an `[[overrides]]` table writes for the rule
+/// where the finding sits: that is what they are for. A detector that asked
+/// for a level of its own keeps it, because it knows something the config does
+/// not: D1 louder on a manifest the run was never scoped for, R1 quieter on a
+/// name no paragraph pinned to a place. A level the repository wrote still caps
+/// it, so `D1 = "warn"` blocks nothing.
+pub fn reported_at(stamp: Stamp, rule: &Rule, written: Option<RuleSetting>) -> Option<Level> {
+    let level = level_for(rule, written)?;
+    Some(match (stamp, written) {
         (Stamp::Rule, _) => level,
         (Stamp::Override(own), Some(RuleSetting::Warn | RuleSetting::Block)) => own.at_most(level),
         (Stamp::Override(own), _) => own,
     })
 }
 
-/// The level a rule reports at, or `None` when the config turns it off.
+/// The level a rule reports at across the repository, or `None` when `[rules]`
+/// turns it off.
 pub fn configured_level(rule: &Rule, config: &Config) -> Option<Level> {
-    match config.rules.get(rule.id) {
+    level_for(rule, config.rules.get(rule.id).copied())
+}
+
+/// The level a setting gives a rule, or `None` where it turns the rule off.
+fn level_for(rule: &Rule, written: Option<RuleSetting>) -> Option<Level> {
+    match written {
         Some(RuleSetting::Off) => None,
         Some(RuleSetting::Warn) => Some(Level::Warn),
         Some(RuleSetting::Block) => Some(Level::Block),

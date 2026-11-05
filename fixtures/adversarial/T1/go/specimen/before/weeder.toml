@@ -1,2 +1,2 @@
 [scope]
-specimens = ["fixtures/adversarial"]
+exclude = ["fixtures/adversarial/"]

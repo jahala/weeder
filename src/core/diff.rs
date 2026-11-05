@@ -110,8 +110,8 @@ pub fn added_file(path: &str, text: Option<&str>) -> FileDiff {
 
 /// The diff of a file that leaves whole: every line removed, no side after it.
 ///
-/// This is how weeder writes a file that moved out of what it judges and into a
-/// specimen directory: the suite no longer has it, whatever path it went to.
+/// This is how weeder writes a file that moved out of what it judges and into
+/// an excluded path: the suite no longer has it, whatever path it went to.
 /// What this is handed is the text the file had, or nothing where its bytes
 /// carried no lines.
 #[must_use]

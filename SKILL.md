@@ -57,6 +57,16 @@ not, is judged like any other file and takes effect once it lands. A base with
 no `weeder.toml` is judged at the catalogue's own levels. `--config` is the one
 way to name another law, and it is for whoever runs weeder, not for the change.
 
+Two keys take paths away from the rules. `[scope] exclude` lists patterns no
+rule reads, gitignore-style from the root (`test/fixtures/`, `**/*.snap`), and
+each one that set files aside is reported as one `EXCLUDED` note with a count.
+`[[overrides]]` sets rule levels under some paths, `paths = ["docs/research/**"]`
+with `rules = { R1 = "off" }`, and the most specific pattern wins. These are a
+person's settings, not yours. Proposing one is a change to `weeder.toml`, which
+C1 blocks until a person signs it with a trailer, and it applies only after it
+lands. A finding you cannot fix is reported to the person, never excluded. A
+test moved into an excluded path is still judged as the test it deleted.
+
 ```bash
 weeder check --base origin/master --strict --format sarif > weeder.sarif
 weeder check --staged
