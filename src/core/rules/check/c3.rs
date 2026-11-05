@@ -50,12 +50,12 @@ fn message(promoted: bool) -> Message {
         return Message {
             what: "a workflow this repository holds as a guardrail was changed.".to_string(),
             why: "`[guardrails] paths` names this file, so what it runs is law here rather than routine.".to_string(),
-            next: "revert it, or land the change to the workflow on its own so a person reads it.".to_string(),
+            next: "revert it, or land the change to the workflow on its own with a `Weeder-allow: C3` trailer saying why, so a person reads it.".to_string(),
         };
     }
     Message {
         what: "a workflow was changed.".to_string(),
         why: "this file decides which checks a server runs, so a change here can quietly stop running one.".to_string(),
-        next: "read the diff against what the workflow used to run, and say in the change why a step moved.".to_string(),
+        next: "read the diff against what the workflow used to run, and write why a step moved in a `Weeder-allow: C3` trailer.".to_string(),
     }
 }

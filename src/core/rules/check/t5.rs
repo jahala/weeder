@@ -132,7 +132,7 @@ fn finding(path: &str, alongside: &str, production: usize) -> Detection {
                 "a recorded expectation changed alongside the code it judges: `{alongside}`{others}."
             ),
             why: "an expectation rewritten to match the run it failed on agrees with whatever the code now does.".to_string(),
-            next: "read the new expectation as a diff and say in the change why the new output is the right one.".to_string(),
+            next: "read the new expectation as a diff, and write why the new output is the right one in a `Weeder-allow: T5` trailer.".to_string(),
         },
         fix: None,
     }
