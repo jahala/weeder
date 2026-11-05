@@ -115,6 +115,39 @@ fn called_marker(code: &str, titled: bool) -> Option<Marker> {
     None
 }
 
+/// The declarators that declare a case rather than a suite.
+const CASE_DECLARATORS: &[&str] = &["it", "test", "specify"];
+
+/// Whether a line of TypeScript or JavaScript declares a case with a marker on
+/// it, `it.skip(`, `test.todo(`, `xit(`. The reader counts a case by the bare
+/// declarator alone, so a case turned off reads to it as a case gone; T1 asks
+/// this to count it as the case it still is (#74), and the marker stays this
+/// rule's finding.
+#[must_use]
+pub fn declares_a_marked_case(code: &str, titled: bool) -> bool {
+    let spoken = words(code);
+    spoken
+        .iter()
+        .zip(spoken.iter().skip(1))
+        .any(|(first, second)| {
+            CASE_DECLARATORS.contains(&first.text)
+                && !first.is_member()
+                && second.is_member()
+                && second.is_called()
+                && MEMBERS.iter().any(|(name, _)| *name == second.text)
+        })
+        || (titled
+            && spoken.iter().any(|word| {
+                word.is_called()
+                    && !word.is_member()
+                    && word.text.len() > 1
+                    && PREFIXES
+                        .iter()
+                        .any(|(letter, _)| word.text.starts_with(*letter))
+                    && CASE_DECLARATORS.contains(&&word.text[1..])
+            }))
+}
+
 /// A decorator that takes the case out of the run, whichever module it came
 /// from: the last segment of the name is what decides.
 fn decorator_marker(code: &str) -> Option<Marker> {

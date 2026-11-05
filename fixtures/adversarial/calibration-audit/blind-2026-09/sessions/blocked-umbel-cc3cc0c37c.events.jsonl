@@ -1,2 +1,0 @@
-{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/blocked-umbel-cc3cc0c37c.md", "sha256": "85b27aa7598e55a1546b509b85a49ffb6b4330b061a25a9f1f01c72c96b9352c", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered packet SHA-256: 85b27aa7598e55a1546b509b85a49ffb6b4330b061a25a9f1f01c72c96b9352c\nVerdict: acceptable\nReasoning: The TODO comments are real, but they document an inferred, defensively-handled tool-call shape rather than a stub; the code works, so the block is friction."}

@@ -350,7 +350,7 @@ pub fn render_table(findings: &[Finding]) -> String {
 
     let indent = " ".repeat(level_width.unwrap_or_default() + 2);
     let mut table = String::new();
-    for row in &rows {
+    for (index, row) in rows.iter().enumerate() {
         let line = format!(
             "{level:<level_width$}  {rule:<rule_width$}  {place:<place_width$}  {what}",
             level = row.level.word(),
@@ -363,6 +363,20 @@ pub fn render_table(findings: &[Finding]) -> String {
         );
         table.push_str(line.trim_end());
         table.push('\n');
+        // A finding that says what an earlier row already said, the same rule
+        // with the same why and next, names that row instead of saying it again:
+        // one conflict block is three markers and one fact. The log keeps every
+        // result whole, because a consumer reads a result on its own.
+        if let Some(first) = rows[..index]
+            .iter()
+            .find(|earlier| says_the_same(earlier, row))
+        {
+            table.push_str(&format!(
+                "{indent}{:<LABEL_WIDTH$}{} for why and next\n",
+                "see", first.place
+            ));
+            continue;
+        }
         for (label, text) in [("why", &row.why), ("next", &row.next)] {
             for (index, part) in wrapped(text).into_iter().enumerate() {
                 let label = if index == 0 { label } else { "" };
@@ -440,6 +454,12 @@ fn row(finding: &Finding) -> Row {
         why: finding.message.why.trim().to_string(),
         next: finding.message.next.trim().to_string(),
     }
+}
+
+/// Whether two rows say one thing: the same rule, the same why, the same next.
+/// The what is each finding's own and is never folded.
+fn says_the_same(left: &Row, right: &Row) -> bool {
+    left.rule == right.rule && left.why == right.why && left.next == right.next
 }
 
 fn counted(count: usize, word: &str) -> String {

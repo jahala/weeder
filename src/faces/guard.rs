@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 use crate::core::finding::{Finding, Level};
 use crate::core::guard::{self, Hook, PushRef};
 use crate::core::sarif::{EXIT_BLOCKED, EXIT_CLEAN, EXIT_COULD_NOT_RUN};
-use crate::core::suppress::TRAILER;
+use crate::core::suppress::{SuppressionSource, TRAILER};
 use crate::faces::{check, read_law, Answer};
 use crate::seams::{fs, git};
 
@@ -544,26 +544,28 @@ fn uninstall(root: &Path) -> Result<Answer, String> {
 
 /// Pre-commit judges the index before a message exists, so the one allowance a
 /// person is entitled to write, a `Weeder-allow:` trailer on this commit, is not
-/// on disk yet and this hook can honour none of it. What it does instead is say
-/// what blocks and name, for each rule, the exact trailer that would allow it,
-/// and leave the verdict to commit-msg, which reads the message the person
-/// wrote. The deferral holds only while there is a stage to defer to: with the
-/// commit-msg hook gone, pre-commit refuses here, because a gate that hands its
-/// verdict to a hook nobody runs is not a gate.
+/// on disk yet and this hook can honour none of it. What it does instead is say,
+/// in one line, what blocks and the exact trailer that would allow it, and leave
+/// the verdict to commit-msg, which reads the message the person wrote. The
+/// table is commit-msg's to print: the two stages judge one index, and printing
+/// it from both showed every finding twice (#78, #88), from a hook that then
+/// passed. The deferral holds only while there is a stage to defer to: with the
+/// commit-msg hook gone, pre-commit refuses here and prints the table itself,
+/// because a gate that hands its verdict to a hook nobody runs is not a gate.
 fn pre_commit(root: &Path, version: &str) -> Result<Answer, String> {
     let judged = check::verdict(&judgement(root, version, None, None));
     let answer = judged.answer;
     if answer.code != EXIT_BLOCKED {
         return Ok(answer);
     }
-    let named = named_before_the_message(&judged.findings);
     if reads_the_message(root)? {
         return Ok(Answer {
             code: EXIT_CLEAN,
-            stdout: format!("{}{named}", answer.stdout),
+            stdout: deferred(&judged.findings),
             ..answer
         });
     }
+    let named = named_before_the_message(&judged.findings);
     Ok(Answer {
         stdout: format!(
             "{}{named}{}",
@@ -586,11 +588,18 @@ fn commit_msg(root: &Path, version: &str, request: &CommitMsg) -> Result<Answer,
     let judged = check::verdict(&judged);
     let answer = judged.answer;
     if answer.code != EXIT_BLOCKED {
-        // pre-commit already wrote the receipt for this very index a moment
-        // ago. A second stage saying the same nothing is noise on every commit
-        // anyone makes, so this one speaks only when it has something to refuse.
+        // Where the index blocked without the message, pre-commit deferred here
+        // in one line and printed no table, so this stage prints it: the allowed
+        // findings, as the notes they now are, are the commit's receipt.
+        // Anywhere else pre-commit already wrote the receipt for this very
+        // index a moment ago, and a second copy is noise on every commit.
+        let receipt = judged.findings.iter().any(allowed_by_the_message);
         return Ok(Answer {
-            stdout: String::new(),
+            stdout: if receipt {
+                answer.stdout
+            } else {
+                String::new()
+            },
             ..answer
         });
     }
@@ -607,8 +616,55 @@ fn commit_msg(root: &Path, version: &str, request: &CommitMsg) -> Result<Answer,
     })
 }
 
-/// What pre-commit says about each rule that blocked: the exact trailer a person
-/// writes to allow it, and the stage that will read it, since this one cannot.
+/// The one line pre-commit prints when it leaves the verdict to commit-msg:
+/// what blocks, the trailer that would allow each rule, and the stage that
+/// reads it and prints the findings.
+fn deferred(findings: &[Finding]) -> String {
+    let rules = blocking(findings);
+    let trailers: Vec<String> = rules
+        .iter()
+        .map(|rule| format!("`{TRAILER} {rule} <reason>`"))
+        .collect();
+    let (verb, allows) = if rules.len() == 1 {
+        ("blocks", "allows it")
+    } else {
+        ("block", "allow them")
+    };
+    format!(
+        "pre-commit: {} {verb} this index. commit-msg reads this commit's message, where {} {allows}, and prints the findings.\n",
+        listed(&rules),
+        listed(&trailers)
+    )
+}
+
+/// Words joined the way a sentence lists them: `a`, `a and b`, `a, b and c`.
+fn listed<T: AsRef<str>>(words: &[T]) -> String {
+    match words {
+        [] => String::new(),
+        [only] => only.as_ref().to_string(),
+        [rest @ .., last] => format!(
+            "{} and {}",
+            rest.iter()
+                .map(AsRef::as_ref)
+                .collect::<Vec<&str>>()
+                .join(", "),
+            last.as_ref()
+        ),
+    }
+}
+
+/// Whether a finding that would have blocked was allowed by a trailer of the
+/// message being written, which is exactly when pre-commit deferred.
+fn allowed_by_the_message(finding: &Finding) -> bool {
+    finding.suppressed.as_ref().is_some_and(|suppression| {
+        suppression.source == SuppressionSource::CommitTrailer
+            && suppression.original_level == Some(Level::Block)
+    })
+}
+
+/// What pre-commit says about each rule that blocked when it refuses on its
+/// own: the exact trailer a person writes to allow it, and the stage that would
+/// read it, since this one cannot.
 fn named_before_the_message(findings: &[Finding]) -> String {
     blocking(findings)
         .iter()

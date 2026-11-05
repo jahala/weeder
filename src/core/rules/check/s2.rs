@@ -128,7 +128,13 @@ fn is_hollow(lang: Lang, mask: &Mask, line: u32, after: usize) -> bool {
     if idiom::is_annotated(mask, span) {
         return false;
     }
-    let Some(body) = idiom::body(lang, mask, span) else {
+    // A handler written on one line shares it with the block it handles, so a
+    // braced body is read from the brace this handler opens.
+    let body = match lang {
+        Lang::Python => idiom::body(lang, mask, span),
+        _ => idiom::braced_body_at(mask, line, after),
+    };
+    let Some(body) = body else {
         return false;
     };
     idiom::does_nothing(&idiom::statements(&body))

@@ -129,6 +129,13 @@ const COLLECTING: &[&str] = &[
     "path", "dir", "root", "file", "include", "match", "spec", "glob",
 ];
 
+/// The words a key or the table it sits in is spelled with when what it names
+/// runs around the suites rather than choosing them: a file loaded before each
+/// suite, a hook run once before the run, the files a coverage report measures
+/// or leaves out. `setupFiles` is spelled with `file` and a coverage table
+/// holds an `exclude`, and neither takes a suite out of the run (#96).
+const SUPPORTING: &[&str] = &["setup", "teardown", "coverage"];
+
 /// The words a name is spelled with when what it holds is a command line rather
 /// than a list of paths. A value weeder read as arguments without being told it
 /// was arguments would make a sentence somebody wrote into a pattern.
@@ -890,6 +897,16 @@ fn sense(stated: &Stated) -> Sense {
         };
     }
     let key = stated.key.to_ascii_lowercase();
+    let supporting = SUPPORTING.iter().any(|word| {
+        key.contains(word)
+            || stated
+                .scope
+                .iter()
+                .any(|held| held.to_ascii_lowercase().contains(word))
+    });
+    if supporting {
+        return Sense::Quiet;
+    }
     if EXCLUDING.iter().any(|word| key.contains(word)) {
         return Sense::Excluding;
     }
@@ -953,9 +970,19 @@ fn interpret(
         .path
         .rsplit_once('/')
         .map_or("", |(directory, _)| directory);
+    // A runner reads the settings file it finds above the suites it runs, so a
+    // file in one package says nothing about another package's suites, or
+    // about the scripts beside them that another runner collects (#96).
     let mine: Vec<&Suite> = suites
         .iter()
         .filter(|suite| settings.governs.contains(&suite.lang))
+        .filter(|suite| {
+            directory.is_empty()
+                || suite
+                    .path
+                    .strip_prefix(directory)
+                    .is_some_and(|rest| rest.starts_with('/'))
+        })
         .collect();
     if mine.is_empty() {
         return;

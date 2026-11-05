@@ -1,6 +1,6 @@
 //! The globs `[scope] allow` and `--scope` are written in.
 
-use weeder::core::glob::{matches, matches_any};
+use weeder::core::glob::{matches, matches_any, overlap};
 
 #[test]
 fn a_single_star_stops_at_a_separator() {
@@ -41,4 +41,45 @@ fn any_of_several_globs_allows_a_path_and_none_allows_nothing() {
         !matches_any(&[], "anything"),
         "an empty list allows nothing"
     );
+}
+
+#[test]
+fn two_globs_overlap_where_one_path_matches_both() {
+    for (left, right, path) in [
+        ("docs/**", "**/*.md", "docs/guide.md"),
+        ("docs/*", "*/keep", "docs/keep"),
+        ("**/*.ts", "src/*.ts", "src/a.ts"),
+        ("src/?.ts", "src/a*", "src/a.ts"),
+        (
+            ".github/workflows/**",
+            ".github/**",
+            ".github/workflows/ci.yml",
+        ),
+        ("**/x", "x", "x"),
+    ] {
+        assert!(
+            matches(left, path) && matches(right, path),
+            "{path} matches both, or this case proves nothing"
+        );
+        assert!(overlap(left, right), "{left} and {right} meet at {path}");
+        assert!(overlap(right, left), "and the answer has no direction");
+    }
+}
+
+#[test]
+fn two_globs_that_no_path_matches_together_do_not_overlap() {
+    for (left, right) in [
+        ("docs/**", "test/**"),
+        ("*.ts", "src/*.ts"),
+        ("src/*", "src/a/b"),
+        ("**/*.md", "**/*.ts"),
+        ("src/?.ts", "src/ab.ts"),
+        ("a", "b"),
+    ] {
+        assert!(
+            !overlap(left, right),
+            "{left} and {right} name no common path"
+        );
+        assert!(!overlap(right, left), "either way round");
+    }
 }

@@ -102,6 +102,51 @@ pub fn body(lang: Lang, mask: &Mask, span: Block) -> Option<String> {
     }
 }
 
+/// What the brace opened at or after character `after` of line `from` holds, up
+/// to the brace that closes it, with comments blanked as [`body`] blanks them.
+///
+/// [`body`] reads from the first brace on the block's first line to the last
+/// one on its last, which is the block's own body whenever the block has its
+/// lines to itself. Written on one line, a handler shares it:
+/// `try { parse(); } catch {}` holds the try's braces before the catch opens,
+/// and a `finally` may follow it, so the body is read from the brace the caller
+/// points at to the one that closes it, and nothing either side (#75).
+#[must_use]
+pub fn braced_body_at(mask: &Mask, from: u32, after: usize) -> Option<String> {
+    let mut body = String::new();
+    let mut depth = 0_i32;
+    for line in from..=mask.line_count() {
+        let skip = if line == from { after } else { 0 };
+        if depth > 0 {
+            body.push('\n');
+        }
+        let code = mask.code(line);
+        let text = mask.outside_comments(line);
+        for (counted, written) in code.chars().zip(text.chars()).skip(skip) {
+            match counted {
+                '{' => {
+                    depth += 1;
+                    if depth == 1 {
+                        continue;
+                    }
+                }
+                '}' if depth == 1 => return Some(body),
+                '}' if depth > 1 => depth -= 1,
+                _ => {}
+            }
+            if depth > 0 {
+                body.push(written);
+            }
+        }
+        // The brace has to open on the line the caller points at, as it does
+        // for [`block`].
+        if depth == 0 {
+            return None;
+        }
+    }
+    None
+}
+
 /// Whether a block says anything to the next reader.
 #[must_use]
 pub fn is_annotated(mask: &Mask, span: Block) -> bool {

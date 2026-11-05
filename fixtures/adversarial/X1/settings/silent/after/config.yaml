@@ -1,0 +1,4 @@
+service:
+  name: billing
+  api_key: $BILLING_API_TOKEN_ROTATED_2026_Q3
+  token_warning: That doesn't look like a billing token. Are you sure?

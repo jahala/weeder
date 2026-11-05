@@ -1,2 +1,0 @@
-{"type": "input", "case": "recall:S2:py:copeca:387932ad5:tests/e2e/fake_agent.py:61", "sha256": "da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered report SHA-256: da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e\nVerdict: miss\nReasoning: A catch handler that silently discards the exception is the S2 \"error swallowed\" shape, planted at the site and not reported by weeder."}

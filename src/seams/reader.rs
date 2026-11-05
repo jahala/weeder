@@ -19,7 +19,7 @@ use tilth_core::{
     OutlineEntry, OutlineKind, TestKind,
 };
 
-use crate::core::classify::Lang;
+use crate::core::classify::{classify_file, Lang};
 use crate::core::read::{
     CallerSite, Definition, DefinitionKind, Import, Outline, TestShape, TestUnit, TestUnitKind,
 };
@@ -58,6 +58,15 @@ pub fn language(path: &Path) -> Lang {
         Some(tilth_core::Lang::Go) => Lang::Go,
         _ => Lang::Other,
     }
+}
+
+/// Whether a path is code in a language weeder carries no rules for: tilth
+/// knows it for a language, a shell script, a makefile, Java, and weeder reads
+/// it as [`Lang::Other`], so no rule judges a line of it. A file that is not
+/// code at all, prose or data, is not one: there is no language in it to read.
+#[must_use]
+pub fn is_unread_code(path: &Path) -> bool {
+    code_language(path).is_some() && classify_file(path, "").lang == Lang::Other
 }
 
 /// What a file declares. A file in a language with no grammar behind it, or one

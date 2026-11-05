@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T6:ts:tend2:fadcb3808:test/verify.test.ts:176", "sha256": "0927501b826f9c61ebff9d366cd80c1a622b1a975bca84104ba80b90786beb49", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 0927501b826f9c61ebff9d366cd80c1a622b1a975bca84104ba80b90786beb49\nVerdict: miss\nReasoning: An error assertion that stops naming the error is a genuine T6 weakening, and the report confirms weeder did not flag the planted site."}

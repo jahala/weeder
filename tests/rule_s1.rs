@@ -404,6 +404,151 @@ fn s1_warns_where_the_base_is_exported_through_an_entry_file() {
     }
 }
 
+/// A language's handling fixture: the production file, the not-implemented
+/// error it handles, the forms of handling it writes, and the one line that
+/// hands the error out as a body's answer.
+struct Handling {
+    name: &'static str,
+    path: &'static str,
+    error: &'static str,
+    handled: &'static [&'static str],
+    handed_out: &'static str,
+}
+
+/// Code that answers callers who reach a placeholder somewhere else: it imports
+/// the error, checks a failure against it, and catches it. None of that is a
+/// body nobody wrote. The last function of each file does hand one out, and
+/// that one is the stub (#94).
+const HANDLING: [Handling; 4] = [
+    Handling {
+        name: "ts",
+        path: "src/peer.ts",
+        error: "NotImplemented",
+        handled: &["import {", "instanceof"],
+        handed_out: "throw new NotImplemented(id);",
+    },
+    Handling {
+        name: "py",
+        path: "src/peer.py",
+        error: "NotImplemented",
+        handled: &["import", "isinstance(", "except"],
+        handed_out: "raise NotImplementedError(name)",
+    },
+    Handling {
+        name: "rs",
+        path: "src/peer.rs",
+        error: "NotImplemented",
+        handled: &["use crate", "=>", "matches!(", "error: NotImplemented"],
+        handed_out: "unimplemented!()",
+    },
+    Handling {
+        name: "go",
+        path: "peer.go",
+        error: "NotImplemented",
+        handled: &["type NotImplemented", "var missing", "case *"],
+        handed_out: "return &NotImplemented{",
+    },
+];
+
+#[test]
+fn s1_is_silent_on_code_that_handles_a_not_implemented_error_and_blocks_a_body_that_raises_one() {
+    for language in HANDLING {
+        let name = language.name;
+        let source = fixture_file("S1", name, "handling/after", language.path);
+        for form in language.handled {
+            assert!(
+                source
+                    .lines()
+                    .any(|line| line.contains(form) && line.contains(language.error)),
+                "{name}: the fixture has to name `{}` in a `{form}`, or the silence proves nothing",
+                language.error
+            );
+        }
+        let expected: Vec<u64> = source
+            .lines()
+            .enumerate()
+            .filter(|(_, line)| line.contains(language.handed_out))
+            .map(|(index, _)| index as u64 + 1)
+            .collect();
+        assert_eq!(
+            expected.len(),
+            1,
+            "{name}: the fixture hands the error out once"
+        );
+
+        let run = fixture("S1", name, "handling").weeder(&["check"]);
+        let reported: Vec<u64> = run
+            .findings()
+            .into_iter()
+            .filter(|finding| finding.rule == "S1")
+            .filter_map(|finding| finding.line)
+            .collect();
+        assert_eq!(
+            reported, expected,
+            "{name}: only the body that hands the error out is a stub\n{}",
+            run.stderr
+        );
+        assert_eq!(run.code, 2, "{name}: and it blocks");
+    }
+}
+
+/// A language's foreign fixture: the production file, the comparison it writes
+/// against a variable called `todo`, and the language's own stub marker where
+/// the file carries one.
+const FOREIGN: [(&str, &str, &str, Option<&str>); 4] = [
+    ("ts", "src/translate.ts", "todo !== null", None),
+    (
+        "py",
+        "src/translate.py",
+        "todo != None",
+        Some("raise NotImplementedError"),
+    ),
+    ("rs", "src/translate.rs", "todo != done", Some("todo!()")),
+    ("go", "translate.go", "todo != nil", None),
+];
+
+#[test]
+fn s1_reads_each_language_s_own_stub_markers_and_no_other_s() {
+    for (name, path, comparison, own) in FOREIGN {
+        let source = fixture_file("S1", name, "foreign/after", path);
+        assert!(
+            source.lines().any(|line| line.contains(comparison)),
+            "{name}: the fixture compares a variable called `todo`, or the silence proves nothing"
+        );
+        let expected: Vec<u64> = own.map_or_else(Vec::new, |marker| {
+            source
+                .lines()
+                .enumerate()
+                .filter(|(_, line)| line.contains(marker))
+                .map(|(index, _)| index as u64 + 1)
+                .collect()
+        });
+        assert_eq!(
+            expected.len(),
+            usize::from(own.is_some()),
+            "{name}: the language's own marker is written once where it is written"
+        );
+
+        let run = fixture("S1", name, "foreign").weeder(&["check"]);
+        let reported: Vec<u64> = run
+            .findings()
+            .into_iter()
+            .filter(|finding| finding.rule == "S1")
+            .filter_map(|finding| finding.line)
+            .collect();
+        assert_eq!(
+            reported, expected,
+            "{name}: `{comparison}` is a comparison, and only the language's own marker is a stub\n{}",
+            run.stderr
+        );
+        assert_eq!(
+            run.code,
+            if own.is_some() { 2 } else { 0 },
+            "{name}: the exit says whether a stub was found"
+        );
+    }
+}
+
 /// Whether a source declares a type of that name: the name written as a word on
 /// a line that opens a block, which is how every language weeder reads spells a
 /// declaration.

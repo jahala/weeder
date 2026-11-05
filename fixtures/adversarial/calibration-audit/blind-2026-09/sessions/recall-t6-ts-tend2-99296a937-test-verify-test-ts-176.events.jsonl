@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t6-ts-tend2-99296a937-test-verify-test-ts-176.md", "sha256": "0b02501f375ed2752af2087aaf5c4edf70699cb1cf0eb1a8a2b8e5ff6c27e555", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered packet SHA-256: 0b02501f375ed2752af2087aaf5c4edf70699cb1cf0eb1a8a2b8e5ff6c27e555\nVerdict: miss\nReasoning: The change removes the `/description/` matcher from `.toThrow()`, so the error assertion was genuinely weakened, and weeder reported nothing."}

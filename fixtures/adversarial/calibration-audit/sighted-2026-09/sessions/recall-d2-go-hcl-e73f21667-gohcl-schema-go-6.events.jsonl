@@ -1,2 +1,0 @@
-{"type": "input", "case": "recall:D2:go:hcl:e73f21667:gohcl/schema.go:6", "sha256": "da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered report SHA-256: da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e\nVerdict: not-a-case\nReasoning: gohcl and hcldec are independent sibling packages in hcl/v2 with no forbidden boundary between them, so this import crosses no genuine boundary; weeder rightly ignored it."}

@@ -20,7 +20,7 @@
 //!
 //! Two more read the moves that only look like one. A case that arrives under
 //! its old name making fewer assertions is a case written over, and counts as
-//! gone. A test file moved into a `[scope] specimens` directory leaves the
+//! gone. A test file moved into a `[scope] exclude` directory leaves the
 //! tree weeder judges, and is judged as deleted from the path it left.
 //!
 //! Every number here is counted off the fixture by this file's own reading of
@@ -653,10 +653,10 @@ fn t1_judges_a_test_moved_into_a_specimen_directory_as_deleted() {
         assert_eq!(t1[0].level, "error", "{name}: T1 blocks");
         assert_eq!(run.code, 2, "{name}: {}", run.stderr);
         assert!(
-            findings
-                .iter()
-                .any(|finding| finding.rule == "SPECIMEN" && finding.path == moved),
-            "{name}: where it went is noted as the specimen it now is: {findings:#?}"
+            findings.iter().any(|finding| finding.rule == "EXCLUDED"
+                && finding.path == "fixtures/adversarial/"
+                && finding.message.contains("1 file")),
+            "{name}: where it went is noted as excluded, counted under the pattern: {findings:#?}"
         );
     }
 }
@@ -666,7 +666,7 @@ fn a_file_moved_from_one_specimen_directory_to_another_stays_set_aside() {
     let repo = common::Repo::init();
     repo.write(
         "weeder.toml",
-        "[scope]\nspecimens = [\"fixtures/adversarial\"]\n",
+        "[scope]\nexclude = [\"fixtures/adversarial/\"]\n",
     );
     let suite = fixture_file("T1", "ts", "moved/before", "src/parser.test.ts");
     repo.write("fixtures/adversarial/one/parser.test.ts", &suite);
@@ -687,9 +687,60 @@ fn a_file_moved_from_one_specimen_directory_to_another_stays_set_aside() {
         .collect();
     assert_eq!(
         rules,
-        vec!["SPECIMEN".to_string()],
+        vec!["EXCLUDED".to_string()],
         "a specimen that stays a specimen is noted and judged by nothing: {}",
         run.output()
     );
     assert_eq!(run.code, 0);
+}
+
+/// Each language's skipped fixture: the suite whose cases are turned off,
+/// focused or left to do rather than deleted, and the marks it writes to do so.
+const SKIPPED: [(&str, &str, &[&str]); 4] = [
+    (
+        "ts",
+        "src/format.test.ts",
+        &[".skip(", ".only(", "xit(", ".todo("],
+    ),
+    ("py", "tests/test_format.py", &["@pytest.mark."]),
+    ("rs", "tests/format.rs", &["#[ignore"]),
+    ("go", "format_test.go", &["t.Skip"]),
+];
+
+#[test]
+fn a_case_turned_skip_focus_or_todo_is_t3_s_finding_and_not_a_case_gone() {
+    for (name, path, marks) in SKIPPED {
+        let source = fixture_file("T1", name, "skipped/after", path);
+        let marked: Vec<u64> = source
+            .lines()
+            .enumerate()
+            .filter(|(_, line)| marks.iter().any(|mark| line.contains(mark)))
+            .map(|(index, _)| index as u64 + 1)
+            .collect();
+        assert!(
+            marked.len() >= 2,
+            "{name}: the fixture turns cases off, or the silence proves nothing"
+        );
+
+        let run = fixture("T1", name, "skipped").weeder(&["check"]);
+        let findings = run.findings();
+        let deleted: Vec<_> = findings
+            .iter()
+            .filter(|finding| finding.rule == "T1")
+            .collect();
+        assert!(
+            deleted.is_empty(),
+            "{name}: a case turned off is still declared, so nothing disappeared: {deleted:#?}"
+        );
+        let skipped: Vec<u64> = findings
+            .iter()
+            .filter(|finding| finding.rule == "T3")
+            .filter_map(|finding| finding.line)
+            .collect();
+        assert_eq!(
+            skipped, marked,
+            "{name}: T3 reports every mark, which is the finding the change earned"
+        );
+        assert_eq!(run.code, 2, "{name}: and it blocks");
+    }
 }

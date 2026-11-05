@@ -1,2 +1,0 @@
-{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/blocked-tend2-52b97e43ce.md", "sha256": "63d4272691bbac21e122d527b59642b4f22f61d03b0d251273434514126244c7", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered packet SHA-256: 63d4272691bbac21e122d527b59642b4f22f61d03b0d251273434514126244c7\nVerdict: false-positive\nReasoning: The packet omits the diff entirely, so no secret-looking string is observable at lines 776 or 791; the claim cannot be confirmed true."}

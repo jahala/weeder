@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
 
+use crate::core::glob;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FileKind {
     Test,
@@ -107,18 +109,30 @@ fn classify_lang(path: &Path) -> Lang {
 
 /// Where a forge keeps the runs it performs on a change. A repository states
 /// its own by-laws here, and every one of them is a file somebody edits.
+pub const WORKFLOWS: &[&str] = &[".github/workflows/**"];
+
+/// The files that decide what the checks do: weeder's own law, the two
+/// instruction files whose hard limits C1 reads, the hooks git runs, and the
+/// settings an agent harness reads. A path pattern in `weeder.toml` that can
+/// cover one of these is refused, so this list is the one both read.
+pub const GUARDRAILS: &[&str] = &[
+    "weeder.toml",
+    "AGENTS.md",
+    "CLAUDE.md",
+    ".claude/CLAUDE.md",
+    ".codex/**",
+    ".githooks/**",
+    ".gemini/settings.json",
+    ".claude/settings*.json",
+    ".claude/settings*/**/*.json",
+];
+
 fn is_workflow(path: &str) -> bool {
-    path.starts_with(".github/workflows/")
+    WORKFLOWS.iter().any(|glob| glob::matches(glob, path))
 }
 
 fn is_guardrail(path: &str) -> bool {
-    path == "weeder.toml"
-        || path == "AGENTS.md"
-        || path == "CLAUDE.md"
-        || path.starts_with(".codex/")
-        || path.starts_with(".githooks/")
-        || path == ".gemini/settings.json"
-        || (path.starts_with(".claude/settings") && path.ends_with(".json"))
+    GUARDRAILS.iter().any(|glob| glob::matches(glob, path))
 }
 
 fn is_manifest(path: &str) -> bool {

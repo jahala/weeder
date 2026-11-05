@@ -1,2 +1,0 @@
-{"type": "input", "case": "blocked:tend2:78fed73b0c", "sha256": "da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered report SHA-256: da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e\nVerdict: acceptable\nReasoning: T1 correctly reports the spike's test files were deleted, and the 50 non-test files went with them, so no shipped behavior lost coverage."}

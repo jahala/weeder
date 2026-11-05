@@ -113,7 +113,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Block,
         short_description: "A configuration line took a test out of the run",
-        full_description: "An added or changed line of the runner's settings stops an existing test file from being collected, read from the settings file's kind and name rather than from any product. A line that names the file, or a pattern matching one, blocks; a line that narrows what the runner reads leaves the hidden set to be worked out, and warns. A setting whose value is built rather than written is reported unreadable instead of guessed at.",
+        full_description: "An added or changed line of the runner's settings stops an existing test file under the settings file's own directory from being collected, read from the settings file's kind and name rather than from any product. A setup, teardown or coverage setting chooses no test file. A line that names the file, or a pattern matching one, blocks; a line that narrows what the runner reads leaves the hidden set to be worked out, and warns. A setting whose value is built rather than written is reported unreadable instead of guessed at.",
         network: Network::None,
     },
     Rule {
@@ -169,7 +169,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Block,
         short_description: "A secret-looking string was added",
-        full_description: "An added line carries a known credential prefix, or a high-entropy literal assigned to a name that reads like a key. A credential a vendor published in its own documentation is named as an example and reported as a note.",
+        full_description: "An added line carries a known credential prefix, or a high-entropy literal assigned to a name that reads like a key, in source or in an env, YAML, TOML or INI file, where the literal is one run of characters rather than a sentence and reads nothing from the environment. A credential a vendor published in its own documentation is named as an example and reported as a note.",
         network: Network::None,
     },
     Rule {
@@ -185,7 +185,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Block,
         short_description: "A guardrail file was edited",
-        full_description: "A change touched a harness settings file, a git hook, `weeder.toml`, or the hard-limits section of `AGENTS.md` or `CLAUDE.md`.",
+        full_description: "A change touched a harness settings file, a git hook, `weeder.toml`, or a section of `AGENTS.md` or `CLAUDE.md` whose heading says hard limits or non-negotiables, or opens with never, or names one of `[guardrails] sections`.",
         network: Network::None,
     },
     Rule {

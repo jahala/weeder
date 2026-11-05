@@ -10,7 +10,9 @@
 //! face honours: a `Weeder-allow:` trailer on the commit. A marker on the line
 //! is read by plain `check` alone, never by a hook and never under `--strict`,
 //! so a finding that taught it would send an agent to write something that
-//! changes nothing, and then to try again (#68).
+//! changes nothing, and then to try again (#68). A warning that asks the change
+//! to say why names the same trailer, because that is where a change says it
+//! (#89), and so does a finding a warn-level rule blocks by override.
 
 mod common;
 
@@ -146,6 +148,17 @@ fn a_marker_and_a_conflict_marker_carry_the_edit_that_takes_the_line_back_out() 
     assert_eq!(proven, FIXED, "both rules that carry a fix are read");
 }
 
+/// The warn-level rules whose next action asks the change to say something:
+/// why the new expectation is right, why a step moved, why any failure will
+/// do. A trailer is where a change says it, and it quiets the warning to a
+/// note, so the next action names it (#89).
+const STATED: [&str; 3] = ["T5", "C3", "T6"];
+
+/// The fixtures where a rule that warns by default blocks one finding by
+/// override, and the folder each keeps that finding's case in. A finding that
+/// blocks names the trailer whatever level its rule defaults to.
+const OVERRIDDEN: [(&str, &str, &str); 1] = [("C3", "paths", "promoted")];
+
 #[test]
 fn every_block_level_next_names_the_trailer_and_none_teaches_the_line_marker() {
     let blocking: Vec<&str> = catalogue::rules()
@@ -157,45 +170,66 @@ fn every_block_level_next_names_the_trailer_and_none_teaches_the_line_marker() {
         blocking.len() >= BLOCKING.len(),
         "the catalogue blocks on at least the rules this file types by hand"
     );
-
-    for rule in blocking {
-        let trailer = format!("`Weeder-allow: {rule}");
-        let marker = format!("weeder-allow {rule}");
+    for rule in STATED {
+        assert!(
+            catalogue::rule(rule).is_some_and(|rule| rule.default_level == Level::Warn),
+            "{rule} is a warn-level rule, or it belongs with the blocking ones"
+        );
+    }
+    let mut read: Vec<(&str, String, &str, &str, i32)> = Vec::new();
+    for (rule, level, code) in blocking
+        .into_iter()
+        .map(|rule| (rule, "error", 2))
+        .chain(STATED.into_iter().map(|rule| (rule, "warning", 0)))
+    {
         let cases = fire_cases(rule);
         assert!(
             !cases.is_empty(),
-            "{rule}: a block-level rule has a fire fixture to read its message from"
+            "{rule}: the rule has a fire fixture to read its message from"
         );
-        for case in cases {
-            let run = fire(rule, &case);
-            let blocked: Vec<String> = results(&run)
-                .iter()
-                .filter(|result| result["ruleId"] == rule && result["level"] == "error")
-                .map(|result| {
-                    result["message"]["text"]
-                        .as_str()
-                        .expect("a result carries a message")
-                        .to_string()
-                })
-                .collect();
+        read.extend(
+            cases
+                .into_iter()
+                .map(|case| (rule, case, "fire", level, code)),
+        );
+    }
+    read.extend(
+        OVERRIDDEN
+            .into_iter()
+            .map(|(rule, case, variant)| (rule, case.to_string(), variant, "error", 2)),
+    );
+
+    for (rule, case, variant, level, code) in read {
+        let trailer = format!("`Weeder-allow: {rule}");
+        let marker = format!("weeder-allow {rule}");
+        let run = fixture(rule, &case, variant);
+        let reported: Vec<String> = results_exiting(&run, code)
+            .iter()
+            .filter(|result| result["ruleId"] == rule && result["level"] == level)
+            .map(|result| {
+                result["message"]["text"]
+                    .as_str()
+                    .expect("a result carries a message")
+                    .to_string()
+            })
+            .collect();
+        assert!(
+            !reported.is_empty(),
+            "{rule}/{case}/{variant}: the fixture reports its own rule at {level}"
+        );
+        for message in reported {
+            let parts = sentences(&message);
+            let next = parts.last().expect("a message has a next action");
             assert!(
-                !blocked.is_empty(),
-                "{rule}/{case}: the fire fixture blocks on its own rule"
+                next.contains(&trailer),
+                "{rule}/{case}/{variant}: the next action names the {trailer} <reason>` \
+                 trailer, the allowance every face reads: {message}"
             );
-            for message in blocked {
-                let parts = sentences(&message);
-                let next = parts.last().expect("a message has a next action");
-                assert!(
-                    next.contains(&trailer),
-                    "{rule}/{case}: the next action names the {trailer} <reason>` trailer, \
-                     the allowance every face reads: {message}"
-                );
-                assert!(
-                    !message.contains(&marker),
-                    "{rule}/{case}: no hook and no --strict run honours `{marker}:` on a \
-                     line, so the message does not teach it: {message}"
-                );
-            }
+            assert!(
+                !message.contains(&marker),
+                "{rule}/{case}/{variant}: no hook and no --strict run honours `{marker}:` \
+                 on a line, so the message does not teach it: {message}"
+            );
         }
     }
 }
@@ -222,8 +256,18 @@ fn fire(rule: &str, case: &str) -> Repo {
 }
 
 fn results(repo: &Repo) -> Vec<serde_json::Value> {
+    results_exiting(repo, 2)
+}
+
+/// The results of a run that leaves with `code`: 2 for a fire fixture that
+/// blocks, 0 for one that warns.
+fn results_exiting(repo: &Repo, code: i32) -> Vec<serde_json::Value> {
     let run = repo.weeder(&["check"]);
-    assert_eq!(run.code, 2, "a fire fixture blocks\n{}", run.stderr);
+    assert_eq!(
+        run.code, code,
+        "a fire fixture leaves with {code}\n{}",
+        run.stderr
+    );
     run.log()["runs"][0]["results"]
         .as_array()
         .expect("a run carries a results array")

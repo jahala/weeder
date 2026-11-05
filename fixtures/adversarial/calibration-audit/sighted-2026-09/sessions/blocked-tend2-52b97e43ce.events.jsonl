@@ -1,2 +1,0 @@
-{"type": "input", "case": "blocked:tend2:52b97e43ce", "sha256": "da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered report SHA-256: da664a25f78db3dcd43102be448589f6c4d5a6c84db63bf60a25fc4a25c5385e\nVerdict: false-positive\nReasoning: X1 misread class attributes `class=\"...__key\">` as secret assignments; the values are renderer markup, not credentials, so no secret was added."}

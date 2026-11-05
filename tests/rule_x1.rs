@@ -5,16 +5,18 @@
 //! its name and its disorder rather than by any prefix at all. The lines weeder
 //! must report are read off the fixture here by the shapes this file planted.
 //!
-//! The neighbour is the four ways a line looks like this and is not: a short
+//! The neighbour is the five ways a line looks like this and is not: a short
 //! value under a key name, a placeholder waiting to be filled in, the digests a
-//! lockfile is made of, and a key name given a read of the environment or any
-//! other expression rather than a literal (#62).
+//! lockfile is made of, a key name given a read of the environment or any
+//! other expression rather than a literal (#62), and a sentence under a key
+//! name (#93).
 //!
 //! The two paths reach different files. A stamped token is a credential
 //! wherever it lands, a note, a page, a log, so the prefix path reads every
-//! file. Reading a name and a value apart takes a language weeder knows the
-//! grammar of, and outside one, `name = value` is a css class, an attribute or
-//! a sentence with a colon in it, so the second path reads source alone.
+//! file. Reading a name and a value apart takes a grammar, and outside one,
+//! `name = value` is a css class, an attribute or a sentence with a colon in
+//! it, so the second path reads source and the env, YAML, TOML and INI files
+//! whose every line is a name and a value (#90).
 //!
 //! Both paths make one exception, and it is a list of exact strings rather than
 //! a shape: the credentials vendors print in their own documentation. Those are
@@ -381,7 +383,7 @@ fn quoted_by_any(tail: &str) -> Option<&str> {
 /// Whether a name is written from a word that names a credential.
 fn holds_key_word(name: &str) -> bool {
     let lowered = name.to_ascii_lowercase();
-    ["key", "secret", "token", "password", "credential"]
+    ["key", "secret", "token", "password", "passwd", "credential"]
         .iter()
         .any(|word| lowered.contains(word))
 }
@@ -642,4 +644,192 @@ fn a_line_that_quotes_an_example_and_carries_a_credential_still_blocks() {
         "the credential decides the line, or a manual is somewhere to hide one"
     );
     assert_eq!(run.code, 2, "a credential blocks\n{}", run.stderr);
+}
+
+// ---------------------------------------------------------------------------
+// A sentence under a key-like name (#93)
+// ---------------------------------------------------------------------------
+
+/// The name each language's neighbour gives a sentence, the warning a form
+/// shows when what was pasted is not a token. The name says token and the value
+/// is long and mixed enough to pass for disorder, so only its spaces say it is
+/// prose.
+const PROSE_NAMES: [(&str, &str); 4] = [
+    ("ts", "GITHUB_TOKEN_WARNING"),
+    ("py", "GITHUB_TOKEN_WARNING"),
+    ("rs", "GITHUB_TOKEN_WARNING"),
+    ("go", "GitHubTokenWarning"),
+];
+
+/// How many words separated by spaces make a value read as prose. A credential
+/// is one run of characters; a scheme and a credential, `Bearer` and its token,
+/// are two.
+const PROSE_WORDS: usize = 3;
+
+#[test]
+fn a_sentence_under_a_key_like_name_is_silent_and_a_disordered_value_under_it_blocks() {
+    for ((name, path), (lang, assigned)) in LANGUAGES.into_iter().zip(PROSE_NAMES) {
+        assert_eq!(name, lang, "the two tables walk the languages in one order");
+        let honest = fixture_file("X1", name, "silent/after", path);
+        let line = honest
+            .lines()
+            .find(|line| line.contains(assigned))
+            .unwrap_or_else(|| panic!("{name}: the neighbour assigns a sentence to `{assigned}`"));
+        let sentence = quoted(line).unwrap_or_else(|| panic!("{name}: {line} quotes a value"));
+        assert!(
+            holds_key_word(assigned)
+                && sentence.chars().count() >= 20
+                && entropy(sentence) > 4.0
+                && sentence.split_whitespace().count() >= PROSE_WORDS,
+            "{name}: the sentence has to be long and mixed enough to read as disorder, \
+             under a key-like name, or its silence proves nothing"
+        );
+
+        let silent = fixture("X1", name, "silent").weeder(&["check"]);
+        let flagged: Vec<Finding> = silent
+            .findings()
+            .into_iter()
+            .filter(|finding| finding.rule == "X1")
+            .collect();
+        assert_eq!(
+            flagged,
+            Vec::new(),
+            "{name}: a sentence is prose whatever the name it is assigned to says"
+        );
+
+        // The same line with a disordered value in place of the sentence. The
+        // value is read off the fire fixture, so this file never spells one.
+        let disordered = fixture_file("X1", name, "fire/after", path)
+            .lines()
+            .find(|line| line.contains(DISORDERED))
+            .and_then(quoted)
+            .map(ToString::to_string)
+            .unwrap_or_else(|| panic!("{name}: the fire fixture assigns a disordered value"));
+        let repo = common::Repo::init();
+        repo.write(path, &honest.replace(sentence, &disordered));
+        let run = repo.weeder(&["check"]);
+        let named = run
+            .findings()
+            .into_iter()
+            .find(|finding| {
+                finding.rule == "X1" && finding.message.contains(&format!("`{assigned}`"))
+            })
+            .unwrap_or_else(|| {
+                panic!(
+                    "{name}: a disordered value under `{assigned}` is reported\n{}",
+                    run.stderr
+                )
+            });
+        assert_eq!(named.level, "error", "{name}: and it blocks");
+        assert_eq!(run.code, 2, "{name}: a credential blocks");
+    }
+}
+
+// ---------------------------------------------------------------------------
+// The settings files a secret is most often committed in (#90)
+// ---------------------------------------------------------------------------
+
+/// The folder holding the settings fixtures: env, YAML, TOML and INI files,
+/// which are not source but do write a name and its value.
+const SETTINGS: &str = "settings";
+
+/// The settings files each fixture writes, and the key each fire fixture gives
+/// a disordered value, in the order weeder reports them. `.env` and YAML write
+/// values unquoted, and `password`'s short form is a key-like name too.
+const SETTINGS_PLANTED: [(&str, &str); 5] = [
+    (".env", "SECRET_KEY"),
+    (".env", "API_TOKEN"),
+    ("config.yaml", "api_key"),
+    ("settings.toml", "db_password"),
+    ("setup.ini", "passwd"),
+];
+
+#[test]
+fn x1_reads_assignments_in_env_yaml_toml_and_ini_files_as_those_files_write_them() {
+    let repo = fixture("X1", SETTINGS, "fire");
+    let run = repo.weeder(&["check"]);
+
+    assert_eq!(
+        run.code, 2,
+        "a credential in a settings file blocks\n{}",
+        run.stderr
+    );
+    let findings: Vec<Finding> = run
+        .findings()
+        .into_iter()
+        .filter(|finding| finding.rule == "X1")
+        .collect();
+    assert_eq!(
+        findings.len(),
+        SETTINGS_PLANTED.len(),
+        "one finding per planted value: {findings:#?}"
+    );
+    for ((path, key), finding) in SETTINGS_PLANTED.iter().zip(&findings) {
+        let planted = fixture_file("X1", SETTINGS, "fire/after", path)
+            .lines()
+            .position(|line| line.contains(key) && line.contains(DISORDERED))
+            .map(|index| index as u64 + 1)
+            .unwrap_or_else(|| panic!("{path} gives `{key}` a disordered value"));
+        assert_eq!(finding.path, *path, "the file is named");
+        assert_eq!(finding.line, Some(planted), "{path}: the planted line");
+        assert_eq!(finding.level, "error", "{path}: X1 blocks");
+        assert!(
+            finding.message.contains(&format!("`{key}`")),
+            "{path}: the finding names the key: {}",
+            finding.message
+        );
+        assert!(
+            !finding.message.contains(DISORDERED),
+            "{path}: a finding never repeats the value it found: {}",
+            finding.message
+        );
+    }
+}
+
+/// The values the settings neighbour gives a key-like name: each reads the
+/// environment or a sibling setting when the file is loaded, in the spelling
+/// its format uses for that, and each is long and mixed enough to pass for
+/// disorder as written.
+const REFERENCES: [(&str, &str); 4] = [
+    (".env", "$Billing_Secret_Key_From_Vault_2026"),
+    ("config.yaml", "$BILLING_API_TOKEN_ROTATED_2026_Q3"),
+    ("settings.toml", "$Billing_Secret_Key_From_Vault_2026"),
+    ("setup.ini", "%(Billing_Passwd_From_Vault_2026)s"),
+];
+
+#[test]
+fn a_settings_value_that_reads_the_environment_is_silent() {
+    let repo = fixture("X1", SETTINGS, "silent");
+
+    let changed = repo.git(&["diff", "HEAD", "--name-only"]);
+    for (path, reference) in REFERENCES {
+        assert!(
+            changed.lines().any(|line| line == path),
+            "{path} must be in the diff, or the silence proves nothing"
+        );
+        let after = fixture_file("X1", SETTINGS, "silent/after", path);
+        assert!(
+            after
+                .lines()
+                .any(|line| line.contains(reference) && holds_key_word(line)),
+            "{path}: the neighbour gives a key-like name `{reference}`"
+        );
+        assert!(
+            reference.chars().count() >= 20 && entropy(reference) > 4.0,
+            "{path}: `{reference}` has to pass for disorder, or its silence proves nothing"
+        );
+    }
+
+    let run = repo.weeder(&["check"]);
+    let flagged: Vec<Finding> = run
+        .findings()
+        .into_iter()
+        .filter(|finding| finding.rule == "X1")
+        .collect();
+    assert_eq!(
+        flagged,
+        Vec::new(),
+        "a reference holds no value, a sentence is prose, and a short setting is a setting"
+    );
+    assert_eq!(run.code, 0, "nothing found, nothing blocked");
 }

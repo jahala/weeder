@@ -30,6 +30,7 @@ conventions=(
   "schema validity"
   "the table's lines"
   "the table's order"
+  "the table's repeats"
   "the table's counts"
   "the table holds nothing else"
 )

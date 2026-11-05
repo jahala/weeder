@@ -33,7 +33,7 @@ another law for one run. `scan` judges the tree it is given, and reads the
 |---|---|---|
 | `[rules]` | a level per rule id: `block`, `warn` or `off` for a check rule, `on` or `off` for a scan rule | all of them |
 | `[scope] allow` | the path globs a change may touch | X2 reports the rest, D1 stops being a warning outside them |
-| `[scope] specimens` | the fixture directories no rule reads | all of them, on both faces |
+| `[scope] exclude` | the path patterns no rule reads, gitignore-style from the root | all of them, on both faces |
 | `[deps] layers` | a layer name to the path globs that belong to it | D2 |
 | `[deps] allow` | the `{ from, to }` pairs an import may run between | D2 |
 | `[entrypoints] cli` | the modules that are the command line itself, where printing is the product | S3 |
@@ -43,20 +43,70 @@ another law for one run. `scan` judges the tree it is given, and reads the
 | `[docs] external` | the names the docs cite on purpose that live outside the tree: file names, paths, globs, variables | R1 |
 | `[guard] protected` | the branches the git hooks refuse to rewrite | `weeder guard` |
 | `[guardrails] paths` | the path globs this repository holds at the constitution tier | C3 |
+| `[guardrails] sections` | the headings of `AGENTS.md` and `CLAUDE.md` whose sections state this repository's law, beside the ones saying hard limits or non-negotiables, or opening with never, matched as words in any case | C1 |
+| `[[overrides]] paths` | the path patterns an override applies to, gitignore-style from the root | the rules it names |
+| `[[overrides]] rules` | a level per rule id under those paths, as `[rules]` spells them | the rules it names |
 
 `weeder check --scope <glob>` names the scope for one run and takes precedence
 over `[scope] allow`. A run given neither allows every path, so X2 has nothing
 to report: weeder will not invent the sentence a change was meant to be held to.
 
-`[scope] specimens` is the one place a repository takes paths away from the
-rules, and it may only take away directories under `fixtures/adversarial/`. An
-adversarial fixture is written to look dishonest, so weeder reading it as
-production code is weeder being right about the wrong file. An entry pointing
-anywhere else, a glob that can name a path outside that root, and a rule id in
-the list are each refused with exit 3, naming what was written. Every path an
-exclusion covers is reported once, at note level, under the id `SPECIMEN`: the
-log says which files no rule read, and `check` still leaves with whatever the
-files it did read deserve.
+`[scope] exclude` takes paths away from every rule. A repository keeps files
+that look dishonest on purpose, fixtures, recorded runs of other projects, a
+frozen old tree, and weeder reading them as production code is weeder being
+right about the wrong file. The patterns read like `.gitignore` lines anchored
+at the root: `test/fixtures/` is a directory and everything under it,
+`docs/dogfood/**` the same by its contents, `**/*.snap` a kind of file at any
+depth.
+
+```toml
+[scope]
+exclude = ["test/fixtures/", "docs/dogfood/**", "**/*.snap"]
+```
+
+`[[overrides]]` sets rule levels for some paths and keeps the rule everywhere
+else. A level written there caps every finding of that rule under those paths,
+the way one under `[rules]` caps it everywhere, and an override can turn on
+under its paths a rule `[rules]` turns off. Where several overrides cover a file
+and name the same rule, the most specific pattern wins: the one with more of its
+path written out, `docs/keep/` over `docs/**`. Two equally specific patterns
+that can cover one file and set one rule two ways are refused, because either
+pick would be a level nobody wrote for that file.
+
+```toml
+[[overrides]]
+paths = ["docs/research/**", "docs/dogfood/**"]
+rules = { R1 = "off", R2 = "off" }
+```
+
+A gate that can be told not to read its own law is no gate, so some patterns
+are refused in both keys, each with exit 3 naming the pattern and the way
+forward: an absolute path, a pattern that steps out with `..`, one that matches
+everything (`*`, `**`, `/`), and one that names a guardrail file, `weeder.toml`,
+`AGENTS.md`, `CLAUDE.md`, the hooks directory, `.github/workflows/`, the agent
+harness settings, or a path `[guardrails] paths` names. A guardrail file is
+never excluded, whatever pattern covers it, so a pattern that reaches one only
+through a wildcard, `**/testdata/` against `.githooks/testdata/`, leaves it
+judged.
+
+Three more things keep an exclusion honest. The law comes from the base, so a
+pattern a change adds applies once that change has landed. `weeder.toml` is a
+guardrail, so C1 blocks the change that writes one until a person allows it,
+and CI under `--strict` honours no allowance. A file moved into an excluded path
+is judged as the deletion of the path it left, so moving a test out of sight
+still blocks on T1.
+
+R1 still counts an excluded path as present, so a doc that cites a fixture is
+not a broken reference. Each pattern that set a file aside is reported once, at note level, under the id
+`EXCLUDED`, with the count of files it took. `check` and `scan` both say it, and
+the SARIF log carries it, so a reviewer sees what was not judged, and `check`
+still leaves with whatever the files it did read deserve.
+
+`check` also says, once per run, which changed files it did not read: code in a
+language weeder has no rules for, a shell script, a makefile, Java. The note
+carries the id `UNREAD`, counts the files by extension, and stops nothing. The
+rules judge TypeScript, JavaScript, Python, Rust and Go, and a change made only of
+other code would otherwise end in a clean count over lines no rule read.
 
 ### How a finding's level is settled
 
@@ -100,16 +150,18 @@ commit's message. An allowance must not outlive the change it was written for.
 The two ways differ in whose hand wrote them, and the git hooks are where that
 matters. `weeder guard commit-msg` judges the index with the message's trailers
 honoured, and is the deciding stage for any block-level finding a trailer may
-allow. `weeder guard pre-commit` runs before the message exists, so it honours
-nothing: it prints what blocks and names, for each rule, the exact trailer that
-would allow it, `Weeder-allow: <RULE> <reason>`, and says commit-msg is the stage
-that reads it. `weeder guard pre-push` honours a trailer again over the commits
+allow, and it prints the findings. `weeder guard pre-commit` runs before the
+message exists, so it honours nothing: it prints one line naming what blocks and,
+for each rule, the exact trailer that would allow it, `Weeder-allow: <RULE> <reason>`,
+and says commit-msg is the stage that reads it. The table comes once, from
+commit-msg, because the two stages judge one index. `weeder guard pre-push` honours a trailer again over the commits
 being pushed, because a commit carries the message it was allowed by.
 
 The deferral holds only while the stage is there to run. `weeder guard pre-commit`
 reads the directory git runs hooks from and takes any executable file that
 invokes `weeder guard commit-msg` as the stage, whoever installed it; with none
-there it refuses on its own rather than passing the verdict to nobody.
+there it refuses on its own rather than passing the verdict to nobody, and prints
+the table itself.
 
 A `weeder-allow` marker on a line is never honoured by a hook, at any stage. The
 line is the agent's to write and the commit message is the person's, and the
@@ -169,7 +221,7 @@ A test file or case was renamed out of the naming convention its runner collects
 
 `check` · blocks by default
 
-An added or changed line of the runner's settings stops an existing test file from being collected, read from the settings file's kind and name rather than from any product. A line that names the file, or a pattern matching one, blocks; a line that narrows what the runner reads leaves the hidden set to be worked out, and warns. A setting whose value is built rather than written is reported unreadable instead of guessed at.
+An added or changed line of the runner's settings stops an existing test file under the settings file's own directory from being collected, read from the settings file's kind and name rather than from any product. A setup, teardown or coverage setting chooses no test file. A line that names the file, or a pattern matching one, blocks; a line that narrows what the runner reads leaves the hidden set to be worked out, and warns. A setting whose value is built rather than written is reported unreadable instead of guessed at.
 
 The settings a repository writes are found the way its manifest is: by what the classifier makes of the file and by the name its ecosystem gives it. What a key means is read from the words it is spelled with — `ignore`, `exclude`, `deselect` on one side, `path`, `files`, `match`, `include` on the other — and a key counts as being about the run only where the key, the table it sits under, or the file's own name says so. A gate written at the top of a suite, on a condition an ordinary run never sets, is the same exclusion written inside the file it hides. `weeder check --strict` refuses the run, at exit 3, where a setting weeder cannot read is among the lines the change wrote.
 
@@ -220,7 +272,7 @@ A changed file imports across a direction that `[deps] allow` does not permit, b
 
 `check` · blocks by default
 
-An added line carries a known credential prefix, or a high-entropy literal assigned to a name that reads like a key. A credential a vendor published in its own documentation is named as an example and reported as a note.
+An added line carries a known credential prefix, or a high-entropy literal assigned to a name that reads like a key, in source or in an env, YAML, TOML or INI file, where the literal is one run of characters rather than a sentence and reads nothing from the environment. A credential a vendor published in its own documentation is named as an example and reported as a note.
 
 <a id="X2"></a>
 ## X2: A file outside the scope was touched
@@ -234,7 +286,7 @@ A changed file matches no scope glob the run allows, and the finding names what 
 
 `check` · blocks by default
 
-A change touched a harness settings file, a git hook, `weeder.toml`, or the hard-limits section of `AGENTS.md` or `CLAUDE.md`.
+A change touched a harness settings file, a git hook, `weeder.toml`, or a section of `AGENTS.md` or `CLAUDE.md` whose heading says hard limits or non-negotiables, or opens with never, or names one of `[guardrails] sections`.
 
 <a id="C2"></a>
 ## C2: An ignore file was broadened over source or tests

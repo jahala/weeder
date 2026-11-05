@@ -13,9 +13,14 @@
 //!
 //! The two markdown files are different. `AGENTS.md` and `CLAUDE.md` are mostly
 //! prose that wants editing, and one section of them is law. So weeder reads the
-//! headings, finds the section that states the hard limits, and reports only a
-//! hunk that lands inside it. A paragraph rewritten three sections down is
-//! writing; a line changed under the limits is a rule being rewritten.
+//! headings, finds the sections that state the law, and reports only a hunk
+//! that lands inside one. A paragraph rewritten three sections down is writing;
+//! a line changed under the limits is a rule being rewritten.
+//!
+//! A repository names its law in its own words. weeder knows the ones such
+//! headings are written in everywhere, [`LAW_HEADINGS`], and a repository adds
+//! its own under `[guardrails] sections` (#77). A heading is matched by the
+//! words it says, whatever their case and whatever else the heading says.
 
 use crate::core::change::Change;
 use crate::core::classify::{classify_file, FileKind};
@@ -23,18 +28,34 @@ use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::guard;
 use crate::core::rules::check::Judgement;
 
-/// The files whose law lives in one section rather than in the whole file.
+/// The files whose law lives in a section rather than in the whole file.
 const INSTRUCTIONS: &[&str] = &["AGENTS.md", "CLAUDE.md"];
 
-/// The heading that opens the section those files state their law in.
-const HARD_LIMITS: &str = "hard limits";
+/// The words a heading says when the section under it states the law, in any
+/// repository. A repository that writes its own adds them in `[guardrails]
+/// sections`.
+const LAW_HEADINGS: &[&str] = &["hard limits", "non-negotiable", "non-negotiables"];
+
+/// The words that state the law only when they open the heading. "Never do
+/// these" is a rule; "three signals, never one number" describes something
+/// else, and the calibration read one such heading as a block on 2026-11-05.
+const LAW_OPENERS: &[&str] = &["never"];
 
 pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
-    let changes = judged.changes;
-    changes.iter().filter_map(edit).collect()
+    let headings: Vec<String> = LAW_HEADINGS
+        .iter()
+        .map(ToString::to_string)
+        .chain(judged.config.guardrail_sections.iter().cloned())
+        .map(|heading| heading.trim().to_lowercase())
+        .collect();
+    judged
+        .changes
+        .iter()
+        .filter_map(|change| edit(change, &headings))
+        .collect()
 }
 
-fn edit(change: &Change) -> Option<Detection> {
+fn edit(change: &Change, headings: &[String]) -> Option<Detection> {
     let path = change.path()?;
     if classify_file(path, "").kind != FileKind::Guardrail {
         return None;
@@ -47,7 +68,7 @@ fn edit(change: &Change) -> Option<Detection> {
     if !is_instructions(path) {
         return Some(guardrail(path));
     }
-    limits_line(change).map(|line| limits(path, line))
+    limits_line(change, headings).map(|line| limits(path, line))
 }
 
 /// Whether a path is one of the files weeder reads section by section.
@@ -56,27 +77,27 @@ fn is_instructions(path: &str) -> bool {
     INSTRUCTIONS.contains(&name)
 }
 
-/// The line the change first touched inside the hard-limits section, on either
-/// side of it. A limit taken out is gone from the new file, and a limit added
-/// was never in the old one, so both sides are read.
-fn limits_line(change: &Change) -> Option<u32> {
-    let after = section(change.after.text());
-    let before = section(change.before.text());
+/// The line the change first touched inside a section that states the law, on
+/// either side of it. A limit taken out is gone from the new file, and a limit
+/// added was never in the old one, so both sides are read.
+fn limits_line(change: &Change, headings: &[String]) -> Option<u32> {
+    let after = sections(change.after.text(), headings);
+    let before = sections(change.before.text(), headings);
     let added = change
         .added()
-        .filter(|(line, _)| after.is_some_and(|range| range.holds(*line)))
+        .filter(|(line, _)| after.iter().any(|range| range.holds(*line)))
         .map(|(line, _)| line)
         .min();
     let removed = change
         .removed()
-        .filter(|(line, _)| before.is_some_and(|range| range.holds(*line)))
+        .filter(|(line, _)| before.iter().any(|range| range.holds(*line)))
         .map(|(line, _)| line)
         .min();
     match (added, removed) {
         (Some(line), _) => Some(line),
         // A hunk that only took lines out has no line of its own in the new
-        // file; the finding points at where the section still begins.
-        (None, Some(_)) => after.map(|range| range.first).or(Some(1)),
+        // file; the finding points at where the first section still begins.
+        (None, Some(_)) => after.first().map(|range| range.first).or(Some(1)),
         (None, None) => None,
     }
 }
@@ -95,23 +116,53 @@ impl Section {
     }
 }
 
-/// Where a document states its hard limits, or `None` where it states none.
-fn section(text: &str) -> Option<Section> {
+/// Every section a document states its law in, in the order it writes them.
+fn sections(text: &str, headings: &[String]) -> Vec<Section> {
     let lines: Vec<&str> = text.lines().collect();
-    let (index, rank) = lines.iter().enumerate().find_map(|(index, line)| {
-        let rank = heading_rank(line)?;
-        let title = line.trim_start_matches('#').trim().to_ascii_lowercase();
-        title.contains(HARD_LIMITS).then_some((index, rank))
-    })?;
-    let last = lines
+    lines
         .iter()
         .enumerate()
-        .skip(index + 1)
-        .find(|(_, line)| heading_rank(line).is_some_and(|next| next <= rank))
-        .map_or(lines.len(), |(next, _)| next);
-    Some(Section {
-        first: index as u32 + 1,
-        last: last as u32,
+        .filter_map(|(index, line)| {
+            let rank = heading_rank(line)?;
+            let title = line.trim_start_matches('#').trim().to_lowercase();
+            (headings.iter().any(|heading| says(&title, heading))
+                || LAW_OPENERS.iter().any(|opener| opens(&title, opener)))
+            .then_some((index, rank))
+        })
+        .map(|(index, rank)| {
+            let last = lines
+                .iter()
+                .enumerate()
+                .skip(index + 1)
+                .find(|(_, line)| heading_rank(line).is_some_and(|next| next <= rank))
+                .map_or(lines.len(), |(next, _)| next);
+            Section {
+                first: index as u32 + 1,
+                last: last as u32,
+            }
+        })
+        .collect()
+}
+
+/// Whether a heading's title says the words, as words: `never` is said by
+/// "Never do these" and not by "Nevertheless".
+fn says(title: &str, words: &str) -> bool {
+    !words.is_empty()
+        && title.match_indices(words).any(|(at, _)| {
+            let before = title[..at].chars().next_back();
+            let after = title[at + words.len()..].chars().next();
+            !before.is_some_and(char::is_alphanumeric) && !after.is_some_and(char::is_alphanumeric)
+        })
+}
+
+/// Whether a heading's title begins with the word: "never do these" begins
+/// with `never`, "never-ending" and "the cockpit, never one number" do not.
+fn opens(title: &str, word: &str) -> bool {
+    title.strip_prefix(word).is_some_and(|rest| {
+        !rest
+            .chars()
+            .next()
+            .is_some_and(|next| next.is_alphanumeric() || next == '-')
     })
 }
 
@@ -148,7 +199,7 @@ fn limits(path: &str, line: u32) -> Detection {
             end_line: line,
         }),
         message: Message {
-            what: "the hard-limits section of the instructions was changed.".to_string(),
+            what: "a section of the instructions that states their limits was changed.".to_string(),
             why: "these are the limits the work is held to, and an agent that edits them is widening what it is allowed to do.".to_string(),
             next: "revert the section, or land the change to the limits on its own with a `Weeder-allow: C1` trailer saying why, so a person reads it.".to_string(),
         },

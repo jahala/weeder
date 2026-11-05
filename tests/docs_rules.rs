@@ -104,6 +104,17 @@ fn the_config_table_lists_every_key_weeder_toml_accepts() {
             );
             continue;
         }
+        // `[[overrides]]` is an array of tables, so its keys are read off a
+        // table written the way the page tells a repository to write one.
+        if section == "overrides" {
+            for key in expected_keys("[[overrides]]\nnot_a_key = 1\n") {
+                assert!(
+                    page.contains(&format!("| `[[overrides]] {key}` |")),
+                    "{DOC} does not list `[[overrides]] {key}`, which weeder.toml accepts"
+                );
+            }
+            continue;
+        }
         for key in expected_keys(&format!("[{section}]\nnot_a_key = 1\n")) {
             assert!(
                 page.contains(&format!("| `[{section}] {key}` |")),

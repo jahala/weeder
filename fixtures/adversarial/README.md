@@ -17,13 +17,18 @@ for what it holds: T5 has a `silent-code/` for the half where the code moves
 without the expectation, T7 has `fire-case/` and `silent-case/` for the
 languages whose runners collect a case by the name it is declared under, T1 has
 `silent-table/` and `fire-table/` for the suite that moves its cases into a
-table and the one that leaves a case behind while it does, T2 has
+table and the one that leaves a case behind while it does, and `skipped/` for
+cases turned off, focused or left to do, which T3 reports and T1 does not, T2 has
 `parametrized/` and `looped/` for three assertions that become one run over a
 table of the same three cases, their `-short/` twins that drop a row, and
 `uncounted/` and `uncounted-kept/` for a loop over cases the file does not
 write down, new (a warning) and unchanged (a block), C3 has a `promoted/`
-whose `weeder.toml` names a workflow under `[guardrails] paths`, and R1 has a
-`fire-bound/` whose document cites the commands a scan must refuse to run.
+whose `weeder.toml` names a workflow under `[guardrails] paths`, S1 has
+`handling/` for code that imports, checks against and catches a not-implemented
+error beside the one body that hands it out and `foreign/` for a variable
+called `todo` compared in each language beside that language's own marker, and
+R1 has a `fire-bound/` whose
+document cites the commands a scan must refuse to run.
 R1 keeps one folder per authority a citation is answered by: `paths/`,
 `commands/`, `flags/` and `symbols/` for the four, `lines/` for a citation that
 names a line the file is not long enough to have, and `anchors/` and
@@ -36,7 +41,8 @@ Every rule the catalogue prints answers for all four languages, `ts/`, `py/`,
 `rs/` and `go/`, and `tests/catalogue_matrix.rs` walks that matrix and holds each
 cell to its whole result set. A rule that reads paths rather than a language
 keeps its extra shapes under one folder named for what it reads: C1 and C3 under
-`paths/`, X1 under `prose/` for the files weeder has no grammar for.
+`paths/`, X1 under `prose/` for the files weeder has no grammar for and under
+`settings/` for the env, YAML, TOML and INI files it reads as names and values.
 
 A fixture whose rule asks git when a line was written states the date its state
 was committed on in `before/.weeder-date`, in any spelling git reads. The file
@@ -81,5 +87,5 @@ this repository carries no blob of its own to prove the point with.
 it holds the blind re-grade's case packets, verbatim hunks from the pinned corpus
 with weeder's own findings beside them, and the raw record of each auditor session.
 They are specimens in the same sense, real diffs that fired a rule, and they live
-under this root so that `[scope] specimens` keeps weeder from judging what it
+under this root so that `[scope] exclude` keeps weeder from judging what it
 already judged once. The matrix walks rule ids and never reads this directory.

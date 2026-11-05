@@ -9,3 +9,4 @@ UPLOAD_TOKEN = "<paste-your-token-here-Xq7vN2mB4dW>"
 SESSION_TOKEN = os.environ["ANTHROPIC_AUTH_TOKEN"]
 REFRESH_TOKEN = os.getenv("ANTHROPIC_REFRESH_TOKEN")
 AUTH_TOKEN = settings.credentials.ANTHROPIC_AUTH_TOKEN
+GITHUB_TOKEN_WARNING = "That doesn't look like a GitHub token. Are you sure?"

@@ -12,7 +12,8 @@
 //! something called a key, a secret, a token, a password or a credential, long
 //! enough to be one and disordered enough that no person typed it as prose, is a
 //! secret. Both halves are needed: a long random string under a plain name is a
-//! fixture, a short readable string under a key name is a setting, and the
+//! fixture, a short readable string under a key name is a setting, a sentence
+//! under a key name is the message a form shows about one (#93), and the
 //! digests filling a lockfile are named for what they are and never for a
 //! credential. The literal is needed too, because `token = process.env.TOKEN`
 //! reads the credential at run time, which is the safe form, and holds no value.
@@ -22,7 +23,11 @@
 //! a paragraph are full of `name = value` that assigns nothing, a class called
 //! `detail-meta__key`, an attribute, a sentence with a colon in the middle of
 //! it. So the prefix path reads every file weeder is handed and the name path
-//! reads source alone, which is the only place a name means what it says.
+//! reads source, where a name means what it says, and the settings files whose
+//! every line is a name and a value: env, YAML, TOML and INI (#90). Those are
+//! where a secret is committed most often, and they write a value the way their
+//! format does, unquoted in env and YAML, so the value is read as written there.
+//! A value that names the environment instead, `${VAR}` or `$VAR`, holds none.
 //!
 //! One list of exact strings stands beside the two shapes: the credentials a
 //! vendor prints in its own documentation so a reader can follow the page.
@@ -126,6 +131,11 @@ const ENTROPY_BITS: f64 = 4.0;
 /// issues a credential with a bracket in it.
 const SLOT_CHARACTERS: &[char] = &['<', '>', '{', '}'];
 
+/// How many words separated by spaces make a value read as prose. A credential
+/// is one run of characters, and a scheme in front of one, `Bearer` and its
+/// token, makes two; a sentence long enough to pass for disorder has more.
+const PROSE_WORDS: usize = 3;
+
 pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     let mut findings = Vec::new();
@@ -133,17 +143,20 @@ pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
         let Some(path) = change.diff.new_path.as_deref() else {
             continue;
         };
-        let source = is_source(change);
+        let grammar = grammar(change, path);
         for (line, text) in change.added() {
             if let Some(shape) = issued(text) {
                 findings.push(finding(path, line, &shape));
                 continue;
             }
-            if source {
-                if let Some(name) = named_and_disordered(text) {
-                    findings.push(finding(path, line, &Shape::named(&name)));
-                    continue;
-                }
+            let named = match grammar {
+                Grammar::Source => named_and_disordered(text),
+                Grammar::Settings(format) => set_and_disordered(text, format),
+                Grammar::None => None,
+            };
+            if let Some(name) = named {
+                findings.push(finding(path, line, &Shape::named(&name)));
+                continue;
             }
             // Last, and only where the two paths above found nothing. weeder
             // reports one finding a line, so a note reached before them would
@@ -156,14 +169,58 @@ pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     findings
 }
 
-/// Whether the file is written in a language weeder reads. Outside one, weeder has
-/// no grammar to tell an assignment from a class name or a colon in a sentence.
-fn is_source(change: &Change) -> bool {
-    change
+/// What weeder knows of how a file writes a name and its value.
+#[derive(Clone, Copy)]
+enum Grammar {
+    /// A language weeder reads, where a literal is written inside quotes.
+    Source,
+    /// A settings file, where every line is a name and a value.
+    Settings(Format),
+    /// Neither: a page, a stylesheet, a paragraph, where `name = value` is a
+    /// class name or a colon in a sentence and assigns nothing.
+    None,
+}
+
+/// The settings formats whose lines X1 reads as a name and a value.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Format {
+    /// `NAME=value`, after `export` or not, the value quoted or not.
+    Env,
+    /// `name: value`, the value quoted or not.
+    Yaml,
+    /// `name = "value"`.
+    Toml,
+    /// `name = value` or `name: value` under a `[section]`. Python's
+    /// `setup.cfg` is written in it too.
+    Ini,
+}
+
+/// How a changed file writes its names and values, by its language and, for
+/// a file in none, by its name.
+fn grammar(change: &Change, path: &str) -> Grammar {
+    let source = change
         .after
         .classification
         .as_ref()
-        .is_some_and(|classification| classification.lang != Lang::Other)
+        .is_some_and(|classification| classification.lang != Lang::Other);
+    if source {
+        return Grammar::Source;
+    }
+    settings_format(path).map_or(Grammar::None, Grammar::Settings)
+}
+
+/// The settings format a path is written in, by its name.
+fn settings_format(path: &str) -> Option<Format> {
+    let name = path.rsplit('/').next().unwrap_or(path);
+    if name == ".env" || name.starts_with(".env.") || name.ends_with(".env") {
+        return Some(Format::Env);
+    }
+    match name.rsplit_once('.').map(|(_, extension)| extension) {
+        Some("yaml" | "yml") => Some(Format::Yaml),
+        Some("toml") => Some(Format::Toml),
+        Some("ini" | "cfg") => Some(Format::Ini),
+        _ => None,
+    }
 }
 
 /// The credential shape a line carries, named by its frame rather than by its
@@ -203,31 +260,86 @@ fn quotes_an_example(line: &str) -> bool {
     tokens(line).into_iter().any(is_published)
 }
 
-/// The name a line assigns a secret-looking value to, where it does.
+/// The name a line of source assigns a secret-looking value to, where it does.
 fn named_and_disordered(line: &str) -> Option<String> {
-    for (head, value) in assignments(line) {
-        let Some(name) = credential_name(head) else {
-            continue;
-        };
-        if value.chars().count() < ENTROPY_LENGTH {
-            continue;
-        }
-        if value.contains(SLOT_CHARACTERS) {
-            continue;
-        }
-        // An example under a name that says `secret` is still an example; the
-        // line is left to the note the caller falls through to.
-        if is_published(value) {
-            continue;
-        }
-        if entropy(value) <= ENTROPY_BITS {
-            continue;
-        }
-        return Some(name);
-    }
-    None
+    assignments(line).into_iter().find_map(|(head, value)| {
+        let name = credential_name(head)?;
+        is_disordered(value).then_some(name)
+    })
 }
 
+/// The name a line of a settings file gives a secret-looking value, where it
+/// does.
+fn set_and_disordered(line: &str, format: Format) -> Option<String> {
+    let (head, value) = setting(line, format)?;
+    let name = credential_name(head)?;
+    is_disordered(value).then_some(name)
+}
+
+/// Whether a value assigned to a key-like name reads as a credential: long
+/// enough, disordered enough, and none of the things that look like one and
+/// are not.
+fn is_disordered(value: &str) -> bool {
+    value.chars().count() >= ENTROPY_LENGTH
+        && !value.contains(SLOT_CHARACTERS)
+        // A sentence carries as many kinds of character as a key does, and its
+        // spaces are what no issued credential has.
+        && value.split_whitespace().count() < PROSE_WORDS
+        // An example under a name that says `secret` is still an example; the
+        // line is left to the note the caller falls through to.
+        && !is_published(value)
+        && entropy(value) > ENTROPY_BITS
+}
+
+/// The name a settings line sets and the value it sets it to, as the format
+/// writes them. A comment, a section header, and a line that opens a list, a
+/// table or a block written below set nothing this line can be judged on.
+fn setting(line: &str, format: Format) -> Option<(&str, &str)> {
+    let trimmed = line.trim_start();
+    if trimmed.starts_with('#') || (format == Format::Ini && trimmed.starts_with(';')) {
+        return None;
+    }
+    let trimmed = match format {
+        Format::Env => trimmed.strip_prefix("export ").unwrap_or(trimmed),
+        Format::Yaml => trimmed.strip_prefix("- ").unwrap_or(trimmed),
+        Format::Toml | Format::Ini => trimmed,
+    };
+    let (at, separator) = match format {
+        Format::Env | Format::Toml => (trimmed.find('=')?, 1),
+        // A YAML key ends at a colon with a space behind it, so a colon inside
+        // a URL or a time is part of a value.
+        Format::Yaml => (trimmed.find(": ")?, 2),
+        Format::Ini => (trimmed.find(['=', ':'])?, 1),
+    };
+    let value = written_value(&trimmed[at + separator..], format)?;
+    Some((&trimmed[..at], value))
+}
+
+/// A settings value as its file writes it: what a quote encloses, or the bare
+/// value up to a comment. A value that reads the environment when the file is
+/// loaded, `${VAR}`, `$VAR`, or INI's `%(name)s`, holds no credential (#62), and
+/// one that opens a list, a table, a tag or a block written below holds none on
+/// this line.
+fn written_value(tail: &str, format: Format) -> Option<&str> {
+    let trimmed = tail.trim();
+    let first = trimmed.chars().next()?;
+    let value = if matches!(first, '"' | '\'') {
+        let opened = first.len_utf8();
+        let end = trimmed[opened..].find(first)?;
+        &trimmed[opened..opened + end]
+    } else {
+        if matches!(first, '[' | '{' | '|' | '>' | '!' | '&' | '*') {
+            return None;
+        }
+        let comment = match format {
+            Format::Ini => trimmed.find(" ;").or_else(|| trimmed.find(" #")),
+            Format::Env | Format::Yaml | Format::Toml => trimmed.find(" #"),
+        };
+        comment.map_or(trimmed, |at| &trimmed[..at]).trim_end()
+    };
+    let reference = value.starts_with('$') || value.contains("${") || value.contains("%(");
+    (!reference).then_some(value)
+}
 /// The name a credential was assigned to, where what an assignment was written
 /// in front of names one.
 ///

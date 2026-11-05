@@ -72,7 +72,7 @@ Release tarballs for five targets, each with a SHA-256, from `.github/workflows/
 
 ## 9. Variability
 
-A repository adapts weeder through `weeder.toml` alone: levels per rule, scope, specimens, layers, guardrail paths, entry points, thresholds. Rules detect shapes and never name vendors or products. The keys are listed in `docs/rules.md`.
+A repository adapts weeder through `weeder.toml` alone: levels per rule, levels per path (`[[overrides]]`), scope, the paths no rule reads (`[scope] exclude`), layers, guardrail paths, entry points, thresholds. Rules detect shapes and never name vendors or products. The keys are listed in `docs/rules.md`.
 
 ## 10. Out of scope
 

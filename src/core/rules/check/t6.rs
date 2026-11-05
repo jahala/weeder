@@ -72,7 +72,7 @@ fn finding(path: &str, line: u32, lost: &[String]) -> Detection {
         message: Message {
             what: format!("an assertion on a failure stopped naming {named}."),
             why: "a case that accepts any failure passes on the failure nobody meant, including the one the next change introduces.".to_string(),
-            next: "name the error the code raises again, or say in the change why any failure will do.".to_string(),
+            next: "name the error the code raises again, or write why any failure will do in a `Weeder-allow: T6` trailer.".to_string(),
         },
         fix: None,
     }

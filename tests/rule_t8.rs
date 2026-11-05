@@ -279,3 +279,89 @@ fn reported(findings: &[Finding]) -> Vec<Finding> {
         .cloned()
         .collect()
 }
+
+/// A case for a suite at `path`, written the way every runner of the language
+/// collects it.
+fn suite(name: &str) -> String {
+    format!("import {{ expect, it }} from \"vitest\";\n\nit(\"{name}\", () => {{\n  expect(1).toBe(1);\n}});\n")
+}
+
+/// A vitest config for an app, with `lines` written inside its `test` object.
+fn vite_config(lines: &[&str]) -> String {
+    let mut written = String::from(
+        "import { defineConfig } from \"vitest/config\";\n\nexport default defineConfig({\n  test: {\n    environment: \"jsdom\",\n",
+    );
+    for line in lines {
+        written.push_str("    ");
+        written.push_str(line);
+        written.push('\n');
+    }
+    written.push_str("  },\n});\n");
+    written
+}
+
+/// A repository with an app's vitest config, two of the app's suites, and a
+/// suite outside the app that another runner collects (#96).
+fn app_with_suites() -> Repo {
+    let repo = Repo::init();
+    repo.write("apps/desktop/vite.config.ts", &vite_config(&[]));
+    repo.write(
+        "apps/desktop/src/app/AppShell.test.tsx",
+        &suite("renders the shell"),
+    );
+    repo.write("apps/desktop/e2e/flow.test.ts", &suite("walks the flow"));
+    repo.write(
+        "scripts/overnight/plan-batches.test.ts",
+        &suite("plans the batches"),
+    );
+    repo.commit("an app and its suites");
+    repo
+}
+
+#[test]
+fn a_setup_or_coverage_entry_narrows_nothing_the_runner_collects() {
+    let repo = app_with_suites();
+    repo.write(
+        "apps/desktop/vite.config.ts",
+        &vite_config(&[
+            "setupFiles: [\"./src/test/setup.ts\"],",
+            "globalSetup: \"./src/test/global.ts\",",
+            "coverage: { include: [\"src/**\"], exclude: [\"**/*.test.tsx\"] },",
+        ]),
+    );
+
+    let run = repo.weeder(&["check"]);
+    let findings = reported(&run.findings());
+    assert_eq!(
+        findings,
+        Vec::new(),
+        "a file run before each suite and a file a coverage report leaves out choose no suite"
+    );
+    assert_eq!(
+        run.code, 0,
+        "nothing found, nothing blocked\n{}",
+        run.stderr
+    );
+}
+
+#[test]
+fn a_runner_config_narrows_only_the_suites_under_its_own_directory() {
+    let repo = app_with_suites();
+    repo.write(
+        "apps/desktop/vite.config.ts",
+        &vite_config(&["include: [\"src/**/*.test.tsx\"],"]),
+    );
+
+    let run = repo.weeder(&["check"]);
+    let findings = reported(&run.findings());
+    assert_eq!(
+        findings
+            .iter()
+            .map(|finding| finding.path.as_str())
+            .collect::<Vec<&str>>(),
+        vec!["apps/desktop/e2e/flow.test.ts"],
+        "the app's suite the pattern leaves out is named, and a suite outside the app is not the app's: {findings:#?}"
+    );
+    assert_eq!(findings[0].level, "warning", "a narrowed pattern warns");
+    assert_eq!(run.code, 0, "and a warning does not stop a change");
+}
