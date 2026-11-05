@@ -1,31 +1,35 @@
 <!doctype html>
+<!-- weeder · its page in the garden's bed design, built from plotplot .brand/reference/product.html at v1.11.1 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>weeder · the judge of the diff</title>
-<meta name="description" content="weeder reads the diff an agent just wrote and refuses the cheap road to green: a deleted test, a dropped assertion, a skip, a stub, a swallowed error, a secret. one static binary, milliseconds, no model in the loop.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20d%3D%22M13.2%2028.4%20C12.8%2022.4%2C%2013.2%2013.4%2C%2013.8%206.2%22%20fill%3D%22none%22%20stroke%3D%22%23357E2C%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M13%2025.6%20L11.5%2024.9%22%20fill%3D%22none%22%20stroke%3D%22%23357E2C%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M13.4%2013%20L15.1%2012.3%22%20fill%3D%22none%22%20stroke%3D%22%23357E2C%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M13.6%209.8%20L12.1%209.2%22%20fill%3D%22none%22%20stroke%3D%22%23357E2C%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%2F%3E%3Cellipse%20cx%3D%229.6%22%20cy%3D%2224.2%22%20rx%3D%222.8%22%20ry%3D%221.2%22%20transform%3D%22rotate%2830%209.6%2024.2%29%22%20fill%3D%22%23357E2C%22%2F%3E%3Cellipse%20cx%3D%2217.5%22%20cy%3D%2211.2%22%20rx%3D%222.8%22%20ry%3D%221.2%22%20transform%3D%22rotate%28-30%2017.5%2011.2%29%22%20fill%3D%22%23357E2C%22%2F%3E%3Cellipse%20cx%3D%2210.2%22%20cy%3D%228.6%22%20rx%3D%222.8%22%20ry%3D%221.2%22%20transform%3D%22rotate%2830%2010.2%208.6%29%22%20fill%3D%22%23357E2C%22%2F%3E%3Cpath%20d%3D%22M11.2%2016.1%20L24.5%2022.75%22%20fill%3D%22none%22%20stroke%3D%22%238E3B5E%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M11.2%2021.9%20L24.5%2015.25%22%20fill%3D%22none%22%20stroke%3D%22%238E3B5E%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%2F%3E%3Ccircle%20cx%3D%2226.5%22%20cy%3D%2223.75%22%20r%3D%222.2%22%20fill%3D%22none%22%20stroke%3D%22%238E3B5E%22%20stroke-width%3D%221.6%22%2F%3E%3Ccircle%20cx%3D%2226.5%22%20cy%3D%2214.25%22%20r%3D%222.2%22%20fill%3D%22none%22%20stroke%3D%22%238E3B5E%22%20stroke-width%3D%221.6%22%2F%3E%3C%2Fsvg%3E">
+<title>weeder · the judge of the diff · a plotplot garden tool</title>
+<meta name="description" content="weeder is a gate for code an agent wrote. It reads the diff, refuses dishonest growth, and leaves with an exit code that says whether the change goes through.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20role%3D%22img%22%20aria-label%3D%22weeder%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225.5%22%20fill%3D%22%23A37A6E%22%2F%3E%3Cg%20transform%3D%22translate%283.36%203.36%29%20scale%280.72%29%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7.5%2022%20C7.3%2016.5%207.4%209.5%207.8%203%22%20stroke%3D%22%231C1610%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22M7.4%2020.2%20C4.9%2019.9%203.1%2018.3%202.7%2015.9%20C5.3%2016%207.1%2017.7%207.4%2020.2%20Z%22%20fill%3D%22%231C1610%22%2F%3E%3Cpath%20d%3D%22M7.7%207.6%20C10.2%207.4%2012%205.8%2012.4%203.4%20C9.8%203.5%208%205.1%207.7%207.6%20Z%22%20fill%3D%22%231C1610%22%2F%3E%3Cpath%20d%3D%22M10.2%2012%20L16.8%2017.8%20M10.2%2018%20L16.8%2012.2%22%20stroke%3D%22%231C1610%22%20stroke-width%3D%222%22%2F%3E%3Ccircle%20cx%3D%2218.3%22%20cy%3D%2219.1%22%20r%3D%221.9%22%20stroke%3D%22%231C1610%22%20stroke-width%3D%222%22%2F%3E%3Ccircle%20cx%3D%2218.3%22%20cy%3D%2210.9%22%20r%3D%221.9%22%20stroke%3D%22%231C1610%22%20stroke-width%3D%222%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Hanken+Grotesk:wght@400..800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Protest+Riot&family=Hanken+Grotesk:wght@400..800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script>(function(){var r=document.documentElement;r.classList.add('js');var s=localStorage.getItem('pp-theme');if(s)r.setAttribute('data-theme',s);else if(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)r.setAttribute('data-theme','dark');})();</script>
 <style>
+  /* ── tokens and theme ── */
   :root{
-    /* color — shared family palette */
+    /* color: shared family palette */
     --pp-primary:#357E2C; --pp-primary-deep:#2C6B2A; --pp-leaf:#4A9E3F; --pp-forest:#214A2C;
-    --pp-accent:#E89227; --pp-amber-ink:#A86518;
+    --pp-accent:#E89227; --pp-marigold:#F4B63A; --pp-amber-ink:#A86518;
     --pp-text:#3A2718; --pp-text-soft:#786148;
-    --pp-bg:#FAF5E9; --pp-bg-band:#F2EAD6; --pp-surface:#F5EEDD; --pp-border:#E2D8C0;
+    --pp-bg:#FAF5E9; --pp-bg-band:#F2EAD6; --pp-bg-artifact:#FCFAF2; --pp-surface:#F5EEDD; --pp-border:#E2D8C0;
     /* semantic */
     --pp-healthy:#46913C; --pp-caution:#B0741C; --pp-error:#BC4126; --pp-info:#3F7186; --pp-muted:#9A8C72;
     /* product blooms */
-    --pp-tilth:#4E88A6; --pp-tend:#D6502F; --pp-petals:#E588A0; --pp-pleach:#97539B; --pp-umbel:#E89227; --pp-copeca:#1F8A7B; --pp-pollen:#C8B330; --pp-pollen-ink:#7E6A08; --pp-weeder:#8E3B5E; --pp-weeder-word:#8E3B5E;
+    --pp-mull:#76D4FF; --pp-glean:#0096B3; --pp-cultivate:#09636B; --pp-graft:#FEAA68; --pp-petals:#CC6A37;
+    --pp-tend:#98D98D; --pp-pleach:#779C46; --pp-umbel:#545E05; --pp-tilth:#F7D4B7; --pp-mycelium:#C9A18D; --pp-weeder:#A37A6E; --pp-well:#4D5972;
+    --pp-coldframe:#4E5A48;
     /* soil-night terminal (fixed in both themes) */
     --pp-term-bg:#1C1610; --pp-term-surface:#262019; --pp-term-border:#403628;
     --pp-term-green:#84C56A; --pp-term-sun:#F2A93B; --pp-term-text:#F3ECD9;
     /* type */
-    --pp-font-heading:'Fraunces',Georgia,serif;
+    --pp-font-heading:'Protest Riot',Georgia,serif;
     --pp-font-body:'Hanken Grotesk',system-ui,sans-serif;
     --pp-font-code:'JetBrains Mono',monospace;
     /* space */
@@ -36,476 +40,564 @@
     /* radius */
     --pp-radius-xs:3px; --pp-radius-sm:6px; --pp-radius-md:8px; --pp-radius-lg:10px;
     --pp-radius-xl:12px; --pp-radius-full:999px;
-    /* shadow — ink-tinted */
+    /* shadow: ink-tinted */
     --pp-shadow-rest:0 1px 0 #E2D8C0, 0 12px 40px -16px rgba(58,39,24,0.35);
     --pp-shadow-lift:0 2px 4px rgba(58,39,24,0.05), 0 14px 32px rgba(58,39,24,0.08);
     /* motion */
     --pp-ease-petal:cubic-bezier(0.22,1,0.36,1);
+
+    /* allotment layer: aliases of palette tokens, no new values */
+    --sign-dark:var(--pp-term-bg);
+    --sign-light:var(--pp-term-text);
+
+    --pp-weeder-word:#8F675B;
+    --bed:var(--pp-weeder); --bed-word:var(--pp-weeder-word); --bed-on:var(--sign-dark);
   }
   [data-theme="dark"]{
     --pp-primary:#84C56A; --pp-accent:#F2A93B; --pp-leaf:#9FD08A;
     --pp-text:#F3ECD9; --pp-text-soft:#C9BBA0;
     --pp-bg:#1C1610; --pp-bg-band:#211A12; --pp-surface:#262019; --pp-border:#403628;
-    --pp-pollen-ink:#D9C44A;
-    --pp-weeder-word:#B85C82;
+    --pp-cultivate:#1E6F77; --pp-umbel:#5F6A18; --pp-well:#58647E; --pp-coldframe:#5A6853;
+    --pp-weeder-word:#A37A6E;
     --pp-shadow-rest:0 1px 0 #403628, 0 12px 40px -16px rgba(8,6,4,0.6);
     --pp-shadow-lift:0 2px 4px rgba(8,6,4,0.3), 0 14px 32px rgba(8,6,4,0.45);
   }
 
+  /* ── base type (shared with the landing page) ── */
   *{box-sizing:border-box}
   html{font-size:18px;scroll-behavior:smooth}
   body{margin:0;background:var(--pp-bg);color:var(--pp-text);
     font-family:var(--pp-font-body);font-size:1.0625rem;line-height:1.65;
     -webkit-font-smoothing:antialiased;transition:background .4s var(--pp-ease-petal),color .4s var(--pp-ease-petal)}
   .wrap{max-width:var(--pp-container-max);margin:0 auto;padding:0 var(--pp-gutter)}
-
-  h1,h2,h3{font-family:var(--pp-font-heading);font-optical-sizing:auto;margin:0;line-height:1.08;font-weight:600}
-  h1{font-size:clamp(3rem,5.4vw,4.2rem);line-height:1.04;font-weight:620;letter-spacing:-.015em}
-  h2{font-size:2.4rem;line-height:1.12}
-  h3{font-size:1.6rem;line-height:1.2}
+  .g12{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--pp-space-sm)}
+  .margin{grid-column:1 / span 3}
+  .content{grid-column:4 / -1}
+  h1,h2,h4{font-family:var(--pp-font-heading);margin:0;font-weight:520;text-wrap:balance}
+  h2{font-size:clamp(2.2rem,3.6vw,3rem);line-height:1.05;letter-spacing:-.015em}
+  p{margin:0;text-wrap:pretty}
   a{color:var(--pp-primary);text-decoration:none}
+  code{font-family:var(--pp-font-code);color:var(--pp-text)}
   :focus-visible{outline:2px solid var(--pp-primary);outline-offset:3px;border-radius:var(--pp-radius-xs)}
-  code{font-family:var(--pp-font-code);font-size:.88em}
-  .kicker{font-family:var(--pp-font-code);font-size:.74rem;font-weight:500;
-    text-transform:uppercase;letter-spacing:.2em;color:var(--pp-weeder-word);margin:0 0 var(--pp-space-xs)}
-  .lede{font-size:1.3rem;line-height:1.5;color:var(--pp-text-soft)}
-  .sec-head{max-width:46ch;margin-bottom:var(--pp-space-xl)}
-  .sec-head h2{margin-top:var(--pp-space-2xs)}
-  .sec-head .lede{margin-top:var(--pp-space-sm)}
+  .label{font-family:var(--pp-font-code);font-size:.7rem;font-weight:500;text-transform:uppercase;
+    letter-spacing:.18em;color:var(--pp-text-soft)}
+  h2.label{line-height:1.65;padding-top:var(--pp-space-4xs)}
+  .lede{font-size:1.15rem;line-height:1.55;color:var(--pp-text-soft)}
+  .arrow{font-family:var(--pp-font-code);font-weight:500}
+  /* the pictogram sprite's one stroke */
+  .glyph{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
 
-  /* buttons */
-  .btn{font-family:var(--pp-font-body);font-weight:600;font-size:1rem;border:0;cursor:pointer;
-    border-radius:var(--pp-radius-sm);padding:var(--pp-space-2xs) var(--pp-space-sm);
-    display:inline-flex;align-items:center;gap:var(--pp-space-3xs);
-    transition:transform .18s ease,background .18s ease,box-shadow .18s ease}
-  .btn.primary{background:var(--pp-primary);color:var(--pp-bg)}
-  .btn.primary:hover{background:var(--pp-primary-deep);transform:translateY(-1px)}
-  [data-theme="dark"] .btn.primary:hover{background:var(--pp-leaf)}
-  .btn.ghost{background:transparent;color:var(--pp-primary);box-shadow:inset 0 0 0 1.5px var(--pp-border)}
+  /* ── buttons: one coloured, one ghost ── */
+  .cta{display:flex;align-items:center;flex-wrap:wrap;gap:var(--pp-space-2xs);margin-top:var(--pp-space-lg)}
+  .btn{font-weight:600;font-size:1rem;border-radius:var(--pp-radius-sm);
+    padding:var(--pp-space-2xs) var(--pp-space-sm);display:inline-flex;align-items:center;gap:var(--pp-space-3xs);
+    transition:transform .18s ease-out,background .18s ease-out,box-shadow .18s ease-out}
+  .btn.sun{background:var(--pp-accent);color:var(--pp-term-bg)}
+  .btn.sun:hover{transform:translateY(-1px);box-shadow:var(--pp-shadow-lift)}
+  .btn.ghost{box-shadow:inset 0 0 0 1.5px var(--pp-border)}
   .btn.ghost:hover{box-shadow:inset 0 0 0 1.5px var(--pp-primary);transform:translateY(-1px)}
+  .btn:active{transform:translateY(1px)}
 
-  /* header */
-  header.site{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--pp-bg) 86%,transparent);
+  /* ── header and inchworm ── */
+  .site{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--pp-bg) 88%,transparent);
     backdrop-filter:blur(8px);border-bottom:1px solid var(--pp-border)}
-  header.site .wrap{display:flex;align-items:center;justify-content:space-between;
+  .site > .wrap{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;
     padding-top:var(--pp-space-xs);padding-bottom:var(--pp-space-xs)}
   .brand{display:inline-flex;align-items:center;gap:var(--pp-space-3xs);color:var(--pp-text)}
   .wordmark{font-family:var(--pp-font-heading);font-weight:600;font-size:1.4rem;letter-spacing:-.01em}
-  .mark{width:28px;height:28px;flex:none}
-  .w-plant{fill:none;stroke:var(--pp-primary);stroke-linecap:round}
-  .w-leaf{fill:var(--pp-primary)}
-  .w-blade{fill:none;stroke:var(--pp-weeder);stroke-linecap:round}
-  .w-loop{fill:none;stroke:var(--pp-weeder)}
+  .wmark{width:28px;height:28px;flex:none}
+  .w-tile{fill:var(--bed)}
+  .w-ink{stroke:var(--bed-on)}
+  .w-ink-fill{fill:var(--bed-on)}
   .nav{display:flex;align-items:center;gap:var(--pp-space-sm)}
-  .nav a{color:var(--pp-text-soft);font-size:.95rem}
+  .nav a{font-family:var(--pp-font-code);font-size:.72rem;font-weight:500;text-transform:uppercase;
+    letter-spacing:.16em;color:var(--pp-text-soft);transition:color .18s ease-out}
   .nav a:hover{color:var(--pp-primary)}
   .toggle{background:transparent;border:1px solid var(--pp-border);border-radius:var(--pp-radius-full);
     width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;
-    color:var(--pp-text-soft);cursor:pointer;transition:color .18s ease,border-color .18s ease}
+    color:var(--pp-text-soft);cursor:pointer;transition:color .18s ease-out,border-color .18s ease-out}
   .toggle:hover{color:var(--pp-primary);border-color:var(--pp-primary)}
   .toggle svg{width:18px;height:18px}
+  /* inchworm: walks the header's bottom line (ground = container y 40); body and head from the family green */
+  .inchworm{position:absolute;left:0;right:0;bottom:-4px;height:44px;overflow:hidden;pointer-events:none;z-index:0}
+  .inchworm svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .iw-body{stroke:var(--pp-primary);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+  .iw-rings{stroke:var(--pp-forest);stroke-width:5;stroke-dasharray:1 3.5;opacity:.35}
+  .iw-head{fill:var(--pp-primary)}
+  .iw-eye{fill:var(--pp-bg)}
 
-  /* hero */
-  .hero .wrap{display:grid;grid-template-columns:1fr 1.22fr;gap:var(--pp-space-xl);
-    align-items:center;padding-top:var(--pp-space-2xl);padding-bottom:var(--pp-space-2xl)}
-  .hero h1{margin:var(--pp-space-2xs) 0 var(--pp-space-sm)}
-  .hero .lede{max-width:34ch}
-  .cta{display:flex;gap:var(--pp-space-2xs);margin-top:var(--pp-space-lg);flex-wrap:wrap}
-  .under{margin-top:var(--pp-space-sm);font-family:var(--pp-font-code);font-size:.78rem;
-    letter-spacing:.04em;color:var(--pp-text-soft)}
+  /* ── direction sign: back to the garden, this bed, the next bed ── */
+  .waysign{background:var(--bed);color:var(--bed-on)}
+  .waysign .wrap{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch}
+  .waysign :focus-visible{outline-color:var(--bed-on)}
+  .way{display:flex;align-items:center;gap:var(--pp-space-2xs);padding:var(--pp-space-2xs) 0;
+    font-family:var(--pp-font-code);font-size:.72rem;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--bed-on)}
+  a.way{transition:gap .2s ease-out}
+  a.way:hover{gap:var(--pp-space-xs)}
+  .way .big{font-size:1.1rem;letter-spacing:0}
+  .way.here{padding:var(--pp-space-2xs) var(--pp-space-md);border-left:1px solid color-mix(in srgb,var(--bed-on) 30%,transparent);border-right:1px solid color-mix(in srgb,var(--bed-on) 30%,transparent)}
+  .way.next{justify-content:flex-end}
+  .way .sep{opacity:.5}
+  .w-plate{height:30px;min-width:30px;border-radius:var(--pp-radius-sm);border:1.5px solid var(--bed-on);display:inline-flex;align-items:center;justify-content:center;font-weight:700;letter-spacing:0;padding:0 var(--pp-space-4xs)}
+  .pn{font-family:var(--pp-font-heading);font-weight:600;font-size:1.05rem;letter-spacing:0;text-transform:none}
+  .big-pn{font-size:1.5rem;font-style:italic;font-variation-settings:"SOFT" 100,"WONK" 1}
 
-  /* terminal */
-  .term{background:var(--pp-term-bg);border:1px solid var(--pp-term-border);
-    border-radius:var(--pp-radius-md);box-shadow:var(--pp-shadow-rest);overflow:hidden;font-family:var(--pp-font-code)}
+  /* ── hero: title beside the pitch, then the product frame ── */
+  .hero{position:relative;z-index:2}
+  .hero .wrap{position:relative}
+  /* guide lines: one even 96px rhythm across the full width, centred, fading from the top down to nothing */
+  .hero::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:linear-gradient(to right,var(--pp-border) 0 1px,transparent 1px);
+    background-size:96px 100%;background-position:center top;background-repeat:repeat-x;
+    -webkit-mask-image:linear-gradient(to bottom,var(--pp-text),transparent);
+    mask-image:linear-gradient(to bottom,var(--pp-text),transparent)}
+  .hero-grid{position:relative;z-index:1;padding-top:var(--pp-space-xl);padding-bottom:0;row-gap:var(--pp-space-xl);align-items:start}
+  .hero-title{grid-column:1 / span 7;align-self:center}
+  .hero h1{font-size:clamp(3.4rem,7.2vw,6.4rem);line-height:.95;font-weight:640;letter-spacing:-.02em;
+    font-variation-settings:"SOFT" 20}
+  .hero h1 em{font-weight:560;color:var(--bed-word);font-variation-settings:"SOFT" 100,"WONK" 1}
+  .hero-copy{grid-column:8 / span 5;align-self:start;padding-top:var(--pp-space-3xs)}
+  .sig{font-family:var(--pp-font-heading);font-style:italic;font-size:1.25rem;margin-bottom:var(--pp-space-sm);
+    display:flex;align-items:center;gap:var(--pp-space-2xs)}
+  .sig::before{content:"";width:32px;height:2px;background:var(--bed);flex:none}
+  /* the terminal: soil-night, fixed in both themes */
+  .hero-term{grid-column:1 / -1}
+  .term{background:var(--pp-term-bg);border:1px solid var(--pp-term-border);border-radius:var(--pp-radius-md);overflow:hidden}
+  .hero-term .term{color:var(--pp-term-text);box-shadow:var(--pp-shadow-rest);font-family:var(--pp-font-code)}
   .term-bar{display:flex;align-items:center;gap:var(--pp-space-3xs);
     padding:var(--pp-space-2xs) var(--pp-space-xs);background:var(--pp-term-surface);border-bottom:1px solid var(--pp-term-border)}
   .tdot{width:11px;height:11px;border-radius:var(--pp-radius-full)}
   .tdot.e{background:var(--pp-error)}
   .tdot.c{background:var(--pp-caution)}
   .tdot.k{background:var(--pp-healthy)}
-  .term-title{margin-left:var(--pp-space-3xs);font-size:.78rem;opacity:.6;color:var(--pp-term-text)}
-  .term-body{margin:0;padding:var(--pp-space-sm);font-size:.72rem;line-height:1.85;
-    white-space:pre-wrap;color:var(--pp-term-text)}
+  .term-title{margin-left:var(--pp-space-3xs);font-size:.74rem;opacity:.6}
+  .term pre{margin:0;padding:var(--pp-space-md);font-family:var(--pp-font-code);font-size:.74rem;line-height:1.8;
+    white-space:pre-wrap;color:var(--pp-term-text);overflow-x:auto}
+  .hero-term pre{padding:var(--pp-space-sm);font-size:.76rem}
   .t-prompt{color:var(--pp-term-green)}
   .t-path{color:var(--pp-term-sun)}
-  .t-block{color:var(--pp-error);font-weight:700}
-  .t-dim{opacity:.55;color:var(--pp-term-text)}
+  .t-dim{opacity:.55}
+  .t-err{color:var(--pp-term-text);background:var(--pp-error);padding:0 var(--pp-space-4xs);border-radius:var(--pp-radius-xs);font-weight:700}
+  .t-rule{color:var(--pp-term-sun);font-weight:700}
+  .caption{display:flex;align-items:center;gap:var(--pp-space-3xs);margin-top:var(--pp-space-2xs);
+    font-family:var(--pp-font-code);font-size:.74rem;letter-spacing:.06em;color:var(--pp-text-soft)}
+  .caption b{color:var(--pp-text)}
+  .ldot{width:10px;height:10px;border-radius:var(--pp-radius-full);flex:none}
+  .ldot.err{background:var(--pp-error)}
 
-  /* sections */
-  section.band{background:var(--pp-bg-band);border-top:1px solid var(--pp-border);border-bottom:1px solid var(--pp-border)}
-  section.pad .wrap{padding-top:var(--pp-space-3xl);padding-bottom:var(--pp-space-3xl)}
+  /* ── sections: label in the margin, content on the right ── */
+  .sec{padding-top:var(--pp-space-2xl);padding-bottom:var(--pp-space-2xl);border-top:1px solid var(--pp-border);row-gap:var(--pp-space-md)}
+  .sec.tight{border-top:0;padding-top:0}
+  .content > h2{margin-bottom:var(--pp-space-md)}
+  .body{font-size:1.1rem;color:var(--pp-text-soft);max-width:58ch}
+  .body strong{color:var(--pp-text);font-weight:600}
+  .body code{font-size:.86em;white-space:nowrap}
+  /* status dots: umbrella colours, never bramble */
+  .dot{width:9px;height:9px;border-radius:var(--pp-radius-full);flex:none;display:inline-block}
+  .dot.ok{background:var(--pp-healthy)}
+  .dot.err{background:var(--pp-error)}
+  .dot.cau{background:var(--pp-caution)}
 
-  /* card rows */
-  .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--pp-space-md)}
-  .cards.four{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .card{background:var(--pp-surface);border:1px solid var(--pp-border);border-radius:var(--pp-radius-lg);
-    padding:var(--pp-space-md);border-top:3px solid var(--pp-weeder)}
-  .card h3{font-size:1.32rem;margin-bottom:var(--pp-space-3xs)}
-  .card p{margin:var(--pp-space-3xs) 0 0;color:var(--pp-text-soft);font-size:.98rem}
-  .card .label{font-family:var(--pp-font-code);font-size:.72rem;text-transform:uppercase;
-    letter-spacing:.14em;margin:0;color:var(--pp-weeder-word)}
+  /* what it refuses */
+  .refuses{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--pp-space-xs) var(--pp-space-lg)}
+  .refuses li{font-family:var(--pp-font-heading);font-size:1.4rem;line-height:1.25}
+  .refuses li{position:relative;padding-left:1.1em}
+  .refuses li::before{content:"*";position:absolute;left:0;top:.08em;font-family:var(--pp-font-heading);color:var(--bed-word)}
 
-  /* the catalogue */
-  .cat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--pp-space-md) var(--pp-space-xl)}
-  .cat h3{font-size:1.15rem;font-family:var(--pp-font-body);font-weight:700;
-    margin-bottom:var(--pp-space-2xs);display:flex;align-items:center;gap:var(--pp-space-3xs)}
-  .rules{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--pp-space-4xs)}
-  .rules li{display:grid;grid-template-columns:2.6rem 1fr;gap:var(--pp-space-3xs);
-    align-items:baseline;font-size:.95rem;color:var(--pp-text-soft);
-    padding:var(--pp-space-4xs) 0;border-bottom:1px solid var(--pp-border)}
-  .rid{font-family:var(--pp-font-code);font-size:.82rem;font-weight:700;color:var(--pp-weeder-word)}
-  .chip{font-family:var(--pp-font-code);font-size:.66rem;text-transform:uppercase;letter-spacing:.12em;
-    padding:var(--pp-space-4xs) var(--pp-space-3xs);border-radius:var(--pp-radius-full);
-    border:1px solid var(--pp-border);color:var(--pp-text-soft)}
-  .chip.block{color:var(--pp-error);border-color:var(--pp-error)}
-  .chip.warn{color:var(--pp-caution);border-color:var(--pp-caution)}
-  .chip.scan{color:var(--pp-info);border-color:var(--pp-info)}
+  /* faces */
+  .faces{list-style:none;margin:0;padding:0}
+  .face{display:grid;grid-template-columns:2rem minmax(0,11rem) minmax(0,1fr);column-gap:var(--pp-space-sm);align-items:baseline;
+    padding-top:var(--pp-space-sm);padding-bottom:var(--pp-space-sm);border-bottom:1px solid var(--pp-border)}
+  .face:first-child{padding-top:0}
+  .face:last-child{border-bottom:0;padding-bottom:0}
+  .face .n{font-family:var(--pp-font-code);font-size:.78rem;color:var(--pp-text-soft)}
+  .face .cmd{font-family:var(--pp-font-code);font-weight:700;font-size:1.02rem}
+  .face .cmd span{font-weight:400;color:var(--pp-text-soft)}
+  .face .what{color:var(--pp-text-soft);max-width:52ch}
 
-  /* numbers */
-  .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--pp-space-md);
-    margin-bottom:var(--pp-space-xl)}
-  .stat{border-top:3px solid var(--pp-weeder);padding-top:var(--pp-space-2xs)}
-  .stat b{display:block;font-family:var(--pp-font-heading);font-weight:620;
-    font-size:2.7rem;line-height:1;letter-spacing:-.02em}
-  .stat span{display:block;margin-top:var(--pp-space-3xs);font-size:.92rem;color:var(--pp-text-soft)}
-  .prose{max-width:64ch;display:flex;flex-direction:column;gap:var(--pp-space-xs)}
-  .prose p{margin:0;color:var(--pp-text-soft)}
-  .prose strong{color:var(--pp-text);font-weight:600}
+  /* proof band: forest under the frame's lower edge, the map's own numbers as sign numerals */
+  .proofband{position:relative;z-index:1;background:var(--pp-forest);color:var(--pp-term-text);
+    margin-top:calc(-1 * var(--pp-space-3xl));padding-top:calc(var(--pp-space-3xl) + var(--pp-space-xl));padding-bottom:var(--pp-space-xl)}
+  .proofband .label{color:var(--pp-term-text);opacity:.78}
+  .pb-at{opacity:.7}
+  .figures{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:var(--pp-space-sm) 0 0;border-top:1px solid rgba(243,236,217,.18)}
+  .figures div{display:flex;flex-direction:column-reverse;justify-content:flex-end;gap:var(--pp-space-3xs);
+    padding:var(--pp-space-sm) var(--pp-space-sm) 0;border-left:1px solid rgba(243,236,217,.18)}
+  .figures div:first-child{border-left:0;padding-left:0}
+  .figures dd{margin:0;font-family:var(--pp-font-heading);font-weight:600;font-size:clamp(3rem,6.4vw,5.4rem);line-height:.95;
+    letter-spacing:-.02em;font-variant-numeric:lining-nums tabular-nums}
+  .figures div:nth-child(3) dd{color:var(--pp-term-green)}
+  .figures dt{font-family:var(--pp-font-code);font-size:.68rem;font-weight:500;text-transform:uppercase;letter-spacing:.16em;opacity:.78}
 
-  /* start */
-  .start-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--pp-space-xl);align-items:start}
-  .snips{display:flex;flex-direction:column;gap:var(--pp-space-xs)}
-  .snip{background:var(--pp-term-bg);border:1px solid var(--pp-term-border);border-radius:var(--pp-radius-md);
-    padding:var(--pp-space-xs) var(--pp-space-sm);font-family:var(--pp-font-code);font-size:.84rem;
-    color:var(--pp-term-text);overflow-x:auto}
-  .snip .t-dim{display:block;margin-bottom:var(--pp-space-4xs)}
+  .sec.first{border-top:0}
 
-  /* footer — the garden footer (reference implementation, .brand/components.md) */
+  /* signs: a row of tiles, hairline seams */
+  .signs{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+    border:1px solid var(--pp-border);border-radius:var(--pp-radius-md);overflow:hidden}
+  .signs li{background:var(--pp-surface);outline:1px solid var(--pp-border);padding:var(--pp-space-sm);display:flex;flex-direction:column;gap:var(--pp-space-3xs)}
+  .signs b{font-family:var(--pp-font-heading);font-weight:560;font-size:1.45rem;line-height:1.15}
+  .signs li > span:last-child{color:var(--pp-text-soft);font-size:.95rem;line-height:1.45}
+  .sg-n{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--pp-radius-sm);
+    background:var(--bed);color:var(--bed-on);font-family:var(--pp-font-code);font-weight:700;font-size:.82rem;margin-bottom:var(--pp-space-3xs)}
+  .signs.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .states li{border-top:6px solid var(--st)}
+  .st-dot{width:14px;height:14px;border-radius:var(--pp-radius-full);background:var(--st);margin-bottom:var(--pp-space-3xs)}
+  .st-done{--st:var(--pp-healthy)} .st-fail{--st:var(--pp-error)} .st-needs{--st:var(--pp-caution)} .st-open{--st:var(--pp-muted)}
+
+  .after{margin-top:var(--pp-space-md);font-family:var(--pp-font-heading);font-style:italic;font-size:1.6rem;line-height:1.2}
+
+  /* allowances */
+  .allow-list{list-style:none;margin:var(--pp-space-sm) 0 0;padding:0;display:grid;row-gap:var(--pp-space-3xs)}
+  .allow-list li{display:grid;grid-template-columns:minmax(0,17rem) minmax(0,1fr);column-gap:var(--pp-space-sm);align-items:baseline}
+  .allow-list code{font-size:.84rem}
+  .allow-list span{font-size:.95rem;color:var(--pp-text-soft)}
+
+  /* install */
+  .install .term{margin-top:var(--pp-space-md)}
+  .then{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--pp-space-2xs);margin-top:var(--pp-space-sm);color:var(--pp-text-soft)}
+  .then code{font-size:.9rem}
+
+  /* where it sits: entries in the index style */
+  .sits{list-style:none;margin:0;padding:0;display:grid;row-gap:var(--pp-space-md)}
+  .sit{display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:var(--pp-space-sm);align-items:center;color:var(--pp-text)}
+  .plate{width:44px;height:44px;border-radius:var(--pp-radius-sm);background:var(--bloom);
+    display:flex;align-items:center;justify-content:center;font-family:var(--pp-font-code);font-weight:700;font-size:.95rem;color:var(--on)}
+  .plate.soon{background:transparent;box-shadow:inset 0 0 0 2px var(--bloom);color:var(--pp-text)}
+  .sit b{display:block;font-family:var(--pp-font-heading);font-weight:520;font-size:1.35rem;line-height:1.2;transition:color .18s ease-out}
+  a.sit:hover b{color:var(--pp-primary)}
+  .sit .label{display:block;margin-top:var(--pp-space-4xs)}
+
+  /* ── footer: the garden footer, the family's shared surface (components.md) ── */
   .gf{background:var(--pp-forest);color:var(--pp-term-text)}
-  .gf-wrap{max-width:var(--pp-container-max);margin:0 auto;
-    padding:var(--pp-space-xl) var(--pp-gutter) var(--pp-space-lg)}
+  .gf-wrap{max-width:var(--pp-container-max);margin:0 auto;padding:var(--pp-space-xl) var(--pp-gutter) var(--pp-space-lg)}
   .gf a{color:var(--pp-term-green)}
   .gf a:hover{color:var(--pp-term-text)}
-  .gf h4{color:var(--pp-term-text);font-size:1.05rem;margin:0 0 var(--pp-space-xs)}
-  .gf .wordmark{font-family:var(--pp-font-heading);font-weight:600;color:var(--pp-term-text)}
+  .gf h4{font-size:1.05rem;margin:0 0 var(--pp-space-xs)}
+  .gf .wordmark{color:var(--pp-term-text)}
   .gf .mark{width:28px;height:28px;flex:none}
   .gf .m-stem{fill:none;stroke:var(--pp-term-green);stroke-width:2;stroke-linecap:round}
   .gf .m-leaf{fill:var(--pp-term-green)}
-  .gf .m-bloom{fill:var(--pp-accent)}
+  .gf .m-bloom{fill:var(--pp-marigold)}
   .gf-plot{display:flex;flex-wrap:wrap;align-items:center;gap:var(--pp-space-2xs) var(--pp-space-md);
     padding-bottom:var(--pp-space-md);margin-bottom:var(--pp-space-lg);
     border-bottom:1px solid rgba(243,236,217,.14)}
   .gf-plotbrand{display:inline-flex;align-items:center;gap:var(--pp-space-3xs)}
-  .gf-plotbrand .wordmark{font-size:1.45rem;letter-spacing:-.01em}
-  .gf-plotline{margin:0;flex:1;min-width:18ch;color:var(--pp-term-text);opacity:.8;font-size:1rem}
+  .gf-plotbrand .wordmark{font-size:1.45rem}
+  .gf-plotline{flex:1;min-width:18ch;opacity:.8;font-size:1rem}
   .gf-plotlink{font-family:var(--pp-font-code);font-size:.82rem;white-space:nowrap}
   .gf-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:var(--pp-space-xl)}
-  .gf-soft{margin:var(--pp-space-2xs) 0 0;color:var(--pp-term-text);opacity:.78;
-    font-size:.95rem;max-width:42ch}
+  .gf-soft{margin-top:var(--pp-space-2xs);opacity:.78;font-size:.95rem;max-width:42ch}
   .gf-garden{display:flex;flex-wrap:wrap;gap:var(--pp-space-3xs)}
-  .gf-garden a{display:inline-flex;align-items:center;gap:var(--pp-space-4xs);
+  .gf-garden a,.gf-garden > span{display:inline-flex;align-items:center;gap:var(--pp-space-4xs);
     font-family:var(--pp-font-code);font-size:.82rem;color:var(--pp-term-text);
     padding:var(--pp-space-4xs) var(--pp-space-2xs);
     border-radius:var(--pp-radius-full);background:rgba(243,236,217,.07)}
   .gf-garden a:hover{background:rgba(243,236,217,.14)}
-  .gf-garden a.is-current{background:color-mix(in srgb, var(--bloom) 18%, transparent)}
-  .gf-dot{width:8px;height:8px;border-radius:var(--pp-radius-full);
-    background:var(--bloom);flex:none}
+  .gf-garden a.is-current{background:color-mix(in srgb,var(--bloom) 18%,transparent)}
+  .gf-dot{width:8px;height:8px;border-radius:var(--pp-radius-full);background:var(--bloom);flex:none}
   .gf-bottom{margin-top:var(--pp-space-xl);padding-top:var(--pp-space-sm);
     border-top:1px solid rgba(243,236,217,.14);display:flex;flex-wrap:wrap;
     gap:var(--pp-space-3xs);justify-content:space-between;
-    font-family:var(--pp-font-code);font-size:.74rem;
-    color:var(--pp-term-text);opacity:.72}
+    font-family:var(--pp-font-code);font-size:.74rem;opacity:.72}
+  .gf :focus-visible{outline-color:var(--pp-term-green)}
 
-  /* motion (enhancement only — content shows without JS) */
-  .js .rise{opacity:0;transform:translateY(16px);transition:opacity .8s var(--pp-ease-petal),transform .8s var(--pp-ease-petal)}
+  /* ── motion: progressive enhancement, gated on .js ── */
+  .js .rise{opacity:0;transform:translateY(20px);transition:opacity .9s var(--pp-ease-petal),transform .9s var(--pp-ease-petal)}
+  .js .hero .rise{transform:translateY(30px);transition:opacity .8s var(--pp-ease-petal),transform .8s var(--pp-ease-petal)}
   .js .rise.in{opacity:1;transform:none}
+  /* this bed blooms in on the map */
+  @keyframes bloom{from{opacity:0;transform:scale(.6) rotate(-14deg)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion: reduce){
     html{scroll-behavior:auto}
     .js .rise{opacity:1!important;transform:none!important;transition:none!important}
+      .inchworm{display:none}
   }
 
+  /* ── breakpoints: the brand's two ── */
   @media (max-width:880px){
     html{font-size:17px}
-    .hero .wrap{grid-template-columns:1fr;gap:var(--pp-space-xl)}
-    .cards,.cards.four{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .cat{grid-template-columns:1fr;gap:var(--pp-space-lg)}
-    .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .start-grid{grid-template-columns:1fr;gap:var(--pp-space-lg)}
+    .margin,.content,.hero-title,.hero-copy,.hero-term{grid-column:1 / -1}
+    .waysign .wrap{grid-template-columns:1fr 1fr}
+    .way.here{grid-column:1 / -1;grid-row:1;padding-left:0;padding-right:0;
+      border:0;border-bottom:1px solid color-mix(in srgb,var(--bed-on) 30%,transparent)}
+    .sec{row-gap:var(--pp-space-sm)}
+    .figures{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .figures div:nth-child(3){border-left:0;padding-left:0}
+    .signs,.signs.three{grid-template-columns:1fr}
     .gf-grid{grid-template-columns:1fr;gap:var(--pp-space-lg)}
   }
   @media (max-width:520px){
     html{font-size:16px}
-    .nav .lbl{display:none}
-    .cards,.cards.four{grid-template-columns:1fr}
-    .stats{grid-template-columns:1fr}
+    .wrap,.gf-wrap{padding-left:var(--pp-space-xs);padding-right:var(--pp-space-xs)}
+    .nav{gap:var(--pp-space-xs)}
+    .nav .lbl,.way .sub{display:none}
+    .way{letter-spacing:.1em}
+      .term pre{padding:var(--pp-space-xs);font-size:.64rem;overflow-wrap:anywhere}
+    .hero-term pre{font-size:.7rem}
+    .refuses{grid-template-columns:1fr}
+    .refuses li{font-size:1.25rem}
+    .face{grid-template-columns:1.5rem minmax(0,1fr);row-gap:var(--pp-space-4xs)}
+    .face .what{grid-column:2}
+    .allow-list li{grid-template-columns:1fr}
+  }
+  /* Protest Riot has one weight and no italic, so every heading-face element uses it as drawn, never faked */
+  html{font-synthesis:none}
+  .hero h1,
+  .big-pn,
+  .figures dd,
+  .hero h1 em,
+  .lf-step,
+  .pains b,
+  .pn,
+  .sig,
+  .signs b,
+  .sit b,
+  .wordmark,
+  h1,
+  h2,
+  h4{font-weight:400!important;font-style:normal!important;font-variation-settings:normal!important;letter-spacing:0!important}
+  /* the script's loops need room between lines */
+  .hero h1{line-height:1.1!important}
+  h2{line-height:1.25!important}
+
+  /* under construction (components.md): a ribbon across the hero's top-right corner on a bed page
+     whose product is planted but not yet shipping. hazard tape in sunlight and soil; it scrolls
+     with the page and takes no clicks; the hero copy stops short of it */
+  .wip{position:absolute;top:0;right:0;width:240px;height:240px;overflow:hidden;z-index:30;pointer-events:none}
+  .wip span{position:absolute;top:68px;right:-74px;width:340px;transform:rotate(45deg);
+    display:flex;align-items:center;justify-content:center;
+    padding:var(--pp-space-3xs) 0;background:var(--pp-accent);color:var(--pp-term-bg);
+    font-family:var(--pp-font-code);font-size:.64rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+    box-shadow:var(--pp-shadow-lift)}
+  .wip span::before,.wip span::after{content:"";position:absolute;left:0;right:0;height:6px;
+    background:repeating-linear-gradient(-45deg,var(--pp-term-bg) 0 6px,var(--pp-accent) 6px 12px)}
+  .wip span::before{top:-6px}
+  .wip span::after{bottom:-6px}
+  .hero:has(.wip) .hero-copy{padding-right:clamp(0px,calc(190px - max(var(--pp-gutter),(100vw - var(--pp-container-max)) / 2 + var(--pp-gutter))),160px)}
+  @media (max-width:880px){
+    .hero:has(.wip) .hero-copy{padding-right:0}
+    .wip{position:relative;width:auto;height:auto;overflow:visible}
+    .wip span{position:relative;top:auto;right:auto;width:auto;transform:none;margin:6px 0;padding:var(--pp-space-4xs) 0;font-size:.6rem}
   }
 </style>
 </head>
 <body id="top">
 
+<!-- pictogram sprite: same stroke and grid as the landing page -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="g-no" viewBox="0 0 24 24"><g class="glyph"><circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/></g></symbol>
+  <symbol id="g-map" viewBox="0 0 24 24"><g class="glyph"><path d="M3 6.5 9 4.5l6 2 6-2v13l-6 2-6-2-6 2z"/><path d="M9 4.5v13M15 6.5v13"/></g></symbol>
+  <symbol id="g-gate" viewBox="0 0 24 24"><g class="glyph"><path d="M4 3v18M20 3v18M4 7.5h16M4 16.5h16M4 16.5 20 7.5"/></g></symbol>
+  <symbol id="g-commit" viewBox="0 0 24 24"><g class="glyph"><circle cx="12" cy="12" r="3.5"/><path d="M2.5 12h6M15.5 12h6"/></g></symbol>
+  <symbol id="g-pr" viewBox="0 0 24 24"><g class="glyph"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="19" r="2.2"/><path d="M6 7.2v9.6M18 16.8V10a3 3 0 0 0-3-3h-4"/><path d="M13 4.5 10.5 7l2.5 2.5"/></g></symbol>
+</svg>
+
 <header class="site">
   <div class="wrap">
     <a class="brand" href="#top" aria-label="weeder home">
-      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
-        <path class="w-plant" d="M13.2 28.4 C12.8 22.4, 13.2 13.4, 13.8 6.2" stroke-width="1.9"/>
-        <path class="w-plant" d="M13 25.6 L11.5 24.9" stroke-width="1.1"/>
-        <path class="w-plant" d="M13.4 13 L15.1 12.3" stroke-width="1.1"/>
-        <path class="w-plant" d="M13.6 9.8 L12.1 9.2" stroke-width="1.1"/>
-        <ellipse class="w-leaf" cx="9.6" cy="24.2" rx="2.8" ry="1.2" transform="rotate(30 9.6 24.2)"/>
-        <ellipse class="w-leaf" cx="17.5" cy="11.2" rx="2.8" ry="1.2" transform="rotate(-30 17.5 11.2)"/>
-        <ellipse class="w-leaf" cx="10.2" cy="8.6" rx="2.8" ry="1.2" transform="rotate(30 10.2 8.6)"/>
-        <path class="w-blade" d="M11.2 16.1 L24.5 22.75" stroke-width="1.9"/>
-        <path class="w-blade" d="M11.2 21.9 L24.5 15.25" stroke-width="1.9"/>
-        <circle class="w-loop" cx="26.5" cy="23.75" r="2.2" stroke-width="1.6"/>
-        <circle class="w-loop" cx="26.5" cy="14.25" r="2.2" stroke-width="1.6"/>
+      <svg class="wmark" viewBox="0 0 24 24" aria-hidden="true">
+        <rect class="w-tile" width="24" height="24" rx="5.5"/>
+        <g transform="translate(3.36 3.36) scale(0.72)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path class="w-ink" stroke-width="2" d="M7.5 22 C7.3 16.5 7.4 9.5 7.8 3"/>
+          <path class="w-ink-fill" d="M7.4 20.2 C4.9 19.9 3.1 18.3 2.7 15.9 C5.3 16 7.1 17.7 7.4 20.2 Z"/>
+          <path class="w-ink-fill" d="M7.7 7.6 C10.2 7.4 12 5.8 12.4 3.4 C9.8 3.5 8 5.1 7.7 7.6 Z"/>
+          <path class="w-ink" stroke-width="2" d="M10.2 12 L16.8 17.8 M10.2 18 L16.8 12.2"/>
+          <circle class="w-ink" stroke-width="2" cx="18.3" cy="19.1" r="1.9"/>
+          <circle class="w-ink" stroke-width="2" cx="18.3" cy="10.9" r="1.9"/>
+        </g>
       </svg>
       <span class="wordmark">weeder</span>
     </a>
-    <nav class="nav">
-      <a href="#rules" class="lbl">the rules</a>
-      <a href="#numbers" class="lbl">the numbers</a>
-      <a href="#start">install</a>
-      <a href="https://github.com/jahala/weeder">github</a>
+    <nav class="nav" aria-label="page">
+      <a href="#why" class="lbl">why</a>
+      <a href="#how" class="lbl">faces</a>
+      <a href="#install" class="lbl">install</a>
+      <a href="https://github.com/jahala/weeder">source ↗</a>
       <button class="toggle" id="theme" type="button" aria-label="Toggle soil-night">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21 13.2A9 9 0 1 1 10.8 3 7 7 0 0 0 21 13.2z"/></svg>
       </button>
     </nav>
   </div>
+  <!-- inchworm: a looper walking the header line. static worm without JS; hidden under reduced motion -->
+  <div class="inchworm" aria-hidden="true">
+    <svg fill="none">
+      <path class="iw-body" d="M22 37.5 C23.5 16, 42.5 16, 44 37.5"/>
+      <path class="iw-rings" d="M22 37.5 C23.5 16, 42.5 16, 44 37.5"/>
+      <circle class="iw-head" cx="45.5" cy="36" r="3.4"/>
+      <circle class="iw-eye" cx="46.8" cy="35" r="1"/>
+    </svg>
+  </div>
 </header>
 
+<nav class="waysign" aria-label="where weeder sits in the garden">
+  <div class="wrap">
+    <a class="way back" href="https://plotplot.ai"><span class="big" aria-hidden="true">←</span><b class="pn">plotplot</b> <span class="sub"><span class="sep">·</span> the garden</span></a>
+    <span class="way here" aria-current="page">the shed <span class="sep">/</span> <span class="w-plate">11</span><b class="pn big-pn">weeder</b></span>
+    <a class="way next" href="https://jahala.github.io/well/">12 <b class="pn">well</b> <span class="sub"><span class="sep">·</span> the one door</span><span class="big" aria-hidden="true">→</span></a>
+  </div>
+</nav>
+
 <main>
-  <section class="hero">
+  <section class="hero" aria-labelledby="hero-title">
     <div class="wrap">
-      <div class="hero-copy rise">
-        <p class="kicker">the judge</p>
-        <h1>tests still mean what they meant.</h1>
-        <p class="lede">weeder reads the diff an agent just wrote and refuses the cheap road to green: a deleted test, a dropped assertion, a skip, a stub, a swallowed error, a secret, a guardrail edited. one static binary, milliseconds, no model in the loop.</p>
-        <div class="cta">
-          <a class="btn primary" href="#start">install weeder</a>
-          <a class="btn ghost" href="https://github.com/jahala/weeder">read the source</a>
+      <div class="hero-grid g12">
+        <div class="hero-title rise">
+          <h1 id="hero-title">Tests still mean what they <em>meant</em>.</h1>
         </div>
-        <p class="under">rust · exit 2 blocks · every finding as sarif</p>
-      </div>
-      <div class="hero-term rise">
-        <div class="term">
-          <div class="term-bar"><span class="tdot e"></span><span class="tdot c"></span><span class="tdot k"></span><span class="term-title">weeder · zsh</span></div>
-<pre class="term-body"><span class="t-dim">~/project</span> <span class="t-prompt">$</span> weeder check
-<span class="t-block">error</span>  <span class="t-path">T1</span>  src/parser.test.ts  a test file was deleted, and 2 test cases went with it.
-1 error, 0 warnings, 0 notes
 
-<span class="t-dim">~/project</span> <span class="t-prompt">$</span> weeder guard install
-weeder guard is installed: git runs its hooks from /home/you/project/.git/weeder-hooks.
-every worktree of this repository runs them.
-<span class="t-dim">pre-commit  refuses an index that carries a finding weeder blocks on
-commit-msg  refuses an index that blocks, where the message allows none of what it blocks on
-pre-push    refuses a pushed range that blocks, and a non-fast-forward to a protected branch
-pre-rebase  refuses a rebase that would rewrite a protected branch</span>
-protected: main, master (as weeder.toml at HEAD has them).
-</pre>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="band pad" id="why" aria-labelledby="why-heading">
-    <div class="wrap">
-      <div class="sec-head rise">
-        <p class="kicker">why weeder</p>
-        <h2 id="why-heading">an agent is the worst judge of the diff it just wrote</h2>
-        <p class="lede">it is asked for green and it will find green. the shortest road there is almost never the code.</p>
-      </div>
-      <div class="cards rise">
-        <div class="card">
-          <p class="label">the failure</p>
-          <h3>one line, and the suite forgets</h3>
-          <p>a red test is deleted. an assertion goes quiet. a skip marker appears. an exception is caught and dropped on the floor. a timeout widens until the flake stops. each one is a single line, and each one is the last thing a reader finds in a diff of a thousand.</p>
-        </div>
-        <div class="card">
-          <p class="label">why not a model</p>
-          <h3>the same judgement on both sides of the desk</h3>
-          <p>asking a model to review what a model produced puts one kind of judgement in both chairs. it is also slow, priced per token, and different every time you ask. a gate has to answer the same way twice.</p>
-        </div>
-        <div class="card">
-          <p class="label">what weeder does</p>
-          <h3>reads the change, not the code</h3>
-          <p>weeder compares what is there now against what was there before and reports shapes: a case that is gone, an assertion that was dropped, a stub where an implementation belongs. no prompt, no score, no opinion about style. an exit code, and a sarif log for the pull request.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="pad" id="rules" aria-labelledby="rules-heading">
-    <div class="wrap">
-      <div class="sec-head rise">
-        <p class="kicker">what it judges</p>
-        <h2 id="rules-heading">twenty seven rules, and only the unambiguous ones block</h2>
-        <p class="lede">every rule has an id, an adversarial fixture in typescript, python, rust and go, and a level. a block stops the change. a warning is for the person at the pull request, never for the agent to argue with.</p>
-      </div>
-      <div class="cat rise">
-        <div>
-          <h3><span class="chip block">block</span> the change does not go through</h3>
-          <ul class="rules">
-            <li><span class="rid">T1</span><span>a test was deleted</span></li>
-            <li><span class="rid">T2</span><span>assertions were dropped from a changed test file</span></li>
-            <li><span class="rid">T3</span><span>a skip or focus marker was added</span></li>
-            <li><span class="rid">T7</span><span>a rename took a test out of the runner</span></li>
-            <li><span class="rid">T8</span><span>a configuration line took a test out of the run</span></li>
-            <li><span class="rid">S1</span><span>a stub or a todo reached production code</span></li>
-            <li><span class="rid">D2</span><span>an import crossed a forbidden boundary</span></li>
-            <li><span class="rid">X1</span><span>a secret-looking string was added</span></li>
-            <li><span class="rid">X2</span><span>a file outside the scope was touched</span></li>
-            <li><span class="rid">C1</span><span>a guardrail file was edited</span></li>
-            <li><span class="rid">G1</span><span>a conflict marker was committed</span></li>
-            <li><span class="rid">B1</span><span>a test passed without the change it covers</span></li>
-          </ul>
-        </div>
-        <div>
-          <h3><span class="chip warn">warn</span> for the human reading the diff</h3>
-          <ul class="rules">
-            <li><span class="rid">T4</span><span>a tolerance or a timeout was widened</span></li>
-            <li><span class="rid">T5</span><span>expected values were regenerated</span></li>
-            <li><span class="rid">T6</span><span>an error assertion was weakened</span></li>
-            <li><span class="rid">M1</span><span>a test mocks the unit under change</span></li>
-            <li><span class="rid">S2</span><span>an error was swallowed</span></li>
-            <li><span class="rid">S3</span><span>a debug leftover reached production code</span></li>
-            <li><span class="rid">D1</span><span>a dependency manifest changed</span></li>
-            <li><span class="rid">C2</span><span>an ignore file was broadened over source or tests</span></li>
-            <li><span class="rid">C3</span><span>a workflow was changed</span></li>
-            <li><span class="rid">G2</span><span>a large or a binary file was added</span></li>
-          </ul>
-          <h3 style="margin-top:var(--pp-space-lg)"><span class="chip scan">scan</span> the tree as it stands, never blocking</h3>
-          <ul class="rules">
-            <li><span class="rid">R1</span><span>the docs cite something that no longer exists</span></li>
-            <li><span class="rid">R2</span><span>a public symbol has no references</span></li>
-            <li><span class="rid">R3</span><span>a todo is older than the configured age</span></li>
-            <li><span class="rid">R4</span><span>a dependency pin lags the registry</span></li>
-            <li><span class="rid">R5</span><span>a test file the configuration never collects</span></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="band pad" id="where" aria-labelledby="where-heading">
-    <div class="wrap">
-      <div class="sec-head rise">
-        <p class="kicker">where it runs</p>
-        <h2 id="where-heading">the gate belongs where the work lands</h2>
-        <p class="lede">a rule nobody runs is a preference. weeder is wired into the four places a change passes through on its way in.</p>
-      </div>
-      <div class="cards four rise">
-        <div class="card">
-          <p class="label">in git</p>
-          <h3>guard</h3>
-          <p><code>weeder guard install</code> writes the hooks and points <code>core.hooksPath</code> at them. pre-commit judges the index, pre-push judges the range and refuses a rewrite of a protected branch. it holds for every agent and every human alike.</p>
-        </div>
-        <div class="card">
-          <p class="label">in the harness</p>
-          <h3>the stop hook</h3>
-          <p><code>weeder hook</code> answers a harness's hook event on stdin and replies in the shape that harness reads. the turn ends against weeder's verdict rather than against the agent's own account of it.</p>
-        </div>
-        <div class="card">
-          <p class="label">in the plan</p>
-          <h3>pleach's gate</h3>
-          <p>pleach runs agent work as a graph of gated nodes. weeder is the gate on each one, so a node whose diff blocks does not publish, and the plan never merges a step that got green the cheap way.</p>
-        </div>
-        <div class="card">
-          <p class="label">on the pull request</p>
-          <h3>the action</h3>
-          <p>in ci, <code>weeder check</code> judges the pull request against the branch it opens onto and writes sarif. code scanning takes the log as it is, so every finding lands as an annotation on the diff a reviewer is already reading.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="pad" id="numbers" aria-labelledby="numbers-heading">
-    <div class="wrap">
-      <div class="sec-head rise">
-        <p class="kicker">measured, 2026-09</p>
-        <h2 id="numbers-heading">a gate is only worth having if it is almost never wrong</h2>
-        <p class="lede">weeder was run over real history at pinned commits, every block was classified by hand with one line of reasoning, and a second party re-graded the classification blind.</p>
-      </div>
-      <div class="stats rise">
-        <div class="stat"><b>635</b><span>commits of real history judged, in 5 repositories, each against its own parent</span></div>
-        <div class="stat"><b>20</b><span>commits blocked, of which 4 were block-level false positives</span></div>
-        <div class="stat"><b>0.63%</b><span>false-positive share of the commits judged, under the two percent bar</span></div>
-        <div class="stat"><b>2877</b><span>of 2907 planted anti-patterns caught, each on the site it was planted in</span></div>
-      </div>
-      <div class="prose rise">
-        <p><strong>recall holds per rule and per language.</strong> every rule that blocks stays at or above 95 percent in each of typescript, python, rust and go. the cases are planted one anti-pattern at a time into real commits by a scanner that knows nothing about weeder's detectors, and a site the commit already fired on is passed over, so no hit is inherited.</p>
-        <p><strong>the classification is a second party's.</strong> the blind re-grade judged each case from a packet with the builder's class out of sight, and agreed on 18 of 20 blocked commits and 19 of 20 recall cases. the false-positive floor, 0.94 percent, takes every verdict it called wrong as true.</p>
-        <p><strong>both readings stay in the report.</strong> under the three classes the ledger used first, the same 23 blocked commits counted 7 false positives, 1.10 percent. under the sharper question, is what the finding says true of the change, they count 4, 0.63 percent. the report keeps both, so the change of definition is on the record beside the number.</p>
-        <p>the corpus, the pins, the judgement of every block and the script that checks the arithmetic are in the repository, at <code>docs/calibration-2026-09.md</code>. a commit pushed to any of those sources after the pin falls outside the window and cannot move a number here.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="band pad" id="fit" aria-labelledby="fit-heading">
-    <div class="wrap">
-      <div class="sec-head rise">
-        <p class="kicker">honest scope</p>
-        <h2 id="fit-heading">what weeder decides, and what it leaves alone</h2>
-      </div>
-      <div class="cards four rise">
-        <div class="card">
-          <p class="label">on its own</p>
-          <h3>one binary, one command</h3>
-          <p>install it, run <code>weeder guard install</code>, and the repository has a gate. nothing else in the garden has to be there, no service runs, and no token is spent.</p>
-        </div>
-        <div class="card">
-          <p class="label">with the garden</p>
-          <h3>tend2 and pleach</h3>
-          <p>tend2 holds the map and only its verifier writes a pass. pleach runs the work as gated nodes. weeder is the gate they call, so a loop's checks stay honest because the diff that would have weakened them never lands.</p>
-        </div>
-        <div class="card">
-          <p class="label">beside what you already run</p>
-          <h3>with the linter and the scanner</h3>
-          <p>a linter reads style, a scanner reads for secrets, a review bot reads the shape of a pull request. weeder reads the change against the tests and the guardrails, and says only what it can prove. it replaces none of them and argues with none of them.</p>
-        </div>
-        <div class="card">
-          <p class="label">what it will not say</p>
-          <h3>whether the code is good</h3>
-          <p>weeder has no view on style, structure, naming, or whether the feature was worth building. it decides one thing, and says so in an exit code: whether the tests still mean what they meant.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="pad" id="start" aria-labelledby="start-heading">
-    <div class="wrap">
-      <div class="start-grid">
-        <div class="rise">
-          <p class="kicker">start</p>
-          <h2 id="start-heading">install it, then put it inside git</h2>
-          <p class="lede">the binary is static and the install is a tarball with its digest beside it. release binaries are built for linux and macos on x86_64 and aarch64 and for windows on x86_64, and the crate and the npm wrapper publish from the same workflow once the registries are set up. the last line is the one that matters: after <code>guard install</code> the gate runs whether anyone remembers it or not.</p>
+        <div class="hero-copy rise">
+          <p class="sig">pulled before it takes root.</p>
+          <p class="lede">weeder is a gate for code an agent wrote. It reads the diff, refuses dishonest growth, and leaves with an exit code that says whether the change goes through. A static Rust binary, milliseconds, no tokens spent, every finding as SARIF 2.1.0.</p>
           <div class="cta">
-            <a class="btn primary" href="https://github.com/jahala/weeder">weeder on github</a>
-            <a class="btn ghost" href="https://github.com/jahala/weeder/releases">release binaries</a>
+            <a class="btn sun" href="#install">Install weeder <span class="arrow" aria-hidden="true">↓</span></a>
+            <a class="btn ghost" href="https://github.com/jahala/weeder">View source <span class="arrow" aria-hidden="true">↗</span></a>
           </div>
         </div>
-        <div class="snips rise">
-          <div class="snip"><span class="t-dim">fetch the release for your platform with its digest, and check it (aarch64-apple-darwin, x86_64-apple-darwin, x86_64-unknown-linux-musl or aarch64-unknown-linux-musl)</span>t=aarch64-apple-darwin; b=https://github.com/jahala/weeder/releases/latest/download; curl -fsSLO "$b/weeder-$t.tar.gz" -O "$b/weeder-$t.tar.gz.sha256" &amp;&amp; shasum -a 256 -c "weeder-$t.tar.gz.sha256"</div>
-          <div class="snip"><span class="t-dim">unpack the executable and put it on your path</span>tar xzf "weeder-$t.tar.gz" weeder &amp;&amp; install -m 755 weeder ~/.local/bin/weeder</div>
-          <div class="snip"><span class="t-dim">then put the judgement inside git</span>weeder guard install --protect master</div>
-        </div>
+
+        <figure class="hero-term rise" style="margin:0">
+          <div class="term">
+            <div class="term-bar"><span class="tdot e"></span><span class="tdot c"></span><span class="tdot k"></span><span class="term-title">weeder check on a merge nobody finished · exit 2</span></div>
+<pre class="term-body"><span class="t-prompt">$</span> weeder check
+<span class="t-err">error</span>  <span class="t-rule">G1</span>  <span class="t-path">src/parser.ts:1</span>  a merge conflict marker (&lt;&lt;&lt;&lt;&lt;&lt;&lt;) was added.
+       <span class="t-dim">why</span>   the file carries both sides of a merge nobody finished, so it does not
+             parse and does not run.
+       <span class="t-dim">next</span>  finish the merge, delete the markers, and stage the file again, or write
+             why they stay in a `Weeder-allow: G1` trailer.
+<span class="t-err">error</span>  <span class="t-rule">G1</span>  <span class="t-path">src/parser.ts:3</span>  a merge conflict marker (=======) was added.
+       <span class="t-dim">see</span>   src/parser.ts:1 for why and next
+<span class="t-err">error</span>  <span class="t-rule">G1</span>  <span class="t-path">src/parser.ts:5</span>  a merge conflict marker (&gt;&gt;&gt;&gt;&gt;&gt;&gt;) was added.
+       <span class="t-dim">see</span>   src/parser.ts:1 for why and next
+<span class="t-dim">3 errors, 0 warnings, 0 notes</span>
+</pre>
+          </div>
+        </figure>
       </div>
     </div>
   </section>
+
+  <section class="proofband" aria-labelledby="proof-title">
+    <div class="wrap">
+      <h2 class="label" id="proof-title">weeder 0.4.0, as it ships <span class="pb-at">· commit 8d921e7 · 5 nov 2026</span></h2>
+      <dl class="figures">
+        <div><dt>rules</dt><dd>27</dd></div>
+        <div><dt>tests</dt><dd>544</dd></div>
+        <div><dt>block the commit</dt><dd>11</dd></div>
+        <div><dt>models in the loop</dt><dd>0</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="wrap" id="why" aria-labelledby="why-title"><div class="sec first g12">
+    <p class="label margin">why</p>
+    <div class="content rise">
+      <h2 id="why-title">The builder is the worst judge of the build.</h2>
+      <p class="body">An agent that has just written a change is the worst available judge of it. It will report success, and it has every incentive to reach success by the shortest road: delete the failing test, add a skip, catch the exception and move on. <strong>weeder notices them first</strong>, deterministically, before a human opens the pull request. It has no model, no prompt and no opinion about style.</p>
+    </div>
+  </div></section>
+
+  <section class="wrap" aria-labelledby="refuse-title"><div class="sec tight g12">
+    <h2 class="label margin" id="refuse-title">what it refuses</h2>
+    <ul class="refuses content rise">
+      <li>deleted or weakened tests</li>
+      <li>skips</li>
+      <li>stubs</li>
+      <li>swallowed errors</li>
+      <li>secrets</li>
+      <li>guardrail edits</li>
+      <li>dependency-direction violations</li>
+    </ul>
+  </div></section>
+
+  <section class="wrap" id="how" aria-labelledby="how-title"><div class="sec g12">
+    <p class="label margin">the faces</p>
+    <div class="content rise">
+      <h2 id="how-title">Five faces on one core</h2>
+      <ol class="faces">
+        <li class="face"><span class="n" aria-hidden="true">1</span><p class="cmd"><span>weeder</span> check</p><p class="what">judges a diff and may block. This is the one wired into hooks and CI.</p></li>
+        <li class="face"><span class="n" aria-hidden="true">2</span><p class="cmd"><span>weeder</span> scan</p><p class="what">judges the repository as it is and never blocks: rotted docs, dead exports, stale work markers, lagging pins.</p></li>
+        <li class="face"><span class="n" aria-hidden="true">3</span><p class="cmd"><span>weeder</span> guard</p><p class="what">puts that judgement inside git, through hooks git cannot be talked out of running.</p></li>
+        <li class="face"><span class="n" aria-hidden="true">4</span><p class="cmd"><span>weeder</span> hook</p><p class="what">answers an agent harness's hook event, so a turn ends against weeder's verdict.</p></li>
+        <li class="face"><span class="n" aria-hidden="true">5</span><p class="cmd"><span>weeder</span> rules</p><p class="what">prints the catalogue, the level each rule carries, and what it may reach over the network.</p></li>
+      </ol>
+    </div>
+  </div></section>
+
+  <section class="wrap" aria-labelledby="exit-title"><div class="sec tight g12">
+    <h2 class="label margin" id="exit-title">exit codes</h2>
+    <div class="content rise">
+      <ul class="signs states three">
+        <li class="st-done"><span class="st-dot" aria-hidden="true"></span><b>exit 0</b><span>clean, or warnings only</span></li>
+        <li class="st-fail"><span class="st-dot" aria-hidden="true"></span><b>exit 2</b><span>at least one block-level finding</span></li>
+        <li class="st-needs"><span class="st-dot" aria-hidden="true"></span><b>exit 3</b><span>weeder could not run, and the message says why</span></li>
+      </ul>
+      <p class="after">Exit 3 is a refusal, not a pass.</p>
+    </div>
+  </div></section>
+
+  <section class="wrap" aria-labelledby="allow-title"><div class="sec tight g12">
+    <h2 class="label margin" id="allow-title">allowances</h2>
+    <div class="content rise">
+      <p class="body">A finding is allowed through on the record and never in silence:</p>
+      <ul class="allow-list">
+        <li><code>Weeder-allow: &lt;RULE&gt; &lt;reason&gt;</code><span>a trailer on the commit, or</span></li>
+        <li><code>weeder-allow &lt;RULE&gt;: &lt;reason&gt;</code><span>a comment on the line.</span></li>
+      </ul>
+    </div>
+  </div></section>
+
+  <section class="wrap" id="numbers" aria-labelledby="numbers-title"><div class="sec g12">
+    <p class="label margin">measured, 2026-09</p>
+    <div class="content rise">
+      <h2 id="numbers-title">A gate is worth having only if it is almost never wrong.</h2>
+      <p class="body">Over <strong>635 commits</strong> of real history in 5 repositories, weeder blocked 24, and 1 of those blocks was false: <strong>0.16 percent</strong> of the commits judged, under the two percent bar. The rules the recall bar holds caught 2864 of 2892 anti-patterns planted in real commits, and each catches at least 95 percent in each of TypeScript, Python, Rust and Go. A blind re-grade agrees on 14 of 20 blocked commits, under its own 90 percent bar, so the share stands as provisional, and its harshest reading is 0.94 percent. <a href="https://github.com/jahala/weeder/blob/master/docs/calibration-2026-09.md">The report</a> keeps the corpus, the pins and every judgement.</p>
+    </div>
+  </div></section>
+
+  <section class="wrap" id="install" aria-labelledby="install-title"><div class="sec install g12">
+    <div class="content rise">
+      <h2 id="install-title">Install</h2>
+      <p class="body">Release binaries for linux and macos on x86_64 and aarch64, and for windows on x86_64, with a SHA-256 beside each. Set <code>target</code> to yours: <code>aarch64-apple-darwin</code>, <code>x86_64-apple-darwin</code>, <code>aarch64-unknown-linux-musl</code>, <code>x86_64-unknown-linux-musl</code> or <code>x86_64-pc-windows-msvc</code>.</p>
+      <div class="term">
+<pre><span class="t-dim">target=</span>aarch64-apple-darwin
+<span class="t-dim">base=</span>https://github.com/jahala/weeder/releases/latest/download
+<span class="t-prompt">curl</span> -fsSLO "$base/weeder-$target.tar.gz" -O "$base/weeder-$target.tar.gz.sha256"
+<span class="t-prompt">shasum</span> -a 256 -c "weeder-$target.tar.gz.sha256"
+<span class="t-prompt">tar</span> xzf "weeder-$target.tar.gz" weeder
+<span class="t-prompt">install</span> -m 755 weeder ~/.local/bin/weeder</pre>
+      </div>
+      <p class="then">Installed, it guards nothing yet. Switch it on where the work lands:</p>
+      <ul class="allow-list">
+        <li><code>weeder guard install --protect main</code><span>in git: hooks judge every commit and push, in every worktree. Name your own default branch.</span></li>
+        <li><code>weeder hook claude</code><span>in Claude Code, on <code>PreToolUse</code> and <code>Stop</code>, so a turn cannot end over a blocking change. <code>weeder hook codex</code> and <code>weeder hook gemini</code> answer those CLIs.</span></li>
+        <li><code>examples/ci/github.yml</code><span>in CI: <a href="https://github.com/jahala/weeder/blob/master/examples/ci/github.yml">copy the workflow</a>. It judges the pull request against its base and hands SARIF to code scanning. The hooks catch honest mistakes early; this is the one that holds.</span></li>
+      </ul>
+      <p class="then"><span>Read on: <a href="https://github.com/jahala/weeder/blob/master/docs/rules.md">every rule</a> and its level, <a href="https://github.com/jahala/weeder/blob/master/docs/sarif.md">the SARIF it writes</a>, and <a href="https://github.com/jahala/weeder/blob/master/SKILL.md">SKILL.md</a>, the whole binary in one file for agents.</span></p>
+    </div>
+  </div></section>
+
+  <section class="wrap" aria-labelledby="sits-title"><div class="sec g12">
+    <h2 class="label margin" id="sits-title">where it sits</h2>
+    <ul class="sits content rise">
+      <li><a class="sit" href="https://jahala.github.io/pleach/"><span class="plate" style="--bloom:var(--pp-pleach);--on:var(--sign-dark)">07</span><span><b>pleach gates every node on weeder</b><span class="label">C build · the conductor</span></span></a></li>
+      <li><div class="sit"><span class="plate soon" style="--bloom:var(--pp-tend)">06</span><span><b>tend runs it in its loops</b><span class="label">C build · plan and verify</span></span></div></li>
+      <li><div class="sit"><span></span><span><b>git's hooks, on every commit and push</b><span class="label">weeder guard</span></span></div></li>
+      <li><div class="sit"><span></span><span><b>the agent harness's hooks</b><span class="label">weeder hook · Claude Code, Codex, Gemini</span></span></div></li>
+      <li><a class="sit" href="https://github.com/jahala/weeder/blob/master/examples/ci/github.yml"><span></span><span><b>a check on the pull request</b><span class="label">weeder check · SARIF 2.1.0</span></span></a></li>
+    </ul>
+  </div></section>
 </main>
 
 <!-- garden footer · shared family surface. swap ONLY: (1) the identity column, (2) the .is-current pill, (3) the repo links -->
 <footer class="gf">
   <div class="gf-wrap">
 
-    <!-- 0 · plotplot band — same on every product page; links home. (the umbrella page omits this) -->
     <div class="gf-plot">
       <a class="gf-plotbrand" href="https://plotplot.ai" aria-label="plotplot home">
-        <svg class="mark" viewBox="0 0 28 28" aria-hidden="true">
-          <path class="m-stem" d="M14 26 V12"/>
-          <path class="m-leaf" d="M14 18.5 C9 17.5 6 13.5 6.6 9 C11 9.8 14 13.2 14 18.5 Z"/>
-          <path class="m-leaf" d="M14 15.5 C19 14.5 22 10.5 21.4 6 C17 6.8 14 10.2 14 15.5 Z"/>
-          <circle class="m-bloom" cx="14" cy="8" r="3"/>
+        <svg class="mark" viewBox="0 0 24 24" aria-hidden="true">
+          <path class="m-stem" d="M12 22 V8"/>
+          <path class="m-leaf" d="M12 17.6 C7.8 16.8 5.2 13.6 5.6 9.8 C9.3 10.4 12 13.2 12 17.6 Z"/>
+          <path class="m-leaf" d="M12 14.6 C16.2 13.8 18.8 10.6 18.4 6.8 C14.7 7.4 12 10.2 12 14.6 Z"/>
+          <circle class="m-bloom" cx="12" cy="4.6" r="2.5"/>
         </svg>
         <span class="wordmark">plotplot</span>
       </a>
@@ -515,30 +607,32 @@ protected: main, master (as weeder.toml at HEAD has them).
 
     <div class="gf-grid">
 
-      <!-- 1 · identity — per product -->
       <div class="gf-col">
         <h4>weeder</h4>
-        <p class="gf-soft">the judge of the diff. it reads what an agent produced and refuses dishonest growth, in milliseconds, with no model in the loop.</p>
+        <p class="gf-soft">the judge of the diff. reads an agent's diff and refuses dishonest growth, with no model in the loop.</p>
         <p class="gf-soft"><a href="https://github.com/jahala/weeder">github →</a> &nbsp;·&nbsp; MIT</p>
       </div>
 
-      <!-- 2 · the garden — identical on every page; add .is-current to THIS product -->
       <div class="gf-col">
         <h4>the plotplot garden</h4>
         <nav class="gf-garden" aria-label="the garden">
-          <a href="https://jahala.github.io/tilth/"  style="--bloom:var(--pp-tilth)"><span class="gf-dot"></span>tilth</a>
-          <a href="https://jahala.github.io/tend/"   style="--bloom:var(--pp-tend)"><span class="gf-dot"></span>tend</a>
-          <a href="https://jahala.github.io/petals/" style="--bloom:var(--pp-petals)"><span class="gf-dot"></span>petals</a>
+          <span style="--bloom:var(--pp-mull)"><span class="gf-dot"></span>mull</span>
+          <span style="--bloom:var(--pp-glean)"><span class="gf-dot"></span>glean</span>
+          <span style="--bloom:var(--pp-cultivate)"><span class="gf-dot"></span>cultivate</span>
+          <span style="--bloom:var(--pp-graft)"><span class="gf-dot"></span>graft</span>
+          <span style="--bloom:var(--pp-petals)"><span class="gf-dot"></span>petals</span>
+          <span style="--bloom:var(--pp-tend)"><span class="gf-dot"></span>tend</span>
           <a href="https://jahala.github.io/pleach/" style="--bloom:var(--pp-pleach)"><span class="gf-dot"></span>pleach</a>
-          <a href="https://jahala.github.io/umbel/"  style="--bloom:var(--pp-umbel)"><span class="gf-dot"></span>umbel</a>
-          <a href="https://jahala.github.io/copeca/" style="--bloom:var(--pp-copeca)"><span class="gf-dot"></span>copeca</a>
-          <a href="https://jahala.github.io/pollen/" style="--bloom:var(--pp-pollen)"><span class="gf-dot"></span>pollen</a>
-          <a href="https://jahala.github.io/weeder/"   style="--bloom:var(--pp-weeder)" class="is-current"><span class="gf-dot"></span>weeder</a>
+          <a href="https://jahala.github.io/umbel/" style="--bloom:var(--pp-umbel)"><span class="gf-dot"></span>umbel</a>
+          <a href="https://jahala.github.io/tilth/" style="--bloom:var(--pp-tilth)"><span class="gf-dot"></span>tilth</a>
+          <a href="https://jahala.github.io/mycelium/" style="--bloom:var(--pp-mycelium)"><span class="gf-dot"></span>mycelium</a>
+          <a href="#top" style="--bloom:var(--pp-weeder)" class="is-current" aria-current="page"><span class="gf-dot"></span>weeder</a>
+          <span style="--bloom:var(--pp-well)"><span class="gf-dot"></span>well</span>
+          <span style="--bloom:var(--pp-coldframe)"><span class="gf-dot"></span>coldframe</span>
         </nav>
         <p class="gf-soft">small, sharp tools for building with agents.</p>
       </div>
 
-      <!-- 3 · nearby — optional; drop the whole column if there's nothing -->
       <div class="gf-col">
         <h4>nearby</h4>
         <p class="gf-soft"><a href="https://github.com/jahala/mrkd">mrkd</a>, a native markdown viewer for macOS.</p>
@@ -548,7 +642,7 @@ protected: main, master (as weeder.toml at HEAD has them).
     </div>
     <div class="gf-bottom">
       <span>© 2026 · a plotplot garden tool · MIT</span>
-      <span>agents produce; weeder decides.</span>
+      <span>pulled before it takes root.</span>
     </div>
   </div>
 </footer>
@@ -562,11 +656,70 @@ protected: main, master (as weeder.toml at HEAD has them).
     root.setAttribute('data-theme',dark?'light':'dark');
     localStorage.setItem('pp-theme',dark?'light':'dark');
   });}
-  if(!('IntersectionObserver' in window)){return;}
+  var items=document.querySelectorAll('.rise');
+  function show(el){el.classList.add('in');}
+  if(!('IntersectionObserver' in window)){Array.prototype.forEach.call(items,show);return;}
   var io=new IntersectionObserver(function(es){es.forEach(function(e){
-    if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
-  });},{threshold:.12,rootMargin:'0px 0px -8% 0px'});
-  document.querySelectorAll('.rise').forEach(function(el){io.observe(el);});
+    if(e.isIntersecting){show(e.target);io.unobserve(e.target);}
+  });},{threshold:0,rootMargin:'0px 0px -6% 0px'});
+  Array.prototype.forEach.call(items,function(el){io.observe(el);});
+})();
+</script>
+<script>
+// inchworm: a looper on the header line. two-anchor gait with a constant body length: the rear is
+// drawn up into an arch, then the front reaches forward. every few strides it rears up and sways,
+// looking about; if a pointer comes close it finishes its step and goes stiff as a twig until the
+// pointer leaves. walks off the right edge, waits, walks in again. honours reduced motion.
+(function(){
+  var box=document.querySelector('.inchworm'); if(!box) return;
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var svg=box.querySelector('svg'), header=box.parentNode;
+  var body=svg.querySelector('.iw-body'), rings=svg.querySelector('.iw-rings');
+  var head=svg.querySelector('.iw-head'), eye=svg.querySelector('.iw-eye');
+  var G=40, base=G-2.5, L=34, Lmin=10, DRAW=560, REACH=640, SENSE=2800, RISE=420;
+  var W=box.clientWidth; window.addEventListener('resize',function(){W=box.clientWidth;});
+  var rear, front, phase='away', tp=0, wait=1400, strides=0, nextSense=0, hover=false, left=0, angle=0;
+  function begin(){front=-30;rear=front-L;phase='draw';tp=0;strides=0;nextSense=4+Math.floor(Math.random()*5);}
+  function ease(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+  // cubic from rear to front; find the arch height that keeps the body length at L
+  function archLen(xr,xf,h){var k=(xf-xr)*.08,x0=xr,y0=0,len=0,i,t,u,x,y;
+    for(i=1;i<=16;i++){t=i/16;u=1-t;x=u*u*u*xr+3*u*u*t*(xr+k)+3*u*t*t*(xf-k)+t*t*t*xf;y=-(3*u*u*t+3*u*t*t)*h;
+      len+=Math.sqrt((x-x0)*(x-x0)+(y-y0)*(y-y0));x0=x;y0=y;} return len;}
+  function arch(xr,yr,xf,yf){var lo=0,hi=L,h,i;for(i=0;i<14;i++){h=(lo+hi)/2;if(archLen(xr,xf,h)<L)lo=h;else hi=h;}
+    var k=(xf-xr)*.08;return 'M'+xr.toFixed(1)+' '+yr.toFixed(1)+' C'+(xr+k).toFixed(1)+' '+(yr-h).toFixed(1)+', '+(xf-k).toFixed(1)+' '+(yf-h).toFixed(1)+', '+xf.toFixed(1)+' '+yf.toFixed(1);}
+  // rear half flat on the line, front half raised at angle a (degrees) from a soft bend
+  function raised(a){var r=a*Math.PI/180,p=rear+L*.45,s=L*.55-4,bx=p+4*Math.cos(r),by=base-4*Math.sin(r);
+    var fx=bx+s*Math.cos(r),fy=by-s*Math.sin(r);
+    return {d:'M'+rear.toFixed(1)+' '+base+' L'+(p-4).toFixed(1)+' '+base+' Q'+p.toFixed(1)+' '+base+' '+bx.toFixed(1)+' '+by.toFixed(1)+' L'+fx.toFixed(1)+' '+fy.toFixed(1),fx:fx,fy:fy,r:r};}
+  function draw(d,fx,fy,tilt){
+    body.setAttribute('d',d);rings.setAttribute('d',d);
+    var hx=fx+1.5*Math.cos(tilt)+1*Math.sin(tilt), hy=fy-1.5*Math.sin(tilt)-1*Math.cos(tilt)+0;
+    head.setAttribute('cx',hx.toFixed(1));head.setAttribute('cy',hy.toFixed(1));
+    eye.setAttribute('cx',(hx+1.3*Math.cos(tilt)+.4).toFixed(1));eye.setAttribute('cy',(hy-1-1.3*Math.sin(tilt)).toFixed(1));}
+  header.addEventListener('mousemove',function(e){var b=box.getBoundingClientRect(),x=e.clientX-b.left;
+    hover=phase!=='away'&&Math.abs(x-(rear+front)/2)<80;if(hover)left=0;});
+  header.addEventListener('mouseleave',function(){hover=false;});
+  var last=0;
+  function frame(ts){
+    var dt=last?Math.min(80,ts-last):16;last=ts;tp+=dt;var t,fy=base,ry=base,p;
+    if(phase==='away'){box.style.visibility='hidden';if(tp>=wait){begin();box.style.visibility='visible';}requestAnimationFrame(frame);return;}
+    if(phase==='draw'){t=Math.min(1,tp/DRAW);rear=(front-L)+(L-Lmin)*ease(t);ry=base-Math.sin(t*Math.PI)*2.5;
+      draw(arch(rear,ry,front,base),front,base,0);if(t>=1){phase='reach';tp=0;}}
+    else if(phase==='reach'){t=Math.min(1,tp/REACH);front=(rear+Lmin)+(L-Lmin)*ease(t);fy=base-Math.sin(t*Math.PI)*2.5;
+      draw(arch(rear,base,front,fy),front,fy,0);
+      if(t>=1){strides++;tp=0;phase=hover?'twig':(strides>=nextSense?'sense':'draw');}}
+    else if(phase==='sense'){t=tp/SENSE;
+      if(t<.25)angle=50*ease(t/.25);else if(t<.78)angle=50+9*Math.sin((t-.25)/.53*Math.PI*4);else angle=50*(1-ease(Math.min(1,(t-.78)/.22)));
+      p=raised(angle);draw(p.d,p.fx,p.fy,p.r);
+      if(t>=1){phase='draw';tp=0;strides=0;nextSense=4+Math.floor(Math.random()*5);}}
+    else if(phase==='twig'){ // rigid, straight, like a twig; holds while the pointer is near
+      if(!hover)left+=dt;
+      if(hover||left<900)angle=Math.min(38,angle+38*dt/RISE);else angle=Math.max(0,angle-38*dt/RISE);
+      p=raised(angle);draw(p.d,p.fx,p.fy,p.r);
+      if(!hover&&left>=900&&angle<=0){phase='draw';tp=0;left=0;}}
+    if(rear>W+30){phase='away';tp=0;wait=3000+Math.random()*4000;}
+    requestAnimationFrame(frame);}
+  requestAnimationFrame(frame);
 })();
 </script>
 </body>

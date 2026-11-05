@@ -1,14 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="weeder">
-  <!-- weeder mark: shears open on a weeder's stem, at the height where the cut is made -->
-  <path d="M13.2 28.4 C12.8 22.4, 13.2 13.4, 13.8 6.2" fill="none" stroke="#357E2C" stroke-width="1.9" stroke-linecap="round"/>
-  <path d="M13 25.6 L11.5 24.9" fill="none" stroke="#357E2C" stroke-width="1.1" stroke-linecap="round"/>
-  <path d="M13.4 13 L15.1 12.3" fill="none" stroke="#357E2C" stroke-width="1.1" stroke-linecap="round"/>
-  <path d="M13.6 9.8 L12.1 9.2" fill="none" stroke="#357E2C" stroke-width="1.1" stroke-linecap="round"/>
-  <ellipse cx="9.6" cy="24.2" rx="2.8" ry="1.2" transform="rotate(30 9.6 24.2)" fill="#357E2C"/>
-  <ellipse cx="17.5" cy="11.2" rx="2.8" ry="1.2" transform="rotate(-30 17.5 11.2)" fill="#357E2C"/>
-  <ellipse cx="10.2" cy="8.6" rx="2.8" ry="1.2" transform="rotate(30 10.2 8.6)" fill="#357E2C"/>
-  <path d="M11.2 16.1 L24.5 22.75" fill="none" stroke="#8E3B5E" stroke-width="1.9" stroke-linecap="round"/>
-  <path d="M11.2 21.9 L24.5 15.25" fill="none" stroke="#8E3B5E" stroke-width="1.9" stroke-linecap="round"/>
-  <circle cx="26.5" cy="23.75" r="2.2" fill="none" stroke="#8E3B5E" stroke-width="1.6"/>
-  <circle cx="26.5" cy="14.25" r="2.2" fill="none" stroke="#8E3B5E" stroke-width="1.6"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="weeder">
+  <rect width="24" height="24" rx="5.5" fill="#A37A6E"/>
+  <g transform="translate(3.36 3.36) scale(0.72)" fill="none">
+    <!-- weeder mark: shears open around a weed's stem, at the height where the cut is made -->
+    <path d="M7.5 22 C7.3 16.5 7.4 9.5 7.8 3" stroke="#1C1610" stroke-width="2"/>
+    <path d="M7.4 20.2 C4.9 19.9 3.1 18.3 2.7 15.9 C5.3 16 7.1 17.7 7.4 20.2 Z" fill="#1C1610"/>
+    <path d="M7.7 7.6 C10.2 7.4 12 5.8 12.4 3.4 C9.8 3.5 8 5.1 7.7 7.6 Z" fill="#1C1610"/>
+    <path d="M10.2 12 L16.8 17.8 M10.2 18 L16.8 12.2" stroke="#1C1610" stroke-width="2"/>
+    <circle cx="18.3" cy="19.1" r="1.9" stroke="#1C1610" stroke-width="2"/>
+    <circle cx="18.3" cy="10.9" r="1.9" stroke="#1C1610" stroke-width="2"/>
+  </g>
 </svg>
