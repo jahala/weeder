@@ -36,7 +36,8 @@ Every rule the catalogue prints answers for all four languages, `ts/`, `py/`,
 `rs/` and `go/`, and `tests/catalogue_matrix.rs` walks that matrix and holds each
 cell to its whole result set. A rule that reads paths rather than a language
 keeps its extra shapes under one folder named for what it reads: C1 and C3 under
-`paths/`, X1 under `prose/` for the files weeder has no grammar for.
+`paths/`, X1 under `prose/` for the files weeder has no grammar for and under
+`settings/` for the env, YAML, TOML and INI files it reads as names and values.
 
 A fixture whose rule asks git when a line was written states the date its state
 was committed on in `before/.weeder-date`, in any spelling git reads. The file

@@ -169,7 +169,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Block,
         short_description: "A secret-looking string was added",
-        full_description: "An added line carries a known credential prefix, or a high-entropy literal assigned to a name that reads like a key, where the literal is one run of characters rather than a sentence. A credential a vendor published in its own documentation is named as an example and reported as a note.",
+        full_description: "An added line carries a known credential prefix, or a high-entropy literal assigned to a name that reads like a key, in source or in an env, YAML, TOML or INI file, where the literal is one run of characters rather than a sentence and reads nothing from the environment. A credential a vendor published in its own documentation is named as an example and reported as a note.",
         network: Network::None,
     },
     Rule {

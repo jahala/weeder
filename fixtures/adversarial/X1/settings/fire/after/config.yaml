@@ -1,0 +1,3 @@
+service:
+  name: billing
+  api_key: {{weeder:disordered}}
