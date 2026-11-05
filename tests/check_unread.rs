@@ -36,7 +36,10 @@ fn repository() -> Repo {
 }
 
 fn notes(found: &[Finding]) -> Vec<&Finding> {
-    found.iter().filter(|finding| finding.rule == NOTICE).collect()
+    found
+        .iter()
+        .filter(|finding| finding.rule == NOTICE)
+        .collect()
 }
 
 #[test]
