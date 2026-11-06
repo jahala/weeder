@@ -57,6 +57,14 @@ not, is judged like any other file and takes effect once it lands. A base with
 no `weeder.toml` is judged at the catalogue's own levels. `--config` is the one
 way to name another law, and it is for whoever runs weeder, not for the change.
 
+A base whose `weeder.toml` this weeder cannot read, say a key a newer release
+renamed, judges one change only: one that rewrites `weeder.toml` and touches
+nothing else, in every commit of the range. That change is judged at the
+catalogue's levels, with one note under the id `LAW` saying so, and C1 still
+blocks it until a person signs it. Any other change over that base exits 3, so
+land the migration first, as a commit of its own and under CI a pull request of
+its own.
+
 Two keys take paths away from the rules. `[scope] exclude` lists patterns no
 rule reads, gitignore-style from the root (`test/fixtures/`, `**/*.snap`), and
 each one that set files aside is reported as one `EXCLUDED` note with a count.

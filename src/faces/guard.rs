@@ -912,7 +912,9 @@ fn protected(root: &Path, from_the_bundle: &[String]) -> Result<Vec<String>, Str
     if !from_the_bundle.is_empty() {
         return Ok(from_the_bundle.to_vec());
     }
-    Ok(read_law(root, "HEAD", None)?.protected_branches)
+    Ok(read_law(root, "HEAD", None)
+        .map_err(|error| error.to_string())?
+        .protected_branches)
 }
 
 /// The line `install` prints about what the hooks will keep, which is the one

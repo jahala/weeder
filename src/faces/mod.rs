@@ -12,15 +12,12 @@ use std::path::Path;
 
 use crate::core::change::{self, Change, Side};
 use crate::core::classify::{classify_file, reads_as_text, FileKind};
-use crate::core::config::{parse_config, Config};
+use crate::core::config::{parse_config, Config, CONFIG_FILE};
 use crate::core::diff::FileDiff;
 use crate::core::read::TestShape;
 use crate::core::syntax::Mask;
 use crate::seams::git::Blob;
 use crate::seams::{fs, git, reader};
-
-/// The name of the file a repository states its law in.
-pub const CONFIG_FILE: &str = "weeder.toml";
 
 /// This repository's configuration, or the defaults where it states none. A
 /// config a caller pointed at and weeder cannot read is a run that never happened;
@@ -50,20 +47,49 @@ pub fn read_config(root: &Path, from: Option<&Path>) -> Result<Config, String> {
 /// itself never supplies it, staged, unstaged or committed, because a law the
 /// judged change can write is no law; a change to `weeder.toml` takes effect
 /// once it has landed. `--config` is the one exception, an explicit choice made
-/// by whoever runs weeder rather than by the change.
-pub fn read_law(root: &Path, base: &str, from: Option<&Path>) -> Result<Config, String> {
+/// by whoever runs weeder rather than by the change. A base whose law this
+/// weeder cannot read is `LawError::Unreadable`, and the caller decides whether
+/// the change it judges is the migration that may be judged over it.
+pub fn read_law(root: &Path, base: &str, from: Option<&Path>) -> Result<Config, LawError> {
     if from.is_some() {
-        return read_config(root, from);
+        return read_config(root, from).map_err(LawError::Unreached);
     }
     let text = git::file_at_base(root, base, CONFIG_FILE)
-        .map_err(|error| error.to_string())?
+        .map_err(|error| LawError::Unreached(error.to_string()))?
         .map(|blob| String::from_utf8_lossy(&blob.bytes).into_owned());
-    parse_config(text.as_deref()).map_err(|error| {
-        format!(
-            "{CONFIG_FILE} at {base} is not valid: {error}. a change is judged under the law its base carries, so repair that key in a commit of its own, or pass --config to name a law for this run."
-        )
+    parse_config(text.as_deref()).map_err(|error| LawError::Unreadable {
+        base: base.to_string(),
+        error: error.to_string(),
     })
 }
+
+/// Why a change has no law to be judged under. The two differ in what can
+/// still be done: a law weeder could not reach is a run that never happened,
+/// and a law the base carries and this weeder cannot read is one a change that
+/// rewrites `weeder.toml` alone can still be judged over (#100).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum LawError {
+    /// git could not answer, or the law `--config` named is not one weeder can
+    /// read; the reason is the whole sentence a person reads.
+    Unreached(String),
+    /// The base carries a `weeder.toml` this weeder refuses: a key it no longer
+    /// has, a value it does not take, text that is not TOML.
+    Unreadable { base: String, error: String },
+}
+
+impl std::fmt::Display for LawError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LawError::Unreached(reason) => f.write_str(reason),
+            LawError::Unreadable { base, error } => write!(
+                f,
+                "{CONFIG_FILE} at {base} is not valid: {error}. a change is judged under the law its base carries, and this weeder cannot read that one. land the {CONFIG_FILE} migration first, as a commit of its own that touches nothing else, and under CI as a pull request of its own: it is judged at the catalogue's levels, and C1 asks a person to sign it. --config names a law for one run instead."
+            ),
+        }
+    }
+}
+
+impl std::error::Error for LawError {}
 
 /// The law a change writes, where it writes one, parsed the way its base's law
 /// was. A `weeder.toml` that does not parse would otherwise land unread and

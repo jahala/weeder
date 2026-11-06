@@ -26,7 +26,17 @@ from the change: HEAD for the working tree and for `--staged`, the base commit f
 `--base` and for pre-push. A change to `weeder.toml` is judged under the law it
 is changing, C1 included, and takes effect once it lands. A base with no
 `weeder.toml` is judged at the levels below. `check --config <path>` names
-another law for one run. `scan` judges the tree it is given, and reads the
+another law for one run.
+
+A release that renames or removes a key leaves a base whose `weeder.toml` the new
+binary cannot read. Over such a base weeder judges one change only: one that
+rewrites `weeder.toml` and touches no other path, in the diff and in every
+commit of the range. It is judged at the levels below, as if the base carried no
+law, and the run says so in one note under the id `LAW`. The change still writes
+no law for itself, so C1 blocks it until a person signs it with a
+`Weeder-allow: C1` trailer, or at the pull request where CI runs `--strict`. Any
+other change over that base exits 3, and the message says to land the migration
+first, on its own. `scan` judges the tree it is given, and reads the
 `weeder.toml` that tree holds.
 
 | Section | What it sets | Rules that read it |

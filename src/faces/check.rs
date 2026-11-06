@@ -14,7 +14,9 @@
 //!
 //! Every mode is judged under `weeder.toml` as the base of its range carries it,
 //! `HEAD` or the base ref, and never under the copy the change holds: a law the
-//! judged change could write would let it switch the judge off.
+//! judged change could write would let it switch the judge off. A base law this
+//! weeder cannot read judges only the change that rewrites `weeder.toml` and
+//! nothing else, at the catalogue's levels, so a renamed key can be migrated.
 //!
 //! A run that cannot reach a judgement, no repository, an unreadable ref, a
 //! config weeder cannot parse, leaves with exit 3 and says why on stderr. A gate
@@ -31,6 +33,7 @@ use crate::core::exclude;
 use crate::core::finding::{Finding, Level};
 use crate::core::glob;
 use crate::core::hierarchy::{self, Hierarchy};
+use crate::core::law;
 use crate::core::read::CallerSite;
 use crate::core::rules;
 use crate::core::rules::check::collect;
@@ -42,7 +45,8 @@ use crate::core::suppress::{
 use crate::core::syntax::Mask;
 use crate::core::unread;
 use crate::faces::{
-    blobs, gather, read_law, readable, side, written_law, Answer, Format, Source, Untracked,
+    blobs, gather, read_law, readable, side, written_law, Answer, Format, LawError, Source,
+    Untracked,
 };
 use crate::seams::{fs, git, reader};
 
@@ -114,7 +118,10 @@ fn judge(request: &Request) -> Result<Verdict, String> {
     let root = git::repository_root(&request.cwd).map_err(|error| error.to_string())?;
     let range = range(request)?;
     // The law comes from where the range starts, never from what it judges.
-    let config = read_law(&root, &range.base, request.config.as_deref())?;
+    let stated = match read_law(&root, &range.base, request.config.as_deref()) {
+        Err(LawError::Unreached(reason)) => return Err(reason),
+        stated => stated,
+    };
     // Asked before anything is judged: a run that cannot do what it was asked
     // never happened, and refusing after the work is a refusal that cost time.
     let untracked = reads_untracked(request, &range)?;
@@ -122,6 +129,20 @@ fn judge(request: &Request) -> Result<Verdict, String> {
     let judged: Vec<FileDiff> = parse_diff(&diff).map_err(|error| {
         format!("weeder could not read the diff git produced: {error}. report it with the change that caused it.")
     })?;
+    // A base law this weeder cannot read still judges the one change that
+    // repairs it, at the catalogue's levels and saying so, and nothing else
+    // (#100). The change supplies no law of its own either way.
+    let (config, law_notice) = match stated {
+        Ok(config) => (config, None),
+        Err(LawError::Unreadable { base, error }) => {
+            let touched = touched(&root, request, &judged, untracked)?;
+            if !law::migrates_the_law_alone(touched.iter().map(String::as_str)) {
+                return Err(LawError::Unreadable { base, error }.to_string());
+            }
+            (Config::default(), Some(law::notice(&base, &error)))
+        }
+        Err(unreached) => return Err(unreached.to_string()),
+    };
     // The excluded paths leave here, before anything reads them: a file no
     // rule judges has no suppression to honour and no malformed one to
     // complain about either. What it has is a note, so the exclusion is in the log.
@@ -168,6 +189,7 @@ fn judge(request: &Request) -> Result<Verdict, String> {
     });
     findings.extend(exclude::notices(&config, &excluded));
     findings.extend(unread::notice(&unread_paths(&changes)));
+    findings.extend(law_notice);
     if request.strict {
         if let Some(unreadable) = malformed.first() {
             return Err(refusal(unreadable));
@@ -335,6 +357,32 @@ fn arrivals(root: &Path, config: &Config) -> Result<(Vec<Change>, Vec<String>), 
         });
     }
     Ok((arrived, excluded))
+}
+
+/// Every path this run's change touched: both paths of each file the diff
+/// names, the files git has never been told about where this run reads them,
+/// and every path each commit of a range touched. The commits count one by one,
+/// because a range whose diff is `weeder.toml` alone can still carry a commit
+/// that touched something else and a later one that took it away.
+fn touched(
+    root: &Path,
+    request: &Request,
+    judged: &[FileDiff],
+    untracked: bool,
+) -> Result<BTreeSet<String>, String> {
+    let mut touched: BTreeSet<String> = judged
+        .iter()
+        .flat_map(|file| [file.old_path.clone(), file.new_path.clone()])
+        .flatten()
+        .collect();
+    if untracked {
+        touched.extend(git::untracked_files(root).map_err(|error| error.to_string())?);
+    }
+    if let Some(base) = &request.base {
+        let tip = request.tip.as_deref().unwrap_or("HEAD");
+        touched.extend(git::paths_in_commits(root, base, tip).map_err(|error| error.to_string())?);
+    }
+    Ok(touched)
 }
 
 fn read_diff(root: &Path, range: &Range) -> Result<String, String> {
