@@ -93,6 +93,105 @@ fn t4_stays_silent_when_the_number_tightens_or_belongs_to_nobody() {
     }
 }
 
+/// Each language moves two unchanged assertions one level deeper, into a
+/// `describe`, a class, a module or a subtest. git writes that as the old lines
+/// out and the new lines in, the block's opening line first, so a pairing by
+/// order alone sets each assertion against the one written above it and reads
+/// `0.3333` against `0.6667`. Nothing was loosened.
+#[test]
+fn t4_stays_silent_when_unchanged_assertions_are_only_reindented() {
+    for language in LANGUAGES {
+        let repo = fixture("T4", language.name, "reindented");
+        let name = language.name;
+        assert_eq!(
+            loosened(&language, "reindented"),
+            Vec::<u64>::new(),
+            "{name}: every assertion the move touched reads the same once its indent is set aside"
+        );
+
+        let run = repo.weeder(&["check"]);
+        assert_eq!(
+            reported(&run.findings(), "T4"),
+            Vec::new(),
+            "{name}: a line that only moved deeper is the same line, and loosened nothing"
+        );
+        assert_eq!(run.code, 0, "{name}: nothing found, nothing blocked");
+    }
+}
+
+/// The same move, with the second assertion loosened on the way in. The
+/// assertion that only moved is no loosening, and the one that moved and
+/// loosened is still reported, on its own line.
+#[test]
+fn t4_warns_on_a_loosening_beside_a_reindent() {
+    for language in LANGUAGES {
+        let repo = fixture("T4", language.name, "reindented-loosened");
+        let name = language.name;
+        let loosened = loosened(&language, "reindented-loosened");
+        assert_eq!(
+            loosened.len(),
+            1,
+            "{name}: the fixture loosens one assertion beside the one that only moved"
+        );
+
+        let run = repo.weeder(&["check"]);
+        let findings = reported(&run.findings(), "T4");
+        assert_eq!(
+            findings
+                .iter()
+                .map(|finding| finding.line.expect("a T4 finding names its line"))
+                .collect::<Vec<u64>>(),
+            loosened,
+            "{name}: the loosened line is reported, and the line that only moved is not"
+        );
+        for finding in &findings {
+            assert!(
+                !finding.message.contains("0.3333` became `0.6667"),
+                "{name}: one assertion's value is never read against another's: {}",
+                finding.message
+            );
+        }
+        assert_eq!(
+            run.code, 0,
+            "{name}: a warning is for the human at the pull request"
+        );
+    }
+}
+
+/// The lines of the after side that rewrote a number and nothing else: the
+/// line reads differently from every line of the before side once its indent
+/// is set aside, and the same as one of them once its digits are set aside too.
+/// A line that only moved deeper is in neither set, and the opening of the new
+/// block is in the first alone.
+fn loosened(language: &Language, case: &str) -> Vec<u64> {
+    let read = |side: &str| {
+        fixture_file(
+            "T4",
+            language.name,
+            case,
+            &format!("{side}/{}", language.path),
+        )
+    };
+    let before = read("before");
+    let after = read("after");
+    let spaced = |line: &str| line.split_whitespace().collect::<Vec<&str>>().join(" ");
+    let undigited = |line: &str| {
+        spaced(line)
+            .chars()
+            .filter(|character| !character.is_ascii_digit())
+            .collect::<String>()
+    };
+    after
+        .lines()
+        .enumerate()
+        .filter(|(_, line)| {
+            before.lines().all(|was| spaced(was) != spaced(line))
+                && before.lines().any(|was| undigited(was) == undigited(line))
+        })
+        .map(|(index, _)| index as u64 + 1)
+        .collect()
+}
+
 /// The lines a fixture's change rewrote, counted from one. Both sides of these
 /// fixtures hold the same lines in the same places, so a line that reads
 /// differently is a line the change rewrote.
