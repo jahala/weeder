@@ -71,6 +71,7 @@ pub fn evaluate(tree: &Tree, config: &Config) -> Vec<Detection> {
             continue;
         }
         let citations = citations(file.text());
+        let first_of_this_document = findings.len();
         // The paths first, and every one of them, because what a path resolved
         // to is the authority for the names written beside it. A name read
         // before the paragraph's path had been resolved would be answered by
@@ -121,8 +122,25 @@ pub fn evaluate(tree: &Tree, config: &Config) -> Vec<Detection> {
                 findings.push(finding(&file.path, citation.line, &complaint));
             }
         }
+        name_the_way_out(&mut findings[first_of_this_document..]);
     }
     findings
+}
+
+/// What a person writes when a document cites somewhere else on purpose: a
+/// study of another codebase, a coverage map of the app being rebuilt, a
+/// runtime file. R1 cannot tell those from a stale reference, so the first of
+/// a document's findings says how to tell it, once, rather than every finding
+/// repeating it (#102, #86).
+const ELSEWHERE: &str = " if this document describes code outside this repository, turn R1 off under its path with `[[overrides]]`; name a file or variable that lives outside the tree in `[docs] external`.";
+
+fn name_the_way_out(document: &mut [Detection]) {
+    let first = document
+        .iter_mut()
+        .min_by_key(|detection| detection.region.as_ref().map(|region| region.start_line));
+    if let Some(first) = first {
+        first.message.next.push_str(ELSEWHERE);
+    }
 }
 
 /// The place a name is answerable to: the path citation standing nearest to it.
