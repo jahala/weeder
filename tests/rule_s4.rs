@@ -13,6 +13,7 @@
 mod common;
 
 use common::{fixture, fixture_file, Repo};
+use weeder::core::change::READABLE;
 
 /// The production file each fire fixture adds an export to, and the name it
 /// exports.
@@ -126,6 +127,34 @@ fn a_production_reference_that_is_not_a_call_still_wires_the_export_in() {
         "a function passed as a value is used\n{}",
         run.stderr
     );
+}
+
+#[test]
+fn a_file_past_the_size_weeder_reads_as_code_is_not_read_for_references() {
+    // Past the cap a file is weighed and G2 reports it, and nobody reads it as
+    // code, the caller search included. Its bytes naming the export wire nothing
+    // in, and reading them for the name is what would cost the worst case its
+    // budget.
+    let repo = typescript_repo();
+    let reference = "import { slugify } from \"./text\";\n\nexport const links = (names: string[]) => names.map(slugify);\n";
+    let row = "export const field = \"the record carries a field\";\n";
+    let padding = row.repeat(READABLE as usize / row.len() + 1);
+    repo.write("src/generated.ts", &format!("{reference}{padding}"));
+    repo.stage_all();
+
+    let run = repo.weeder(&["check"]);
+    let s4: Vec<_> = run
+        .findings()
+        .into_iter()
+        .filter(|finding| finding.rule == "S4")
+        .collect();
+    assert_eq!(
+        s4.len(),
+        1,
+        "only tests reach the export from a file weeder reads as code: {s4:?}\n{}",
+        run.stderr
+    );
+    assert_eq!(s4[0].path, "src/text.ts");
 }
 
 #[test]

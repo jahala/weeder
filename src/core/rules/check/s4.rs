@@ -24,7 +24,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::core::change::{Change, Side};
+use crate::core::change::{reads_as_code, Change, Side};
 use crate::core::classify::{classify_file, FileKind, Lang};
 use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::glob;
@@ -124,7 +124,9 @@ fn exported(side: &Side) -> impl Iterator<Item = &Definition> {
 }
 
 /// The changed files that write each wanted name in their code, outside a
-/// comment or a string.
+/// comment or a string. A file past the size weeder reads as code is weighed
+/// and never read as code, by the caller search or here, and word by word it
+/// costs more than the rest of a run together.
 fn written_in_changes(
     changes: &[Change],
     wanted: &BTreeSet<&str>,
@@ -134,7 +136,7 @@ fn written_in_changes(
         let Some(path) = change.diff.new_path.as_deref() else {
             continue;
         };
-        if change.after.lang() == Lang::Other {
+        if change.after.lang() == Lang::Other || !reads_as_code(change.after.size) {
             continue;
         }
         let from_a_test = change.after.is(FileKind::Test);
