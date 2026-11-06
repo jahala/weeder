@@ -238,7 +238,11 @@ fn rust_reads_as_a_module_with_its_tests_inside_it() {
     );
     assert!(tests_of(&caller, &caller_source).is_empty());
 
-    assert_eq!(callers_of("greet", &dir), ["main.rs:4 in main"]);
+    // The module's own test calls it too, and a call from a test is a call.
+    assert_eq!(
+        callers_of("greet", &dir),
+        ["greet.rs:15 in tests.greets_by_name", "main.rs:4 in main"]
+    );
 }
 
 #[test]

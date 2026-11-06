@@ -10,13 +10,13 @@
 //! ref that no longer exists on disk. Only [`related_files`] and [`callers`]
 //! touch the filesystem, because only they answer questions about other files.
 
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashSet};
 use std::path::{Path, PathBuf};
 
 use tilth_core::{
-    detect_file_type, extract_import_source, find_callers_batch, get_outline_entries, is_external,
-    is_import_line, resolve_related_files_with_content, test_entries, BloomFilterCache, FileType,
-    OutlineEntry, OutlineKind, TestKind,
+    detect_file_type, extract_imports, find_callers_batch, get_outline_entries, is_external,
+    resolve_related_files_with_content, test_entries, BloomFilterCache, FileType, OutlineEntry,
+    OutlineKind, TestKind,
 };
 
 use crate::core::classify::{classify_file, Lang};
@@ -132,51 +132,34 @@ pub fn test_shape(path: &Path, content: &str) -> TestShape {
     TestShape { units }
 }
 
-/// The import statements a file makes, in source order.
+/// The modules a file imports, one import per module, in source order.
 ///
-/// tilth judges an import by the line it starts on, and so does weeder: a
-/// statement written across several lines carries the range it spans and the
-/// source read off the whole of it. A language that lists several sources in
-/// one statement, Go's parenthesised block, is one import here, because the
-/// substrate names one source per statement and weeder adds no parser of its own.
+/// A statement can name several modules, Go's parenthesised block, a Rust
+/// `use a::{b, c}`, Python's `import os, json`, and tilth names each on the
+/// line that names it. So does weeder: an import here is one module, its line
+/// is the one a finding about it points at, and its text is that line as the
+/// file writes it.
 #[must_use]
 pub fn imports(path: &Path, content: &str) -> Vec<Import> {
     let Some(lang) = code_language(path) else {
         return Vec::new();
     };
-
-    // The outline is what knows where a multi-line statement ends; the line
-    // scan is what finds every statement, including the ones no outline entry
-    // is emitted for.
-    let ends = import_statement_ends(path, content);
     let lines: Vec<&str> = content.lines().collect();
-    let mut found = Vec::new();
-    for (index, line) in lines.iter().enumerate() {
-        if !is_import_line(line, lang) {
-            continue;
-        }
-        let start_line = index as u32 + 1;
-        let end_line = ends
-            .get(&start_line)
-            .copied()
-            .unwrap_or(start_line)
-            .max(start_line)
-            .min(lines.len() as u32);
-        let text = lines[index..end_line as usize]
-            .iter()
-            .map(|line| line.trim())
-            .collect::<Vec<_>>()
-            .join(" ");
-        let source = extract_import_source(&text, Some(lang));
-        found.push(Import {
-            start_line,
-            end_line,
-            external: is_external(&source, lang),
-            text,
-            source,
-        });
-    }
-    found
+    extract_imports(content, lang)
+        .into_iter()
+        .map(|import| Import {
+            start_line: import.line,
+            end_line: import.line,
+            // tilth names a line of this content, so the line is there; an
+            // empty text is what a line past the end would honestly hold.
+            text: lines
+                .get(import.line.saturating_sub(1) as usize)
+                .map(|line| line.trim().to_string())
+                .unwrap_or_default(),
+            external: is_external(&import.source, lang),
+            source: import.source,
+        })
+        .collect()
 }
 
 /// The files this file's relative imports resolve to on disk. An import that
@@ -281,18 +264,6 @@ fn definition_kind(kind: OutlineKind) -> DefinitionKind {
         OutlineKind::Module => DefinitionKind::Module,
         OutlineKind::TestSuite | OutlineKind::TestCase => DefinitionKind::Other,
     }
-}
-
-/// Where each import statement in the outline ends, keyed by the line it starts
-/// on. Only imports, so a declaration that happens to open on the same line as
-/// one cannot lend it its range.
-fn import_statement_ends(path: &Path, content: &str) -> HashMap<u32, u32> {
-    outline(path, content)
-        .flatten()
-        .iter()
-        .filter(|definition| definition.kind == DefinitionKind::Import)
-        .map(|definition| (definition.start_line, definition.end_line))
-        .collect()
 }
 
 /// Walk the outline for tests a language declares rather than calls, giving

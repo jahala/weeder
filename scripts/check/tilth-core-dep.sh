@@ -10,7 +10,7 @@ root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
 
 repo="https://github.com/jahala/tilth"
-rev="7f38db58696e16c2df2be71da985f47097f34920"
+rev="4bfce427dbbfb054dbf3785eb0f60b6843635bbc"
 status=0
 
 command -v jq >/dev/null 2>&1 || { echo "jq is not on PATH" >&2; exit 3; }
