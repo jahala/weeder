@@ -117,6 +117,9 @@ fn planter(rule: &str) -> Option<Planter> {
         "S1" => |lang, tree, seed| stub_production_code(lang, tree, seed).ok_or(NoSite::Absent),
         "S2" => |lang, tree, seed| swallow_a_failure(lang, tree, seed).ok_or(NoSite::Absent),
         "S3" => |lang, tree, seed| leave_a_print(lang, tree, seed).ok_or(NoSite::Absent),
+        "S4" => {
+            |lang, tree, seed| export_for_the_tests_alone(lang, tree, seed).ok_or(NoSite::Absent)
+        }
         "D1" => |lang, tree, seed| change_a_manifest(lang, tree, seed).ok_or(NoSite::Absent),
         "D2" => |lang, tree, seed| cross_a_boundary(lang, tree, seed).ok_or(NoSite::Absent),
         "X1" => |lang, tree, seed| add_a_secret(lang, tree, seed).ok_or(NoSite::Absent),
@@ -1028,6 +1031,182 @@ fn leave_a_print(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
     None
 }
 
+/// The name S4's planted function is given in each language, chosen so that no
+/// real program in the corpus is likely to have written it already.
+pub(super) fn orphan_name(lang: Language) -> &'static str {
+    match lang {
+        Language::Ts => "formatOrphanLabel",
+        Language::Go => "FormatOrphanLabel",
+        Language::Py | Language::Rs => "format_orphan_label",
+    }
+}
+
+/// The files whose exports are somebody else's to call by design, and the
+/// directories that hold no shipped code whatever their files are named.
+fn entered_from_outside(path: &str) -> bool {
+    let name = basename(path);
+    let stem = name.rsplit_once('.').map_or(name, |(head, _)| head);
+    let set_apart = path.split('/').any(|segment| {
+        matches!(
+            segment,
+            "tests" | "__tests__" | "benches" | "testdata" | "fixtures"
+        )
+    });
+    set_apart || matches!(stem, "lib" | "index" | "__init__" | "main" | "__main__")
+}
+
+/// S4: a function is exported and a suite calls it, and nothing that ships does.
+///
+/// The function goes at the foot of a production file, and a case calling it at
+/// the foot of a suite the runner collects. Nothing else in the tree names it.
+fn export_for_the_tests_alone(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
+    let name = orphan_name(lang);
+    if tree
+        .sources(lang)
+        .iter()
+        .any(|source| source.code.iter().any(|code| code.contains(name)))
+    {
+        return None;
+    }
+    let suites: Vec<&Source> = tree
+        .tests(lang)
+        .into_iter()
+        .filter(|source| lang.collects_file(&source.path))
+        .collect();
+    let any_suite = rotate(suites.clone(), seed).next()?;
+    for source in rotate(tree.production(lang), seed) {
+        if entered_from_outside(&source.path) {
+            continue;
+        }
+        // A Go suite calls a function of its own package by its bare name, so
+        // one in the same directory is the honest caller where there is one.
+        let suite = suites
+            .iter()
+            .copied()
+            .find(|suite| lang == Language::Go && directory(&suite.path) == directory(&source.path))
+            .unwrap_or(any_suite);
+        let (definition, case) = orphan(lang, name);
+        let declared =
+            source.lines.len() + definition.iter().take_while(|line| line.is_empty()).count();
+        let planted = with(source, source.lines.len(), &definition);
+        let mut tested: Vec<String> = Vec::new();
+        let at = suite.last_import().map_or(0, |line| line + 1);
+        if let Some(import) = import_for_a_suite(lang, suite, source, name) {
+            tested.push(import);
+        }
+        let suite_text = {
+            let mut lines = suite.lines.clone();
+            for (offset, line) in tested.iter().enumerate() {
+                lines.insert(at.min(lines.len()) + offset, line.clone());
+            }
+            lines.extend(case);
+            joined(&lines)
+        };
+        return Some(
+            Mutation::new(
+                format!("`{name}` was exported and only `{}` calls it", suite.path),
+                &source.path,
+            )
+            .writing(&source.path, planted)
+            .writing(&suite.path, suite_text)
+            .at(
+                declared as u32 + 1,
+                (source.lines.len() + definition.len()) as u32,
+            ),
+        );
+    }
+    None
+}
+
+/// The function S4 plants and the case that calls it, each led by the blank
+/// lines its language puts between top-level declarations.
+fn orphan(lang: Language, name: &str) -> (Vec<String>, Vec<String>) {
+    let lines = |written: &[&str]| written.iter().map(ToString::to_string).collect();
+    match lang {
+        Language::Ts => (
+            lines(&[
+                "",
+                &format!("export function {name}(value: string): string {{"),
+                "  return value.trim();",
+                "}",
+            ]),
+            lines(&[
+                "",
+                &format!("test(\"{name} trims the label\", () => {{"),
+                &format!("  expect({name}(\" a \")).toBe(\"a\");"),
+                "});",
+            ]),
+        ),
+        Language::Py => (
+            lines(&[
+                "",
+                "",
+                &format!("def {name}(value):"),
+                "    return value.strip()",
+            ]),
+            lines(&[
+                "",
+                "",
+                &format!("def test_{name}_trims_the_label():"),
+                &format!("    assert {name}(\" a \") == \"a\""),
+            ]),
+        ),
+        Language::Rs => (
+            lines(&[
+                "",
+                &format!("pub fn {name}(value: &str) -> String {{"),
+                "    value.trim().to_string()",
+                "}",
+            ]),
+            lines(&[
+                "",
+                "#[test]",
+                &format!("fn {name}_trims_the_label() {{"),
+                &format!("    assert_eq!({name}(\" a \"), \"a\");"),
+                "}",
+            ]),
+        ),
+        Language::Go => (
+            lines(&[
+                "",
+                &format!("func {name}(value string) string {{"),
+                "\treturn value",
+                "}",
+            ]),
+            lines(&[
+                "",
+                &format!("func Test{name}(t *testing.T) {{"),
+                &format!("\tif {name}(\"a\") != \"a\" {{"),
+                "\t\tt.Fatal(\"the label should come back as it went in\")",
+                "\t}",
+                "}",
+            ]),
+        ),
+    }
+}
+
+/// The import a suite needs to reach the planted function, where its language
+/// imports a function by name: Rust and Go reach it through a path or a package
+/// the suite already holds.
+fn import_for_a_suite(
+    lang: Language,
+    suite: &Source,
+    source: &Source,
+    name: &str,
+) -> Option<String> {
+    match lang {
+        Language::Ts => Some(format!(
+            "import {{ {name} }} from \"{}\";",
+            relative_module(&suite.path, &source.path)
+        )),
+        Language::Py => Some(format!(
+            "from {} import {name}",
+            dotted_module(&source.path)
+        )),
+        Language::Rs | Language::Go => None,
+    }
+}
+
 // ---------------------------------------------------------------------------
 // The rest of the repository
 // ---------------------------------------------------------------------------
@@ -1798,6 +1977,110 @@ mod tests {
             unmeasured.is_empty(),
             "the recall campaign cannot measure every check rule:\n{}",
             unmeasured.join("\n")
+        );
+    }
+
+    /// A small program and its suite in one language, as files on disk.
+    fn program(lang: Language) -> [(&'static str, &'static str); 2] {
+        match lang {
+            Language::Ts => [
+                ("src/text.ts", "export function trim(value: string): string {\n  return value.trim();\n}\n\nexport const NAME = \"text\";\n"),
+                ("src/text.test.ts", "import { trim } from \"./text\";\n\ntest(\"trim\", () => {\n  expect(trim(\" a \")).toBe(\"a\");\n});\n"),
+            ],
+            Language::Py => [
+                ("src/text.py", "def trim(value):\n    return value.strip()\n\n\nNAME = \"text\"\n"),
+                ("tests/test_text.py", "from text import trim\n\n\ndef test_trim():\n    assert trim(\" a \") == \"a\"\n"),
+            ],
+            Language::Rs => [
+                ("src/text.rs", "pub fn trim(value: &str) -> &str {\n    value.trim()\n}\n\npub const NAME: &str = \"text\";\n"),
+                ("tests/text.rs", "use fixture::text::trim;\n\n#[test]\nfn trims() {\n    assert_eq!(trim(\" a \"), \"a\");\n}\n"),
+            ],
+            Language::Go => [
+                ("text.go", "package text\n\nimport \"strings\"\n\nfunc Trim(value string) string {\n\treturn strings.TrimSpace(value)\n}\n"),
+                ("text_test.go", "package text\n\nimport \"testing\"\n\nfunc TestTrim(t *testing.T) {\n\tif Trim(\" a \") != \"a\" {\n\t\tt.Fatal(\"trim\")\n\t}\n}\n"),
+            ],
+        }
+    }
+
+    fn planted_tree(lang: Language, extra: &[(&str, &str)]) -> (tempfile::TempDir, Tree) {
+        let root = tempfile::tempdir().expect("a directory for the tree");
+        let files: Vec<(&str, &str)> = program(lang)
+            .into_iter()
+            .chain(extra.iter().copied())
+            .collect();
+        for (path, text) in &files {
+            let whole = root.path().join(path);
+            std::fs::create_dir_all(whole.parent().expect("a file has a parent"))
+                .expect("the directory is writable");
+            std::fs::write(&whole, text).expect("the file is writable");
+        }
+        let paths = files.iter().map(|(path, _)| path.to_string()).collect();
+        let tree = Tree::read(root.path(), paths, Vec::new(), &[], &[lang]);
+        (root, tree)
+    }
+
+    /// Write a mutation into the tree the way the campaign does, and hand back
+    /// what each file held before.
+    fn written(planted: &Mutation, tree: &Tree) -> Vec<(String, Option<String>)> {
+        let mut before = Vec::new();
+        for (path, text) in &planted.writes {
+            let whole = tree.root.join(path);
+            // Both files exist before the write, so each has a text to give back.
+            let held = std::fs::read_to_string(&whole).expect("the file reads before the write");
+            before.push((path.clone(), Some(held)));
+            std::fs::write(&whole, text.as_deref().expect("S4 only writes"))
+                .expect("the file is writable");
+        }
+        before
+    }
+
+    #[test]
+    fn an_export_only_a_suite_calls_is_planted_and_read_back_in_every_language() {
+        for lang in [Language::Ts, Language::Py, Language::Rs, Language::Go] {
+            let (_root, tree) = planted_tree(lang, &[]);
+            let planted = export_for_the_tests_alone(lang, &tree, 0)
+                .unwrap_or_else(|| panic!("{lang:?}: a production file and a suite are a site"));
+            let before = written(&planted, &tree);
+            assert!(
+                shape::present("S4", lang, &planted, &tree, &before),
+                "{lang:?}: the planted export is read back: {}",
+                planted.shape
+            );
+            let (first, last) = planted.lines.expect("the shape is written on lines");
+            let source = std::fs::read_to_string(tree.root.join(&planted.target[0]))
+                .expect("the production file reads");
+            let declaration = source
+                .lines()
+                .nth(first as usize - 1)
+                .expect("the first line named is in the file");
+            assert!(
+                declaration.contains(orphan_name(lang)),
+                "{lang:?}: the first line named is the declaration: {declaration}"
+            );
+            assert_eq!(
+                last as usize,
+                source.lines().count(),
+                "{lang:?}: the shape ends the file"
+            );
+        }
+    }
+
+    #[test]
+    fn an_export_shipped_code_already_names_is_not_read_as_one_only_a_suite_calls() {
+        // The case is planted where nothing names the function, and read back
+        // in a tree whose shipped code calls it.
+        let lang = Language::Ts;
+        let (_root, clean) = planted_tree(lang, &[]);
+        let planted = export_for_the_tests_alone(lang, &clean, 0).expect("a site");
+        let caller = format!(
+            "import {{ {name} }} from \"./text\";\n\nexport function label(value: string): string {{\n  return {name}(value);\n}}\n",
+            name = orphan_name(lang)
+        );
+        let (_wired_root, tree) = planted_tree(lang, &[("src/app.ts", caller.as_str())]);
+        let before = written(&planted, &tree);
+        assert!(
+            !shape::present("S4", lang, &planted, &tree, &before),
+            "a production caller means the shape is not there"
         );
     }
 

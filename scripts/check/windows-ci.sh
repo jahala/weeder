@@ -227,3 +227,48 @@ print(
     f"{runner}"
 )
 PY
+
+# --- the release gate: no tag ships a commit Windows has not passed -----------
+# Pull requests no longer run Windows, so release.yml has to refuse a tagged
+# commit whose windows.yml run is missing, unfinished or red. The yaml half says
+# the gate runs in the job every build waits on; the run half drives the gate
+# itself against real runs: master's newest green one passes, and the root
+# commit, which no windows.yml run ever judged, is refused.
+release=".github/workflows/release.yml"
+gate="scripts/windows-green.sh"
+[ -f "$gate" ] || { echo "$gate is missing, so nothing stops a tag on a commit Windows never passed" >&2; exit 1; }
+python3 - "$release" "$gate" <<'PY' || exit 1
+import sys
+
+import yaml
+
+path, gate = sys.argv[1], sys.argv[2]
+with open(path, encoding="utf-8") as handle:
+    jobs = (yaml.safe_load(handle) or {}).get("jobs") or {}
+gating = [
+    key
+    for key, job in jobs.items()
+    if any(gate in (step.get("run") or "") and "GITHUB_SHA" in (step.get("run") or "") for step in job.get("steps") or [])
+]
+if not gating:
+    print(f"{path} never runs {gate} on the tagged commit, so a release can ship a commit Windows never passed", file=sys.stderr)
+    raise SystemExit(1)
+build = jobs.get("build") or {}
+needs = build.get("needs")
+needs = [needs] if isinstance(needs, str) else needs or []
+if not set(gating) & set(needs):
+    print(f"{path}: the build job does not wait on {gating[0]}, so it can publish before the Windows gate answers", file=sys.stderr)
+    raise SystemExit(1)
+PY
+
+green_sha="$(gh run list --workflow "$(basename "$workflow")" --branch "$branch" --limit 1 --json headSha -q '.[0].headSha')"
+if ! bash "$gate" "$green_sha" >/dev/null; then
+  echo "$gate refused ${green_sha:0:12}, the commit of master's newest green windows run, so the gate refuses what it must let through" >&2
+  exit 1
+fi
+root="$(git rev-list --max-parents=0 HEAD | head -1)"
+if bash "$gate" "$root" >/dev/null 2>&1; then
+  echo "$gate passed ${root:0:12}, the root commit, which no windows.yml run ever judged" >&2
+  exit 1
+fi
+echo "$release runs $gate on the tagged commit before any build: it passes ${green_sha:0:12} and refuses ${root:0:12}"

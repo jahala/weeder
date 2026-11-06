@@ -137,7 +137,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Warn,
         short_description: "An error was swallowed",
-        full_description: "An added handler in production code discards a failure without logging it, wrapping it, or passing it on.",
+        full_description: "An added handler in production code discards a failure without logging it, wrapping it, passing it on, or saying in a comment why it is right to drop it.",
         network: Network::None,
     },
     Rule {
@@ -146,6 +146,14 @@ const CATALOGUE: &[Rule] = &[
         default_level: Level::Warn,
         short_description: "A debug leftover reached production code",
         full_description: "An added line in a production file prints or breaks for debugging, outside the entry points the config names as command-line faces.",
+        network: Network::None,
+    },
+    Rule {
+        id: "S4",
+        face: Face::Check,
+        default_level: Level::Warn,
+        short_description: "Production code was added that only its tests call",
+        full_description: "A production file gains an exported definition, or exports one it already held, and every reference to it outside its own file is in a test, with at least one there. A reference is a call found anywhere in the tree, or the name written in the code of a file the change touched. The entry points R2 exempts, and the modules `[entrypoints] cli` names, are left alone, and so is an export nothing references, which is R2's.",
         network: Network::None,
     },
     Rule {

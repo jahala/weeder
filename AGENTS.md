@@ -2,7 +2,7 @@
 
 weeder is a static binary that reads what an agent produced and refuses dishonest growth: deleted or weakened tests, skips, stubs, swallowed errors, secrets, guardrail edits, dependency-direction violations. Milliseconds, zero tokens, every finding as SARIF 2.1.0. Three faces on one core: `weeder check` judges a diff and may block; `weeder scan` judges the tree and never blocks; `weeder guard` is the law in git through hooks. `weeder bite` proves a test fails without its change. Agents produce; weeder decides.
 
-The map in `docs/tend2/` is the plan and the proof. Read the project loop (`docs/tend2/weeder.tend2.html`) and then the loop you are working. Two documents govern from outside this repository and are read-only here: the garden's law, and the build brief weeder was commissioned under. Neither is in this tree; ask the owner for them. Where they disagree, the loop beats the brief and the law beats both.
+The map in `docs/tend/` is the plan and the proof. Read the project loop (`docs/tend/weeder.tend.html`) and then the loop you are working. Two documents govern from outside this repository and are read-only here: the garden's law, and the build brief weeder was commissioned under. Neither is in this tree; ask the owner for them. Where they disagree, the loop beats the brief and the law beats both.
 
 ## Layout
 
@@ -14,16 +14,16 @@ tests/         integration tests that drive the real `weeder` binary on real git
 fixtures/adversarial/<RULE>/<lang>/{fire,silent}/{before,after}/   one minimal repo history per rule per language: `before/` is committed as HEAD, `after/` is the working tree; a file `after/.weeder-commit` carries the commit message (for trailers) and is never copied. A scan rule judges one state, so its fixture carries `before/` alone and the tree is left as `before/` committed it
 schemas/       vendored official schemas (sarif-schema-2.1.0.json)
 xtask/         weeder's own measurements, the bench and never the product, a workspace member so they judge with the core the binary ships: `cargo xtask calibrate` writes docs/calibration-2026-09.md, `cargo xtask suppressions` counts the allowances each repository wrote, `cargo xtask mutate` is the recall campaign that plants one anti-pattern per case in real commits of the same corpus and writes the recall section of the same file. It reads every tree back after it writes into it, with its own scanner and never with weeder's: a case whose shape is not there afterwards is unplantable, counted per rule and language beside the misses, and charged to neither column
-scripts/check/ evidence scripts a loop cites; run.sh is the runner tend2 verify uses, and scripts/corpus-scratch.sh fetches the calibration corpus at its pins so the evidence reads the same history the measurement did. scripts/umbrella-brand.sh fetches the umbrella's .brand and petals/scripts at the version `.brand/products/weeder/petalsrc.example` names, so the page checks are held to the umbrella's own gate rather than to a copy of it kept here
+scripts/check/ evidence scripts a loop cites; run.sh is the runner tend verify uses, and scripts/corpus-scratch.sh fetches the calibration corpus at its pins so the evidence reads the same history the measurement did. scripts/umbrella-brand.sh fetches the umbrella's .brand and petals/scripts at the version `.brand/products/weeder/petalsrc.example` names, so the page checks are held to the umbrella's own gate rather than to a copy of it kept here
 scripts/audit/ the re-grades, run by code rather than typed: blind-run.sh hands one case packet to one fresh auditor session, sighted-run.sh hands the report itself, and each writes its own `docs/calibration-audit*.md` from the answers. Redoing the ledger moves the sample both draw, so both are re-run when it is
 scripts/proof/ evidence that starts a real agent session and writes what happened into docs/proof-2026-09.md
-docs/          sarif.md · pleach.md · tend2-seam.md · calibration-2026-09.md · proof-2026-09.md · dogfood.md · dogfood/<loop>.md · ideas/ (free-standing ideas, not yet a loop) · tend2/ (the map) · calibration/ (corpus.toml pins every repository the calibration judges by source and full sha, corpus-go.toml pins the Go history the recall campaign adds to it, judgements.toml classifies each block, first-run.toml is what the first run refused and is history rather than output)
+docs/          sarif.md · pleach.md · tend2-seam.md · calibration-2026-09.md · proof-2026-09.md · dogfood.md · dogfood/<loop>.md · ideas/ (free-standing ideas, not yet a loop) · tend/ (the map) · calibration/ (corpus.toml pins every repository the calibration judges by source and full sha, corpus-go.toml pins the Go history the recall campaign adds to it, judgements.toml classifies each block, first-run.toml is what the first run refused and is history rather than output)
 examples/      pleach/plan.json · ci/github.yml
 garden.json    the manifest the umbrella reads (F1); schemas/garden.schema.json is its vendored, flagged schema
 index.html     the landing page, one static file with no build step: the umbrella's tokens inlined, fonts from the Google Fonts CDN, the mark and the favicon drawn from `.brand/products/weeder/assets/`, and the garden footer copied from the umbrella's reference implementation. GitHub Pages serves it from the default branch at jahala.github.io/weeder/ once the owner enables it
 SKILL.md       the whole binary in one file for an agent; its body must name every subcommand and flag `weeder --help` prints
 .brand/products/weeder/   identity, colours (three measured accent candidates, flagged), voice, the mark in paper and soil-night
-.github/workflows/      ci.yml (fmt, clippy, test, and the suite again on the release profile for the latency budget, on every pull request) · windows.yml (the same suite on windows-latest on every push to master and weekly, never on a pull request, so Windows never holds a merge up; a failure opens or updates one issue labelled `windows`) · release.yml (version check, platform matrix, crates.io, npm)
+.github/workflows/      ci.yml (fmt, clippy, test, and the suite again on the release profile for the latency budget, on every pull request) · windows.yml (the same suite on windows-latest on every push to master and weekly, never on a pull request, so Windows never holds a merge up; a failure opens or updates one issue labelled `windows`) · release.yml (version check, the Windows gate that refuses a tagged commit windows.yml has not passed, platform matrix, crates.io, npm)
 npm/           the wrapper: install.js fetches the release binary, run.js proxies to it
 LICENSE        MIT, naming the owner, flagged until confirmed · README.md carries the garden footer
 ```
@@ -47,7 +47,7 @@ Dependency direction is weeder's own doctrine and its D2 rule enforces it on its
 - One mebibyte is where a file stops being code weeder reads: `core::change::READABLE`. Above it a side is weighed and its lines are read, and the parser is asked nothing, because outlining a blob costs more than every rule in a run together and G2 already reports the file itself. Both faces obey it, and `tests/rule_g2.rs` holds the other half: a credential planted past the cap is still found, so the cap is a cost declined and not a place to hide in.
 - A file is read once. The face scans each side into a `syntax::Mask` on the way in and every rule reads that one scan, the way it already reads the outline the face made; a rule that scans a file of its own is the bug the latency budget caught. The scan keeps the runs of code, comment and literal a line is made of rather than a kind per character, so it weighs about what the file does, and a view of a line that is all one kind is the line itself rather than a copy of it.
 - Both sides of every changed file are read in one question to git. `git::files_at_ref` and `git::files_in_index` list what the ref or the index holds and hand the objects to a single `cat-file --batch`; a `git show` per file costs a process per file, and starting a process is most of what reading a small one costs. The listings are how a path with anything in it, a newline included, still names its own object.
-- A worker's dogfood notes on tend2, pleach and umbel are kept out of the tree, and `.gitignore` names where they go: one file per loop, never one shared file, because two writers on one file conflict at every landing. Those notes are a letter to the maintainers of three other tools, carrying their unreleased paths and their versions, and they are not weeder's to publish.
+- A worker's dogfood notes on tend, pleach and umbel are kept out of the tree, and `.gitignore` names where they go: one file per loop, never one shared file, because two writers on one file conflict at every landing. Those notes are a letter to the maintainers of three other tools, carrying their unreleased paths and their versions, and they are not weeder's to publish.
 - The corpus-backed evidence runs in no routine: CI does not run `scripts/check/`, and `calibrate.sh`, `recall*.sh`, `corpus-pinned.sh`, `suppression-rate.sh`, `audit-transcript.sh` and `packet-cache-free.sh` each need the corpus fetched at its pins. A generated file can therefore sit in the tree disagreeing with the code that writes it, and one did: the recall section said 2762 caught where the campaign produces 2761. Run the corpus set before any release and after anything that touches a rule, a generator or the corpus, and remember that the audits are anchored to those files by hash: correcting a measurement moves the seeded sample and can cost fresh auditor sessions.
 - The suppression tokens are `Weeder-allow:` in a commit message and `weeder-allow <RULE>:` on a line, and the gate reads those and nothing else. They carried the tool's older name until 2026-09-08 because the finding messages that teach them were sealed into the blind audit's case packets, and the rename cost what that seal was worth: forty fresh auditor sessions, blind and sighted, on regenerated packets. It cost that once. The seal now covers the judged content alone, the rule ids, each finding's level, path and line, and the hunks, so a message's wording can be improved without buying forty more. `cargo xtask suppressions` counts both spellings when it reads a history, because a history read is not the gate; honouring both in the gate would be the shim weeder does not ship. The reason is written beside the parser in `src/core/suppress.rs`; do not tidy it.
 - `plans/` and the commit subjects are evidence, not clutter. `scripts/check/bite-kill.sh` counts the nodes out of `plans/*.plan.json` and the landings out of `git log --all`, and holds `docs/bite-2026-09.md` to both, so that no prose can move the number that keeps `bite` unshipped. Ignoring the plans, rewriting a `pleach: <id> verified|quarantined` subject, or deleting a branch that carries one, breaks a shipped claim; `quarantine/calibration-audit` holds a landing no other branch has. Re-run the check after any of it, and regenerate the report's rows when a node lands again.
@@ -59,7 +59,7 @@ Dependency direction is weeder's own doctrine and its D2 rule enforces it on its
 cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace
 cargo xtask mutate                             # the recall campaign, on the calibration corpus
 bash scripts/check/run.sh tests/<name>.rs     # one evidence file, the way the verifier runs it
-tend2 next docs/tend2                          # where things stand
+tend next docs/tend                           # where things stand
 ```
 
 `cargo xtask mutate` reads the corpus calibration judges,
@@ -74,13 +74,14 @@ its pin into `weeder-recall-corpus` under the temporary directory, or wherever
 
 `tilth-core` is a git dependency on `https://github.com/jahala/tilth`, pinned by rev to the commit the tilth agent landed (the tilth-core loop names it). Nothing weeder is built from points at a path on this machine; the worktree at `.context/tilth-core` exists only so the evidence script can run the crate's own suite.
 
-<!-- tend2:begin -->
-## tend2 — this project plans on loops
+<!-- tend:begin -->
+## tend — this project plans on loops
 
-- Orient first: `tend2 next docs/tend2` (or the `loop_next` MCP tool) — next up, running now, needs-you, gone stale.
+- Orient first: `tend next docs/tend` (or the `loop_next` MCP tool) — next up, running now, needs-you, gone stale.
 - Nothing gets built that is not a loop first: shape the goal and its checks on the map before any code.
-- Only `tend2 verify` writes a pass. Never hand-flip a checkbox — a naked [x] renders claimed, not proven.
+- Only `tend verify` writes a pass. Never hand-flip a checkbox — a naked [x] renders claimed, not proven.
+- Done is what the checks say: a loop is done when every check on it carries a verified pass, and not one commit sooner.
 - Record decisions, scope-outs and dead ends in the loop's `## Tried` — append-only memory for whoever comes next.
 - The map holds bets, not maybes: ideas attached to a loop park in its `## Tried`; free-standing ideas park in `docs/ideas/`; shaping is the only transition onto the map.
-- Full craft lives in the tend2 plugin skills (next, shape, run, verify, discover, change).
-<!-- tend2:end -->
+- The by-laws are `docs/tend/practices.md` — the lessons this repository earned, carried into every work order. A line enters it by citing the `## Tried` entries that paid for it.
+<!-- tend:end -->

@@ -121,3 +121,46 @@ fn shape_lines(lang: &str, path: &str, shapes: &[&str]) -> Vec<u64> {
     lines.sort_unstable();
     lines
 }
+
+/// The next action asks for a comment saying why a failure is right to drop,
+/// so a comment on the line, or alone on the line above it, is that answer, as
+/// a comment inside an empty handler already is (#116). A line with no comment
+/// near it is still a failure going nowhere.
+#[test]
+fn s2_reads_a_comment_beside_a_dropped_failure_as_the_reason_the_next_action_asks_for() {
+    let cases: [(&str, &str, &str, &str); 2] = [
+        (
+            "src/lib.rs",
+            "pub fn count(v: Option<u32>) -> u32 {\n    v.unwrap_or(0)\n}\n",
+            "pub fn count(v: Option<u32>) -> u32 {\n    // no value means no subject, and zero is the count for no subject\n    v.unwrap_or_default()\n}\n\npub fn read_or_none(r: Result<u32, String>) -> Option<u32> {\n    r.ok() // a missing value is already reported upstream\n}\n",
+            "pub fn count(v: Option<u32>) -> u32 {\n    v.unwrap_or_default()\n}\n",
+        ),
+        (
+            "client.go",
+            "package client\n\nfunc post() error { return nil }\n\nfunc send() {\n\tpost()\n}\n",
+            "package client\n\nfunc post() error { return nil }\n\nfunc send() {\n\terr := post()\n\t// the post is a best-effort ping; its failure changes nothing here\n\t_ = err\n}\n",
+            "package client\n\nfunc post() error { return nil }\n\nfunc send() {\n\terr := post()\n\t_ = err\n}\n",
+        ),
+    ];
+    for (path, before, explained, bare) in cases {
+        let repo = common::Repo::init();
+        repo.write(path, before);
+        repo.commit("the code before the change");
+
+        repo.write(path, explained);
+        let run = repo.weeder(&["check"]);
+        assert!(
+            run.findings().iter().all(|finding| finding.rule != "S2"),
+            "{path}: a comment saying why is the answer S2 asks for\n{}",
+            run.output()
+        );
+
+        repo.write(path, bare);
+        let run = repo.weeder(&["check"]);
+        assert!(
+            run.findings().iter().any(|finding| finding.rule == "S2"),
+            "{path}: with no comment near it the failure still goes nowhere\n{}",
+            run.output()
+        );
+    }
+}

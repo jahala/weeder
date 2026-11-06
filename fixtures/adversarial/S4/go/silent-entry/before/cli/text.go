@@ -1,0 +1,7 @@
+package cli
+
+import "strings"
+
+func Trim(value string) string {
+	return strings.TrimSpace(value)
+}

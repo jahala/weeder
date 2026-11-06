@@ -18,6 +18,10 @@
 //!
 //! A fallible call turned into a value that cannot fail, with nothing asked
 //! about what went wrong.
+//!
+//! The last two are a choice a program may make on purpose, and the next
+//! action asks for a comment saying why: one on the line, or alone on the line
+//! above it, is that answer, and the line is left alone.
 
 use crate::core::change::Change;
 use crate::core::classify::{FileKind, Lang};
@@ -110,6 +114,11 @@ fn swallowed(table: &Handling, lang: Lang, mask: &Mask, line: u32) -> Option<Swa
             }
         }
     }
+    // A failure dropped on purpose says so in a comment, which is what the next
+    // action asks for: on the line itself, or alone on the line above it (#116).
+    if explained(mask, line) {
+        return None;
+    }
     if let Some(word) = spoken.iter().find(|word| discards(&code, word)) {
         return Some(Swallowed::discarded(word.text));
     }
@@ -117,6 +126,13 @@ fn swallowed(table: &Handling, lang: Lang, mask: &Mask, line: u32) -> Option<Swa
         word.is_member() && word.is_called() && table.discarding.contains(&word.text)
     })?;
     Some(Swallowed::converted(converted.text))
+}
+
+/// Whether a comment beside the line says why its failure is dropped: one on
+/// the line, or a line above holding a comment and no code.
+fn explained(mask: &Mask, line: u32) -> bool {
+    let said = |at: u32| !mask.comments(at).trim().is_empty();
+    said(line) || (line > 1 && said(line - 1) && mask.code(line - 1).trim().is_empty())
 }
 
 /// Whether the block opened at `after` on this line holds nothing that does
