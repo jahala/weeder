@@ -528,6 +528,8 @@ fn only_a_suite_calls_the_new_export(site: &Site, planted: &Mutation, tree: &Tre
         .filter(|(path, written)| written.is_some() && *path != site.path)
         .filter(|(path, _)| site.lang.collects_file(path))
         .filter_map(|(path, _)| {
+            // A suite that cannot be read back is not one the shape can be
+            // confirmed in, and the case is then unplantable rather than an error.
             let text = std::fs::read_to_string(tree.root.join(path)).ok()?;
             Some(Source::read(path, site.lang, &text))
         })

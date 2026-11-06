@@ -2025,7 +2025,9 @@ mod tests {
         let mut before = Vec::new();
         for (path, text) in &planted.writes {
             let whole = tree.root.join(path);
-            before.push((path.clone(), std::fs::read_to_string(&whole).ok()));
+            // Both files exist before the write, so each has a text to give back.
+            let held = std::fs::read_to_string(&whole).expect("the file reads before the write");
+            before.push((path.clone(), Some(held)));
             std::fs::write(&whole, text.as_deref().expect("S4 only writes"))
                 .expect("the file is writable");
         }
@@ -2047,7 +2049,10 @@ mod tests {
             let (first, last) = planted.lines.expect("the shape is written on lines");
             let source = std::fs::read_to_string(tree.root.join(&planted.target[0]))
                 .expect("the production file reads");
-            let declaration = source.lines().nth(first as usize - 1).unwrap_or_default();
+            let declaration = source
+                .lines()
+                .nth(first as usize - 1)
+                .expect("the first line named is in the file");
             assert!(
                 declaration.contains(orphan_name(lang)),
                 "{lang:?}: the first line named is the declaration: {declaration}"
