@@ -137,7 +137,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Warn,
         short_description: "An error was swallowed",
-        full_description: "An added handler in production code discards a failure without logging it, wrapping it, or passing it on.",
+        full_description: "An added handler in production code discards a failure without logging it, wrapping it, passing it on, or saying in a comment why it is right to drop it.",
         network: Network::None,
     },
     Rule {

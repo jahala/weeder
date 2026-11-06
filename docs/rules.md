@@ -254,7 +254,7 @@ An added line in a production file carries a stub marker, an unimplemented body,
 
 `check` · warns by default
 
-An added handler in production code discards a failure without logging it, wrapping it, or passing it on.
+An added handler in production code discards a failure without logging it, wrapping it, passing it on, or saying in a comment why it is right to drop it.
 
 <a id="S3"></a>
 ## S3: A debug leftover reached production code
