@@ -47,7 +47,7 @@ first, on its own. `scan` judges the tree it is given, and reads the
 | `[scope] exclude` | the path patterns no rule reads, gitignore-style from the root | all of them, on both faces |
 | `[deps] layers` | a layer name to the path globs that belong to it | D2 |
 | `[deps] allow` | the `{ from, to }` pairs an import may run between | D2 |
-| `[entrypoints] cli` | the modules that are the command line itself, where printing is the product | S3 |
+| `[entrypoints] cli` | the modules that are the command line itself, where printing is the product and what they export is the command line's to call | S3, S4 |
 | `[thresholds] todo_age_days` | how old a work marker may get | R3 |
 | `[thresholds] dependency_lag` | how far behind a pin may fall | R4 |
 | `[docs] commands` | the programs whose own `--help` a cited command and its flags are resolved against | R1 |
@@ -263,6 +263,13 @@ An added handler in production code discards a failure without logging it, wrapp
 `check` · warns by default
 
 An added line in a production file prints or breaks for debugging, outside the entry points the config names as command-line faces.
+
+<a id="S4"></a>
+## S4: Production code was added that only its tests call
+
+`check` · warns by default
+
+A production file gains an exported definition, or exports one it already held, and every reference to it outside its own file is in a test, with at least one there. A reference is a call found anywhere in the tree, or the name written in the code of a file the change touched. The entry points R2 exempts, and the modules `[entrypoints] cli` names, are left alone, and so is an export nothing references, which is R2's.
 
 <a id="D1"></a>
 ## D1: A dependency manifest changed

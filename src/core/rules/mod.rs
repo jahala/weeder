@@ -3,7 +3,8 @@
 //! `check` judges a diff, `scan` judges a tree and `bite` judges what a test
 //! command did with two states of one; the three read different things and land
 //! on their own schedules, so each face owns its registry and none of them can
-//! quietly start running another's rules.
+//! quietly start running another's rules. An answer rules on two faces both
+//! need, what a language calls exported, sits beside them in `export`.
 
 use crate::core::catalogue::Rule;
 use crate::core::config::{Config, RuleSetting};
@@ -11,6 +12,7 @@ use crate::core::finding::{Detection, Finding, Level, Stamp};
 
 pub mod bite;
 pub mod check;
+pub mod export;
 pub mod scan;
 
 /// What one rule's detector found, as the findings it is reported as. The

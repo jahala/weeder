@@ -150,9 +150,9 @@ fn a_marker_and_a_conflict_marker_carry_the_edit_that_takes_the_line_back_out() 
 
 /// The warn-level rules whose next action asks the change to say something:
 /// why the new expectation is right, why a step moved, why any failure will
-/// do. A trailer is where a change says it, and it quiets the warning to a
-/// note, so the next action names it (#89).
-const STATED: [&str; 3] = ["T5", "C3", "T6"];
+/// do, why code nothing runs yet is staged. A trailer is where a change says
+/// it, and it quiets the warning to a note, so the next action names it (#89).
+const STATED: [&str; 4] = ["T5", "C3", "T6", "S4"];
 
 /// The fixtures where a rule that warns by default blocks one finding by
 /// override, and the folder each keeps that finding's case in. A finding that
