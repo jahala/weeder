@@ -34,7 +34,7 @@ A plain `weeder scan` opens no network connection. `--refresh-snapshot` is the o
 ## Tests
 - [x] (code) `weeder scan` reads the tree rather than the diff (an unstaged and an uncommitted change make no difference), exits 0 with warnings and 3 when it cannot run, and prints SARIF or a table like `check` · tests/scan_face.rs @b5a4a50 · by cli
 - [x] (code) R1 warns on a cited path, command, flag and symbol that no longer resolve, one fixture each, and stays silent when they all resolve · tests/rule_r1.rs @3b5872903c99e9 · by cli
-- [x] (code) R2 warns on an exported symbol nothing references in each of ts, py, rs and go and stays silent on a referenced one and on the exempt entry points · tests/rule_r2.rs @15c0a79b0c897c · by cli
+- [x] (code) R2 warns on an exported symbol nothing references in each of ts, py, rs and go and stays silent on a referenced one and on the exempt entry points · tests/rule_r2.rs @15c0a79ae65395 · by cli
 - [x] (code) R3 warns on a TODO whose blame date is older than the threshold and stays silent on a fresh one · tests/rule_r3.rs @5f4cac2 · by cli
 - [x] (code) R4 warns on a pin behind the committed snapshot beyond the threshold for each manifest kind and stays silent within it, with no network reached · tests/rule_r4.rs @f93fdc8 · by cli
 - [x] (code) with `[docs] commands` naming one command, a document citing that command, an unlisted command, a shell-only line and a destructive line, `weeder scan` on a test-owned `PATH` runs only the listed command, only with `--help`, never the unlisted one, never a shell, and never an argument from the document, proven by the commands' own argv logs · tests/scan_exec_bound.rs @30bcba3 · by cli
