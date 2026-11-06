@@ -1,0 +1,85 @@
+name: Windows
+
+# Windows is one of the five platforms the release contract names, and it is
+# judged here, after the fact: on every push to master, once a week, and on
+# demand. It never runs on a pull request, so it never holds a merge up (the
+# owner's ruling of 2026-11-06). A failure opens, or adds to, one issue labelled
+# `windows`, so a Windows fault is a visible task rather than a red mark nobody
+# reads. The suite is the one ci.yml runs on ubuntu; scripts/check/windows-ci.sh
+# holds the two to it and reads master's newest run here.
+on:
+  push:
+    branches: [master]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      # The self-check judges the whole repository against its root commit, so
+      # the runner needs the history, not the one commit a shallow clone holds.
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # ratchet:dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # ratchet:Swatinem/rust-cache@v2
+        with:
+          key: windows
+      # The compile is its own step: what the release run failed on was building
+      # the library for this target at all, and a failure there should say so
+      # rather than arrive as a test that never ran.
+      - run: cargo build --workspace --all-targets
+      # Every suite runs even after one fails, so one Windows run says everything
+      # that is wrong there rather than the first thing.
+      - run: cargo test --workspace --no-fail-fast
+        env:
+          # The runner's own TEMP names its user directory by an 8.3 short name
+          # and git answers every question with the long one, so the temp
+          # repositories the suite builds go where every component of the path is
+          # its own name and the two spellings cannot disagree.
+          TMP: ${{ runner.temp }}
+          TEMP: ${{ runner.temp }}
+
+  # Only this job may write issues, and it runs only when the suite failed. It
+  # reads the failing tests out of the windows job's own log and keeps them in
+  # one open issue labelled `windows`: a new issue when none is open, a comment
+  # on it when one is.
+  report:
+    needs: windows
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RUN_ID: ${{ github.run_id }}
+      SHA: ${{ github.sha }}
+    steps:
+      - name: Open or update the windows issue
+        shell: bash
+        run: |
+          set -euo pipefail
+          job="$(gh run view "$RUN_ID" --json jobs --jq '.jobs[] | select(.name == "windows") | .databaseId')"
+          gh api "repos/$GH_REPO/actions/jobs/$job/logs" > windows.log
+          failing="$(grep -oE 'test [^ ]+ \.\.\. FAILED' windows.log | sed -E 's/^test (.+) \.\.\. FAILED$/\1/' | sort -u | while read -r name; do printf "%s\n" "- \`$name\`"; done || true)"
+          if [ -z "$failing" ]; then
+            failing="- no test reported FAILED; the build or another step failed, see the run"
+          fi
+          body="$(printf 'The Windows suite failed on %s (run %s).\n\nFailing tests:\n%s\n\nRun: https://github.com/%s/actions/runs/%s\n' "${SHA:0:12}" "$RUN_ID" "$failing" "$GH_REPO" "$RUN_ID")"
+          gh label create windows --color 0E8A16 --description "Fails on the Windows runner" 2>/dev/null || true
+          open="$(gh issue list --label windows --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$open" ]; then
+            gh issue comment "$open" --body "$body"
+          else
+            gh issue create --label windows --title "The Windows suite fails on master" --body "$body"
+          fi
