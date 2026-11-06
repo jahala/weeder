@@ -130,6 +130,17 @@ file has. A name a paragraph pins to a file or a directory is asked of that
 place first and the tree second, and comes back as a warning naming the place; a
 name with nothing beside it is asked of the tree alone and comes back as a note.
 
+R2 cannot see a program that loads a file by the path it is given, a tool
+reading its config with a dynamic `import(path)` or a runner pointed at a spec,
+so it would report what such a file exports as referenced by nothing. Name those
+files under `[entrypoints] loaded` in `weeder.toml`, as path globs from the root,
+and R2 treats each as an entry point:
+
+```toml
+[entrypoints]
+loaded = ["*.config.ts", "loops/*/loop.ts"]
+```
+
 ## guard: the law in git
 
 `weeder guard` installs hooks git cannot be talked out of running, by pointing

@@ -5,14 +5,23 @@
 //! that grew until the flake went away.
 //!
 //! The finding is a pair: a line that went out and the line that came in to
-//! replace it, in one hunk. The two are read through the syntax mask and
+//! replace it, in one rewrite. The two are read through the syntax mask and
 //! compared with their numbers taken out, the same assertion, differently
 //! numbered, so a rewritten line, a renamed value or a changed expectation is
 //! not this rule's business. What makes a number a slack is the word it is
 //! written under, which the vocabulary knows: a magnitude accepts more as it
 //! grows, and a count of digits accepts more as it shrinks.
+//!
+//! The partner is found by that likeness rather than by position. A block that
+//! wraps unchanged assertions moves every line of them one level deeper, and git
+//! writes the move as the old lines out and the new ones in, the block's opening
+//! line first, so the line in the same place is the assertion written above. A
+//! line that comes back the same but for its whitespace only moved, and is set
+//! aside before any partner is looked for.
 
-use crate::core::change::Replacement;
+use std::collections::{BTreeMap, VecDeque};
+
+use crate::core::change::Run;
 use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::rules::check::vocab::{names, numbers, skeleton, slack, Name, Number, Sense};
 use crate::core::rules::check::Judgement;
@@ -30,33 +39,89 @@ pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
         }
         let before = change.before.mask();
         let after = change.after.mask();
-        for pair in change.replacements() {
-            if let Some(widening) = widening(before, after, &pair) {
-                findings.push(finding(path, pair.new_line, &widening));
+        for run in change.runs() {
+            for (old_line, new_line) in partners(before, after, &run) {
+                let out = before.code(old_line);
+                let into = after.code(new_line);
+                if let Some(widening) = widening(&out, &into) {
+                    findings.push(finding(path, new_line, &widening));
+                }
             }
         }
     }
     findings
 }
 
-/// What a rewritten line did to the slack it carries, where it carried one and
-/// changed nothing else.
-fn widening(before: &Mask, after: &Mask, pair: &Replacement<'_>) -> Option<Widening> {
-    let out = before.code(pair.old_line);
-    let into = after.code(pair.new_line);
-    if skeleton(&out) != skeleton(&into) {
-        return None;
+/// The lines of one rewrite that are the same assertion differently numbered,
+/// as the number each has in its own file.
+///
+/// A removed line that comes back the same once its whitespace is set aside is
+/// that line moved, and it takes its copy out of the running first. Every other
+/// removed line is set against the first added line still unclaimed that reads
+/// the same with its numbers taken out, which is the only partner this rule
+/// could judge. A line git could not number is not one a finding can point at,
+/// and takes no part. The maps are looked up and never walked, so their order
+/// reaches no output.
+fn partners(before: &Mask, after: &Mask, run: &Run<'_>) -> Vec<(u32, u32)> {
+    let spaced = |text: &str| text.split_whitespace().collect::<Vec<&str>>().join(" ");
+    let mut unclaimed: Vec<Option<u32>> = Vec::new();
+    let mut copies: BTreeMap<String, VecDeque<usize>> = BTreeMap::new();
+    for (new_line, text) in run
+        .added
+        .iter()
+        .filter_map(|line| Some((line.new_line?, line.text.as_str())))
+    {
+        copies
+            .entry(spaced(text))
+            .or_default()
+            .push_back(unclaimed.len());
+        unclaimed.push(Some(new_line));
     }
-    let named = names(&into);
-    numbers(&out)
+    let mut rewritten = Vec::new();
+    for line in &run.removed {
+        let Some(old_line) = line.old_line else {
+            continue;
+        };
+        match copies
+            .get_mut(&spaced(&line.text))
+            .and_then(VecDeque::pop_front)
+        {
+            Some(index) => unclaimed[index] = None,
+            None => rewritten.push(old_line),
+        }
+    }
+    let mut shapes: BTreeMap<String, VecDeque<u32>> = BTreeMap::new();
+    for new_line in unclaimed.into_iter().flatten() {
+        shapes
+            .entry(skeleton(&after.code(new_line)))
+            .or_default()
+            .push_back(new_line);
+    }
+    rewritten
         .into_iter()
-        .zip(numbers(&into))
+        .filter_map(|old_line| {
+            let new_line = shapes
+                .get_mut(&skeleton(&before.code(old_line)))?
+                .pop_front()?;
+            Some((old_line, new_line))
+        })
+        .collect()
+}
+
+/// What a rewritten line did to the slack it carries. The two lines read the
+/// same with their numbers taken out, which is how they were paired, so the
+/// numbers are the only thing that moved.
+fn widening(out: &str, into: &str) -> Option<Widening> {
+    let named = names(into);
+    numbers(out)
+        .into_iter()
+        .zip(numbers(into))
         .find_map(|(was, now)| {
             let sense = widens(sense(&named, &now)?, was.value, now.value)?;
             Some(Widening {
                 sense,
-                was: number_text(&out, &was),
-                now: number_text(&into, &now),
+                was: number_text(out, &was),
+                now: number_text(into, &now),
             })
         })
 }

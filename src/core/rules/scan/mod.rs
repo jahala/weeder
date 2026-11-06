@@ -61,8 +61,9 @@ pub struct Site {
 /// Every identifier the tree's code carries, and where each one is written.
 ///
 /// Only the code counts. A name in a comment is a mention and a name in a
-/// string is a message; neither reaches the program, so neither keeps a symbol
-/// alive and neither proves a cited symbol still exists.
+/// string is a message; neither calls anything, so neither keeps a symbol
+/// alive. R1 asks a different question, whether the program still carries a
+/// name at all, and reads the strings as well.
 #[must_use]
 pub fn code_words(tree: &Tree) -> BTreeMap<String, Vec<Site>> {
     let mut found: BTreeMap<String, Vec<Site>> = BTreeMap::new();
