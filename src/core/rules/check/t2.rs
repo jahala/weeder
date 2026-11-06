@@ -52,7 +52,8 @@ use std::collections::BTreeSet;
 use crate::core::change::{Change, Side};
 use crate::core::finding::{Detection, Level, Message, Region, Stamp};
 use crate::core::read::TestUnit;
-use crate::core::rules::check::generated::{Runs, Times};
+use crate::core::rules::check::generated::{nested_functions, Runs, Times};
+use crate::core::rules::check::idiom::Block;
 use crate::core::rules::check::subject::{self, Subject};
 use crate::core::rules::check::vocab::Suite;
 use crate::core::rules::check::Judgement;
@@ -335,7 +336,7 @@ fn claims(side: &Side) -> Said {
     let cases: Vec<&TestUnit> = side.tests.cases().collect();
     // The tables are read only once a line has made a claim, since most of the
     // files that pass through here make none.
-    let mut runs: Option<Runs> = None;
+    let mut runs: Option<(Runs, Vec<Block>)> = None;
     for line in 1..=mask.line_count() {
         let count = suite.assertions(mask, line);
         if count == 0 {
@@ -372,10 +373,23 @@ fn claims(side: &Side) -> Said {
             weight,
             subjects: subjects.clone(),
         };
-        match runs
-            .get_or_insert_with(|| Runs::of(side.lang(), mask))
-            .times(line)
-        {
+        let (tables, nested) = runs.get_or_insert_with(|| {
+            (
+                Runs::of(side.lang(), mask),
+                nested_functions(side.lang(), mask, &side.tests.units),
+            )
+        });
+        // A claim in a function nested in the case runs as often as that
+        // function is called, which nothing in the file counts.
+        let called = nested
+            .iter()
+            .any(|block| block.first < line && line <= block.last);
+        let times = if called {
+            Times::Uncounted
+        } else {
+            tables.times(line)
+        };
+        match times {
             Times::Counted(0) => {}
             Times::Counted(times) => said.made.push(claim(count.saturating_mul(times))),
             Times::Uncounted => {

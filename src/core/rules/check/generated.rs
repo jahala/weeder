@@ -1216,3 +1216,80 @@ fn opening(character: char) -> i32 {
 fn closing(character: char) -> i32 {
     i32::from(matches!(character, ')' | ']' | '}'))
 }
+
+/// The functions written inside a case that are no case or suite themselves: a
+/// closure handed to something that walks a table, a callback, a definition
+/// nested in the case. What runs in one runs as often as something calls it,
+/// and the file does not say how often that is, so a claim inside one is read
+/// the way a claim under a loop over a list built at run time is.
+#[must_use]
+pub fn nested_functions(lang: Lang, mask: &Mask, units: &[TestUnit]) -> Vec<Block> {
+    let mut found = Vec::new();
+    for line in 1..=mask.line_count() {
+        let inside_a_case = units.iter().any(|unit| {
+            unit.kind == crate::core::read::TestUnitKind::Case
+                && unit.start_line < line
+                && line <= unit.end_line
+        });
+        if !inside_a_case || units.iter().any(|unit| unit.start_line == line) {
+            continue;
+        }
+        let code = mask.code(line);
+        let Some(after) = opens_function(lang, &code) else {
+            continue;
+        };
+        if let Some(block) = idiom::block(lang, mask, line, after) {
+            found.push(block);
+        }
+    }
+    found
+}
+
+/// Where a line opens a function's body, as the character from which its
+/// block is read, or `None` where it opens none. A braced language has to end
+/// the line with the brace, so a struct literal or a closure written on one
+/// line is not taken for a body that runs the lines below it.
+fn opens_function(lang: Lang, code: &str) -> Option<usize> {
+    let trimmed = code.trim();
+    let column = |byte: usize| code[..byte].chars().count();
+    match lang {
+        Lang::Python => {
+            (trimmed.starts_with("def ") || trimmed.starts_with("async def ")).then_some(0)
+        }
+        _ if !trimmed.ends_with('{') => None,
+        Lang::TypeScript | Lang::JavaScript => code
+            .find("=>")
+            .or_else(|| {
+                words(code)
+                    .into_iter()
+                    .find(|word| word.text == "function" && !word.is_member())
+                    .map(|word| word.start)
+            })
+            .map(column),
+        Lang::Rust => closure_head(code).map(column),
+        // A literal handed to `Run` is a subtest, a case of its own, and the
+        // tables around it already count it.
+        Lang::Go => words(code)
+            .into_iter()
+            .find(|word| word.text == "func" && !word.is_member() && word.start > 0)
+            .filter(|word| !code[..word.start].trim().is_empty())
+            .filter(|word| !code[..word.start].contains(".Run("))
+            .map(|word| column(word.start)),
+        Lang::Other => None,
+    }
+}
+
+/// Where a Rust closure's parameter list opens: a `|` written where an
+/// expression starts, after an opening bracket, a comma, an `=` or `move`, so
+/// the `||` of a condition is never read as one.
+fn closure_head(code: &str) -> Option<usize> {
+    code.char_indices().find_map(|(at, character)| {
+        if character != '|' {
+            return None;
+        }
+        let before = code[..at].trim_end();
+        let opens =
+            before.ends_with(['(', ',', '=']) || before.ends_with("move") || before.is_empty();
+        opens.then_some(at)
+    })
+}
