@@ -150,11 +150,10 @@ pub fn imports(path: &Path, content: &str) -> Vec<Import> {
         .map(|import| Import {
             start_line: import.line,
             end_line: import.line,
-            // tilth names a line of this content, so the line is there; an
-            // empty text is what a line past the end would honestly hold.
             text: lines
                 .get(import.line.saturating_sub(1) as usize)
                 .map(|line| line.trim().to_string())
+                // tilth names a line of this content, so the line is there.
                 .unwrap_or_default(),
             external: is_external(&import.source, lang),
             source: import.source,
