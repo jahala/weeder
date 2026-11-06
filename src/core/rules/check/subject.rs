@@ -46,6 +46,10 @@ pub struct Subject {
     /// What the case last bound the expression's leading name to, where it
     /// binds it at all.
     pub bound: Option<String>,
+    /// Which binding of the name that is, counted from the case's first line:
+    /// a name bound twice to the same expression holds two values, and a check
+    /// after each is about a different one though every word of it is the same.
+    pub binding: usize,
 }
 
 impl Subject {
@@ -55,6 +59,7 @@ impl Subject {
     #[must_use]
     pub fn covers(&self, other: &Subject) -> bool {
         self.bound == other.bound
+            && self.binding == other.binding
             && other
                 .written
                 .strip_prefix(&self.written)
@@ -180,19 +185,27 @@ fn bound(mask: &Mask, view: &View, span: Span, line: u32, floor: u32) -> Subject
         return Subject {
             written,
             bound: None,
+            binding: 0,
         };
     }
-    let binding = (floor.min(line)..=line).rev().find_map(|at| {
+    let floor = floor.min(line);
+    let found = (floor..=line).rev().find_map(|at| {
         let code = mask.code(at);
         let column = assigned_at(&code, &root)?;
         let bound = View::of(mask, at);
         let end = top_level(&bound.code, (column, bound.code.len()), &[";"])
             .map_or(bound.code.len(), |(at, _)| at);
-        Some(continued(mask, &bound, (column, end), at, line))
+        Some((at, continued(mask, &bound, (column, end), at, line)))
+    });
+    let binding = found.as_ref().map_or(0, |(at, _)| {
+        (floor..=*at)
+            .filter(|earlier| assigned_at(&mask.code(*earlier), &root).is_some())
+            .count()
     });
     Subject {
         written,
-        bound: binding,
+        bound: found.map(|(_, text)| text),
+        binding,
     }
 }
 
