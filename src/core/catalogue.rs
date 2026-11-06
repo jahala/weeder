@@ -153,7 +153,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Warn,
         short_description: "A dependency manifest changed",
-        full_description: "A package manifest or its lockfile changed; the change blocks when a scope excludes the manifest.",
+        full_description: "A package manifest or its lockfile changed in more than the package's own version; the change blocks when a scope excludes the manifest.",
         network: Network::None,
     },
     Rule {
