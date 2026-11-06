@@ -1084,3 +1084,51 @@ impl Terminal {
         String::from_utf8_lossy(&written).replace('\r', "")
     }
 }
+
+/// Hands every item to `work` on as many threads as the machine has cores, and
+/// the answers back in the items' order.
+///
+/// A walk over every fixture starts thousands of processes, weeder and the git
+/// it asks, and one at a time they are most of what the suite costs: on a
+/// hosted Windows runner, where starting a process costs most, such a walk was
+/// seventeen minutes of the job. Each item still runs whole; only the waiting
+/// is shared. A panic in `work` is the test's failure, raised again here with
+/// its own message once every thread has stopped.
+pub fn across_cores<T: Sync, R: Send>(items: &[T], work: impl Fn(&T) -> R + Sync) -> Vec<R> {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    let workers = std::thread::available_parallelism()
+        .map_or(1, std::num::NonZeroUsize::get)
+        .min(items.len())
+        .max(1);
+    let next = AtomicUsize::new(0);
+    let mut answers: Vec<Option<R>> = std::iter::repeat_with(|| None).take(items.len()).collect();
+    std::thread::scope(|scope| {
+        let threads: Vec<_> = (0..workers)
+            .map(|_| {
+                scope.spawn(|| {
+                    let mut done = Vec::new();
+                    loop {
+                        let at = next.fetch_add(1, Ordering::Relaxed);
+                        let Some(item) = items.get(at) else {
+                            return done;
+                        };
+                        done.push((at, work(item)));
+                    }
+                })
+            })
+            .collect();
+        for thread in threads {
+            let done = thread
+                .join()
+                .unwrap_or_else(|panic| std::panic::resume_unwind(panic));
+            for (at, answer) in done {
+                answers[at] = Some(answer);
+            }
+        }
+    });
+    answers
+        .into_iter()
+        .map(|answer| answer.expect("every item is taken by exactly one thread"))
+        .collect()
+}

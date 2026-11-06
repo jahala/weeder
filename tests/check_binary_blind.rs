@@ -17,7 +17,7 @@ mod common;
 
 use std::collections::BTreeSet;
 
-use common::{fixture, Repo};
+use common::{across_cores, fixture, Repo};
 
 const LANGUAGES: [&str; 4] = ["ts", "py", "rs", "go"];
 
@@ -119,40 +119,46 @@ fn git_is_blind(repo: &Repo) -> bool {
 
 #[test]
 fn each_blocking_shape_still_blocks_when_git_is_told_to_show_no_lines() {
-    let mut misses = Vec::new();
-    for (rule, shape) in RULES {
-        for lang in LANGUAGES {
-            let seen =
-                rule_set(&fixture(rule, lang, "fire").weeder(&["check", "--format", "sarif"]));
-            for blind in BLINDS {
-                let repo = fixture(rule, lang, "fire");
-                hide(&repo, lang, blind);
-                assert!(
-                    git_is_blind(&repo),
-                    "{rule} {lang} {blind:?}: git has to call the change binary, or the test proves nothing"
-                );
+    let cells: Vec<_> = RULES
+        .iter()
+        .flat_map(|&(rule, shape)| LANGUAGES.iter().map(move |&lang| (rule, shape, lang)))
+        .collect();
+    // Each rule and language is built and judged on its own thread.
+    let misses: Vec<String> = across_cores(&cells, |&(rule, shape, lang)| {
+        let mut misses = Vec::new();
+        let seen = rule_set(&fixture(rule, lang, "fire").weeder(&["check", "--format", "sarif"]));
+        for blind in BLINDS {
+            let repo = fixture(rule, lang, "fire");
+            hide(&repo, lang, blind);
+            assert!(
+                git_is_blind(&repo),
+                "{rule} {lang} {blind:?}: git has to call the change binary, or the test proves nothing"
+            );
 
-                let run = repo.weeder(&["check", "--format", "sarif"]);
-                let blocked = run
-                    .findings()
-                    .iter()
-                    .any(|finding| finding.rule == rule && finding.level == "error");
-                // What git was told to hide is judged as if it had been shown:
-                // the same rules, and G2 besides where a NUL arrived in a new
-                // file, because nobody can review that file on a page either.
-                let mut hidden = rule_set(&run);
-                if matches!(blind, Blind::NulByte) && !seen.contains("G2") {
-                    hidden.remove("G2");
-                }
-                if run.code != 2 || !blocked || hidden != seen {
-                    misses.push(format!(
-                        "{rule} ({shape}) in {lang} under {blind:?}: exit {}, {hidden:?} where the plain change gives {seen:?}{}",
-                        run.code, run.stderr
-                    ));
-                }
+            let run = repo.weeder(&["check", "--format", "sarif"]);
+            let blocked = run
+                .findings()
+                .iter()
+                .any(|finding| finding.rule == rule && finding.level == "error");
+            // What git was told to hide is judged as if it had been shown:
+            // the same rules, and G2 besides where a NUL arrived in a new
+            // file, because nobody can review that file on a page either.
+            let mut hidden = rule_set(&run);
+            if matches!(blind, Blind::NulByte) && !seen.contains("G2") {
+                hidden.remove("G2");
+            }
+            if run.code != 2 || !blocked || hidden != seen {
+                misses.push(format!(
+                    "{rule} ({shape}) in {lang} under {blind:?}: exit {}, {hidden:?} where the plain change gives {seen:?}{}",
+                    run.code, run.stderr
+                ));
             }
         }
-    }
+        misses
+    })
+    .into_iter()
+    .flatten()
+    .collect();
     assert!(
         misses.is_empty(),
         "{} blocking shapes went unseen:\n{}",

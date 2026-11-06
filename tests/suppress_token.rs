@@ -16,7 +16,9 @@ mod common;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use common::{conflicted_parser, fixture, fixture_root, ours, separator, theirs, Repo, BRANCH};
+use common::{
+    across_cores, conflicted_parser, fixture, fixture_root, ours, separator, theirs, Repo, BRANCH,
+};
 
 const REASON: &str = "the merge finishes in the follow-up commit";
 
@@ -148,14 +150,25 @@ fn a_marker_with_no_reason_is_complained_about_in_the_spelling_that_works() {
 #[test]
 fn no_finding_weeder_prints_teaches_a_token_the_gate_no_longer_reads() {
     let (trailer, marker) = retired();
-    let mut messages = BTreeSet::new();
-    for (rule, face) in catalogue() {
-        for lang in languages(&rule) {
-            let repo = fixture(&rule, &lang, "fire");
-            let run = repo.weeder(&[face.as_str(), "--format", "sarif"]);
-            messages.extend(run.findings().into_iter().map(|finding| finding.message));
-        }
-    }
+    let cells: Vec<(String, String, String)> = catalogue()
+        .into_iter()
+        .flat_map(|(rule, face)| {
+            languages(&rule)
+                .into_iter()
+                .map(move |lang| (rule.clone(), face.clone(), lang))
+        })
+        .collect();
+    let messages: BTreeSet<String> = across_cores(&cells, |(rule, face, lang)| {
+        let repo = fixture(rule, lang, "fire");
+        let run = repo.weeder(&[face.as_str(), "--format", "sarif"]);
+        run.findings()
+            .into_iter()
+            .map(|finding| finding.message)
+            .collect::<Vec<_>>()
+    })
+    .into_iter()
+    .flatten()
+    .collect();
 
     assert!(
         !messages.is_empty(),

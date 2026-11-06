@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 
 use tempfile::TempDir;
 
-use common::{fixture, fixture_root, weeder_in, Finding, Repo, Run};
+use common::{across_cores, fixture, fixture_root, weeder_in, Finding, Repo, Run};
 
 /// The file a fixture states its own law in.
 const CONFIG: &str = "weeder.toml";
@@ -134,66 +134,77 @@ fn places(found: &[Finding]) -> Vec<(String, Option<u64>, String)> {
 #[test]
 fn a_rule_set_to_warn_blocks_nothing_and_a_rule_set_to_off_says_nothing() {
     let desk = TempDir::new().expect("the laws need somewhere to sit");
-    let mut wrong = Vec::new();
-
+    let mut walk = Vec::new();
     for rule in check_rules() {
         let walked = cells(&rule);
         assert!(
             !walked.is_empty(),
             "{rule} keeps no fixture for this walk to judge"
         );
-        for (lang, case) in walked {
-            let name = format!("{rule}-{lang}-{case}");
-            let cell = format!("fixtures/adversarial/{rule}/{lang}/{case}");
-
-            let repo = fixture(&rule, &lang, &case);
-            let own = check(&repo, None);
-            assert_ne!(own.code, 3, "{cell} could not be judged\n{}", own.stderr);
-            let reported = from_rule(&own, &rule);
-            if case == "fire" && reported.is_empty() {
-                wrong.push(format!("{cell} reported no {rule} under its own law"));
-                continue;
-            }
-
-            let warned = check(&repo, Some(&law_with(&repo, &rule, "warn", &desk, &name)));
-            assert_ne!(
-                warned.code, 3,
-                "{cell} could not be judged under warn\n{}",
-                warned.stderr
-            );
-            let under_warn = from_rule(&warned, &rule);
-            if places(&under_warn) != places(&reported) {
-                wrong.push(format!(
-                    "{cell} under {rule} = \"warn\" reported other findings than under its own law"
-                ));
-            }
-            let loud: Vec<String> = under_warn
-                .iter()
-                .filter(|finding| finding.level == "error")
-                .map(|finding| format!("{}:{:?}", finding.path, finding.line))
-                .collect();
-            if !loud.is_empty() {
-                wrong.push(format!(
-                    "{cell} under {rule} = \"warn\" still blocked at {}",
-                    loud.join(", ")
-                ));
-            }
-
-            let off = check(&repo, Some(&law_with(&repo, &rule, "off", &desk, &name)));
-            assert_ne!(
-                off.code, 3,
-                "{cell} could not be judged under off\n{}",
-                off.stderr
-            );
-            let under_off = from_rule(&off, &rule);
-            if !under_off.is_empty() {
-                wrong.push(format!(
-                    "{cell} under {rule} = \"off\" still reported {} finding(s)",
-                    under_off.len()
-                ));
-            }
-        }
+        walk.extend(
+            walked
+                .into_iter()
+                .map(|(lang, case)| (rule.clone(), lang, case)),
+        );
     }
+
+    // Each fixture is judged three times on its own thread.
+    let wrong: Vec<String> = across_cores(&walk, |(rule, lang, case)| {
+        let mut wrong = Vec::new();
+        let name = format!("{rule}-{lang}-{case}");
+        let cell = format!("fixtures/adversarial/{rule}/{lang}/{case}");
+
+        let repo = fixture(rule, lang, case);
+        let own = check(&repo, None);
+        assert_ne!(own.code, 3, "{cell} could not be judged\n{}", own.stderr);
+        let reported = from_rule(&own, rule);
+        if case == "fire" && reported.is_empty() {
+            wrong.push(format!("{cell} reported no {rule} under its own law"));
+            return wrong;
+        }
+
+        let warned = check(&repo, Some(&law_with(&repo, rule, "warn", &desk, &name)));
+        assert_ne!(
+            warned.code, 3,
+            "{cell} could not be judged under warn\n{}",
+            warned.stderr
+        );
+        let under_warn = from_rule(&warned, rule);
+        if places(&under_warn) != places(&reported) {
+            wrong.push(format!(
+                "{cell} under {rule} = \"warn\" reported other findings than under its own law"
+            ));
+        }
+        let loud: Vec<String> = under_warn
+            .iter()
+            .filter(|finding| finding.level == "error")
+            .map(|finding| format!("{}:{:?}", finding.path, finding.line))
+            .collect();
+        if !loud.is_empty() {
+            wrong.push(format!(
+                "{cell} under {rule} = \"warn\" still blocked at {}",
+                loud.join(", ")
+            ));
+        }
+
+        let off = check(&repo, Some(&law_with(&repo, rule, "off", &desk, &name)));
+        assert_ne!(
+            off.code, 3,
+            "{cell} could not be judged under off\n{}",
+            off.stderr
+        );
+        let under_off = from_rule(&off, rule);
+        if !under_off.is_empty() {
+            wrong.push(format!(
+                "{cell} under {rule} = \"off\" still reported {} finding(s)",
+                under_off.len()
+            ));
+        }
+        wrong
+    })
+    .into_iter()
+    .flatten()
+    .collect();
 
     assert!(
         wrong.is_empty(),
