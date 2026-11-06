@@ -62,6 +62,48 @@ fn d2_fires_at_block_level_where_a_layer_reaches_one_it_may_not_in_every_languag
 }
 
 #[test]
+fn d2_judges_every_module_a_statement_names() {
+    // One statement naming two modules: a Go `import ( … )` block, a Rust
+    // `use crate::{…}` group, a Python `import a, b`. Each module crosses a
+    // boundary of its own, and each is judged on the line that names it. A
+    // TypeScript statement names one module, so the language has no such shape.
+    for (lang, offender, line) in [
+        ("go", "core/finding.go", [6_u64, 7]),
+        ("rs", "src/core/finding.rs", [1, 1]),
+        ("py", "src/core/finding.py", [1, 1]),
+    ] {
+        let run = fixture("D2", lang, "grouped").weeder(&["check"]);
+        assert_eq!(
+            run.code, 2,
+            "{lang}: a forbidden direction blocks\n{}",
+            run.stderr
+        );
+        let mut found: Vec<(String, Option<u64>, bool)> = run
+            .findings()
+            .into_iter()
+            .filter(|finding| finding.rule == "D2")
+            .map(|finding| {
+                (
+                    finding.path,
+                    finding.line,
+                    finding.message.contains("`faces`"),
+                )
+            })
+            .collect();
+        found.sort();
+        let mut wanted = vec![
+            (offender.to_string(), Some(line[0]), true),
+            (offender.to_string(), Some(line[1]), false),
+        ];
+        wanted.sort();
+        assert_eq!(
+            found, wanted,
+            "{lang}: one finding for each module the statement names, `faces` and `seams`"
+        );
+    }
+}
+
+#[test]
 fn d2_stays_silent_on_a_direction_the_repository_allows() {
     for (lang, _, allowed) in LAYERS {
         let repo = fixture("D2", lang, "silent");

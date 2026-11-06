@@ -133,13 +133,13 @@ impl TestShape {
 /// One import statement: where it is, what it says, and what it names.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Import {
-    /// 1-based, and inclusive at both ends. A statement written across several
-    /// lines carries the range it spans.
+    /// 1-based, and inclusive at both ends: the line that names this module,
+    /// which a statement naming several gives each of them on its own.
     pub start_line: u32,
     pub end_line: u32,
-    /// The statement as it is written.
+    /// The line that names the module, as it is written.
     pub text: String,
-    /// The module the statement names: a package, a crate path, a relative path.
+    /// The module: a package, a crate path, a relative path.
     pub source: String,
     /// Whether the source lies outside the project. A language whose module
     /// paths need a build system to resolve, Go, Java, Kotlin, reads every

@@ -200,38 +200,49 @@ fn what_the_reader_returns_is_that_same_data() {
 }
 
 #[test]
-fn an_import_written_across_several_lines_is_one_import() {
-    // The statement is read whole, so the source is found where it is written:
-    // at the end of a TypeScript clause, at the head of a Rust path.
+fn a_statement_naming_several_modules_is_one_import_per_module() {
+    // A statement is read for every module it names, each on the line that
+    // names it: the source at the end of a TypeScript clause, every member of a
+    // Rust group, every path in a Go block (#124).
     let typescript = reader::imports(
         Path::new("basket.ts"),
         "import {\n  price,\n  tax,\n} from \"./price\";\n\nexport const rate = tax;\n",
     );
-    assert_eq!(typescript.len(), 1);
-    assert_eq!((typescript[0].start_line, typescript[0].end_line), (1, 4));
-    assert_eq!(typescript[0].source, "./price");
-    assert!(!typescript[0].external);
+    let read: Vec<(u32, &str, bool)> = typescript
+        .iter()
+        .map(|import| (import.start_line, import.source.as_str(), import.external))
+        .collect();
+    assert_eq!(read, [(4, "./price", false)]);
 
     let rust = reader::imports(
         Path::new("basket.rs"),
         "use crate::core::{\n    price::Price,\n    tax::Tax,\n};\n\npub fn rate() -> Tax {\n    Tax::default()\n}\n",
     );
-    assert_eq!(rust.len(), 1);
-    assert_eq!((rust[0].start_line, rust[0].end_line), (1, 4));
-    assert_eq!(rust[0].source, "crate::core");
-    assert!(!rust[0].external);
+    let read: Vec<(u32, &str, bool)> = rust
+        .iter()
+        .map(|import| (import.start_line, import.source.as_str(), import.external))
+        .collect();
+    assert_eq!(
+        read,
+        [
+            (2, "crate::core::price::Price", false),
+            (3, "crate::core::tax::Tax", false)
+        ]
+    );
 
-    // Go lists several sources in one statement and tilth names one source per
-    // statement, so the block arrives whole and its module paths read as
-    // external, which is all a file alone says about them.
+    // Go's module paths read as external, which is all a file alone says
+    // about them; the module each line names is its own import all the same.
     let go = reader::imports(
         Path::new("basket.go"),
         "package basket\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n)\n\nfunc Rate() string {\n\treturn fmt.Sprint(strings.TrimSpace(\" x \"))\n}\n",
     );
-    assert_eq!(go.len(), 1);
-    assert_eq!((go[0].start_line, go[0].end_line), (3, 6));
-    assert!(go[0].text.contains("fmt") && go[0].text.contains("strings"));
-    assert!(go[0].external);
+    let read: Vec<(u32, &str, bool)> = go
+        .iter()
+        .map(|import| (import.start_line, import.source.as_str(), import.external))
+        .collect();
+    assert_eq!(read, [(4, "fmt", true), (5, "strings", true)]);
+    assert!(go.iter().all(|import| import.start_line == import.end_line));
+    assert_eq!(go[0].text, "\"fmt\"");
 }
 
 #[test]

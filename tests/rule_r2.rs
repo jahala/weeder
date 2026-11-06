@@ -110,3 +110,27 @@ fn a_file_another_program_loads_by_path_is_an_entry_point_when_the_config_names_
         );
     }
 }
+
+/// An export written under another name is imported by that name, so that is
+/// the name R2 looks for. The fixture exports two functions under aliases and
+/// the rest of the repository imports one of them: the other is the finding,
+/// named the way an importer would have to write it.
+///
+/// Only TypeScript and JavaScript export a name under another one. Python's
+/// `from a import b as c` and Rust's `pub use a::b as c` are imports, which R2
+/// does not judge, and Go exports a name by how it is spelled.
+#[test]
+fn an_aliased_export_is_looked_up_by_the_name_it_is_exported_as() {
+    let found = findings("ts", "aliased");
+    assert_eq!(
+        found.len(),
+        1,
+        "R2/ts/aliased exports one alias nothing imports, and weeder reported: {found:#?}"
+    );
+    assert!(
+        found[0].message.starts_with("`parseNode` is exported"),
+        "the finding names the alias an importer would write, not the local name: {}",
+        found[0].message
+    );
+    assert_eq!(found[0].path, "src/plan.ts");
+}
