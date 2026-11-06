@@ -29,6 +29,7 @@ pub mod m1;
 pub mod s1;
 pub mod s2;
 pub mod s3;
+pub mod s4;
 pub mod subject;
 pub mod t1;
 pub mod t2;
@@ -82,6 +83,14 @@ pub fn types_in_question(changes: &[Change]) -> BTreeSet<String> {
     s1::types_in_question(changes)
 }
 
+/// The names a rule needs the callers of, beyond the definitions X2 names the
+/// blast radius of. The face asks the caller search about all of them in one
+/// walk of the tree, and a change that exports nothing new asks nothing here.
+#[must_use]
+pub fn symbols_in_question(changes: &[Change]) -> BTreeSet<String> {
+    s4::symbols_in_question(changes)
+}
+
 type Detector = fn(&Judgement) -> Vec<Detection>;
 
 /// The detectors weeder has on this face. A catalogue rule absent from this table
@@ -99,6 +108,7 @@ const DETECTORS: &[(&str, Detector)] = &[
     ("S1", s1::evaluate),
     ("S2", s2::evaluate),
     ("S3", s3::evaluate),
+    ("S4", s4::evaluate),
     ("D1", d1::evaluate),
     ("D2", d2::evaluate),
     ("X1", x1::evaluate),

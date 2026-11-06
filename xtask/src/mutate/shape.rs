@@ -76,6 +76,7 @@ fn reader(rule: &str) -> Option<Reader> {
         "S1" => Reader::Site(|site, _, _| a_marker_for_work_is_in_shipped_code(site)),
         "S2" => Reader::Site(|site, _, _| a_failure_goes_nowhere(site)),
         "S3" => Reader::Site(|site, _, _| a_print_is_in_shipped_code(site)),
+        "S4" => Reader::Site(only_a_suite_calls_the_new_export),
         "D1" => Reader::Site(|site, _, _| a_dependency_pin_moved(site)),
         "D2" => Reader::Site(|site, _, tree| an_import_crosses_a_layer(site, tree)),
         "X1" => Reader::Site(|site, _, _| a_credential_is_written_down(site)),
@@ -484,6 +485,76 @@ fn a_print_is_in_shipped_code(site: &Site) -> bool {
         Language::Go => "fmt.Print",
     };
     site.ships() && code.contains(printed) && site.inside_a_function()
+}
+
+/// S4: a function code that ships now exports, that no other file of shipped
+/// code names, and that a suite the runner collects calls.
+fn only_a_suite_calls_the_new_export(site: &Site, planted: &Mutation, tree: &Tree) -> bool {
+    let (Some(first), Some(code)) = (site.first, site.code()) else {
+        return false;
+    };
+    if !site.ships() {
+        return false;
+    }
+    let Some(declared) = site
+        .after
+        .functions()
+        .into_iter()
+        .find(|function| function.first as usize == first)
+    else {
+        return false;
+    };
+    let name = declared.name;
+    let exported = match site.lang {
+        Language::Ts => code.trim_start().starts_with("export "),
+        Language::Rs => code.trim_start().starts_with("pub "),
+        Language::Go => name.chars().next().is_some_and(char::is_uppercase),
+        Language::Py => !name.starts_with('_'),
+    };
+    if name.is_empty() || !exported || names(&site.before, &name) {
+        return false;
+    }
+    let shipped_elsewhere = tree
+        .production(site.lang)
+        .into_iter()
+        .filter(|source| source.path != site.path)
+        .any(|source| names(source, &name));
+    if shipped_elsewhere {
+        return false;
+    }
+    planted
+        .writes
+        .iter()
+        .filter(|(path, written)| written.is_some() && *path != site.path)
+        .filter(|(path, _)| site.lang.collects_file(path))
+        .filter_map(|(path, _)| {
+            // A suite that cannot be read back is not one the shape can be
+            // confirmed in, and the case is then unplantable rather than an error.
+            let text = std::fs::read_to_string(tree.root.join(path)).ok()?;
+            Some(Source::read(path, site.lang, &text))
+        })
+        .any(|suite| {
+            suite.code.iter().any(|code| {
+                word_at(code, &name)
+                    .is_some_and(|at| code[at + name.len()..].trim_start().starts_with('('))
+            })
+        })
+}
+
+/// Whether a file's code writes this name as a word of its own.
+fn names(source: &Source, name: &str) -> bool {
+    source.code.iter().any(|code| word_at(code, name).is_some())
+}
+
+/// The byte the name starts at on a line of code, where it stands as a word of
+/// its own rather than inside a longer name.
+fn word_at(code: &str, name: &str) -> Option<usize> {
+    let is_word = |character: char| character.is_alphanumeric() || character == '_';
+    code.match_indices(name).map(|(at, _)| at).find(|at| {
+        let before = code[..*at].chars().next_back();
+        let after = code[at + name.len()..].chars().next();
+        !before.is_some_and(is_word) && !after.is_some_and(is_word)
+    })
 }
 
 // ---------------------------------------------------------------------------
