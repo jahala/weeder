@@ -20,7 +20,7 @@ mod common;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use common::{fixture, fixture_root, Repo, Run};
+use common::{across_cores, fixture, fixture_root, Repo, Run};
 
 /// Three environments a run must not be able to tell apart. Turkish is here
 /// because it is the locale that breaks case folding done the naive way: its
@@ -31,6 +31,9 @@ const ENVIRONMENTS: &[(&str, &str)] = &[
     ("en_US.UTF-8", "Asia/Kathmandu"),
     ("tr_TR.UTF-8", "Pacific/Chatham"),
 ];
+
+/// The run whose findings show the replays compared something.
+const PLAIN: [&str; 3] = ["check", "--format", "sarif"];
 
 /// A fixture as it is spelled on disk.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -55,15 +58,13 @@ fn every_fixture_answers_the_same_bytes_in_every_locale_and_time_zone() {
         fixture_root().display()
     );
 
-    let mut reported = 0;
-    for case in &cases {
+    // Each fixture is replayed whole on its own thread, and the C replay of
+    // the plain SARIF run is the one whose findings are counted.
+    let reported: usize = across_cores(&cases, |case| {
         let repo = fixture(&case.rule, &case.lang, &case.case);
-        reported += repo
-            .weeder(&["check", "--format", "sarif"])
-            .findings()
-            .len();
+        let mut found = 0;
         for arguments in [
-            vec!["check", "--format", "sarif"],
+            PLAIN.to_vec(),
             vec!["check", "--format", "table"],
             vec!["check", "--format", "sarif", "--strict"],
         ] {
@@ -72,6 +73,9 @@ fn every_fixture_answers_the_same_bytes_in_every_locale_and_time_zone() {
                 .map(|(locale, zone)| run(&repo, &arguments, locale, zone))
                 .collect();
             let first = &replays[0];
+            if arguments == PLAIN {
+                found = first.findings().len();
+            }
             for (replay, (locale, zone)) in replays.iter().zip(ENVIRONMENTS) {
                 assert_eq!(
                     replay.stdout,
@@ -93,7 +97,10 @@ fn every_fixture_answers_the_same_bytes_in_every_locale_and_time_zone() {
                 );
             }
         }
-    }
+        found
+    })
+    .into_iter()
+    .sum();
 
     // Three empty logs are byte-identical too. The fixtures have to have found
     // something between them, or this test compares nothing three times.

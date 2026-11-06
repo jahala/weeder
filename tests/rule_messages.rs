@@ -16,7 +16,7 @@
 
 mod common;
 
-use common::{fixture, fixture_root, Repo};
+use common::{across_cores, fixture, fixture_root, Repo};
 use weeder::core::catalogue::{self, Face};
 use weeder::core::Level;
 
@@ -54,53 +54,55 @@ const FIXED: [&str; 2] = ["T3", "G1"];
 
 #[test]
 fn every_block_level_result_says_what_why_and_next() {
-    for (rule, cases) in BLOCKING {
-        for case in cases {
-            let run = fire(rule, case);
-            let results = results(&run);
-            assert!(
-                !results.is_empty(),
-                "{rule}/{case}: the fire fixture has to produce a finding"
+    let cells: Vec<(&str, &str)> = BLOCKING
+        .iter()
+        .flat_map(|&(rule, cases)| cases.iter().map(move |&case| (rule, case)))
+        .collect();
+    across_cores(&cells, |&(rule, case)| {
+        let run = fire(rule, case);
+        let results = results(&run);
+        assert!(
+            !results.is_empty(),
+            "{rule}/{case}: the fire fixture has to produce a finding"
+        );
+        for result in &results {
+            let message = result["message"]["text"]
+                .as_str()
+                .expect("a result carries a message")
+                .to_string();
+            let parts = sentences(&message);
+            assert_eq!(
+                parts.len(),
+                3,
+                "{rule}/{case}: what, why and next, and nothing else: {message}"
             );
-            for result in &results {
-                let message = result["message"]["text"]
-                    .as_str()
-                    .expect("a result carries a message")
-                    .to_string();
-                let parts = sentences(&message);
-                assert_eq!(
-                    parts.len(),
-                    3,
-                    "{rule}/{case}: what, why and next, and nothing else: {message}"
-                );
-                for part in &parts {
-                    assert!(
-                        part.len() > 10,
-                        "{rule}/{case}: every part says something: {message}"
-                    );
-                }
+            for part in &parts {
                 assert!(
-                    parts[0] != parts[1] && parts[1] != parts[2] && parts[0] != parts[2],
-                    "{rule}/{case}: three sentences, not one repeated: {message}"
+                    part.len() > 10,
+                    "{rule}/{case}: every part says something: {message}"
                 );
+            }
+            assert!(
+                parts[0] != parts[1] && parts[1] != parts[2] && parts[0] != parts[2],
+                "{rule}/{case}: three sentences, not one repeated: {message}"
+            );
+            assert!(
+                message.ends_with('.'),
+                "{rule}/{case}: the message ends where it stops: {message}"
+            );
+            assert!(
+                !message.starts_with(char::is_uppercase),
+                "{rule}/{case}: sentence case: {message}"
+            );
+            let lowered = message.to_ascii_lowercase();
+            for word in NEVER {
                 assert!(
-                    message.ends_with('.'),
-                    "{rule}/{case}: the message ends where it stops: {message}"
+                    !lowered.contains(word),
+                    "{rule}/{case}: weeder does not say `{word}`: {message}"
                 );
-                assert!(
-                    !message.starts_with(char::is_uppercase),
-                    "{rule}/{case}: sentence case: {message}"
-                );
-                let lowered = message.to_ascii_lowercase();
-                for word in NEVER {
-                    assert!(
-                        !lowered.contains(word),
-                        "{rule}/{case}: weeder does not say `{word}`: {message}"
-                    );
-                }
             }
         }
-    }
+    });
 }
 
 #[test]
@@ -199,10 +201,11 @@ fn every_block_level_next_names_the_trailer_and_none_teaches_the_line_marker() {
             .map(|(rule, case, variant)| (rule, case.to_string(), variant, "error", 2)),
     );
 
-    for (rule, case, variant, level, code) in read {
+    across_cores(&read, |(rule, case, variant, level, code)| {
+        let (rule, variant, level, code) = (*rule, *variant, *level, *code);
         let trailer = format!("`Weeder-allow: {rule}");
         let marker = format!("weeder-allow {rule}");
-        let run = fixture(rule, &case, variant);
+        let run = fixture(rule, case, variant);
         let reported: Vec<String> = results_exiting(&run, code)
             .iter()
             .filter(|result| result["ruleId"] == rule && result["level"] == level)
@@ -231,7 +234,7 @@ fn every_block_level_next_names_the_trailer_and_none_teaches_the_line_marker() {
                  on a line, so the message does not teach it: {message}"
             );
         }
-    }
+    });
 }
 
 /// The fixture folders a rule keeps a fire case in, read off the tree, so a
