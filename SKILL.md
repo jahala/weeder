@@ -134,7 +134,7 @@ R2 cannot see a program that loads a file by the path it is given, a tool
 reading its config with a dynamic `import(path)` or a runner pointed at a spec,
 so it would report what such a file exports as referenced by nothing. Name those
 files under `[entrypoints] loaded` in `weeder.toml`, as path globs from the root,
-and R2 treats each as an entry point:
+and R2 and S4 treat each as an entry point:
 
 ```toml
 [entrypoints]

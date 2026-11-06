@@ -19,8 +19,9 @@
 //! move or an edit rather than new code, and is left alone.
 //!
 //! What something outside the repository calls by design is `rules::export`'s
-//! answer, the one R2 reads, and a module `[entrypoints] cli` names is the
-//! command line itself. Neither is judged.
+//! answer, the one R2 reads. A module `[entrypoints] cli` names is the command
+//! line itself, and a file `[entrypoints] loaded` names is another program's to
+//! load by path. None of these is judged.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -36,7 +37,10 @@ use crate::core::syntax::words;
 pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let added: Vec<Added> = added_exports(judged.changes)
         .into_iter()
-        .filter(|added| !glob::matches_any(&judged.config.cli_entrypoints, added.path))
+        .filter(|added| {
+            !glob::matches_any(&judged.config.cli_entrypoints, added.path)
+                && !glob::matches_any(&judged.config.loaded_entrypoints, added.path)
+        })
         .collect();
     if added.is_empty() {
         return Vec::new();

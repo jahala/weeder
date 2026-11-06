@@ -153,7 +153,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Warn,
         short_description: "Production code was added that only its tests call",
-        full_description: "A production file gains an exported definition, or exports one it already held, and every reference to it outside its own file is in a test, with at least one there. A reference is a call found anywhere in the tree, or the name written in the code of a file the change touched. The entry points their language exempts, and the modules `[entrypoints] cli` names, are left alone, and so is an export nothing references, which is R2's.",
+        full_description: "A production file gains an exported definition, or exports one it already held, and every reference to it outside its own file is in a test, with at least one there. A reference is a call found anywhere in the tree, or the name written in the code of a file the change touched. The entry points their language exempts, the modules `[entrypoints] cli` names and the files `[entrypoints] loaded` names are left alone, and so is an export nothing references, which is R2's.",
         network: Network::None,
     },
     Rule {

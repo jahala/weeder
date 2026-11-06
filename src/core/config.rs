@@ -58,7 +58,7 @@ pub struct Config {
     /// `[entrypoints] loaded`: the path globs of files another program loads
     /// by the path it is given rather than by importing a name, a config file
     /// a tool reads, a spec a runner is pointed at. What they export is that
-    /// program's to call, so R2 treats each as an entry point.
+    /// program's to call, so R2 and S4 treat each as an entry point.
     pub loaded_entrypoints: Vec<String>,
     pub thresholds: Thresholds,
     /// `[docs] commands`: the commands R1 resolves a cited command and flag
