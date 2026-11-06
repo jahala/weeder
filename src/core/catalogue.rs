@@ -153,7 +153,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Check,
         default_level: Level::Warn,
         short_description: "Production code was added that only its tests call",
-        full_description: "A production file gains an exported definition, or exports one it already held, and every reference to it outside its own file is in a test, with at least one there. A reference is a call found anywhere in the tree, or the name written in the code of a file the change touched. The entry points R2 exempts, and the modules `[entrypoints] cli` names, are left alone, and so is an export nothing references, which is R2's.",
+        full_description: "A production file gains an exported definition, or exports one it already held, and every reference to it outside its own file is in a test, with at least one there. A reference is a call found anywhere in the tree, or the name written in the code of a file the change touched. The entry points their language exempts, and the modules `[entrypoints] cli` names, are left alone, and so is an export nothing references, which is R2's.",
         network: Network::None,
     },
     Rule {
@@ -249,7 +249,7 @@ const CATALOGUE: &[Rule] = &[
         face: Face::Scan,
         default_level: Level::Warn,
         short_description: "A public symbol has no references",
-        full_description: "An exported definition is referenced nowhere in the repository, and it is not one of the entry points its language exempts.",
+        full_description: "An exported definition is referenced nowhere in the repository, and it is not one of the entry points its language exempts or in a file `[entrypoints] loaded` names.",
         network: Network::None,
     },
     Rule {

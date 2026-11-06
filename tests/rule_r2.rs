@@ -65,3 +65,48 @@ fn a_referenced_export_and_an_entry_point_are_left_alone() {
         );
     }
 }
+
+/// The files `[entrypoints] loaded` names are loaded by another program from
+/// the path it is given, so nothing in the repository imports what they export,
+/// by design. Each fixture's own `weeder.toml` names its files, and the same
+/// tree without that list reports each of them, which is what the list is for.
+#[test]
+fn a_file_another_program_loads_by_path_is_an_entry_point_when_the_config_names_it() {
+    let loaded: &[(&str, &[&str])] = &[
+        ("ts", &["loops/first/loop.ts", "runner.config.ts"]),
+        ("py", &["loops/first/loop.py"]),
+        ("rs", &["loops/first/loop.rs"]),
+        ("go", &["loops/first/loop.go"]),
+    ];
+    for (lang, paths) in loaded {
+        let repo = fixture("R2", lang, "loaded");
+        let run = repo.weeder(&["scan", "--rules", "R2", "--format", "sarif"]);
+        assert_eq!(
+            run.code, 0,
+            "R2/{lang}/loaded writes `[entrypoints] loaded`, a key weeder reads: {}",
+            run.stderr
+        );
+        let found = run.findings();
+        assert!(
+            found.is_empty(),
+            "R2/{lang}/loaded names every file it exports from as loaded by path, and weeder reported: {found:#?}"
+        );
+
+        repo.write("weeder.toml", "");
+        let run = repo.weeder(&["scan", "--rules", "R2", "--format", "sarif"]);
+        assert_eq!(run.code, 0, "a scan never blocks: {}", run.stderr);
+        let reported: Vec<String> = run
+            .findings()
+            .into_iter()
+            .map(|finding| finding.path)
+            .collect();
+        assert_eq!(
+            reported,
+            paths
+                .iter()
+                .map(|path| path.to_string())
+                .collect::<Vec<String>>(),
+            "R2/{lang}/loaded without the list reports every file it would have named"
+        );
+    }
+}

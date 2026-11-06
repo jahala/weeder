@@ -48,6 +48,7 @@ first, on its own. `scan` judges the tree it is given, and reads the
 | `[deps] layers` | a layer name to the path globs that belong to it | D2 |
 | `[deps] allow` | the `{ from, to }` pairs an import may run between | D2 |
 | `[entrypoints] cli` | the modules that are the command line itself, where printing is the product and what they export is the command line's to call | S3, S4 |
+| `[entrypoints] loaded` | the path globs of files another program loads by the path it is given, whose exports are that program's to call | R2 |
 | `[thresholds] todo_age_days` | how old a work marker may get | R3 |
 | `[thresholds] dependency_lag` | how far behind a pin may fall | R4 |
 | `[docs] commands` | the programs whose own `--help` a cited command and its flags are resolved against | R1 |
@@ -269,7 +270,7 @@ An added line in a production file prints or breaks for debugging, outside the e
 
 `check` · warns by default
 
-A production file gains an exported definition, or exports one it already held, and every reference to it outside its own file is in a test, with at least one there. A reference is a call found anywhere in the tree, or the name written in the code of a file the change touched. The entry points R2 exempts, and the modules `[entrypoints] cli` names, are left alone, and so is an export nothing references, which is R2's.
+A production file gains an exported definition, or exports one it already held, and every reference to it outside its own file is in a test, with at least one there. A reference is a call found anywhere in the tree, or the name written in the code of a file the change touched. The entry points their language exempts, and the modules `[entrypoints] cli` names, are left alone, and so is an export nothing references, which is R2's.
 
 <a id="D1"></a>
 ## D1: A dependency manifest changed
@@ -368,7 +369,18 @@ Some names are cited on purpose and never live in the tree: a file a program wri
 
 `scan` · on by default
 
-An exported definition is referenced nowhere in the repository, and it is not one of the entry points its language exempts.
+An exported definition is referenced nowhere in the repository, and it is not one of the entry points its language exempts or in a file `[entrypoints] loaded` names.
+
+Some files are loaded by another program from the path it is given: a config
+file a tool reads with a dynamic `import(path)`, a spec a runner is pointed at.
+Nothing in the repository imports what they export, by design. List them under
+`[entrypoints] loaded`, as path globs from the root, and R2 treats each as an
+entry point:
+
+```toml
+[entrypoints]
+loaded = ["*.config.ts", "loops/*/loop.ts"]
+```
 
 <a id="R3"></a>
 ## R3: A TODO is older than the configured age

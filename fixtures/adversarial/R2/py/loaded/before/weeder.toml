@@ -1,0 +1,2 @@
+[entrypoints]
+loaded = ["loops/*/loop.py"]
