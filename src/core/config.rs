@@ -52,7 +52,8 @@ pub struct Config {
     /// `[deps] allow`: the import directions between layers that are permitted; D2 flags the rest.
     pub dependency_directions: Vec<DependencyDirection>,
     /// `[entrypoints] cli`: the modules that are the command line itself, where
-    /// printing is the product rather than something left behind. S3 reads these.
+    /// printing is the product rather than something left behind, and what they
+    /// export is the command line's to call. S3 and S4 read these.
     pub cli_entrypoints: Vec<String>,
     pub thresholds: Thresholds,
     /// `[docs] commands`: the commands R1 resolves a cited command and flag

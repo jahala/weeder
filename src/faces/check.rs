@@ -495,11 +495,12 @@ fn collection(changes: &[Change], paths: &[String]) -> collect::Collection {
     collect::written_by(&collect::uncollected(&read, paths), changes)
 }
 
-/// Where the definitions of the out-of-scope files are called from. Only those
-/// files are asked about: a walk of the tree is the one expensive thing a check
-/// does, and with nothing outside the scope there is nothing to ask.
+/// Where the definitions of the out-of-scope files are called from, and the
+/// names the rules asked about besides: what the change exported, for S4. Only
+/// those are asked about, in one walk: a walk of the tree is the one expensive
+/// thing a check does, and with nothing to ask there is no walk.
 fn callers(root: &Path, changes: &[Change], scope: &[String]) -> Result<Vec<CallerSite>, String> {
-    let symbols: BTreeSet<String> = changes
+    let mut symbols: BTreeSet<String> = changes
         .iter()
         .filter(|change| {
             change
@@ -508,6 +509,7 @@ fn callers(root: &Path, changes: &[Change], scope: &[String]) -> Result<Vec<Call
         })
         .flat_map(Change::changed_definitions)
         .collect();
+    symbols.extend(rules::check::symbols_in_question(changes));
     reader::callers(&symbols, root).map_err(|error| error.to_string())
 }
 
