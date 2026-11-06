@@ -30,7 +30,9 @@ pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
         }
         let before = change.before.mask();
         let after = change.after.mask();
-        for pair in change.replacements() {
+        // A line that only moved, re-indented into a block, is no rewrite: it
+        // is set aside before the rest are paired by place.
+        for pair in change.runs().iter().flat_map(|run| run.rewritten().pairs()) {
             if let Some(lost) = weakening(before, after, &pair) {
                 findings.push(finding(path, pair.new_line, &lost));
             }

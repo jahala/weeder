@@ -272,6 +272,40 @@ pub struct Run<'a> {
     pub added: Vec<&'a HunkLine>,
 }
 
+impl<'a> Run<'a> {
+    /// The run with every line that only moved set aside: a removed line that
+    /// comes back the same once its whitespace is set aside takes its copy out
+    /// with it. A block that wraps unchanged lines moves each one deeper, and
+    /// git writes the move as the old lines out and the new ones in with the
+    /// block's opening line first, so paired by place every line would meet
+    /// the one written above it.
+    #[must_use]
+    pub fn rewritten(&self) -> Run<'a> {
+        let spaced = |text: &str| text.split_whitespace().collect::<Vec<&str>>().join(" ");
+        let mut added: Vec<Option<&'a HunkLine>> = self.added.iter().copied().map(Some).collect();
+        let mut removed = Vec::new();
+        for line in &self.removed {
+            let wanted = spaced(&line.text);
+            match added.iter().position(|candidate| {
+                candidate.is_some_and(|candidate| spaced(&candidate.text) == wanted)
+            }) {
+                Some(at) => added[at] = None,
+                None => removed.push(*line),
+            }
+        }
+        Run {
+            removed,
+            added: added.into_iter().flatten().collect(),
+        }
+    }
+
+    /// The run's lines paired in the order git wrote them.
+    #[must_use]
+    pub fn pairs(&self) -> Vec<Replacement<'a>> {
+        paired(&self.removed, &self.added)
+    }
+}
+
 /// One line rewritten: the line that went out and the line that came in.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Replacement<'a> {

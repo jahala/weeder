@@ -63,33 +63,13 @@ pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
 /// and takes no part. The maps are looked up and never walked, so their order
 /// reaches no output.
 fn partners(before: &Mask, after: &Mask, run: &Run<'_>) -> Vec<(u32, u32)> {
-    let spaced = |text: &str| text.split_whitespace().collect::<Vec<&str>>().join(" ");
-    let mut unclaimed: Vec<Option<u32>> = Vec::new();
-    let mut copies: BTreeMap<String, VecDeque<usize>> = BTreeMap::new();
-    for (new_line, text) in run
-        .added
+    let run = run.rewritten();
+    let rewritten: Vec<u32> = run
+        .removed
         .iter()
-        .filter_map(|line| Some((line.new_line?, line.text.as_str())))
-    {
-        copies
-            .entry(spaced(text))
-            .or_default()
-            .push_back(unclaimed.len());
-        unclaimed.push(Some(new_line));
-    }
-    let mut rewritten = Vec::new();
-    for line in &run.removed {
-        let Some(old_line) = line.old_line else {
-            continue;
-        };
-        match copies
-            .get_mut(&spaced(&line.text))
-            .and_then(VecDeque::pop_front)
-        {
-            Some(index) => unclaimed[index] = None,
-            None => rewritten.push(old_line),
-        }
-    }
+        .filter_map(|line| line.old_line)
+        .collect();
+    let unclaimed: Vec<Option<u32>> = run.added.iter().map(|line| line.new_line).collect();
     let mut shapes: BTreeMap<String, VecDeque<u32>> = BTreeMap::new();
     for new_line in unclaimed.into_iter().flatten() {
         shapes
