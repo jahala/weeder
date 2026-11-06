@@ -541,6 +541,10 @@ fn loops(lang: Lang, mask: &Mask) -> Vec<Loop> {
             Some(from) => runs_over(lang, mask, (at, from), HOPS),
             None => (None, (at, after)),
         };
+        let (entries, end) = match leaves_rows_out(mask, end) {
+            Some(end) => (None, end),
+            None => (entries, end),
+        };
         let body = match lang {
             // An indented language opens its body at the colon closing the header.
             Lang::Python => idiom::block(lang, mask, at, after),
@@ -551,6 +555,60 @@ fn loops(lang: Lang, mask: &Mask) -> Vec<Loop> {
         }
     }
     found
+}
+
+/// The adapters a loop may walk a table through and still run once for each of
+/// its entries: the ways of reaching the entries, numbering them, reversing
+/// them or reshaping each one.
+const KEEPS_EVERY_ROW: &[&str] = &[
+    "iter",
+    "into_iter",
+    "iter_mut",
+    "enumerate",
+    "rev",
+    "copied",
+    "cloned",
+    "map",
+    "entries",
+    "keys",
+    "values",
+    "items",
+];
+
+/// Where a table a loop walks is followed by a slice, or by an adapter that can
+/// leave rows out or add some (`filter`, `take`, `skip`, `flat_map`), the end of
+/// all of it: the loop runs some number of times the table's own count does not
+/// say. `None` where nothing follows but adapters that keep every row.
+fn leaves_rows_out(mask: &Mask, from: At) -> Option<At> {
+    let mut at = from;
+    let mut changed = false;
+    loop {
+        let Some((place, character)) = next_code(mask, at) else {
+            return changed.then_some(at);
+        };
+        match character {
+            '[' => {
+                let close = closing_of(mask, place)?;
+                changed = true;
+                at = step(close);
+            }
+            '.' => {
+                let Some((name_at, first)) = next_code(mask, step(place)) else {
+                    return changed.then_some(at);
+                };
+                if !is_identifier(first) {
+                    return changed.then_some(at);
+                }
+                let (name, end) = identifier(mask, name_at);
+                changed |= !KEEPS_EVERY_ROW.contains(&name.as_str());
+                at = (name_at.0, end);
+                if let Some((open, '(')) = next_code(mask, at) {
+                    at = step(closing_of(mask, open)?);
+                }
+            }
+            _ => return changed.then_some(at),
+        }
+    }
 }
 
 /// Whether what a line writes in front of a keyword leaves the keyword opening
@@ -1215,4 +1273,81 @@ fn opening(character: char) -> i32 {
 /// 1 for a character that closes a bracket, 0 for everything else.
 fn closing(character: char) -> i32 {
     i32::from(matches!(character, ')' | ']' | '}'))
+}
+
+/// The functions written inside a case that are no case or suite themselves: a
+/// closure handed to something that walks a table, a callback, a definition
+/// nested in the case. What runs in one runs as often as something calls it,
+/// and the file does not say how often that is, so a claim inside one is read
+/// the way a claim under a loop over a list built at run time is.
+#[must_use]
+pub fn nested_functions(lang: Lang, mask: &Mask, units: &[TestUnit]) -> Vec<Block> {
+    let mut found = Vec::new();
+    for line in 1..=mask.line_count() {
+        let inside_a_case = units.iter().any(|unit| {
+            unit.kind == crate::core::read::TestUnitKind::Case
+                && unit.start_line < line
+                && line <= unit.end_line
+        });
+        if !inside_a_case || units.iter().any(|unit| unit.start_line == line) {
+            continue;
+        }
+        let code = mask.code(line);
+        let Some(after) = opens_function(lang, &code) else {
+            continue;
+        };
+        if let Some(block) = idiom::block(lang, mask, line, after) {
+            found.push(block);
+        }
+    }
+    found
+}
+
+/// Where a line opens a function's body, as the character from which its
+/// block is read, or `None` where it opens none. A braced language has to end
+/// the line with the brace, so a struct literal or a closure written on one
+/// line is not taken for a body that runs the lines below it.
+fn opens_function(lang: Lang, code: &str) -> Option<usize> {
+    let trimmed = code.trim();
+    let column = |byte: usize| code[..byte].chars().count();
+    match lang {
+        Lang::Python => {
+            (trimmed.starts_with("def ") || trimmed.starts_with("async def ")).then_some(0)
+        }
+        _ if !trimmed.ends_with('{') => None,
+        Lang::TypeScript | Lang::JavaScript => code
+            .find("=>")
+            .or_else(|| {
+                words(code)
+                    .into_iter()
+                    .find(|word| word.text == "function" && !word.is_member())
+                    .map(|word| word.start)
+            })
+            .map(column),
+        Lang::Rust => closure_head(code).map(column),
+        // A literal handed to `Run` is a subtest, a case of its own, and the
+        // tables around it already count it.
+        Lang::Go => words(code)
+            .into_iter()
+            .find(|word| word.text == "func" && !word.is_member() && word.start > 0)
+            .filter(|word| !code[..word.start].trim().is_empty())
+            .filter(|word| !code[..word.start].contains(".Run("))
+            .map(|word| column(word.start)),
+        Lang::Other => None,
+    }
+}
+
+/// Where a Rust closure's parameter list opens: a `|` written where an
+/// expression starts, after an opening bracket, a comma, an `=` or `move`, so
+/// the `||` of a condition is never read as one.
+fn closure_head(code: &str) -> Option<usize> {
+    code.char_indices().find_map(|(at, character)| {
+        if character != '|' {
+            return None;
+        }
+        let before = code[..at].trim_end();
+        let opens =
+            before.ends_with(['(', ',', '=']) || before.ends_with("move") || before.is_empty();
+        opens.then_some(at)
+    })
 }

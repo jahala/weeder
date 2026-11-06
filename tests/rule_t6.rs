@@ -93,6 +93,25 @@ fn t6_stays_silent_when_an_assertion_arrives_naming_what_it_accepts() {
     }
 }
 
+#[test]
+fn t6_stays_silent_when_unchanged_error_assertions_are_only_reindented() {
+    // Wrapping a case in a block moves every line of it deeper, and git writes
+    // the block's opening line first, so paired by place each assertion meets
+    // the one above it: a weak check set against a strong one reads as the
+    // strong one weakened. In TypeScript, Python and Go this layout did; the
+    // Rust one lines up by chance and holds the same answer either way.
+    for language in LANGUAGES {
+        let name = language.name;
+        let run = fixture("T6", name, "reindented").weeder(&["check"]);
+        assert_eq!(
+            reported(&run.findings()),
+            Vec::new(),
+            "{name}: a line that only moved weakened nothing"
+        );
+        assert_eq!(run.code, 0, "{name}: nothing found, nothing blocked");
+    }
+}
+
 /// The lines a fixture's change rewrote, counted from one.
 fn rewritten(language: &Language, case: &str) -> Vec<u64> {
     let before = fixture_file(

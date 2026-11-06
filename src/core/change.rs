@@ -219,30 +219,39 @@ impl Change {
     /// rest are additions and removals with no partner.
     #[must_use]
     pub fn replacements(&self) -> Vec<Replacement<'_>> {
-        let mut pairs = Vec::new();
+        self.runs()
+            .iter()
+            .flat_map(|run| paired(&run.removed, &run.added))
+            .collect()
+    }
+
+    /// The rewrites git wrote, each a run of removals and the run of additions
+    /// that followed it inside one hunk. A rule that has its own way of telling
+    /// which line replaced which reads these rather than the pairs by order.
+    #[must_use]
+    pub fn runs(&self) -> Vec<Run<'_>> {
+        let mut runs = Vec::new();
         for hunk in &self.diff.hunks {
-            let mut removed: Vec<&HunkLine> = Vec::new();
-            let mut added: Vec<&HunkLine> = Vec::new();
+            let mut run = Run::default();
             for line in &hunk.lines {
                 match line.kind {
-                    LineKind::Removed if added.is_empty() => removed.push(line),
-                    LineKind::Added => added.push(line),
+                    LineKind::Removed if run.added.is_empty() => run.removed.push(line),
+                    LineKind::Added => run.added.push(line),
                     // Anything else closes the run: a context line, and a
                     // removal that opens the next one.
                     _ => {
-                        pairs.extend(paired(&removed, &added));
-                        removed.clear();
-                        added.clear();
+                        runs.push(std::mem::take(&mut run));
                         if line.kind == LineKind::Removed {
-                            removed.push(line);
+                            run.removed.push(line);
                         }
                     }
                 }
             }
             // A hunk that ends inside a run closes it where its lines run out.
-            pairs.extend(paired(&removed, &added));
+            runs.push(run);
         }
-        pairs
+        runs.retain(|run| !run.removed.is_empty() || !run.added.is_empty());
+        runs
     }
 
     fn lines(&self, kind: LineKind) -> impl Iterator<Item = (Option<u32>, &str)> {
@@ -252,6 +261,48 @@ impl Change {
             .flat_map(|hunk| hunk.lines.iter())
             .filter(move |line| line.kind == kind)
             .map(|line| (line.new_line, line.text.as_str()))
+    }
+}
+
+/// The lines one rewrite took out and the lines it put in, in the order git
+/// wrote them.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Run<'a> {
+    pub removed: Vec<&'a HunkLine>,
+    pub added: Vec<&'a HunkLine>,
+}
+
+impl<'a> Run<'a> {
+    /// The run with every line that only moved set aside: a removed line that
+    /// comes back the same once its whitespace is set aside takes its copy out
+    /// with it. A block that wraps unchanged lines moves each one deeper, and
+    /// git writes the move as the old lines out and the new ones in with the
+    /// block's opening line first, so paired by place every line would meet
+    /// the one written above it.
+    #[must_use]
+    pub fn rewritten(&self) -> Run<'a> {
+        let spaced = |text: &str| text.split_whitespace().collect::<Vec<&str>>().join(" ");
+        let mut added: Vec<Option<&'a HunkLine>> = self.added.iter().copied().map(Some).collect();
+        let mut removed = Vec::new();
+        for line in &self.removed {
+            let wanted = spaced(&line.text);
+            match added.iter().position(|candidate| {
+                candidate.is_some_and(|candidate| spaced(&candidate.text) == wanted)
+            }) {
+                Some(at) => added[at] = None,
+                None => removed.push(*line),
+            }
+        }
+        Run {
+            removed,
+            added: added.into_iter().flatten().collect(),
+        }
+    }
+
+    /// The run's lines paired in the order git wrote them.
+    #[must_use]
+    pub fn pairs(&self) -> Vec<Replacement<'a>> {
+        paired(&self.removed, &self.added)
     }
 }
 

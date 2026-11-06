@@ -55,6 +55,11 @@ pub struct Config {
     /// printing is the product rather than something left behind, and what they
     /// export is the command line's to call. S3 and S4 read these.
     pub cli_entrypoints: Vec<String>,
+    /// `[entrypoints] loaded`: the path globs of files another program loads
+    /// by the path it is given rather than by importing a name, a config file
+    /// a tool reads, a spec a runner is pointed at. What they export is that
+    /// program's to call, so R2 and S4 treat each as an entry point.
+    pub loaded_entrypoints: Vec<String>,
     pub thresholds: Thresholds,
     /// `[docs] commands`: the commands R1 resolves a cited command and flag
     /// against, by reading each one's own `--help`. Empty leaves a cited
@@ -161,6 +166,7 @@ impl Default for Config {
             layers: BTreeMap::new(),
             dependency_directions: Vec::new(),
             cli_entrypoints: Vec::new(),
+            loaded_entrypoints: Vec::new(),
             thresholds: Thresholds {
                 todo_age_days: 30,
                 dependency_lag: 3,
@@ -228,6 +234,9 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
     if let Some(entrypoints) = raw.entrypoints {
         if let Some(cli) = entrypoints.cli {
             config.cli_entrypoints = cli;
+        }
+        if let Some(loaded) = entrypoints.loaded {
+            config.loaded_entrypoints = loaded;
         }
     }
     if let Some(thresholds) = raw.thresholds {
@@ -538,6 +547,7 @@ struct DependencyDirectionToml {
 #[serde(deny_unknown_fields)]
 struct RawEntrypoints {
     cli: Option<Vec<String>>,
+    loaded: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]

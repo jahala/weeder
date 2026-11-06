@@ -110,6 +110,67 @@ fn s4_stays_silent_on_an_entry_point_somebody_outside_the_repository_calls() {
 }
 
 #[test]
+fn s4_stays_silent_on_a_file_the_repository_says_another_program_loads_by_path() {
+    // The fire fixture's change, with the file that gains the export named
+    // under `[entrypoints] loaded`: a program outside the repository loads it
+    // by path, so its exports are that program's to call, and tests reaching
+    // them is no sign that nothing else does.
+    for (lang, path, _) in SHAPES {
+        let repo = Repo::init();
+        for (file, text) in fixture_side(lang, "fire/before") {
+            repo.write(&file, &text);
+        }
+        repo.write(
+            "weeder.toml",
+            &format!("[entrypoints]\nloaded = [\"{path}\"]\n"),
+        );
+        repo.commit("the state the change starts from");
+        for (file, text) in fixture_side(lang, "fire/after") {
+            repo.write(&file, &text);
+        }
+        repo.stage_all();
+
+        let run = repo.weeder(&["check"]);
+        let s4: Vec<_> = run
+            .findings()
+            .into_iter()
+            .filter(|finding| finding.rule == "S4")
+            .collect();
+        assert_eq!(
+            s4,
+            Vec::new(),
+            "{lang}: a file loaded by path is an entry point\n{}",
+            run.stderr
+        );
+    }
+}
+
+/// Every file of one side of a fixture, as paths relative to the side.
+fn fixture_side(lang: &str, side: &str) -> Vec<(String, String)> {
+    let root = common::fixture_root().join("S4").join(lang).join(side);
+    let mut files = Vec::new();
+    let mut pending = vec![root.clone()];
+    while let Some(dir) = pending.pop() {
+        for entry in std::fs::read_dir(&dir).expect("the fixture side should be readable") {
+            let path = entry.expect("a fixture entry should read").path();
+            if path.is_dir() {
+                pending.push(path);
+            } else {
+                let relative = path
+                    .strip_prefix(&root)
+                    .expect("a fixture file sits under its side")
+                    .to_string_lossy()
+                    .replace('\\', "/");
+                let text = std::fs::read_to_string(&path).expect("a fixture file should read");
+                files.push((relative, text));
+            }
+        }
+    }
+    files.sort();
+    files
+}
+
+#[test]
 fn a_production_reference_that_is_not_a_call_still_wires_the_export_in() {
     // Handed to `map` rather than called, the function is still on a path the
     // product runs, and the caller search sees no call to it there.

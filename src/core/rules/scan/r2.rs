@@ -4,25 +4,31 @@
 //! either dead weight or a promise somebody forgot to keep, and both are worth a
 //! reader's attention. What counts as public, and which exports something
 //! outside the repository calls by design, is `rules::export`'s answer, the
-//! same one S4 reads.
+//! same one S4 reads. A repository names the rest under `[entrypoints] loaded`:
+//! the files another program loads by the path it is given, whose exports
+//! nothing here imports because the program reaches them by path instead.
 
 use std::collections::BTreeMap;
 
 use crate::core::classify::FileKind;
 use crate::core::config::Config;
 use crate::core::finding::{Detection, Message, Region, Stamp};
+use crate::core::glob;
 use crate::core::read::Definition;
 use crate::core::rules::export;
 use crate::core::tree::{Tree, TreeFile};
 
 use super::{code_words, Site};
 
-pub fn evaluate(tree: &Tree, _config: &Config) -> Vec<Detection> {
+pub fn evaluate(tree: &Tree, config: &Config) -> Vec<Detection> {
     let words = code_words(tree);
     let mut findings = Vec::new();
 
     for file in tree.code() {
-        if file.kind() == FileKind::Test || export::is_entry_file(file.name()) {
+        if file.kind() == FileKind::Test
+            || export::is_entry_file(file.name())
+            || glob::matches_any(&config.loaded_entrypoints, &file.path)
+        {
             continue;
         }
         let lines = super::code_lines(file);

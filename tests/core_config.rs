@@ -104,6 +104,24 @@ fn config_errors_name_bad_keys_and_levels() {
 }
 
 #[test]
+fn entrypoints_loaded_names_the_files_another_program_loads_by_path() {
+    let config = parse_config(Some(
+        "[entrypoints]\ncli = [\"src/cli/**\"]\nloaded = [\"*.config.ts\", \"loops/*/loop.ts\"]\n",
+    ))
+    .expect("both keys are weeder's");
+    assert_eq!(config.cli_entrypoints, vec!["src/cli/**"]);
+    assert_eq!(
+        config.loaded_entrypoints,
+        vec!["*.config.ts", "loops/*/loop.ts"]
+    );
+    assert!(Config::default().loaded_entrypoints.is_empty());
+
+    let misspelled = parse_config(Some("[entrypoints]\nload = [\"*.config.ts\"]\n"))
+        .expect_err("a key weeder does not read sets nothing, so it must fail");
+    assert!(misspelled.to_string().contains("load"));
+}
+
+#[test]
 fn docs_external_names_what_lives_outside_the_tree_and_an_unknown_docs_key_is_refused() {
     let config = parse_config(Some(
         "[docs]\ncommands = [\"weeder\"]\nexternal = [\"stop.sh\", \"state/**\", \"GEMINI_MODEL\"]\n",
