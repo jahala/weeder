@@ -541,6 +541,10 @@ fn loops(lang: Lang, mask: &Mask) -> Vec<Loop> {
             Some(from) => runs_over(lang, mask, (at, from), HOPS),
             None => (None, (at, after)),
         };
+        let (entries, end) = match leaves_rows_out(mask, end) {
+            Some(end) => (None, end),
+            None => (entries, end),
+        };
         let body = match lang {
             // An indented language opens its body at the colon closing the header.
             Lang::Python => idiom::block(lang, mask, at, after),
@@ -551,6 +555,60 @@ fn loops(lang: Lang, mask: &Mask) -> Vec<Loop> {
         }
     }
     found
+}
+
+/// The adapters a loop may walk a table through and still run once for each of
+/// its entries: the ways of reaching the entries, numbering them, reversing
+/// them or reshaping each one.
+const KEEPS_EVERY_ROW: &[&str] = &[
+    "iter",
+    "into_iter",
+    "iter_mut",
+    "enumerate",
+    "rev",
+    "copied",
+    "cloned",
+    "map",
+    "entries",
+    "keys",
+    "values",
+    "items",
+];
+
+/// Where a table a loop walks is followed by a slice, or by an adapter that can
+/// leave rows out or add some (`filter`, `take`, `skip`, `flat_map`), the end of
+/// all of it: the loop runs some number of times the table's own count does not
+/// say. `None` where nothing follows but adapters that keep every row.
+fn leaves_rows_out(mask: &Mask, from: At) -> Option<At> {
+    let mut at = from;
+    let mut changed = false;
+    loop {
+        let Some((place, character)) = next_code(mask, at) else {
+            return changed.then_some(at);
+        };
+        match character {
+            '[' => {
+                let close = closing_of(mask, place)?;
+                changed = true;
+                at = step(close);
+            }
+            '.' => {
+                let Some((name_at, first)) = next_code(mask, step(place)) else {
+                    return changed.then_some(at);
+                };
+                if !is_identifier(first) {
+                    return changed.then_some(at);
+                }
+                let (name, end) = identifier(mask, name_at);
+                changed |= !KEEPS_EVERY_ROW.contains(&name.as_str());
+                at = (name_at.0, end);
+                if let Some((open, '(')) = next_code(mask, at) {
+                    at = step(closing_of(mask, open)?);
+                }
+            }
+            _ => return changed.then_some(at),
+        }
+    }
 }
 
 /// Whether what a line writes in front of a keyword leaves the keyword opening

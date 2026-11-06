@@ -565,8 +565,10 @@ fn t2_warns_when_the_claims_that_left_now_run_under_a_loop_it_cannot_count() {
     // `uncounted` runs the claims under a loop over a list the file builds at
     // run time. `callback` runs them in a function nested in the case and
     // handed to something that walks a table, which runs as often as it is
-    // called: weeder cannot count that either.
-    for state in ["uncounted", "callback"] {
+    // called: weeder cannot count that either. `adapted` walks a table it
+    // writes down through a slice or an adapter that can leave rows out, so
+    // the table's own count is not the count the loop runs.
+    for state in ["uncounted", "callback", "adapted"] {
         for language in LANGUAGES {
             let name = format!("{} {state}", language.name);
             let before = assertions(&language, &format!("{state}/before"));
