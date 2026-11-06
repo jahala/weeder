@@ -1,6 +1,6 @@
 {
   "goal": "A CSV importer that reads the supplier feed, validates every row, and reports what it refused. For the operations team who currently re-key the feed by hand.",
-  "source": "docs/tend2",
+  "source": "docs/tend",
   "nodes": [
     {
       "id": "parser",

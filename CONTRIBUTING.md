@@ -25,7 +25,7 @@ CI runs the same three commands on every change, and runs the suite again on a r
 
 ## The map
 
-Work here is planned on loops. `docs/tend2/` holds one page per module with the checks that prove it, and `AGENTS.md` carries the layout, the dependency direction weeder enforces on itself, the voice, and the rules any change is held to. For anything that adds a rule, a face or a flag, read the loop that owns it first; for anything the map has no loop for, open an issue so the shape is agreed before the code.
+Work here is planned on loops. `docs/tend/` holds one page per module with the checks that prove it, and `AGENTS.md` carries the layout, the dependency direction weeder enforces on itself, the voice, and the rules any change is held to. For anything that adds a rule, a face or a flag, read the loop that owns it first; for anything the map has no loop for, open an issue so the shape is agreed before the code.
 
 ## Code style
 

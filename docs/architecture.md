@@ -1,6 +1,6 @@
 # Architecture
 
-What weeder is, what it promises, and the state of the evidence behind each promise. `AGENTS.md` holds the layout and the working rules; the map in `docs/tend2/` holds the plan; `docs/decisions.md` indexes the rulings. This file holds what none of them states: the trust model, and which mechanisms are proven, assumed or open.
+What weeder is, what it promises, and the state of the evidence behind each promise. `AGENTS.md` holds the layout and the working rules; the map in `docs/tend/` holds the plan; `docs/decisions.md` indexes the rulings. This file holds what none of them states: the trust model, and which mechanisms are proven, assumed or open.
 
 ## 1. What weeder is
 

@@ -5,7 +5,7 @@ through each of them in the order you write them. Every step names the test that
 fails if you leave it out. Where nothing fails, the page says so.
 
 Nothing is built here that is not a loop first. Shape the rule's loop in
-`docs/tend2/` before you write code, as `AGENTS.md` says.
+`docs/tend/` before you write code, as `AGENTS.md` says.
 
 ## 1. The catalogue row
 
