@@ -49,7 +49,7 @@ use crate::core::glob;
 use crate::core::syntax;
 use crate::core::tree::{CommandListing, Tree, TreeFile};
 
-use super::{code_words, declared_names};
+use super::declared_names;
 
 /// The documents a repository states itself in. A path is repository-relative,
 /// and `docs/**/*.md` reaches every depth under the directory.
@@ -168,14 +168,27 @@ fn anchoring<'a>(
 
 /// Every name the repository still carries, outside the prose being judged.
 ///
-/// A symbol resolves against what the code declares, what the code writes, and
-/// what the repository's data holds, a vendored schema, a manifest, the map.
-/// The documents R1 reads are the one place it does not look: a citation that
-/// could vouch for itself, or for the one in the paragraph above it, would never
-/// go stale and would never be worth reading.
+/// A symbol resolves against what the code declares, what the code writes, what
+/// the code quotes, and what the repository's data holds, a vendored schema, a
+/// manifest, the map. A name in a string is one the program still carries, an
+/// allowlist of variables, a case label, the shell a template holds, so it
+/// answers a citation even though it keeps no export alive. A name in a comment
+/// is only mentioned, and a name nothing but prose still mentions is what this
+/// rule is for. The documents R1 reads are the one place it does not look: a
+/// citation that could vouch for itself, or for the one in the paragraph above
+/// it, would never go stale and would never be worth reading.
 fn known_identifiers(tree: &Tree) -> BTreeSet<String> {
     let mut known = declared_names(tree);
-    known.extend(code_words(tree).into_keys());
+    for file in tree.code() {
+        let mask = file.mask();
+        for line in 1..=mask.line_count() {
+            known.extend(
+                syntax::words(&mask.outside_comments(line))
+                    .into_iter()
+                    .map(|word| word.text.to_string()),
+            );
+        }
+    }
     for file in &tree.files {
         if file.is_code() || is_document(&file.path) {
             continue;
@@ -843,8 +856,8 @@ fn symbol_complaint(
         }
         return vec![Complaint {
             stamp: Stamp::Override(Level::Note),
-            what: format!("the docs cite the symbol `{cited}`, and the code declares and uses no `{name}`."),
-            why: "a name that only the documentation still knows sends a reader looking for code that was renamed or deleted.".to_string(),
+            what: format!("the docs cite the symbol `{cited}`, and no code declares, uses or quotes `{name}`."),
+            why: "a name the program no longer carries sends a reader looking for code that was renamed or deleted.".to_string(),
             next: "cite the name the code carries now, or delete the reference.".to_string(),
         }];
     };

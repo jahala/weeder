@@ -362,6 +362,11 @@ A citation carries the line it names. A path that resolves is still wrong when t
 
 A path the root does not hold is asked of the tails of every tracked path, on whole components, because docs are often written from inside a source root: `rules/scan/r1.rs` resolves to `src/core/rules/scan/r1.rs` when that is the only path ending that way. A tail several paths end in is reported with the paths it could mean. A brace pattern such as `src/core/rules/scan/{r1,r2}.rs` resolves when every place it spells does, and is reported for the ones that do not.
 
+A symbol resolves when the code declares it, uses it or quotes it in a string,
+or when a file of data the repository carries holds it. A name in a string is
+one the program still carries, such as a case label or a variable in an
+allowlist. A name that only a comment still mentions is reported.
+
 Some names are cited on purpose and never live in the tree: a file a program writes at run time, a variable another program reads. `[docs] external` lists them, as file names, paths, globs or variable names, and R1 reports none of them. A name the list does not cover is judged as before. A path `[scope] specimens` sets aside is still in the repository, so R1 counts it as there without reading it.
 
 <a id="R2"></a>

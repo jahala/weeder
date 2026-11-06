@@ -350,6 +350,35 @@ fn nothing_is_reported_when_every_citation_still_resolves() {
     }
 }
 
+/// A name the code holds in a string is one the program still carries: an
+/// allowlist of variables, a case label, the shell held in a template. Each
+/// language's fixture cites four names its code holds only that way, and a
+/// fifth its code only mentions in a comment, which is the one R1 exists to
+/// find. The finding says what R1 checked and found missing, and nothing more.
+#[test]
+fn a_name_the_code_quotes_is_known_and_one_only_a_comment_mentions_is_not() {
+    for lang in ["ts", "py", "rs", "go"] {
+        let found = findings(lang, "quoted");
+        assert_eq!(
+            found.len(),
+            1,
+            "R1/{lang}/quoted cites four names its code quotes and one only a comment mentions, and weeder reported: {found:#?}"
+        );
+        let finding = &found[0];
+        assert_eq!(
+            finding.level, "note",
+            "{lang}: nothing pins the name to a place"
+        );
+        assert!(
+            finding.message.starts_with(
+                "the docs cite the symbol `CHILD_SESSION`, and no code declares, uses or quotes `CHILD_SESSION`."
+            ),
+            "{lang}: the finding names the name a comment alone carries, and says what was looked for: {}",
+            finding.message
+        );
+    }
+}
+
 /// A document that cites another codebase reads to R1 as a document full of
 /// stale paths, and the settings that answer it are a person's to write. The
 /// first finding in each document names them, once, so a flood of R1 findings
