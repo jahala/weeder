@@ -269,7 +269,7 @@ An added line in a production file prints or breaks for debugging, outside the e
 
 `check` · warns by default
 
-A package manifest or its lockfile changed; the change blocks when a scope excludes the manifest.
+A package manifest or its lockfile changed in more than the package's own version; the change blocks when a scope excludes the manifest.
 
 <a id="D2"></a>
 ## D2: An import crossed a forbidden boundary
