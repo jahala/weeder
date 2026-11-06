@@ -371,3 +371,51 @@ fn the_report_carries_the_unplantable_count_beside_the_misses() {
         "the row does not carry what the run counted: {row}"
     );
 }
+
+/// The corpus cache sits in the temporary directory, and macOS empties files
+/// there that nobody touched for a few days while leaving the directories. A
+/// clone left as that skeleton is still a clone the campaign can use: it is
+/// fetched again, the run plants what it planted before, and it does not blame
+/// the source for what the cache lost (#101).
+#[test]
+fn a_cache_the_system_emptied_of_its_files_is_fetched_again() {
+    let bench = Bench::new();
+    let repo = python_history(("pyproject.toml", PINS_A_DEPENDENCY), CLAIMS_THE_FAILURE);
+    campaign(&bench, "probe", &repo, "T6", "py").succeeded();
+    let first = planted(&bench, "T6", "py");
+    assert!(first > 0, "the first run plants cases:\n{}", bench.report());
+
+    let clone = bench.path().join("weeder-recall-corpus").join("probe");
+    assert!(
+        clone.join(".git").is_dir(),
+        "the first run left its clone at {}",
+        clone.display()
+    );
+    empty_of_files(&clone.join(".git"));
+
+    let again = campaign(&bench, "probe", &repo, "T6", "py");
+    assert_eq!(
+        again.code, 0,
+        "a clone the system emptied is fetched again rather than failing the run:\n{}\n{}",
+        again.stdout, again.stderr
+    );
+    assert_eq!(
+        planted(&bench, "T6", "py"),
+        first,
+        "the run plants what it planted before the cache was emptied"
+    );
+}
+
+/// Every file under `directory` removed and every directory kept, which is the
+/// shape macOS leaves a temporary clone in. The test made this directory, in its
+/// own bench, and removes only files inside it.
+fn empty_of_files(directory: &std::path::Path) {
+    for entry in std::fs::read_dir(directory).expect("the clone's git directory is readable") {
+        let path = entry.expect("an entry of the git directory").path();
+        if path.is_dir() {
+            empty_of_files(&path);
+        } else {
+            std::fs::remove_file(&path).expect("a file the test's own bench holds");
+        }
+    }
+}

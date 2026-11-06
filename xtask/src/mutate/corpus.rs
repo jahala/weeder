@@ -99,7 +99,10 @@ pub fn prepare(repo: &Repo) -> Result<Working, String> {
 pub fn prepare_in(cache: &Path, repo: &Repo) -> Result<Working, String> {
     let root = cache.join(&repo.name);
     std::fs::create_dir_all(&root).map_err(|error| format!("{}: {error}", root.display()))?;
-    if !root.join(".git").exists() {
+    // A clone the system has emptied of its files is a skeleton of directories
+    // git does not recognise; initialising it again restores what git needs, and
+    // the fetch below brings back what the pin needs (#101).
+    if !is_repository(&root) {
         git::run(&root, &["init", "--quiet"])?;
     }
     let commit = format!("{}^{{commit}}", repo.tip);
@@ -144,6 +147,19 @@ pub fn slice(working: &Working, index: usize) -> Result<PathBuf, String> {
         return Ok(working.root.clone());
     }
     let root = cache_root().join(format!("{}-{index}", working.name));
+    if root.join(".git").exists() && !is_repository(&root) {
+        // A slice shares the clone's objects; a purged one is initialised again
+        // and pointed back at them, which is all `clone --shared` gave it.
+        git::run(&root, &["init", "--quiet"])?;
+        let alternates = root.join(".git/objects/info");
+        std::fs::create_dir_all(&alternates)
+            .map_err(|error| format!("{}: {error}", alternates.display()))?;
+        std::fs::write(
+            alternates.join("alternates"),
+            format!("{}\n", working.root.join(".git/objects").display()),
+        )
+        .map_err(|error| format!("{}: {error}", alternates.display()))?;
+    }
     if !root.join(".git").exists() {
         git::run(
             &cache_root(),
@@ -159,6 +175,17 @@ pub fn slice(working: &Working, index: usize) -> Result<PathBuf, String> {
     }
     git::run(&root, &["update-ref", BRANCH, &working.tip])?;
     Ok(root)
+}
+
+/// Whether `root` is itself a git repository git can read, rather than a
+/// directory inside some other one or a skeleton the system emptied.
+fn is_repository(root: &Path) -> bool {
+    let Ok(found) = git::capture(root, &["rev-parse", "--absolute-git-dir"]) else {
+        return false;
+    };
+    let ours = root.join(".git");
+    let resolve = |path: &Path| std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+    resolve(Path::new(found.trim())) == resolve(&ours)
 }
 
 /// The languages a repository writes, counted off the tree at the pin rather
