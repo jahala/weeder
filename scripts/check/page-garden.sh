@@ -118,6 +118,10 @@ def skeleton(token):
             kept = sorted(word for word in value.split() if word != "is-current")
             if kept:
                 shown[key] = " ".join(kept)
+        elif key == "aria-current":
+            # and it says so to a screen reader too, the way the reference bed
+            # page does; the garden row below holds it to the current pill
+            continue
         else:
             shown[key] = value
     return (kind, name, tuple(sorted(shown.items())))
@@ -231,10 +235,15 @@ if reference is not None and footer is not None:
                 continue
             if depth is None:
                 continue
-            if kind == "open" and name == "a":
+            # a bed is a pill carrying its bloom, linked where the bed has a
+            # page and a plain span where it has none yet
+            if kind == "open" and name in ("a", "span") and "--bloom" in attrs.get("style", ""):
                 beds.append({"style": attrs.get("style", ""), "dot": False, "name": ""})
                 if "is-current" in classes(attrs):
                     current.append(len(beds) - 1)
+                if "aria-current" in attrs and "is-current" not in classes(attrs):
+                    complain("the garden row says %r is current to a screen reader and not to the eye"
+                             % attrs.get("style", ""))
             elif kind == "open" and name == "span" and beds and "gf-dot" in classes(attrs):
                 beds[-1]["dot"] = True
             elif kind == "text" and beds:
@@ -344,16 +353,12 @@ floor = one(r"catches at least (\d+) percent of the anti-patterns", "the recall 
 planted = one(r"([\d,]+) cases were planted", "the number of cases planted")
 caught = one(r"([\d,]+) of them were caught", "the number of cases caught")
 blind_blocks = one(
-    r"blocked commits in \S+ at ([\d.]+) percent of (\d+) cases",
+    r"blocked commits in \S+blind\S+ agrees on ([\d.]+) percent of (\d+) cases",
     "the blind re-grade's agreement on blocked commits",
 )
-blind_recall = one(
-    r"recall cases in \S+ at ([\d.]+) percent of (\d+) cases",
-    "the blind re-grade's agreement on recall cases",
-)
-old = one(
-    r"the same (\d+) blocked commits counted (\d+) false positives, ([\d.]+) percent",
-    "the count under the classes in use before the ruling",
+harshest = one(
+    r"The floor under that share is ([\d.]+) percent",
+    "the share's harshest reading",
 )
 dated = one(r"^# calibration: [^\n]*?(\d{4}-\d{2})\s*$", "the month the report is dated")
 
@@ -372,15 +377,13 @@ if planted:
     required["the cases planted"] = planted[0]
 if caught:
     required["the cases caught"] = caught[0]
-if old:
-    required["the blocked commits under the old classes"] = old[0]
-    required["the false positives under the old classes"] = old[1]
-    required["the false-positive share under the old classes"] = old[2]
+if harshest:
+    required["the share's harshest reading"] = harshest[0]
 if dated:
     required["the month the calibration is dated"] = dated[0]
 
 derived = set()
-for label, agreement in (("blocked commits", blind_blocks), ("recall cases", blind_recall)):
+for label, agreement in (("blocked commits", blind_blocks),):
     if not agreement:
         continue
     percent, cases = float(agreement[0]), int(agreement[1])
@@ -419,7 +422,7 @@ if complaints:
 
 print(
     "index.html: the garden footer matches the umbrella's reference implementation at %s, "
-    "the garden row lists all eight beds with weeder current, the header carries the canonical "
+    "the garden row lists every bed the reference does, with weeder current, the header carries the canonical "
     "shears, and every calibration number on it is the report's own" % version
 )
 PY

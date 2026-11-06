@@ -276,7 +276,7 @@ A production file gains an exported definition, or exports one it already held, 
 
 `check` · warns by default
 
-A package manifest or its lockfile changed; the change blocks when a scope excludes the manifest.
+A package manifest or its lockfile changed in more than the package's own version; the change blocks when a scope excludes the manifest.
 
 <a id="D2"></a>
 ## D2: An import crossed a forbidden boundary

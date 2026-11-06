@@ -1,0 +1,4 @@
+[project]
+name = "demo"
+version = "1.5.0"
+dependencies = ["tomli>=2.0.2"]

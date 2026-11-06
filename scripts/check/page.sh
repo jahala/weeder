@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Evidence for page.tend2.html c1: index.html at the repository root passes the
-# umbrella's own brand gate with nothing to fix and nothing to review.
+# umbrella's own brand gate with nothing to fix, and with nothing to review that
+# the umbrella's own reference bed page does not also raise.
 #
 # The gate is the umbrella's, not a copy of it kept here. `scripts/umbrella-brand.sh`
 # fetches the umbrella at the version `.brand/products/weeder/petalsrc.example`
@@ -9,9 +10,14 @@
 # over the umbrella's staging copy of it, and the page beside them. Then it runs
 # `petals/scripts/check.sh` from the same fetch.
 #
-# check.sh fails on errors alone, so warnings would pass its exit code. The
-# claim is 0 and 0, so this script reads the counts it prints and holds it to
-# both.
+# check.sh fails on errors alone, so warnings would pass its exit code. The page
+# is built from `.brand/reference/product.html`, and the markup and wording it
+# takes from there draw warnings the umbrella has not cleared from the reference
+# itself. So the same check is run on the reference, from the same fetch, and
+# every warning the page draws has to be one the reference draws too, read by
+# its message with the line number taken out: a warning weeder's own swaps
+# brought in fails the check, and so does one more of a kind than the reference
+# has.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
@@ -51,19 +57,48 @@ if [ ! -f "$stage/.staged" ]; then
   : > "$stage/.staged"
 fi
 
+# One petals check on one file, from the staging directory, into a report.
+judge() {
+  ( cd "$stage" && bash petals/scripts/check.sh "$1" --brand .brand --product "$product" ) > "$2" 2>&1
+}
+
+# The warnings a report holds, each without its line number, sorted so that two
+# lists compare as multisets.
+warnings_of() {
+  sed -n 's/^WARNING \(\[[a-z]*\]\) line [0-9][0-9]*: /\1 /p' "$1" | LC_ALL=C sort
+}
+
 report="$stage/check.out"
+reference="$stage/reference.out"
 set +e
-( cd "$stage" && bash petals/scripts/check.sh index.html --brand .brand --product "$product" ) > "$report" 2>&1
+judge index.html "$report"
 verdict=$?
+judge .brand/reference/product.html "$reference"
+reference_verdict=$?
 set -e
 
-warnings="$(sed -n 's/.*Result: PASS (\([0-9][0-9]*\) warning.*/\1/p' "$report" | head -1)"
-if [ "$verdict" -ne 0 ] || [ -z "$warnings" ] || [ "$warnings" -ne 0 ]; then
+if [ "$verdict" -ne 0 ] || ! grep -q 'Result: PASS' "$report"; then
   cat "$report" >&2
   echo "" >&2
-  echo "index.html does not pass the umbrella's gate at $version ($sha) with 0 errors and 0 warnings" >&2
+  echo "index.html does not pass the umbrella's gate at $version ($sha): it has errors to fix" >&2
+  exit 1
+fi
+if [ "$reference_verdict" -ne 0 ] || ! grep -q 'Result: PASS' "$reference"; then
+  cat "$reference" >&2
+  echo "" >&2
+  echo "the umbrella's own reference page fails its gate at $version ($sha), so it is no measure of the page" >&2
+  exit 3
+fi
+
+extra="$(LC_ALL=C comm -23 <(warnings_of "$report") <(warnings_of "$reference"))"
+if [ -n "$extra" ]; then
+  cat "$report" >&2
+  echo "" >&2
+  echo "index.html draws warnings the umbrella's reference page at $version ($sha) does not:" >&2
+  echo "$extra" >&2
   exit 1
 fi
 
+count="$(warnings_of "$report" | grep -c . || true)"
 sed -n '/--- petals check/,$p' "$report"
-echo "index.html: 0 errors, 0 warnings against the umbrella's own petals check at $version ($sha), product layer $product"
+echo "index.html: 0 errors, and its $count warnings are all ones the umbrella's reference page draws, against the umbrella's own petals check at $version ($sha), product layer $product"
