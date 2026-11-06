@@ -178,8 +178,17 @@ fn the_catalogue_names_the_one_rule_that_may_reach_a_network() {
     let table = weeder_in(anywhere.path(), &["rules"]);
     assert_eq!(table.code, 0);
     let lines = table.stdout_lines();
-    assert_eq!(lines.len(), entries.len(), "one line per rule");
-    for (line, entry) in lines.iter().zip(&entries) {
+    assert_eq!(
+        lines.len(),
+        entries.len() + 1,
+        "a header naming the columns, then one line per rule"
+    );
+    assert_eq!(
+        lines[0].split_whitespace().nth(3),
+        Some("network"),
+        "the column is named, so `none` reads as no network and as nothing else"
+    );
+    for (line, entry) in lines.iter().skip(1).zip(&entries) {
         // Two spaces or more part one column from the next; a cell's own words
         // are one space apart, so the row comes back whole.
         let cells: Vec<&str> = line

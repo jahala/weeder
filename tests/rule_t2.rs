@@ -624,3 +624,96 @@ fn t2_still_blocks_a_drop_beside_a_loop_it_cannot_count_that_did_not_change() {
         assert_eq!(code, 2, "{name}: the change is stopped");
     }
 }
+
+/// Each language's suite that checks three parts of one value with three loose
+/// assertions, and the way the language writes the exact one that replaces
+/// them: the whole value, compared equal.
+const PINNED: [Language; 4] = [
+    Language {
+        name: "ts",
+        path: "src/instruction.test.ts",
+        into: "",
+        forms: &["expect("],
+    },
+    Language {
+        name: "py",
+        path: "tests/test_instruction.py",
+        into: "",
+        forms: &["assert "],
+    },
+    Language {
+        name: "rs",
+        path: "tests/instruction.rs",
+        into: "",
+        forms: &["assert!(", "assert_eq!("],
+    },
+    Language {
+        name: "go",
+        path: "instruction_test.go",
+        into: "",
+        forms: &["t.Errorf("],
+    },
+];
+
+/// The value every assertion in the pinned fixtures is about, and the whole
+/// of it that the exact assertion compares it to.
+const SUBJECT: &str = "text";
+const WHOLE: &str = "Rebase feature onto main from origin.";
+
+#[test]
+fn t2_stays_silent_when_loose_claims_on_a_value_become_one_exact_claim_on_it() {
+    for language in PINNED {
+        let name = language.name;
+        let before = assertions(&language, "exact/before");
+        assert!(
+            before > 1 && assertions(&language, "exact/after") == 1,
+            "{name}: several claims have to become one, or the silence proves nothing"
+        );
+        let after = fixture_file("T2", name, "exact", &format!("after/{}", language.path));
+        assert!(
+            after.contains(WHOLE) && after.contains(SUBJECT),
+            "{name}: the one claim left compares the same value to the whole of it"
+        );
+
+        let (findings, code) = reported(&language, "exact");
+        assert_eq!(
+            findings,
+            Vec::new(),
+            "{name}: an exact claim on a value says everything the loose claims on it said"
+        );
+        assert_eq!(code, 0, "{name}: nothing blocked");
+    }
+}
+
+#[test]
+fn t2_blocks_when_the_exact_claim_is_about_something_else() {
+    for language in PINNED {
+        let name = language.name;
+        let before = assertions(&language, "exact-other/before");
+        let after = assertions(&language, "exact-other/after");
+        let written = fixture_file(
+            "T2",
+            name,
+            "exact-other",
+            &format!("after/{}", language.path),
+        );
+        assert!(
+            !written.contains(WHOLE),
+            "{name}: the exact claim left pins the length, not the text"
+        );
+
+        let (findings, code) = reported(&language, "exact-other");
+        let findings = t2(findings);
+        assert_eq!(findings.len(), 1, "{name}: one T2 finding: {findings:#?}");
+        assert_eq!(findings[0].level, "error", "{name}: T2 blocks");
+        assert!(
+            findings[0].message.contains(&format!(
+                "{} assertions went out of this file: it made {before} and now makes {after}.",
+                before - after
+            )),
+            "{name}: the claims on the text are gone, whatever the length is: {}",
+            findings[0].message
+        );
+        assert_eq!(code, 2, "{name}: the change is stopped");
+    }
+}

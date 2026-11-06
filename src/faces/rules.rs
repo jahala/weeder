@@ -1,7 +1,8 @@
 //! `weeder rules`, the catalogue, as weeder will apply it.
 //!
-//! Every rule, its default level, the face it belongs to, and the one line it
-//! reports. The levels are read from `Config::default()`, so this face and the
+//! Every rule, its default level, the face it belongs to, what it may reach
+//! over the network, and the one line it reports, under a header naming each
+//! column. The levels are read from `Config::default()`, so this face and the
 //! judgement can never drift apart.
 
 use crate::core::catalogue::{self, Face, Rule};
@@ -70,24 +71,38 @@ fn face_word(face: Face) -> &'static str {
     }
 }
 
-fn table(rows: &[Row]) -> String {
-    let id_width = width(rows.iter().map(|row| row.id.len()));
-    let level_width = width(rows.iter().map(|row| row.level.len()));
-    let face_width = width(rows.iter().map(|row| row.face.len()));
-    let network_width = width(rows.iter().map(|row| row.network.len()));
+/// The names the table prints over its columns, the same names the json gives
+/// its keys. A column nobody named gets read as whatever its reader guesses:
+/// the network column's `none` was once taken for "this rule takes no
+/// allowance" (#106).
+const COLUMNS: [&str; 5] = ["id", "level", "face", "network", "finding"];
 
-    let mut table = String::new();
-    for row in rows {
+fn table(rows: &[Row]) -> String {
+    let [id, level, face, network, finding] = COLUMNS;
+    let id_width = width(rows.iter().map(|row| row.id.len()).chain([id.len()]));
+    let level_width = width(rows.iter().map(|row| row.level.len()).chain([level.len()]));
+    let face_width = width(rows.iter().map(|row| row.face.len()).chain([face.len()]));
+    let network_width = width(
+        rows.iter()
+            .map(|row| row.network.len())
+            .chain([network.len()]),
+    );
+
+    let line = |id: &str, level: &str, face: &str, network: &str, finding: &str| {
         let line = format!(
-            "{id:<id_width$}  {level:<level_width$}  {face:<face_width$}  {network:<network_width$}  {finding}",
-            id = row.id,
-            level = row.level,
-            face = row.face,
-            network = row.network,
-            finding = row.finding,
+            "{id:<id_width$}  {level:<level_width$}  {face:<face_width$}  {network:<network_width$}  {finding}"
         );
-        table.push_str(line.trim_end());
-        table.push('\n');
+        format!("{}\n", line.trim_end())
+    };
+    let mut table = line(id, level, face, network, finding);
+    for row in rows {
+        table.push_str(&line(
+            &row.id,
+            &row.level,
+            &row.face,
+            &row.network,
+            &row.finding,
+        ));
     }
     table
 }

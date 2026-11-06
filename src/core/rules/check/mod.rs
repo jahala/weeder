@@ -29,6 +29,7 @@ pub mod m1;
 pub mod s1;
 pub mod s2;
 pub mod s3;
+pub mod subject;
 pub mod t1;
 pub mod t2;
 pub mod t3;

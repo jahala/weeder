@@ -744,3 +744,194 @@ fn a_case_turned_skip_focus_or_todo_is_t3_s_finding_and_not_a_case_gone() {
         assert_eq!(run.code, 2, "{name}: and it blocks");
     }
 }
+
+/// Each language's suite of contrast cases, written out one at a time before
+/// the change and generated afterwards by tables inside a table: a `describe`
+/// handed the themes and an `each` per kind of pair inside it, a class handed
+/// the themes and its tests handed their pairs, stacked, a subtest per theme
+/// running a subtest per pair, and a row of cases crossed with a row of values.
+/// Some of the tables are consts the file declares, one is spread from another,
+/// and one is mapped on its way in.
+const NESTED: [Table; 4] = [
+    Table {
+        name: "ts",
+        tests: "src/contrast.test.ts",
+    },
+    Table {
+        name: "py",
+        tests: "tests/test_contrast.py",
+    },
+    Table {
+        name: "rs",
+        tests: "tests/contrast.rs",
+    },
+    Table {
+        name: "go",
+        tests: "contrast_test.go",
+    },
+];
+
+/// The pair the fire variant takes out of the inner table, which every theme
+/// of the outer table ran.
+const DROPPED: &str = "muted";
+
+#[test]
+fn t1_and_t2_stay_silent_when_written_out_cases_become_tables_inside_a_table() {
+    for table in NESTED {
+        let name = table.name;
+        let declared = cases(name, "silent-nested/before", table.tests);
+        assert!(
+            declared > 4,
+            "{name}: the suite has to write out a case per theme and pair, or the check proves nothing"
+        );
+        assert!(
+            cases(name, "silent-nested/after", table.tests) < declared,
+            "{name}: the tables have to declare fewer cases than they run, or a reader counting declarations sees no drop to be wrong about"
+        );
+
+        let repo = fixture("T1", name, "silent-nested");
+        let changed = repo.git(&["diff", "HEAD", "--name-only"]);
+        assert!(
+            changed.lines().any(|path| path == table.tests),
+            "{name}: the test file must be in the diff, or the silence proves nothing"
+        );
+        let run = repo.weeder(&["check"]);
+        assert_eq!(
+            run.findings(),
+            Vec::new(),
+            "{name}: every case still runs once for every theme, and so does every claim"
+        );
+        assert_eq!(run.code, 0, "{name}: nothing found, nothing blocked");
+    }
+}
+
+#[test]
+fn t1_and_t2_count_a_row_an_inner_table_lost_once_for_every_row_of_the_outer_one() {
+    for table in NESTED {
+        let name = table.name;
+        let written = declarations(name, "fire-nested/before", table.tests);
+        let before = written.len();
+        let claims: usize = written.iter().map(|case| assertions(name, case)).sum();
+        let lost: Vec<&Declaration> = written
+            .iter()
+            .filter(|case| case.name.to_lowercase().contains(DROPPED))
+            .collect();
+        assert!(
+            lost.len() > 1,
+            "{name}: the dropped pair has to run under more than one theme, or the outer table multiplies nothing"
+        );
+        let gone = lost.len();
+        let unmade: usize = lost.iter().map(|case| assertions(name, case)).sum();
+
+        let run = fixture("T1", name, "fire-nested").weeder(&["check"]);
+        let findings = run.findings();
+        let t1: Vec<&common::Finding> = findings.iter().filter(|f| f.rule == "T1").collect();
+        assert_eq!(t1.len(), 1, "{name}: one T1 finding: {findings:#?}");
+        assert_eq!(t1[0].level, "error", "{name}: T1 blocks");
+        assert!(
+            t1[0].message.contains(&format!(
+                "{gone} test cases disappeared from this file: it declared {before} and now declares {}.",
+                before - gone
+            )),
+            "{name}: the tables are counted row by row, each inner row once per outer row: {}",
+            t1[0].message
+        );
+        let t2: Vec<&common::Finding> = findings.iter().filter(|f| f.rule == "T2").collect();
+        assert_eq!(t2.len(), 1, "{name}: one T2 finding: {findings:#?}");
+        assert_eq!(t2[0].level, "error", "{name}: T2 blocks");
+        assert!(
+            t2[0].message.contains(&format!(
+                "{unmade} assertions went out of this file: it made {claims} and now makes {}.",
+                claims - unmade
+            )),
+            "{name}: a claim runs once for every row of every table around it: {}",
+            t2[0].message
+        );
+        assert_eq!(run.code, 2, "{name}: the change is stopped");
+    }
+}
+
+/// The languages whose tests can be generated from a table weeder cannot
+/// count: an `each` handed a table another module exports, a decorator handed
+/// one, a subtest per entry of what a function returns. A Rust test is handed
+/// its rows by attributes and macros, which write every row down.
+const UNCOUNTED: [Table; 3] = [
+    Table {
+        name: "ts",
+        tests: "src/format.test.ts",
+    },
+    Table {
+        name: "py",
+        tests: "tests/test_format.py",
+    },
+    Table {
+        name: "go",
+        tests: "format_test.go",
+    },
+];
+
+#[test]
+fn t1_warns_when_the_cases_that_left_now_come_from_a_table_it_cannot_count() {
+    for table in UNCOUNTED {
+        let name = table.name;
+        let before = cases(name, "uncounted/before", table.tests);
+        assert!(
+            before > 1,
+            "{name}: the suite has to write out more than one case, or the warning proves nothing"
+        );
+        assert!(
+            cases(name, "uncounted/after", table.tests) <= 1,
+            "{name}: every case written out has to go but the one the table drives, so only the table can hold them"
+        );
+
+        let run = fixture("T1", name, "uncounted").weeder(&["check"]);
+        let findings = run.findings();
+        let t1: Vec<&common::Finding> = findings.iter().filter(|f| f.rule == "T1").collect();
+        assert_eq!(t1.len(), 1, "{name}: one T1 finding: {findings:#?}");
+        assert_eq!(
+            t1[0].level, "warning",
+            "{name}: a loss weeder cannot prove is a warning for the person, not a block: {}",
+            t1[0].message
+        );
+        assert!(
+            t1[0]
+                .message
+                .contains(&format!("it declared {before} and now declares 1"))
+                && t1[0].message.contains("cannot count"),
+            "{name}: the finding names both counts and why it cannot decide: {}",
+            t1[0].message
+        );
+        assert!(
+            !t1[0].message.contains("unwatched"),
+            "{name}: the table may still hold every case, so the finding may not say they are unwatched: {}",
+            t1[0].message
+        );
+        assert_eq!(run.code, 0, "{name}: a warning stops nobody: {findings:#?}");
+    }
+}
+
+#[test]
+fn t1_still_blocks_a_case_gone_beside_a_table_it_cannot_count_that_did_not_change() {
+    for table in UNCOUNTED {
+        let name = table.name;
+        let before = cases(name, "uncounted-kept/before", table.tests);
+        let after = cases(name, "uncounted-kept/after", table.tests);
+        assert_eq!(
+            after + 1,
+            before,
+            "{name}: one written-out case goes, and the table stays as it was"
+        );
+
+        let run = fixture("T1", name, "uncounted-kept").weeder(&["check"]);
+        let findings = run.findings();
+        let t1: Vec<&common::Finding> = findings.iter().filter(|f| f.rule == "T1").collect();
+        assert_eq!(t1.len(), 1, "{name}: one T1 finding: {findings:#?}");
+        assert_eq!(t1[0].level, "error", "{name}: T1 blocks");
+        assert!(
+            t1[0].message.contains("1 test case disappeared"),
+            "{name}: the table was there on both sides, so the case that went is provably gone: {}",
+            t1[0].message
+        );
+        assert_eq!(run.code, 2, "{name}: the change is stopped");
+    }
+}
