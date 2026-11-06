@@ -188,12 +188,38 @@ fn bound(mask: &Mask, view: &View, span: Span, line: u32, floor: u32) -> Subject
         let bound = View::of(mask, at);
         let end = top_level(&bound.code, (column, bound.code.len()), &[";"])
             .map_or(bound.code.len(), |(at, _)| at);
-        Some(bound.written((column, end)))
+        Some(continued(mask, &bound, (column, end), at, line))
     });
     Subject {
         written,
         bound: binding,
     }
+}
+
+/// What a name was bound to, read on past the line it starts on while a bracket
+/// it opened is still open, up to the assertion's own line. Two bindings that
+/// open the same way and go on to different values are two values: read by
+/// their first line alone, every `[` or `join([` would bind the same thing.
+fn continued(mask: &Mask, first: &View, span: Span, at: u32, line: u32) -> String {
+    let depth = |code: &[char]| -> i32 {
+        code.iter()
+            .map(|character| opening(*character) - closing(*character))
+            .sum()
+    };
+    let mut written = first.written(span);
+    let mut open = depth(&first.code[span.0..span.1]);
+    let mut next = at.saturating_add(1);
+    while open > 0 && next < line {
+        let more = View::of(mask, next);
+        open += depth(&more.code);
+        let piece = more.written((0, more.code.len()));
+        if !piece.is_empty() {
+            written.push(' ');
+            written.push_str(&piece);
+        }
+        next = next.saturating_add(1);
+    }
+    written
 }
 
 /// Whether a matcher's name compares two values whole.
