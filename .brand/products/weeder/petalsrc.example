@@ -1,4 +1,4 @@
-# .petalsrc — drop this at the root of the weeder repo (rename to `.petalsrc`)
+# .petalsrc: drop this at the root of the weeder repo (rename to `.petalsrc`)
 brand:
   # plotplot is the umbrella brand and the brand repo.
   source: https://github.com/jahala/plotplot.git

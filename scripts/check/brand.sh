@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # Evidence for garden-fit: the product layer F6 verifies exists, in the shape the
-# umbrella's own product layers are written in, and every contrast number in it
-# is the number the umbrella's method produces.
+# umbrella's own product layers are written in, and every contrast number the
+# umbrella records for weeder's colours is the number the umbrella's method
+# produces.
 #
 # The numbers are recomputed rather than read. A palette table is worth having
 # only if a colour that fails its class cannot be written down as one that
-# passes, so this script measures every hex in every measured column against the
-# background that column names and refuses a row that disagrees with the maths.
+# passes. The layer keeps no table of its own, its colour delta says the
+# measured values live in the umbrella's `colors.md`, so this script fetches the
+# umbrella at the version petalsrc.example names, measures every row there that
+# names weeder's colours, and refuses a row that disagrees with the maths.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
@@ -68,8 +71,15 @@ for banned in violation error suppression lint; do
   fi
 done
 
-# The accent is decided (bramble, 2026-09-05) and is one value everywhere it is
-# claimed: the identity table, the colour delta, and both marks' fills.
+# The accent is decided, the shed's bloom the umbrella's Product Accents table
+# gives weeder, and is one value everywhere it is claimed: the identity table,
+# the colour delta, and both marks' tiles. The marks are drawn in two values
+# only, the tile and the ink identity.md names, on paper and on soil-night.
+ink="$(grep -E '^- Two values only' "$layer/identity.md" | grep -oE 'ink `#[0-9A-Fa-f]{6}' | grep -oE '#[0-9A-Fa-f]{6}' | head -1 || true)"
+if [ -z "$ink" ]; then
+  echo "$layer/identity.md names no ink in its 'Two values only' line: the mark has no second value to be held to" >&2
+  status=1
+fi
 accent="$(grep -E '^\| Accent \|' "$layer/identity.md" | grep -oE '#[0-9A-Fa-f]{6}' | head -1 || true)"
 if [ -z "$accent" ]; then
   echo "$layer/identity.md names no accent hex in its Accent row" >&2
@@ -80,14 +90,16 @@ else
     status=1
   fi
   for mark in weeder-mark.svg weeder-mark-night.svg; do
-    if ! grep -qiF "$accent" "$layer/assets/$mark"; then
-      echo "$layer/assets/$mark does not use the accent $accent" >&2
-      status=1
-    fi
+    for value in "$accent" "$ink"; do
+      if [ -n "$value" ] && ! grep -qiF "$value" "$layer/assets/$mark"; then
+        echo "$layer/assets/$mark does not use $value" >&2
+        status=1
+      fi
+    done
     for hex in $(grep -oE '#[0-9A-Fa-f]{6}' "$layer/assets/$mark" | tr 'a-f' 'A-F' | sort -u); do
       case "$hex" in
-        "$(printf '%s' "$accent" | tr 'a-f' 'A-F')"|"#357E2C"|"#84C56A") ;;
-        *) echo "$layer/assets/$mark uses $hex, which is neither the accent nor the plant's two greens" >&2; status=1 ;;
+        "$(printf '%s' "$accent" | tr 'a-f' 'A-F')"|"$(printf '%s' "$ink" | tr 'a-f' 'A-F')") ;;
+        *) echo "$layer/assets/$mark uses $hex, which is neither the accent tile nor the ink" >&2; status=1 ;;
       esac
     done
   done
@@ -97,9 +109,10 @@ if grep -qF "[flagged]" "$layer/identity.md" "$layer/colors.md"; then
   status=1
 fi
 
-# Every measured number, measured again. A column whose heading carries a hex is
-# a contrast column, and the cell below it is a ratio against that background.
-measured="$(python3 - "$layer/colors.md" <<'PY'
+# Every number the umbrella records for weeder's colours, measured again. A row
+# of its contrast tables reads "<colour> #hex on <background> #hex | ratio".
+IFS=$'\t' read -r checkout _ version _ < <(bash "$root/scripts/umbrella-brand.sh")
+measured="$(python3 - "$checkout/.brand/colors.md" "$version" <<'PY'
 import re, sys
 
 def _lin(channel):
@@ -115,53 +128,34 @@ def ratio(one, other):
     a, b = luminance(one), luminance(other)
     return (max(a, b) + 0.05) / (min(a, b) + 0.05)
 
+ROW = re.compile(r"^\|\s*([^|]*?#[0-9A-Fa-f]{6}[^|]*?\bon\b[^|]*?#[0-9A-Fa-f]{6}[^|]*?)\s*\|\s*([^|]*?)\s*\|")
 HEX = re.compile(r"#[0-9A-Fa-f]{6}")
 
-def cells(line):
-    return [cell.strip() for cell in line.strip().strip("|").split("|")]
-
-source = open(sys.argv[1], encoding="utf-8").read().splitlines()
+path, version = sys.argv[1:3]
 checked = 0
 wrong = []
-header = None
-for line in source:
-    if not line.startswith("|"):
-        header = None
+for line in open(path, encoding="utf-8"):
+    row = ROW.match(line)
+    if row is None or "weeder" not in row.group(1).lower():
         continue
-    row = cells(line)
-    if header is None:
-        header = row
+    pair, cell = row.group(1), row.group(2)
+    subject, background = HEX.findall(pair)[:2]
+    try:
+        recorded = float(cell)
+    except ValueError:
+        wrong.append(f"{pair}: the ratio cell is '{cell}', which is not a ratio")
         continue
-    if all(set(cell) <= {"-", ":"} for cell in row):
-        continue
-    if "Hex" not in header:
-        continue
-    subject = HEX.search(row[header.index("Hex")])
-    if subject is None:
-        continue
-    for column, heading in enumerate(header):
-        background = HEX.search(heading)
-        if background is None or column >= len(row):
-            continue
-        try:
-            recorded = float(row[column])
-        except ValueError:
-            wrong.append(f"{row[0]}: the {heading} cell is '{row[column]}', which is not a ratio")
-            continue
-        measured = ratio(subject.group(), background.group())
-        checked += 1
-        if abs(measured - recorded) > 0.05:
-            wrong.append(
-                f"{row[0]} {subject.group()} on {background.group()}: "
-                f"recorded {recorded:.1f}, measured {measured:.2f}"
-            )
+    measured = ratio(subject, background)
+    checked += 1
+    if abs(measured - recorded) > 0.05:
+        wrong.append(f"{pair}: recorded {recorded:.1f}, measured {measured:.2f}")
 
 for complaint in wrong:
-    print(complaint, file=sys.stderr)
+    print(f"the umbrella's colors.md at {version}: {complaint}", file=sys.stderr)
 if wrong:
     raise SystemExit(1)
 if checked == 0:
-    print("no contrast ratio was measured: no table carries a Hex column and a background heading", file=sys.stderr)
+    print(f"the umbrella's colors.md at {version} records no contrast ratio for weeder's colours", file=sys.stderr)
     raise SystemExit(1)
 print(checked)
 PY
@@ -174,6 +168,6 @@ if ! grep -qF "product: weeder" "$layer/petalsrc.example"; then
 fi
 
 if [ "$status" -eq 0 ]; then
-  echo ".brand/products/weeder: the shape is whole, the accent $accent is one value everywhere, $measured contrast ratios measured and correct"
+  echo ".brand/products/weeder: the shape is whole, the accent $accent is one value everywhere, the marks are drawn in it and the ink $ink alone, and the $measured contrast ratios the umbrella records for weeder are measured and correct"
 fi
 exit "$status"
