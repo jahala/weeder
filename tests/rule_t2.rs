@@ -686,6 +686,46 @@ fn t2_stays_silent_when_loose_claims_on_a_value_become_one_exact_claim_on_it() {
 }
 
 #[test]
+fn t2_blocks_when_an_exact_claim_goes_and_one_the_file_already_made_stays() {
+    // The exact claim that answers for loose ones is a claim on the same values.
+    // `exact-kept` binds its values through expressions that run over several
+    // lines and open the same way, so only reading each binding whole tells the
+    // two claims apart. `exact-shared` compares two different values to one
+    // expected value, so a claim is said again only where every value it was
+    // about is pinned again. `exact-repeated` writes the same line in two
+    // cases and drops it from the first, so the claim that went has to be read
+    // as the first case's, and not as the next case's that is still there.
+    for case in ["exact-kept", "exact-shared", "exact-repeated"] {
+        for language in PINNED {
+            let name = language.name;
+            let before = assertions(&language, &format!("{case}/before"));
+            let after = assertions(&language, &format!("{case}/after"));
+            assert!(
+                before == 2 && after == 1,
+                "{name} {case}: two exact claims have to become one, or the finding proves nothing"
+            );
+
+            let (findings, code) = reported(&language, case);
+            let findings = t2(findings);
+            assert_eq!(
+                findings.len(),
+                1,
+                "{name} {case}: one T2 finding: {findings:#?}"
+            );
+            assert_eq!(findings[0].level, "error", "{name} {case}: T2 blocks");
+            assert!(
+                findings[0]
+                    .message
+                    .contains("1 assertion went out of this file: it made 2 and now makes 1."),
+                "{name} {case}: the claim that went is counted: {}",
+                findings[0].message
+            );
+            assert_eq!(code, 2, "{name} {case}: the change is stopped");
+        }
+    }
+}
+
+#[test]
 fn t2_blocks_when_the_exact_claim_is_about_something_else() {
     for language in PINNED {
         let name = language.name;

@@ -75,10 +75,6 @@ impl Mutation {
 pub enum NoSite {
     /// The tree holds nothing this shape can be planted in.
     Absent,
-    /// The language's runner cannot be fooled this way at all, and why. The
-    /// injector is the only thing that knows the reason, so it carries it
-    /// rather than leaving the report to guess one.
-    NotInLanguage(&'static str),
 }
 
 /// The rules the campaign injects for: every check rule the catalogue holds,
@@ -589,10 +585,8 @@ fn rename_out_of_the_runner(lang: Language, tree: &Tree, seed: u64) -> Result<Mu
     if lang == Language::Rs && tree.paths.iter().all(|path| !collected_rust_target(path)) {
         // cargo collects a case by its attribute, so no rename of a case takes
         // one out of the run. Only an integration target has a name to lose,
-        // and this tree carries none.
-        return Err(NoSite::NotInLanguage(
-            "the language's runner does not collect by name, so no rename takes a case out of the run",
-        ));
+        // and this tree carries none: a gap in the corpus, not in the language.
+        return Err(NoSite::Absent);
     }
     for source in rotate(tree.tests(lang), seed) {
         if tree.touched(&source.path) || !lang.collects_file(&source.path) {
@@ -632,10 +626,9 @@ const SCRIPT_SETTINGS: &str = "jest.config.js";
 fn keep_a_suite_out_of_the_run(lang: Language, tree: &Tree, seed: u64) -> Result<Mutation, NoSite> {
     if lang == Language::Rs && tree.paths.iter().all(|path| !collected_rust_target(path)) {
         // cargo finds a test by the attribute above it, and a crate with no
-        // integration target has no file for a setting to keep out of the run.
-        return Err(NoSite::NotInLanguage(
-            "the language's runner collects a case by the attribute above it, and this history holds no integration target for a setting to keep out of the run",
-        ));
+        // integration target has no file for a setting to keep out of the run:
+        // a gap in the corpus, not in the language.
+        return Err(NoSite::Absent);
     }
     if lang == Language::Ts && tree.paths.iter().any(|path| path == SCRIPT_SETTINGS) {
         // The repository states its own; rewriting it would be a case about

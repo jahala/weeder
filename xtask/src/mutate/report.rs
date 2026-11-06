@@ -301,9 +301,6 @@ fn absences(outcomes: &[Outcome], plan: &Plan) -> String {
             if cases > 0 {
                 continue;
             }
-            let impossible = outcomes
-                .iter()
-                .find_map(|outcome| outcome.impossible.get(&key));
             let looked: usize = outcomes
                 .iter()
                 .filter_map(|outcome| outcome.absent.get(&key))
@@ -316,16 +313,12 @@ fn absences(outcomes: &[Outcome], plan: &Plan) -> String {
                 .iter()
                 .filter_map(|outcome| outcome.unplantable.get(&key))
                 .sum();
-            let reason = if let Some(impossible) = impossible {
-                (*impossible).to_string()
-            } else {
-                format!(
-                    "no commit of the corpus held a site for this shape: {looked} commits offered \
-                     none, {passed} more were passed over because the commit itself already fires \
-                     the rule there, and {unplantable} were written and read back without the \
-                     shape in them"
-                )
-            };
+            let reason = format!(
+                "no commit of the corpus held a site for this shape: {looked} commits offered \
+                 none, {passed} more were passed over because the commit itself already fires \
+                 the rule there, and {unplantable} were written and read back without the \
+                 shape in them"
+            );
             written.push_str(&format!("- {rule} · {}, {reason}\n", lang.slug()));
         }
     }
@@ -558,7 +551,6 @@ mod tests {
     #[test]
     fn the_opening_names_exactly_the_rules_the_bar_holds() {
         let held = barred();
-        assert_eq!(held, ["T1", "T3", "S1", "X1", "C1", "G1"]);
         let mut rows: Vec<Row> = Vec::new();
         for rule in &held {
             for lang in Language::ALL {
@@ -567,7 +559,7 @@ mod tests {
         }
         rows.push(Row {
             hits: 11,
-            ..met("D2", Language::Go)
+            ..met("S2", Language::Go)
         });
         let written = opening(&rows, &[]);
         assert!(
@@ -578,8 +570,30 @@ mod tests {
             "the sentence names the bar's rules and no others: {written}"
         );
         assert!(
-            !written.contains("rule that blocks") && !written.contains("D2"),
+            !written.contains("rule that blocks") && !written.contains("S2"),
             "a rule that blocks outside the bar is not claimed for: {written}"
+        );
+    }
+
+    /// A rule that blocks stops an agent's change, and a block that misses
+    /// what it names is the one failure nobody sees: the bar holds every check
+    /// rule the catalogue blocks with by default, and no rule that only warns.
+    #[test]
+    fn the_bar_holds_every_check_rule_that_blocks_and_no_other() {
+        use weeder::core::catalogue::{self, Face};
+        use weeder::core::finding::Level;
+
+        let mut blocking: Vec<&str> = catalogue::rules()
+            .iter()
+            .filter(|rule| rule.face == Face::Check && rule.default_level == Level::Block)
+            .map(|rule| rule.id)
+            .collect();
+        let mut held = barred();
+        blocking.sort_unstable();
+        held.sort_unstable();
+        assert_eq!(
+            held, blocking,
+            "xtask/recall-bar.txt names exactly the check rules that block by default"
         );
     }
 

@@ -133,16 +133,19 @@ fn dropped(change: &Change, made: &Made, arrived: &[Arrival]) -> Option<Detectio
     // takes nothing from the proof.
     let unproven = !unanswered(&made.after.floors, &made.before.floors).is_empty();
     // A claim the other side makes again, whole, says nothing less, and is
-    // neither a claim dropped nor one to follow elsewhere.
+    // neither a claim dropped nor one to follow elsewhere. It is made again only
+    // where every value it was about is compared whole again: a claim that held
+    // one value to another is not said by a claim that holds a third to it.
     let (covered, lost): (Vec<Claim>, Vec<Claim>) = unanswered(&made.before.made, &made.after.made)
         .into_iter()
         .partition(|claim| {
-            claim.subjects.iter().any(|value| {
-                made.after
-                    .pinned
-                    .iter()
-                    .any(|(case, pinned)| *case == claim.case && pinned.covers(value))
-            })
+            !claim.subjects.is_empty()
+                && claim.subjects.iter().all(|value| {
+                    made.after
+                        .pinned
+                        .iter()
+                        .any(|(case, pinned)| *case == claim.case && pinned.covers(value))
+                })
         });
     let moved = followed(&lost, arrived, path);
     let remaining = (before - after)
@@ -256,23 +259,30 @@ fn unanswered(left: &[Claim], right: &[Claim]) -> Vec<Claim> {
 
 /// Each claim on the left with the claims on the right that answer for it, and
 /// how much of it each one answers for, no claim on the right spoken for more
-/// often than it is made. An identical line is paired first, so a rewritten
-/// line is not credited with a partner the line it was written as has the
-/// better claim to.
+/// often than it is made. An identical line in the same case is paired first,
+/// then an identical line anywhere, then a rewritten one, so neither a rewritten
+/// line nor the same line in another case is credited with a partner the line
+/// it was written as has the better claim to. A suite that writes one check in
+/// every case would otherwise pair a check that went with the next case's, and
+/// the claim read as lost would be one that is still there.
 fn answered(left: &[&Claim], right: &[&Claim]) -> Vec<Vec<(usize, usize)>> {
     let mut found: Vec<Vec<(usize, usize)>> = vec![Vec::new(); left.len()];
     let mut owed: Vec<usize> = left.iter().map(|claim| claim.weight).collect();
     let mut free: Vec<usize> = right.iter().map(|claim| claim.weight).collect();
-    for same_line in [true, false] {
+    for pass in [
+        Pairing::SameLineSameCase,
+        Pairing::SameLine,
+        Pairing::Answers,
+    ] {
         for (index, claim) in left.iter().enumerate() {
             for (at, made) in right.iter().enumerate() {
                 if owed[index] == 0 {
                     break;
                 }
-                let pairs = if same_line {
-                    claim.line == made.line
-                } else {
-                    answers(claim, made)
+                let pairs = match pass {
+                    Pairing::SameLineSameCase => claim.line == made.line && claim.case == made.case,
+                    Pairing::SameLine => claim.line == made.line,
+                    Pairing::Answers => answers(claim, made),
                 };
                 if free[at] == 0 || !pairs {
                     continue;
@@ -285,6 +295,14 @@ fn answered(left: &[&Claim], right: &[&Claim]) -> Vec<Vec<(usize, usize)>> {
         }
     }
     found
+}
+
+/// The order claims are paired in, closest partner first.
+#[derive(Clone, Copy)]
+enum Pairing {
+    SameLineSameCase,
+    SameLine,
+    Answers,
 }
 
 /// Whether a claim made elsewhere answers for one that left: the same line,

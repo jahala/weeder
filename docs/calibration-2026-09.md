@@ -36,6 +36,7 @@ No `weeder.toml` was passed and none was read: every rule ran at the level the c
 | M1 | warn | A test mocks the unit under change |
 | S2 | warn | An error was swallowed |
 | S3 | warn | A debug leftover reached production code |
+| S4 | warn | Production code was added that only its tests call |
 | T4 | warn | A tolerance or a timeout was widened |
 | T5 | warn | Expected values were regenerated |
 | T6 | warn | An error assertion was weakened |
@@ -46,7 +47,7 @@ No `weeder.toml` was passed and none was read: every rule ran at the level the c
 
 No commit in the corpus carried a `weeder.toml` of its own, so no repository moved a rule off the level above.
 
-## tilth, 200 commits judged, 8 blocked, 80 warned
+## tilth, 200 commits judged, 8 blocked, 71 warned
 
 The window ends at `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905`, fetched from `https://github.com/jahala/tilth.git`: the last 200 commits reaching it that are not merges, 200 of which have a parent to be judged against.
 
@@ -61,7 +62,7 @@ The window ends at `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905`, fetched from `htt
 | `d422a325fc` refactor(install): fold entry style into ConfigFormat as JsonLocal variant | T2 | acceptable | T2 says src/install.rs went from 66 assertions to 65, and it did. The one that went checked the entry_style field this commit folds into ConfigFormat, and the JsonLocal match that replaces it is asserted in the same case. |
 | `bd36a43637` index: drop inert SymbolIndex plumbing | T1 | acceptable | T1 says src/index/symbol.rs went with 6 cases, and it did. SymbolIndex was allocated and threaded through the searches and never consulted, and this commit deletes the type; the cases exercised the dead allocator, so what they covered stopped existing in the same breath. A file of tests leaving the tree is worth reading either way. |
 
-## pleach, 152 commits judged, 3 blocked, 18 warned
+## pleach, 152 commits judged, 3 blocked, 33 warned
 
 The window ends at `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9`, fetched from `https://github.com/jahala/pleach.git`: the last 153 commits reaching it that are not merges, 152 of which have a parent to be judged against.
 
@@ -71,7 +72,7 @@ The window ends at `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9`, fetched from `htt
 | `76207691f3` docs(tend): sync the garden to the adapters refactor | C1 | acceptable | C1 says the non-negotiables section of .claude/CLAUDE.md changed, and it did: the adapters refactor rewords the strict-downward-deps rule to name adapters beside seams and faces, and drops the rctrl binary from the requirements line. The seven rule headings are the same before and after, and none of them says less. First blocked on 2026-11-05, when C1 began reading a non-negotiables heading (#77). |
 | `2515d2ac88` docs(tend): audit garden features + refresh project docs | C1 | acceptable | C1 says the non-negotiables section of .claude/CLAUDE.md changed, and it did: this commit writes the section, seven rules from test-first to green-before-merge, into a file that had none. A law arriving is worth a person's eye, and nothing was loosened. First blocked on 2026-11-05 (#77). |
 
-## tend2, 200 commits judged, 6 blocked, 24 warned
+## tend2, 200 commits judged, 6 blocked, 35 warned
 
 The window ends at `51035a5c827b1a8c2f49049f07487dcfac9036c6`, fetched from `https://github.com/jahala/tend.git`: the last 200 commits reaching it that are not merges, 200 of which have a parent to be judged against.
 
@@ -84,13 +85,13 @@ The window ends at `51035a5c827b1a8c2f49049f07487dcfac9036c6`, fetched from `htt
 | `2bb9d83f23` fix(loop-hole): briefing signal density — dismiss once, empty sections elide, unique headers (sonnet, SYN-D, chain-gated) | T2 | acceptable | T2 says spikes/loop-hole/tests/briefing-v3.spec.ts went from 23 claims to 19, and it did: the case loops over the section headings, and each empty section used to be held to its heading and two lines of 'cleared the floor' text, where now it is held to the heading's absence. The commit makes empty sections elide, and the case was rewritten to demand exactly that, with a new claim that the scaffolding text is gone. The behaviour changed and the test follows it; nothing is watched less. First blocked on 2026-09-23, when T2 began counting a claim once per case its loop runs it for. |
 | `0bfa87f287` docs(tend2): repo identity flip phase 1 — README/CLAUDE.md/docs re-rooted v2-first, v1 legacy lane preserved (sonnet, #47, chain-gated) | C1 | acceptable | C1 says the section under `Never delete docs or research` in CLAUDE.md changed, and its lines did: the v2-first restructure moved it under the v1 legacy section and demoted it from ### to ####. Its text is the same, word for word. First blocked on 2026-11-05 (#77); the first reading of that run also blocked an edit under `The cockpit, never one number`, which C1 no longer reads as law. |
 
-## copeca, 25 commits judged, 0 blocked, 7 warned
+## copeca, 25 commits judged, 0 blocked, 8 warned
 
 The window ends at `fc9c5b9e5f34085755c10746f1d46fd46edf2945`, fetched from `https://github.com/jahala/copeca.git`: the last 26 commits reaching it that are not merges, 25 of which have a parent to be judged against. Fewer than 50 commits were judged, so this repository is reported and not judged on its own share.
 
 Nothing blocked.
 
-## umbel, 58 commits judged, 7 blocked, 11 warned
+## umbel, 58 commits judged, 7 blocked, 15 warned
 
 The window ends at `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d`, fetched from `https://github.com/jahala/umbel.git`: the last 59 commits reaching it that are not merges, 58 of which have a parent to be judged against.
 
@@ -108,16 +109,16 @@ The window ends at `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d`, fetched from `htt
 
 | Repo | Commits judged | Blocked | Warned | True positive | Acceptable | False positive | False-positive share |
 |---|---|---|---|---|---|---|---|
-| tilth | 200 | 8 | 80 | 1 | 7 | 0 | 0.00% |
-| pleach | 152 | 3 | 18 | 0 | 2 | 1 | 0.66% |
-| tend2 | 200 | 6 | 24 | 0 | 6 | 0 | 0.00% |
-| copeca | 25 | 0 | 7 | 0 | 0 | 0 | 0.00% |
-| umbel | 58 | 7 | 11 | 2 | 5 | 0 | 0.00% |
-| **pooled** | **635** | **24** | **140** | **3** | **20** | **1** | **0.16%** |
+| tilth | 200 | 8 | 71 | 1 | 7 | 0 | 0.00% |
+| pleach | 152 | 3 | 33 | 0 | 2 | 1 | 0.66% |
+| tend2 | 200 | 6 | 35 | 0 | 6 | 0 | 0.00% |
+| copeca | 25 | 0 | 8 | 0 | 0 | 0 | 0.00% |
+| umbel | 58 | 7 | 15 | 2 | 5 | 0 | 0.00% |
+| **pooled** | **635** | **24** | **162** | **3** | **20** | **1** | **0.16%** |
 
 The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 0.16 percent of 635 commits, and 0 commits weeder could not judge.
 
-Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 174 of them at block level still, 74 at warn level, 1 at note level and 83 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files; 5 moved from T1 at block level to T5 at warn level, all of them on test files.
+Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 174 of them at block level still, 75 at warn level, 1 at note level and 82 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files; 5 moved from T1 at block level to T5 at warn level, all of them on test files; 1 moved from X1 at block level to S4 at warn level, all of them on prod files.
 
 Too few commits to carry a share of their own, reported and not judged alone: copeca (25 commits, 0.00 percent). Their commits and their false positives are both in the pooled total.
 
@@ -134,7 +135,7 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 | copeca | `70d669542a` | `.github/workflows/dependency-review.yml` | workflow | C1 | C3 | warn |
 | copeca | `70d669542a` | `.github/workflows/release.yml` | workflow | C1 | C3 | warn |
 | copeca | `70d669542a` | `.github/workflows/scorecard.yml` | workflow | C1 | C3 | warn |
-| copeca | `70d669542a` | `src/copeca/results/signing.py` | prod | X1 | nothing | nothing |
+| copeca | `70d669542a` | `src/copeca/results/signing.py` | prod | X1 | S4 | warn |
 | copeca | `e8584ab6af` | `docs/tend/features/accuracy-blind-claims.tend.html` | other | X1 | nothing | nothing |
 | copeca | `e8584ab6af` | `docs/tend/features/contamination-erodes-trust.tend.html` | other | X1 | nothing | nothing |
 | copeca | `e8584ab6af` | `docs/tend/features/copeca-analysis-reporting.tend.html` | other | X1 | nothing | nothing |
@@ -330,7 +331,7 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 
 ## Recall
 
-Every rule the recall bar holds, T1, T3, S1, X1, C1, G1, catches at least 95 percent of the anti-patterns planted for it, in each of ts, py, rs and go. 2892 cases were planted one anti-pattern at a time in real commits, and 2864 of them were caught on the site they were planted in.
+The bar is not met: T2 in go, T7 in rs, T8 in rs, D2 in go are under 95 percent. 3008 cases were planted one anti-pattern at a time in real commits, and 2974 of them were caught on the site they were planted in.
 
 The campaign is `cargo xtask mutate`. For each case it checks out a real commit of a corpus repository, plants one anti-pattern in its tree with a scanner that knows nothing about weeder's detectors, and runs `weeder check --base <parent> --strict`. A case counts as caught only where the rule fires on the file the shape was planted in, on the lines it was planted on where it has lines. A site the unmutated commit already fires that rule on is passed over, so no hit is inherited from the commit itself.
 
@@ -338,13 +339,13 @@ The campaign is `cargo xtask mutate`. For each case it checks out a real commit 
 
 | Repository | Source | Window ends at | Commits walked | Cases |
 |---|---|---|---|---|
-| cobra | `https://github.com/spf13/cobra.git` | `adbc8813901bba65827259daa8e22ff94ec1f30e` | 200 | 340 |
-| copeca | `https://github.com/jahala/copeca.git` | `fc9c5b9e5f34085755c10746f1d46fd46edf2945` | 15 | 265 |
-| hcl | `https://github.com/hashicorp/hcl.git` | `6abbb088cdb82416d1b3d9fcbaab29534133567a` | 200 | 380 |
-| pleach | `https://github.com/jahala/pleach.git` | `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9` | 21 | 294 |
-| tend2 | `https://github.com/jahala/tend.git` | `51035a5c827b1a8c2f49049f07487dcfac9036c6` | 76 | 294 |
-| tilth | `https://github.com/jahala/tilth.git` | `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905` | 191 | 1039 |
-| umbel | `https://github.com/jahala/umbel.git` | `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d` | 58 | 280 |
+| cobra | `https://github.com/spf13/cobra.git` | `adbc8813901bba65827259daa8e22ff94ec1f30e` | 200 | 360 |
+| copeca | `https://github.com/jahala/copeca.git` | `fc9c5b9e5f34085755c10746f1d46fd46edf2945` | 15 | 279 |
+| hcl | `https://github.com/hashicorp/hcl.git` | `6abbb088cdb82416d1b3d9fcbaab29534133567a` | 200 | 400 |
+| pleach | `https://github.com/jahala/pleach.git` | `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9` | 22 | 308 |
+| tend2 | `https://github.com/jahala/tend.git` | `51035a5c827b1a8c2f49049f07487dcfac9036c6` | 76 | 308 |
+| tilth | `https://github.com/jahala/tilth.git` | `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905` | 191 | 1059 |
+| umbel | `https://github.com/jahala/umbel.git` | `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d` | 58 | 294 |
 
 The garden five are the repositories calibration measures precision on, read from `docs/calibration/corpus.toml` at the commits it pins them at. They carry no Go between them and weeder judges Go, so the Go column is measured on two Go projects that `docs/calibration/corpus-go.toml` pins the same way, read exactly as the five are.
 
@@ -352,9 +353,9 @@ Every window ends at the pin. A commit pushed to one of these sources later is o
 
 Files the injector planted nothing in, counted once for each commit they were read at:
 
-- added by the commit, so nothing in it was there to change: 448
-- carrying a NUL byte, which git writes no text diff for: 164
-- saying a generator wrote it: 713
+- added by the commit, so nothing in it was there to change: 449
+- carrying a NUL byte, which git writes no text diff for: 165
+- saying a generator wrote it: 714
 
 ### Recall, per rule and language
 
@@ -364,10 +365,10 @@ Files the injector planted nothing in, counted once for each commit they were re
 | T1 | block | py | 34 | 34 | 0 | 0 | 100.0% |
 | T1 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
 | T1 | block | go | 40 | 39 | 1 | 0 | 97.5% |
-| T2 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
+| T2 | block | ts | 42 | 41 | 1 | 0 | 97.6% |
 | T2 | block | py | 34 | 33 | 1 | 0 | 97.1% |
 | T2 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
-| T2 | block | go | 40 | 40 | 0 | 0 | 100.0% |
+| T2 | block | go | 40 | 35 | 5 | 0 | 87.5% |
 | T3 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
 | T3 | block | py | 34 | 34 | 0 | 0 | 100.0% |
 | T3 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
@@ -408,6 +409,10 @@ Files the injector planted nothing in, counted once for each commit they were re
 | S3 | warn | py | 34 | 34 | 0 | 0 | 100.0% |
 | S3 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
 | S3 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
+| S4 | warn | ts | 42 | 42 | 0 | 2 | 100.0% |
+| S4 | warn | py | 34 | 34 | 0 | 0 | 100.0% |
+| S4 | warn | rs | 0 | 0 | 0 | 0 | no cases |
+| S4 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
 | D1 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
 | D1 | warn | py | 0 | 0 | 0 | 0 | no cases |
 | D1 | warn | rs | 32 | 32 | 0 | 0 | 100.0% |
@@ -451,16 +456,21 @@ Unplantable is the column the misses have to be read beside. The injector writes
 
 Each of these was planted and not reported. The before and after of every one is kept under the campaign's cache directory, as `cases/<rule>/<language>/<repository>-<commit>`, so a number nobody believes can be replayed by hand. `WEEDER_RECALL_CACHE` says where that directory is; it sits under the temporary directory otherwise.
 
+- T2 · go · cobra `f2878bab8` · `active_help_test.go`, the assertion on line 45 was deleted
+- T2 · go · cobra `e2dd29ddc` · `active_help_test.go`, the assertion on line 346 was deleted
 - T1 · go · cobra `3f3b81882` · `doc/man_examples_test.go`, the case `ExampleGenManTree` was deleted
 - T2 · py · copeca `70d669542` · `tests/config/test_mode_models.py`, the assertion on line 66 was deleted
 - S2 · py · copeca `387932ad5` · `tests/e2e/fake_agent.py:61`, a handler was added that catches and says nothing
+- T2 · go · hcl `9466647a1` · `hclsyntax/expression_typeparams_test.go`, the assertion on line 52 was deleted
 - D2 · go · hcl `9466647a1` · `hclwrite/ast_block.go:6`, `hclwrite` was made to import `integrationtest`
 - D2 · go · hcl `bd45ab812` · `hclwrite/format.go:6`, `hclwrite` was made to import `integrationtest`
 - D2 · go · hcl `e73f21667` · `gohcl/schema.go:6`, `gohcl` was made to import `hcldec`
 - D2 · go · hcl `6bf1a67a9` · `gohcl/decode.go:6`, `gohcl` was made to import `hcldec`
 - D2 · go · hcl `2efc26623` · `hclwrite/ast_body.go:6`, `hclwrite` was made to import `integrationtest`
+- T2 · go · hcl `6769f8b19` · `hclwrite/round_trip_test.go`, the assertion on line 151 was deleted
 - D2 · go · hcl `92f12c4e5` · `hcldec/gob.go:6`, `hcldec` was made to import `hcled`
 - D2 · go · hcl `ab1acc486` · `hclwrite/tokens.go:6`, `hclwrite` was made to import `integrationtest`
+- T2 · go · hcl `63950438f` · `hclwrite/ast_body_test.go`, the assertion on line 1688 was deleted
 - D2 · go · hcl `6a91a7547` · `gohcl/types.go:6`, `gohcl` was made to import `hcldec`
 - D2 · go · hcl `0268c1604` · `gohcl/types.go:6`, `gohcl` was made to import `hcldec`
 - T4 · ts · pleach `3a1306011` · `test/loop/run-work.test.ts:10`, a wait was widened from 1000 to 10000
@@ -479,12 +489,14 @@ Each of these was planted and not reported. The before and after of every one is
 - T6 · ts · tend2 `ad070a0d4` · `test/verify.test.ts:176`, an error assertion stopped naming the error
 - T6 · ts · tend2 `99296a937` · `test/verify.test.ts:176`, an error assertion stopped naming the error
 - T4 · rs · tilth `5b0539e6a` · `src/mcp/write.rs:148`, a wait was widened from 1 to 10
+- T2 · ts · umbel `97dfce245` · `test/integration/gemini-provider.test.ts`, the assertion on line 226 was deleted
 
 ### Where a shape had nowhere to go
 
 - T4 · go, no commit of the corpus held a site for this shape: 400 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
-- T7 · rs, the language's runner does not collect by name, so no rename takes a case out of the run
-- T8 · rs, the language's runner collects a case by the attribute above it, and this history holds no integration target for a setting to keep out of the run
+- T7 · rs, no commit of the corpus held a site for this shape: 191 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
+- T8 · rs, no commit of the corpus held a site for this shape: 191 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
+- S4 · rs, no commit of the corpus held a site for this shape: 191 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
 - D1 · py, no commit of the corpus held a site for this shape: 206 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
 
 <!-- recall:end -->
