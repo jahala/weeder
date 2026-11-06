@@ -331,7 +331,7 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 
 ## Recall
 
-The bar is not met: T2 in go, T7 in rs, T8 in rs, D2 in go are under 95 percent. 3008 cases were planted one anti-pattern at a time in real commits, and 2974 of them were caught on the site they were planted in.
+The bar is not met: T7 in rs, T8 in rs, D2 in go are under 95 percent. 3008 cases were planted one anti-pattern at a time in real commits, and 2978 of them were caught on the site they were planted in.
 
 The campaign is `cargo xtask mutate`. For each case it checks out a real commit of a corpus repository, plants one anti-pattern in its tree with a scanner that knows nothing about weeder's detectors, and runs `weeder check --base <parent> --strict`. A case counts as caught only where the rule fires on the file the shape was planted in, on the lines it was planted on where it has lines. A site the unmutated commit already fires that rule on is passed over, so no hit is inherited from the commit itself.
 
@@ -368,7 +368,7 @@ Files the injector planted nothing in, counted once for each commit they were re
 | T2 | block | ts | 42 | 41 | 1 | 0 | 97.6% |
 | T2 | block | py | 34 | 33 | 1 | 0 | 97.1% |
 | T2 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
-| T2 | block | go | 40 | 35 | 5 | 0 | 87.5% |
+| T2 | block | go | 40 | 39 | 1 | 0 | 97.5% |
 | T3 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
 | T3 | block | py | 34 | 34 | 0 | 0 | 100.0% |
 | T3 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
@@ -456,12 +456,9 @@ Unplantable is the column the misses have to be read beside. The injector writes
 
 Each of these was planted and not reported. The before and after of every one is kept under the campaign's cache directory, as `cases/<rule>/<language>/<repository>-<commit>`, so a number nobody believes can be replayed by hand. `WEEDER_RECALL_CACHE` says where that directory is; it sits under the temporary directory otherwise.
 
-- T2 · go · cobra `f2878bab8` · `active_help_test.go`, the assertion on line 45 was deleted
-- T2 · go · cobra `e2dd29ddc` · `active_help_test.go`, the assertion on line 346 was deleted
 - T1 · go · cobra `3f3b81882` · `doc/man_examples_test.go`, the case `ExampleGenManTree` was deleted
 - T2 · py · copeca `70d669542` · `tests/config/test_mode_models.py`, the assertion on line 66 was deleted
 - S2 · py · copeca `387932ad5` · `tests/e2e/fake_agent.py:61`, a handler was added that catches and says nothing
-- T2 · go · hcl `9466647a1` · `hclsyntax/expression_typeparams_test.go`, the assertion on line 52 was deleted
 - D2 · go · hcl `9466647a1` · `hclwrite/ast_block.go:6`, `hclwrite` was made to import `integrationtest`
 - D2 · go · hcl `bd45ab812` · `hclwrite/format.go:6`, `hclwrite` was made to import `integrationtest`
 - D2 · go · hcl `e73f21667` · `gohcl/schema.go:6`, `gohcl` was made to import `hcldec`
@@ -470,7 +467,6 @@ Each of these was planted and not reported. The before and after of every one is
 - T2 · go · hcl `6769f8b19` · `hclwrite/round_trip_test.go`, the assertion on line 151 was deleted
 - D2 · go · hcl `92f12c4e5` · `hcldec/gob.go:6`, `hcldec` was made to import `hcled`
 - D2 · go · hcl `ab1acc486` · `hclwrite/tokens.go:6`, `hclwrite` was made to import `integrationtest`
-- T2 · go · hcl `63950438f` · `hclwrite/ast_body_test.go`, the assertion on line 1688 was deleted
 - D2 · go · hcl `6a91a7547` · `gohcl/types.go:6`, `gohcl` was made to import `hcldec`
 - D2 · go · hcl `0268c1604` · `gohcl/types.go:6`, `gohcl` was made to import `hcldec`
 - T4 · ts · pleach `3a1306011` · `test/loop/run-work.test.ts:10`, a wait was widened from 1000 to 10000

@@ -695,7 +695,18 @@ fn t2_blocks_when_an_exact_claim_goes_and_one_the_file_already_made_stays() {
     // about is pinned again. `exact-repeated` writes the same line in two
     // cases and drops it from the first, so the claim that went has to be read
     // as the first case's, and not as the next case's that is still there.
-    for case in ["exact-kept", "exact-shared", "exact-repeated"] {
+    // `exact-first` writes the same line twice in one case about two values,
+    // and drops the first, so the claim that went is the one about the value
+    // no claim pins any more. `exact-again` binds one name twice to the same
+    // expression and checks it after each, so the two checks are about two
+    // values though every word of them is the same.
+    for case in [
+        "exact-kept",
+        "exact-shared",
+        "exact-repeated",
+        "exact-first",
+        "exact-again",
+    ] {
         for language in PINNED {
             let name = language.name;
             let before = assertions(&language, &format!("{case}/before"));

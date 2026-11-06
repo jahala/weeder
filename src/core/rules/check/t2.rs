@@ -259,17 +259,19 @@ fn unanswered(left: &[Claim], right: &[Claim]) -> Vec<Claim> {
 
 /// Each claim on the left with the claims on the right that answer for it, and
 /// how much of it each one answers for, no claim on the right spoken for more
-/// often than it is made. An identical line in the same case is paired first,
-/// then an identical line anywhere, then a rewritten one, so neither a rewritten
-/// line nor the same line in another case is credited with a partner the line
-/// it was written as has the better claim to. A suite that writes one check in
-/// every case would otherwise pair a check that went with the next case's, and
+/// often than it is made. A claim's twin is paired first, the identical line in
+/// the same case about the same values, then the identical line in the same
+/// case, then the identical line anywhere, then a rewritten one, so no claim is
+/// credited with a partner another claim has the better claim to. A suite that
+/// writes one check in every case, or one check twice in a case about two
+/// values, would otherwise pair a check that went with a copy that stayed, and
 /// the claim read as lost would be one that is still there.
 fn answered(left: &[&Claim], right: &[&Claim]) -> Vec<Vec<(usize, usize)>> {
     let mut found: Vec<Vec<(usize, usize)>> = vec![Vec::new(); left.len()];
     let mut owed: Vec<usize> = left.iter().map(|claim| claim.weight).collect();
     let mut free: Vec<usize> = right.iter().map(|claim| claim.weight).collect();
     for pass in [
+        Pairing::Twin,
         Pairing::SameLineSameCase,
         Pairing::SameLine,
         Pairing::Answers,
@@ -280,6 +282,11 @@ fn answered(left: &[&Claim], right: &[&Claim]) -> Vec<Vec<(usize, usize)>> {
                     break;
                 }
                 let pairs = match pass {
+                    Pairing::Twin => {
+                        claim.line == made.line
+                            && claim.case == made.case
+                            && claim.subjects == made.subjects
+                    }
                     Pairing::SameLineSameCase => claim.line == made.line && claim.case == made.case,
                     Pairing::SameLine => claim.line == made.line,
                     Pairing::Answers => answers(claim, made),
@@ -300,6 +307,7 @@ fn answered(left: &[&Claim], right: &[&Claim]) -> Vec<Vec<(usize, usize)>> {
 /// The order claims are paired in, closest partner first.
 #[derive(Clone, Copy)]
 enum Pairing {
+    Twin,
     SameLineSameCase,
     SameLine,
     Answers,
