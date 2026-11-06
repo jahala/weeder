@@ -6,6 +6,9 @@ use crate::core::classify;
 use crate::core::finding::Level;
 use crate::core::pattern;
 
+/// The name of the file a repository states its law in.
+pub const CONFIG_FILE: &str = "weeder.toml";
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RuleSetting {
     Off,
@@ -175,7 +178,7 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
         return Ok(Config::default());
     };
     let raw: RawConfig = toml::from_str(input).map_err(|error| ConfigError {
-        key: "weeder.toml".to_string(),
+        key: CONFIG_FILE.to_string(),
         message: error.message().to_string(),
     })?;
     let mut config = Config::default();

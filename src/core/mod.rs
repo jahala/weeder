@@ -11,6 +11,7 @@ pub mod guard;
 pub mod help;
 pub mod hierarchy;
 pub mod hook;
+pub mod law;
 pub mod pattern;
 pub mod read;
 pub mod registry;

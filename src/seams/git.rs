@@ -397,6 +397,43 @@ pub fn commit_messages(root: &Path, base: &str, tip: &str) -> Result<Vec<String>
         .collect())
 }
 
+/// Every path any commit of a range touched, each named once. A rename is the
+/// two paths it is, the one left and the one arrived at. A merge names what it
+/// wrote itself, the paths where it differs from every parent, and never what it
+/// brought in from a side whose commits are already judged or already the base.
+pub fn paths_in_commits(root: &Path, base: &str, tip: &str) -> Result<Vec<String>, GitError> {
+    let commit = resolve_base(root, base)?;
+    if !has_ref(root, tip)? {
+        return Ok(Vec::new());
+    }
+    let tip = resolve_ref(root, tip)?;
+    let range = if commit == EMPTY_TREE {
+        tip
+    } else {
+        format!("{commit}..{tip}")
+    };
+    let listed = run_lossy(
+        root,
+        &[
+            "log",
+            "--format=",
+            "--name-only",
+            "-z",
+            "--no-renames",
+            "--diff-merges=dense-combined",
+            &range,
+        ],
+    )?;
+    let mut paths: Vec<String> = listed
+        .split('\u{0}')
+        .filter(|path| !path.is_empty())
+        .map(ToString::to_string)
+        .collect();
+    paths.sort();
+    paths.dedup();
+    Ok(paths)
+}
+
 /// Every file the tree holds, as git sees it: what is tracked, and what is
 /// untracked and not ignored. A scan judges the repository as it is, so a file
 /// a worker wrote and never staged counts, and a file the ignore rules hide is
