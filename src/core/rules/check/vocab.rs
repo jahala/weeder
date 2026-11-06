@@ -251,15 +251,26 @@ impl Suite {
     /// gives its handle for exactly that, called on the handle this file named.
     #[must_use]
     pub fn opens_subtest(&self, mask: &Mask, line: u32) -> bool {
+        self.subtest_at(mask, line).is_some()
+    }
+
+    /// Where on the 1-based line the call that opens a test inside a test ends
+    /// its name, as a column counted in characters: the call's arguments, and
+    /// the body of the subtest with them, open after it.
+    #[must_use]
+    pub fn subtest_at(&self, mask: &Mask, line: u32) -> Option<usize> {
         let table = assertions(self.lang);
         let code = mask.code(line);
-        names(&code).iter().any(|name| {
-            name.is_called()
-                && name
-                    .receiver()
-                    .is_some_and(|receiver| self.handles.contains(receiver))
-                && table.handle_subtests.contains(&name.last())
-        })
+        names(&code)
+            .iter()
+            .find(|name| {
+                name.is_called()
+                    && name
+                        .receiver()
+                        .is_some_and(|receiver| self.handles.contains(receiver))
+                    && table.handle_subtests.contains(&name.last())
+            })
+            .map(|name| code[..name.end].chars().count())
     }
 
     /// How many assertions the whole file makes.

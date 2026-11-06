@@ -349,3 +349,44 @@ fn nothing_is_reported_when_every_citation_still_resolves() {
         );
     }
 }
+
+/// A document that cites another codebase reads to R1 as a document full of
+/// stale paths, and the settings that answer it are a person's to write. The
+/// first finding in each document names them, once, so a flood of R1 findings
+/// carries its own way out without every finding repeating it (#102, #86).
+#[test]
+fn the_first_r1_finding_in_a_document_names_the_settings_for_citations_of_elsewhere() {
+    let repo = common::Repo::init();
+    repo.write("src/app.ts", "export const app = 1;\n");
+    repo.write(
+        "docs/research.md",
+        "# Another codebase\n\nIts entry is `src/main/boot.ts`.\n\nIts store is `src/store/db.ts`.\n",
+    );
+    repo.commit("a document about another codebase");
+    let run = repo.weeder(&["scan", "--format", "sarif"]);
+    let r1: Vec<Finding> = run
+        .findings()
+        .into_iter()
+        .filter(|finding| finding.rule == "R1" && finding.path == "docs/research.md")
+        .collect();
+    assert_eq!(
+        r1.len(),
+        2,
+        "both stale paths are reported\n{}",
+        run.output()
+    );
+    let hinted: Vec<&Finding> = r1
+        .iter()
+        .filter(|finding| {
+            finding.message.contains("[[overrides]]") && finding.message.contains("[docs] external")
+        })
+        .collect();
+    assert_eq!(
+        hinted.len(),
+        1,
+        "the settings are named once per document\n{}",
+        run.output()
+    );
+    let first = r1.iter().filter_map(|finding| finding.line).min();
+    assert_eq!(hinted[0].line, first, "on the document's first finding");
+}

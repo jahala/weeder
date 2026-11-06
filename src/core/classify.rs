@@ -112,11 +112,14 @@ fn classify_lang(path: &Path) -> Lang {
 pub const WORKFLOWS: &[&str] = &[".github/workflows/**"];
 
 /// The files that decide what the checks do: weeder's own law, the two
-/// instruction files whose hard limits C1 reads, the hooks git runs, and the
-/// settings an agent harness reads. A path pattern in `weeder.toml` that can
+/// instruction files whose hard limits C1 reads, the hooks git runs, the
+/// settings an agent harness reads, and the garden's `garden.lock` and
+/// `garden.json`, which pin and declare the judges a planted repository runs. A path pattern in `weeder.toml` that can
 /// cover one of these is refused, so this list is the one both read.
 pub const GUARDRAILS: &[&str] = &[
     "weeder.toml",
+    "garden.lock",
+    "garden.json",
     "AGENTS.md",
     "CLAUDE.md",
     ".claude/CLAUDE.md",

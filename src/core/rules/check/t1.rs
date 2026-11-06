@@ -25,11 +25,20 @@
 //! the behaviour is covered by nobody; where some cases moved, the finding names
 //! the files they moved into, because a sentence a reader can disprove in one
 //! click costs more than the finding is worth.
+//!
+//! Where the cases now come from a table whose entries the file does not write
+//! down, a table another module exports or a function returns, the table may
+//! run every case that left or none of them. A change that puts its cases
+//! under such a table is one whose fall weeder cannot prove, so the finding is
+//! a warning for the person at the pull request, saying the loss is unproven
+//! rather than claiming it, the same answer T2 gives a claim moved under such a
+//! loop. A table of that kind that was there on both sides takes nothing from
+//! the proof, and a case gone beside it still blocks.
 
 use std::collections::BTreeSet;
 
 use crate::core::change::{Change, Side};
-use crate::core::finding::{Detection, Message, Region, Stamp};
+use crate::core::finding::{Detection, Level, Message, Region, Stamp};
 use crate::core::read::TestUnit;
 use crate::core::rules::check::generated;
 use crate::core::rules::check::vocab::Suite;
@@ -84,8 +93,9 @@ fn deletion(change: &Change, held: &Held, arrived: &[Arrival]) -> Option<Detecti
     if !change.before.holds_tests() {
         return None;
     }
-    let before = generated::case_count(&change.before);
-    let after = generated::case_count(&change.after);
+    let census = generated::census(&change.before);
+    let now = generated::census(&change.after);
+    let (before, after) = (census.count, now.count);
     let gone = if change.is_deletion() {
         before
     } else if after < before {
@@ -98,11 +108,51 @@ fn deletion(change: &Change, held: &Held, arrived: &[Arrival]) -> Option<Detecti
     if remaining == 0 {
         return None;
     }
-    Some(if change.is_deletion() {
-        file_gone(path, remaining, &moved)
+    if change.is_deletion() {
+        return Some(file_gone(path, remaining, &moved));
+    }
+    let mut found = cases_gone(path, change, before, after, remaining, &moved);
+    if !opened_since(&now.uncounted, &census.uncounted).is_empty() {
+        found.stamp = Stamp::Override(Level::Warn);
+        found.message = uncounted(before, after, remaining, &moved);
+    }
+    Some(found)
+}
+
+/// The tables weeder cannot count that the file opens now and did not open
+/// before, each spoken for once, so a file that opens the same one twice
+/// opened a second.
+fn opened_since(now: &[String], before: &[String]) -> Vec<String> {
+    let mut left: Vec<&String> = before.iter().collect();
+    now.iter()
+        .filter(|table| match left.iter().position(|was| was == table) {
+            Some(at) => {
+                left.remove(at);
+                false
+            }
+            None => true,
+        })
+        .cloned()
+        .collect()
+}
+
+/// What T1 says where the cases it cannot find may come from a table whose
+/// entries the file does not write down: the fall as written, and why only a
+/// person can say whether a case was lost.
+fn uncounted(before: usize, after: usize, remaining: usize, moved: &Followed) -> Message {
+    let went = if moved.count == 0 {
+        String::new()
     } else {
-        cases_gone(path, change, before, after, remaining, &moved)
-    })
+        format!(", {} moved to {}", counted(moved.count), named(&moved.into))
+    };
+    Message {
+        what: format!(
+            "{} disappeared from this file as written{went}: it declared {before} and now declares {after}, and the rest may now come from a table weeder cannot count.",
+            counted(remaining)
+        ),
+        why: "the table may hold every case that left or none of them, and only running it or reading it says which, so weeder cannot tell a suite that moved its cases into a table from one that lost them.".to_string(),
+        next: "read the table; if the cases are gone, put them back, and if they are there, write the table down where weeder can count it.".to_string(),
+    }
 }
 
 /// Both sides of one changed file, read for the cases they declare.

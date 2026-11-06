@@ -1,0 +1,4 @@
+# the judges this repository runs, pinned
+[[judge]]
+name = "weeder"
+version = "0.4.0"
