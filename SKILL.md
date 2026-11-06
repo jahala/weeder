@@ -211,8 +211,11 @@ weeder hook claude < event.json
 ## rules: the catalogue
 
 `weeder rules` prints every rule, the level it carries, the face it belongs to and
-what it may reach over the network. Every rule but R4 says `none`, and R4 says
-`registries under --refresh-snapshot`. `--format table` is the default and
+what it may reach over the network, under a header that names the columns `id`,
+`level`, `face`, `network` and `finding`. Every rule but R4 says `none` under
+`network`, and R4 says `registries under --refresh-snapshot`. The column is about
+the network and says nothing about allowances, which every rule takes the way
+the list under Working against weeder describes. `--format table` is the default and
 `--format json` is for a program. Only unambiguous rules block by
 default; everything else warns, and a warning is for the human at the pull
 request rather than for the agent.

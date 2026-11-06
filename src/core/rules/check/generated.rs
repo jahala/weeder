@@ -14,8 +14,19 @@
 //! table through `each` or one row at a time by attributes; and a macro whose
 //! body carries a test attribute gives one case for each entry it is invoked
 //! with.
+//!
+//! Tables nest, and a declaration runs once for every row of every table
+//! around it: a `describe` handed three themes over an `each` handed four pairs
+//! runs twelve cases, as does a class handed three themes whose test is handed
+//! four, a subtest per theme that runs a subtest per pair, or four rows of cases
+//! crossed with three values. A table may also be built from another, spread
+//! into it or mapped on its way in, and the entries it reaches are the ones
+//! counted.
+//!
 //! Where the entries cannot be counted, a generated declaration stands for the
-//! one case that is written, which is what the file says on its face.
+//! one case that is written, which is what the file says on its face, and the
+//! table it stands under is named, so a rule can tell a count that rests on a
+//! table nobody can read from one that does not.
 //!
 //! Some of those declarations the reader never reports at all: a title that is
 //! a variable rather than a literal, a function a decorator stands in front of.
@@ -30,6 +41,8 @@
 //!
 //! Everything is read through the syntax mask, so a comma inside a string never
 //! ends an entry and a brace inside a comment never opens a table.
+
+use std::collections::BTreeSet;
 
 use crate::core::change::Side;
 use crate::core::classify::Lang;
@@ -71,7 +84,26 @@ const WALKS: &[&str] = &[
     "keys",
     "values",
     "entries",
+    "map",
 ];
+
+/// What JavaScript and TypeScript write in front of an entry that spreads
+/// another table into the one being written. Python writes a star, which
+/// [`runs_over`] already reads past.
+const SPREAD: &str = "...";
+
+/// What Python writes in front of a class it is declaring. A table handed to a
+/// class runs every test the class holds once per row.
+const PYTHON_CLASS: &str = "class";
+
+/// The decorator that hands a Python test its table. Any decorator whose
+/// table weeder can count is counted; this is the one that hands a table even
+/// where weeder cannot count it.
+const PARAMETRIZE: &str = "parametrize";
+
+/// The attribute that hands one parameter of a Rust test a row of values, the
+/// test running once for each, crossed with every other row it is handed.
+const VALUES_ATTRIBUTE: &str = "values";
 
 /// What Python writes in front of a function it is declaring.
 const PYTHON_DECLARATION: &str = "def";
@@ -111,6 +143,10 @@ const HOPS: usize = 4;
 /// A place in a file: a 1-based line, and a column counted in characters.
 type At = (u32, usize);
 
+/// A table a decorator hands a declaration: the line the decorator opens on,
+/// and the entries, where the file writes them down.
+type Handed = (u32, Option<usize>);
+
 /// One loop, the lines it runs over, and how many entries what it runs over
 /// holds, where the file writes them down.
 struct Loop {
@@ -119,29 +155,93 @@ struct Loop {
     entries: Option<usize>,
 }
 
-/// How many cases a file holds, the generated ones counted by the tables that
+/// The cases a file holds, the generated ones counted by the tables that
 /// generate them.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Census {
+    /// How many cases the file runs, as far as its tables can be counted.
+    pub count: usize,
+    /// The tables a case was generated from whose entries the file does not
+    /// write down, each as the line that opens it reads without its comments
+    /// and its spacing, in the order the file opens them. A case under one of
+    /// them counts once, which is the least it can run.
+    pub uncounted: Vec<String>,
+}
+
+/// How many cases a file holds, and which of the tables generating them
+/// cannot be counted.
 #[must_use]
-pub fn case_count(side: &Side) -> usize {
+pub fn census(side: &Side) -> Census {
     let lang = side.lang();
     let mask = side.mask();
-    let loops = loops(lang, mask);
     let suite = Suite::of(lang, mask);
     let declared: Vec<&TestUnit> = side.tests.cases().collect();
-    let handed = match lang {
-        Lang::TypeScript | Lang::JavaScript => each_tables(lang, mask),
-        _ => Vec::new(),
-    };
+    let around = Around::of(lang, mask);
 
-    let mut total = 0;
-    for case in &declared {
-        total += subtests(mask, &suite, &loops, case)
-            .unwrap_or_else(|| stands_for(mask, &loops, &handed, case.start_line));
+    let mut tallies: Vec<Tally> = declared
+        .iter()
+        .map(|case| {
+            subtests(mask, &suite, &around.loops, case)
+                .unwrap_or_else(|| around.stands_for(mask, case.start_line))
+        })
+        .collect();
+    tallies.extend(
+        unseen(lang, mask, &declared)
+            .into_iter()
+            .map(|line| around.stands_for(mask, line)),
+    );
+    let count = tallies
+        .iter()
+        .fold(0, |total: usize, tally| total.saturating_add(tally.times))
+        .saturating_add(macro_generated(lang, mask))
+        .saturating_add(row_generated(lang, mask, &declared));
+    let opened: BTreeSet<u32> = tallies
+        .iter()
+        .flat_map(|tally| tally.uncounted.iter().copied())
+        .collect();
+    Census {
+        count,
+        uncounted: opened
+            .into_iter()
+            .map(|line| as_written(mask, line))
+            .collect(),
     }
-    for line in unseen(lang, mask, &declared) {
-        total += stands_for(mask, &loops, &handed, line);
+}
+
+/// How many times the tables around one declaration run it, and the lines
+/// opening the ones among them whose entries cannot be counted.
+struct Tally {
+    times: usize,
+    uncounted: Vec<u32>,
+}
+
+impl Tally {
+    /// A declaration nothing generates: the one case it is written as.
+    fn once() -> Tally {
+        Tally {
+            times: 1,
+            uncounted: Vec::new(),
+        }
     }
-    total + macro_generated(lang, mask) + row_generated(lang, mask, &declared)
+
+    /// The same declaration run once more for every entry of a table opened on
+    /// a line, or, where the entries cannot be counted, run under it all the
+    /// same.
+    fn by(&mut self, opened: u32, entries: Option<usize>) {
+        match entries {
+            Some(entries) => self.times = self.times.saturating_mul(entries),
+            None => self.uncounted.push(opened),
+        }
+    }
+}
+
+/// A line as the program writes it: without its comments and with its spacing
+/// collapsed, so the same table opened on both sides of a change reads the same.
+fn as_written(mask: &Mask, line: u32) -> String {
+    mask.outside_comments(line)
+        .split_whitespace()
+        .collect::<Vec<&str>>()
+        .join(" ")
 }
 
 /// How many times a line runs.
@@ -182,7 +282,7 @@ impl Runs {
             })
             .collect();
         match lang {
-            Lang::Python => drivers.extend(decorated_functions(mask)),
+            Lang::Python => drivers.extend(decorated_declarations(mask)),
             Lang::TypeScript | Lang::JavaScript => drivers.extend(each_tables(lang, mask)),
             Lang::Rust => {
                 drivers.extend(case_attributes(mask));
@@ -211,53 +311,152 @@ impl Runs {
     }
 }
 
-/// How many cases one declaration stands for: the entries of the table driving
-/// it, or the one case that is written.
-fn stands_for(mask: &Mask, loops: &[Loop], handed: &[Driver], line: u32) -> usize {
-    around(loops, line)
-        .or_else(|| decorated(mask, line))
-        .or_else(|| {
-            handed
+/// The tables a declaration can be written under, read once for a file: its
+/// loops, the cases and suites handed a table through `each`, and the Python
+/// classes, each with the tables its decorators hand it.
+struct Around {
+    lang: Lang,
+    loops: Vec<Loop>,
+    handed: Vec<Driver>,
+    classes: Vec<(Block, Vec<Handed>)>,
+}
+
+impl Around {
+    fn of(lang: Lang, mask: &Mask) -> Around {
+        Around {
+            lang,
+            loops: loops(lang, mask),
+            handed: match lang {
+                Lang::TypeScript | Lang::JavaScript => each_tables(lang, mask),
+                _ => Vec::new(),
+            },
+            classes: match lang {
+                Lang::Python => classes(mask),
+                _ => Vec::new(),
+            },
+        }
+    }
+
+    /// How many cases one declaration stands for: one for every entry of every
+    /// table around it, every loop it is written in, every `each` it or a suite
+    /// around it is handed, every decorator above it and above each class it is
+    /// declared in, or the one case that is written.
+    fn stands_for(&self, mask: &Mask, line: u32) -> Tally {
+        let mut tally = Tally::once();
+        for opened in self
+            .loops
+            .iter()
+            .filter(|opened| opened.at < line && line <= opened.body.last)
+        {
+            tally.by(opened.at, opened.entries);
+        }
+        for table in self
+            .handed
+            .iter()
+            .filter(|table| table.first <= line && line <= table.last)
+        {
+            tally.by(table.first, table.entries);
+        }
+        if self.lang == Lang::Python {
+            for (opened, entries) in decorated(mask, line) {
+                tally.by(opened, entries);
+            }
+            for (_, tables) in self
+                .classes
                 .iter()
-                .find(|table| table.first == line)
-                .and_then(|table| table.entries)
-        })
-        .unwrap_or(1)
+                .filter(|(body, _)| body.first < line && line <= body.last)
+            {
+                for (opened, entries) in tables {
+                    tally.by(*opened, *entries);
+                }
+            }
+        }
+        tally
+    }
 }
 
-/// The entries of the table the innermost loop around a declaration runs over.
-fn around(loops: &[Loop], line: u32) -> Option<usize> {
-    loops
-        .iter()
-        .filter(|opened| opened.at < line && line <= opened.body.last)
-        .max_by_key(|opened| opened.at)
-        .and_then(|opened| opened.entries)
-}
-
-/// The entries of the table a test runs subtests over: a loop written inside
-/// the case, whose body opens a test inside the test.
-fn subtests(mask: &Mask, suite: &Suite, loops: &[Loop], case: &TestUnit) -> Option<usize> {
-    loops
+/// How many cases a test runs as subtests over tables: one for every innermost
+/// subtest written under a loop inside the case, times the entries of every
+/// such loop around it. A test that runs no subtest under a loop is the one
+/// case it is written as, and this says nothing about it.
+fn subtests(mask: &Mask, suite: &Suite, loops: &[Loop], case: &TestUnit) -> Option<Tally> {
+    let inside: Vec<&Loop> = loops
         .iter()
         .filter(|opened| opened.at > case.start_line && opened.body.last <= case.end_line)
-        .find(|opened| (opened.at..=opened.body.last).any(|line| suite.opens_subtest(mask, line)))
-        .and_then(|opened| opened.entries)
+        .collect();
+    if inside.is_empty() {
+        return None;
+    }
+    let opened: Vec<(u32, u32)> = (case.start_line.saturating_add(1)..=case.end_line)
+        .filter_map(|line| {
+            let after = suite.subtest_at(mask, line)?;
+            let last = match next_code(mask, (line, after)) {
+                Some((open, '(')) => closing_of(mask, open).map_or(line, |close| close.0),
+                _ => line,
+            };
+            Some((line, last))
+        })
+        .collect();
+    let mut total: Option<Tally> = None;
+    for &(line, last) in &opened {
+        let innermost = !opened
+            .iter()
+            .any(|&(other, _)| line < other && other <= last);
+        let around: Vec<&&Loop> = inside
+            .iter()
+            .filter(|opened| opened.at < line && line <= opened.body.last)
+            .collect();
+        if !innermost || around.is_empty() {
+            continue;
+        }
+        let mut tally = Tally::once();
+        for opened in around {
+            tally.by(opened.at, opened.entries);
+        }
+        let sum = total.get_or_insert(Tally {
+            times: 0,
+            uncounted: Vec::new(),
+        });
+        sum.times = sum.times.saturating_add(tally.times);
+        sum.uncounted.extend(tally.uncounted);
+    }
+    total
 }
 
-/// The entries of the table a decorator directly above a declaration hands it:
-/// a table written in the decorator, or one it names that the file assigns.
-fn decorated(mask: &Mask, line: u32) -> Option<usize> {
-    let opened = *annotations_above(mask, line, &DECORATOR.to_string()).first()?;
-    (opened..line)
+/// The tables the decorators stacked directly above a declaration hand it, each
+/// with the line its decorator opens on: a table written in the decorator, or
+/// one it names that the file assigns. A decorator that hands no table weeder
+/// can count is left out, unless it is the one that exists to hand a table, and
+/// then it is named as a table that cannot be counted.
+fn decorated(mask: &Mask, line: u32) -> Vec<Handed> {
+    let mut found = Vec::new();
+    let mut end = line;
+    for opened in annotations_above(mask, line, &DECORATOR.to_string()) {
+        let entries = decorator_table(mask, opened, end);
+        let parametrizes = names(&mask.code(opened))
+            .first()
+            .is_some_and(|name| name.last() == PARAMETRIZE);
+        if entries.is_some() || parametrizes {
+            found.push((opened, entries));
+        }
+        end = opened;
+    }
+    found
+}
+
+/// The entries of the table one decorator, written from one line up to the
+/// next, hands the declaration under it.
+fn decorator_table(mask: &Mask, opened: u32, end: u32) -> Option<usize> {
+    (opened..end)
         .find_map(|at| {
             let column = mask
                 .code(at)
                 .chars()
                 .position(|character| character == '[')?;
-            entries_at(mask, at, column)
+            entries_at(Lang::Python, mask, (at, column), HOPS)
         })
         .or_else(|| {
-            (opened..line).find_map(|at| {
+            (opened..end).find_map(|at| {
                 let code = mask.code(at);
                 words(&code)
                     .into_iter()
@@ -266,6 +465,29 @@ fn decorated(mask: &Mask, line: u32) -> Option<usize> {
                     .find_map(|word| named_entries(Lang::Python, mask, word.text, opened, HOPS))
             })
         })
+}
+
+/// The Python classes a file declares, each with the lines it holds and the
+/// tables its decorators hand it. A table handed to a class runs every test it
+/// holds once per row.
+fn classes(mask: &Mask) -> Vec<(Block, Vec<Handed>)> {
+    (1..=mask.line_count())
+        .filter(|line| declares_a_class(&mask.code(*line)))
+        .filter_map(|line| {
+            let tables = decorated(mask, line);
+            if tables.is_empty() {
+                return None;
+            }
+            idiom::block(Lang::Python, mask, line, 0).map(|body| (body, tables))
+        })
+        .collect()
+}
+
+/// Whether a line of Python declares a class.
+fn declares_a_class(code: &str) -> bool {
+    words(code)
+        .first()
+        .is_some_and(|word| word.text == PYTHON_CLASS)
 }
 
 /// The lines the annotations stacked directly above a declaration open on,
@@ -358,8 +580,8 @@ fn runs_over(lang: Lang, mask: &Mask, from: At, hops: usize) -> (Option<usize>, 
                 continue;
             }
             // Go writes no bracket without a type, so one opens a composite.
-            '[' if lang == Lang::Go => composite(mask, at),
-            '(' | '[' | '{' => group(mask, at),
+            '[' if lang == Lang::Go => composite(lang, mask, at, hops),
+            '(' | '[' | '{' => group(lang, mask, at, hops),
             character if is_identifier(character) => chain(lang, mask, at, hops),
             _ => (None, at),
         };
@@ -367,16 +589,16 @@ fn runs_over(lang: Lang, mask: &Mask, from: At, hops: usize) -> (Option<usize>, 
 }
 
 /// The entries of the bracketed group opening at a place, and where it ends.
-fn group(mask: &Mask, at: At) -> (Option<usize>, At) {
+fn group(lang: Lang, mask: &Mask, at: At, hops: usize) -> (Option<usize>, At) {
     match closing_of(mask, at) {
-        Some(close) => (entries_at(mask, at.0, at.1), step(close)),
+        Some(close) => (entries_at(lang, mask, at, hops), step(close)),
         None => (None, at),
     }
 }
 
 /// The entries of a Go composite literal: a type, then the table in braces. A
 /// struct or interface type brings braces of its own, which open no table.
-fn composite(mask: &Mask, from: At) -> (Option<usize>, At) {
+fn composite(lang: Lang, mask: &Mask, from: At, hops: usize) -> (Option<usize>, At) {
     let mut at = from;
     loop {
         let Some((place, character)) = next_code(mask, at) else {
@@ -388,7 +610,7 @@ fn composite(mask: &Mask, from: At) -> (Option<usize>, At) {
                 None => return (None, place),
             },
             '*' | '.' => at = step(place),
-            '{' => return group(mask, place),
+            '{' => return group(lang, mask, place, hops),
             character if is_identifier(character) => {
                 let (word, end) = identifier(mask, place);
                 at = (place.0, end);
@@ -423,12 +645,12 @@ fn chain(lang: Lang, mask: &Mask, from: At, hops: usize) -> (Option<usize>, At) 
             // A macro hands its own brackets the table.
             Some((bang, '!')) if lang == Lang::Rust && name.is_none() => {
                 return match next_code(mask, step(bang)) {
-                    Some((open, '(' | '[' | '{')) => group(mask, open),
+                    Some((open, '(' | '[' | '{')) => group(lang, mask, open, hops),
                     _ => (None, step(bang)),
                 };
             }
             Some((_, '[')) if lang == Lang::Go && word == "map" && name.is_none() => {
-                return composite(mask, at);
+                return composite(lang, mask, at, hops);
             }
             Some((open, '(')) => {
                 if name.is_none() || !WALKS.contains(&word.as_str()) {
@@ -480,7 +702,7 @@ fn named_entries(lang: Lang, mask: &Mask, name: &str, reader: u32, hops: usize) 
 
 /// Where the value begins on a line that assigns `name`: past the operator that
 /// joins the two. A line that only mentions the name assigns nothing.
-fn assigned_at(code: &str, name: &str) -> Option<usize> {
+pub(crate) fn assigned_at(code: &str, name: &str) -> Option<usize> {
     let word = words(code)
         .into_iter()
         .find(|word| word.text == name && !word.is_member())?;
@@ -509,37 +731,53 @@ fn assigned_at(code: &str, name: &str) -> Option<usize> {
 /// closing the last entry ends it rather than opening another, and a group with
 /// nothing in it holds nothing. A literal is an entry like any other, though the
 /// code view blanks it.
-fn entries_at(mask: &Mask, line: u32, column: usize) -> Option<usize> {
+///
+/// An entry that spreads another table into this one stands for the entries
+/// of that table, where they can be counted; where they cannot, neither can
+/// this table's.
+fn entries_at(lang: Lang, mask: &Mask, open: At, hops: usize) -> Option<usize> {
+    let (line, column) = open;
     if opening(mask.code(line).chars().nth(column)?) != 1 {
         return None;
     }
     let mut depth = 0_i32;
-    let mut commas = 0;
-    let mut written = false;
-    let mut trailing = false;
+    let mut starts: Vec<At> = Vec::new();
+    let mut expecting = true;
     for at in line..=mask.line_count() {
         let start = if at == line { column } else { 0 };
-        for character in substance(mask, at).into_iter().skip(start) {
+        for (index, character) in substance(mask, at).into_iter().enumerate().skip(start) {
             let opens = opening(character) == 1;
             let closes = closing(character) == 1;
             if closes && depth == 1 {
-                return Some(if written {
-                    commas + usize::from(!trailing)
-                } else {
-                    0
+                return starts.into_iter().try_fold(0_usize, |total, entry| {
+                    spread(lang, mask, entry, hops).map(|entries| total.saturating_add(entries))
                 });
             }
             depth += opening(character) - closing(character);
             if character == ',' && depth == 1 {
-                commas += 1;
-                trailing = true;
-            } else if !character.is_whitespace() && !(opens && depth == 1) {
-                written = true;
-                trailing = false;
+                expecting = true;
+            } else if !character.is_whitespace() && !(opens && depth == 1) && expecting {
+                starts.push((at, index));
+                expecting = false;
             }
         }
     }
     None
+}
+
+/// How many entries one entry of a table stands for: itself, or, where it
+/// spreads another table into this one, the entries of that table.
+fn spread(lang: Lang, mask: &Mask, entry: At, hops: usize) -> Option<usize> {
+    let code: Vec<char> = mask.code(entry.0).chars().skip(entry.1).collect();
+    match lang {
+        Lang::TypeScript | Lang::JavaScript
+            if code.iter().take(SPREAD.len()).copied().eq(SPREAD.chars()) =>
+        {
+            runs_over(lang, mask, (entry.0, entry.1 + SPREAD.len()), hops).0
+        }
+        Lang::Python if code.first() == Some(&'*') => runs_over(lang, mask, entry, hops).0,
+        _ => Some(1),
+    }
 }
 
 /// A line as the code view reads it, with each character of a literal standing
@@ -612,15 +850,15 @@ fn declares_a_case(lang: Lang, code: &str) -> bool {
     }
 }
 
-/// The Python functions a decorator hands a table, each running its body once
-/// per entry.
-fn decorated_functions(mask: &Mask) -> Vec<Driver> {
+/// The Python functions and classes a decorator hands a table, each running
+/// its body once per entry, and a class every test it holds.
+fn decorated_declarations(mask: &Mask) -> Vec<Driver> {
     let mut found = Vec::new();
     for line in 1..=mask.line_count() {
         let code = mask.code(line);
         let spoken = words(&code);
         let declares = match spoken.first() {
-            Some(word) if word.text == PYTHON_DECLARATION => true,
+            Some(word) if word.text == PYTHON_DECLARATION || word.text == PYTHON_CLASS => true,
             Some(word) if word.text == PYTHON_ASYNC => spoken
                 .get(1)
                 .is_some_and(|word| word.text == PYTHON_DECLARATION),
@@ -629,16 +867,18 @@ fn decorated_functions(mask: &Mask) -> Vec<Driver> {
         if !declares {
             continue;
         }
-        let Some(entries) = decorated(mask, line) else {
+        let tables = decorated(mask, line);
+        if tables.is_empty() {
+            continue;
+        }
+        let Some(body) = idiom::block(Lang::Python, mask, line, 0) else {
             continue;
         };
-        if let Some(body) = idiom::block(Lang::Python, mask, line, 0) {
-            found.push(Driver {
-                first: line,
-                last: body.last,
-                entries: Some(entries),
-            });
-        }
+        found.extend(tables.into_iter().map(|(_, entries)| Driver {
+            first: line,
+            last: body.last,
+            entries,
+        }));
     }
     found
 }
@@ -681,7 +921,8 @@ fn each_tables(lang: Lang, mask: &Mask) -> Vec<Driver> {
 }
 
 /// The Rust functions handed their rows one attribute at a time, each running
-/// its body once per row.
+/// its body once per row, and once more for every value of every parameter
+/// handed a row of values, which the rows are crossed with.
 fn case_attributes(mask: &Mask) -> Vec<Driver> {
     let mut found = Vec::new();
     for line in 1..=mask.line_count() {
@@ -696,16 +937,57 @@ fn case_attributes(mask: &Mask) -> Vec<Driver> {
             .into_iter()
             .filter(|above| is_case_attribute(&mask.code(*above)))
             .count();
-        if rows == 0 {
+        let after = (line, code[..keyword.end].chars().count());
+        let values = value_rows(mask, after);
+        if rows == 0 && values.is_empty() {
             continue;
         }
-        let after = (line, code[..keyword.end].chars().count());
+        let entries = values.into_iter().try_fold(rows.max(1), |total, row| {
+            row.map(|entries| total.saturating_mul(entries))
+        });
         if let Some(last) = body_after(Lang::Rust, mask, after) {
             found.push(Driver {
                 first: line,
                 last,
-                entries: Some(rows),
+                entries,
             });
+        }
+    }
+    found
+}
+
+/// The entries of every row of values the parameters of a Rust function are
+/// handed, `#[values(…)]`, read from the place after its `fn` to the end of its
+/// parameter list.
+fn value_rows(mask: &Mask, from: At) -> Vec<Option<usize>> {
+    let Some((open, _)) = code_from(mask, from).find(|(_, character)| *character == '(') else {
+        return Vec::new();
+    };
+    let Some(close) = closing_of(mask, open) else {
+        return Vec::new();
+    };
+    let mut found = Vec::new();
+    let mut at = step(open);
+    while let Some((place, character)) = next_code(mask, at) {
+        if place.0 > close.0 || (place.0 == close.0 && place.1 >= close.1) {
+            break;
+        }
+        at = step(place);
+        if character != '#' {
+            continue;
+        }
+        let Some((bracket, '[')) = next_code(mask, at) else {
+            continue;
+        };
+        let Some((name, _)) = next_code(mask, step(bracket)) else {
+            continue;
+        };
+        let (word, end) = identifier(mask, name);
+        if word != VALUES_ATTRIBUTE {
+            continue;
+        }
+        if let Some((list, '(')) = next_code(mask, (name.0, end)) {
+            found.push(entries_at(Lang::Rust, mask, list, HOPS));
         }
     }
     found
@@ -731,7 +1013,8 @@ fn macro_bodies(mask: &Mask) -> Vec<Driver> {
             let entries = invocations(mask, &name, &body).into_iter().try_fold(
                 0_usize,
                 |total, (line, column)| {
-                    entries_at(mask, line, column).map(|entries| total.saturating_add(entries))
+                    entries_at(Lang::Rust, mask, (line, column), HOPS)
+                        .map(|entries| total.saturating_add(entries))
                 },
             );
             Driver {
@@ -775,7 +1058,7 @@ fn macro_generated(lang: Lang, mask: &Mask) -> usize {
     let mut total = 0;
     for (name, body) in test_macros(mask) {
         for (line, column) in invocations(mask, &name, &body) {
-            total += entries_at(mask, line, column).unwrap_or(1);
+            total += entries_at(Lang::Rust, mask, (line, column), HOPS).unwrap_or(1);
         }
     }
     total

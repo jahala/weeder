@@ -36,6 +36,16 @@
 //! held by nobody; where some claims moved, the finding names the files they
 //! moved into, because a sentence a reader can disprove in one click costs more
 //! than the finding is worth.
+//!
+//! A claim can also be made stronger rather than kept. Three loose claims on
+//! one value, that it contains this, that and the other, replaced by one claim
+//! that the value equals the whole of what it should be, are not two claims
+//! lost: the one says everything the three said. So a claim that left is not
+//! counted where the other side compares the same value whole, in the same
+//! case and with the same thing bound to it, or the value it was read off;
+//! see [`subject`]. An exact claim on something else, the value's length,
+//! covers nothing, and a claim that leaves with no exact one beside it is a
+//! claim dropped.
 
 use std::collections::BTreeSet;
 
@@ -43,6 +53,7 @@ use crate::core::change::{Change, Side};
 use crate::core::finding::{Detection, Level, Message, Region, Stamp};
 use crate::core::read::TestUnit;
 use crate::core::rules::check::generated::{Runs, Times};
+use crate::core::rules::check::subject::{self, Subject};
 use crate::core::rules::check::vocab::Suite;
 use crate::core::rules::check::Judgement;
 use crate::core::syntax::Mask;
@@ -68,6 +79,8 @@ struct Claim {
     case: String,
     line: String,
     weight: usize,
+    /// The values the claim is about, where its line can be read for them.
+    subjects: Vec<Subject>,
 }
 
 /// A claim a file in this change did not make before it and makes now.
@@ -85,6 +98,8 @@ struct Arrival {
 struct Said {
     made: Vec<Claim>,
     floors: Vec<Claim>,
+    /// The values compared whole, each with the case that compares it.
+    pinned: Vec<(String, Subject)>,
 }
 
 /// The claims one changed file makes on each side of the change.
@@ -117,12 +132,22 @@ fn dropped(change: &Change, made: &Made, arrived: &[Arrival]) -> Option<Detectio
     // prove, and a person has to read it. A loop that was there on both sides
     // takes nothing from the proof.
     let unproven = !unanswered(&made.after.floors, &made.before.floors).is_empty();
-    let moved = followed(
-        &unanswered(&made.before.made, &made.after.made),
-        arrived,
-        path,
-    );
-    let remaining = (before - after).saturating_sub(moved.count);
+    // A claim the other side makes again, whole, says nothing less, and is
+    // neither a claim dropped nor one to follow elsewhere.
+    let (covered, lost): (Vec<Claim>, Vec<Claim>) = unanswered(&made.before.made, &made.after.made)
+        .into_iter()
+        .partition(|claim| {
+            claim.subjects.iter().any(|value| {
+                made.after
+                    .pinned
+                    .iter()
+                    .any(|(case, pinned)| *case == claim.case && pinned.covers(value))
+            })
+        });
+    let moved = followed(&lost, arrived, path);
+    let remaining = (before - after)
+        .saturating_sub(moved.count)
+        .saturating_sub(total(&covered));
     if remaining == 0 {
         return None;
     }
@@ -290,10 +315,36 @@ fn claims(side: &Side) -> Said {
         if count == 0 {
             continue;
         }
+        let case = enclosing(&cases, line);
+        let name = case.map_or("", |case| case.name.as_str());
+        // A line that makes several claims is read for none of their subjects:
+        // which value each one is about is not a question one line answers.
+        let reading = (count == 1)
+            .then(|| {
+                subject::read(
+                    side.lang(),
+                    mask,
+                    line,
+                    case.map_or(1, |case| case.start_line),
+                )
+            })
+            .flatten();
+        if let Some(reading) = reading.as_ref().filter(|reading| reading.exact) {
+            said.pinned.extend(
+                reading
+                    .subjects
+                    .iter()
+                    .map(|value| (name.to_string(), value.clone())),
+            );
+        }
+        // A line weeder cannot read for its subject is a claim about nothing it
+        // can name, and no subjects is exactly that: nothing covers it.
+        let subjects = reading.map(|reading| reading.subjects).unwrap_or_default();
         let claim = |weight: usize| Claim {
-            case: enclosing(&cases, line).to_string(),
+            case: name.to_string(),
             line: written(mask, line),
             weight,
+            subjects: subjects.clone(),
         };
         match runs
             .get_or_insert_with(|| Runs::of(side.lang(), mask))
@@ -313,12 +364,12 @@ fn claims(side: &Side) -> Said {
 /// The case a line sits in: the narrowest one that spans it, so a case written
 /// inside another answers for its own lines. A line outside every case sits in
 /// none.
-fn enclosing<'a>(cases: &[&'a TestUnit], line: u32) -> &'a str {
+fn enclosing<'a>(cases: &[&'a TestUnit], line: u32) -> Option<&'a TestUnit> {
     cases
         .iter()
         .filter(|case| case.start_line <= line && line <= case.end_line)
         .min_by_key(|case| case.end_line.saturating_sub(case.start_line))
-        .map_or("", |case| case.name.as_str())
+        .copied()
 }
 
 /// A line as the program writes it: the whole of it apart from the comments,

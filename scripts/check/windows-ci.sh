@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
-# Evidence for windows: the suite runs on windows-latest on every pull request,
-# and the run on master says it passed.
+# Evidence for windows: the suite runs on windows-latest on every push to master,
+# never on a pull request, and the run on master says it passed.
 #
 # A cross-check from a developer machine cannot answer this. Every tree-sitter
 # grammar weeder parses through is built by a C compiler, and building them for
 # `x86_64-pc-windows-msvc` needs the MSVC toolchain, so `cargo check --target`
 # stops long before it reaches weeder's own code. The compile can only be proven
-# on a Windows runner, which is why this check reads a run rather than a tree:
-# the yaml half says the job exists on the same events as the ubuntu one, and the
-# GitHub half says the job on master's newest run went green.
+# on a Windows runner, which is why this check reads a run rather than a tree.
+#
+# The owner ruled on 2026-11-06 that Windows never blocks a merge: the job lives
+# in its own workflow, runs on push to master and on a schedule, and a failure
+# opens or updates one issue labelled `windows`. So the yaml half holds the job
+# to the suite ci.yml runs on ubuntu, refuses a pull-request trigger, and wants
+# the report job; the GitHub half says the job on master's newest run went green.
 #
 # It refuses on the three ways this claim goes quietly false: a job that is not
 # in the run at all, a job that was skipped, and a job that failed. None of them
@@ -18,11 +22,13 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
 
-workflow=".github/workflows/ci.yml"
+workflow=".github/workflows/windows.yml"
+suite_workflow=".github/workflows/ci.yml"
 branch="master"
 runner="windows-latest"
 
-[ -f "$workflow" ] || { echo "$workflow is missing, so nothing runs on any platform" >&2; exit 1; }
+[ -f "$workflow" ] || { echo "$workflow is missing, so nothing judges the windows platform" >&2; exit 1; }
+[ -f "$suite_workflow" ] || { echo "$suite_workflow is missing, so there is no suite to hold windows to" >&2; exit 1; }
 
 command -v python3 >/dev/null 2>&1 || {
   echo "python3 is not on PATH, so the workflow cannot be read. The check refuses to pass on unread yaml." >&2
@@ -37,15 +43,17 @@ gh auth status >/dev/null 2>&1 || {
   exit 3
 }
 
-# --- the yaml: a job on windows, on the same events, running the same suite ----
-job="$(python3 - "$workflow" "$runner" <<'PY'
+# --- the yaml: a job on windows, after the fact, running ci.yml's suite --------
+job="$(python3 - "$workflow" "$runner" "$suite_workflow" <<'PY'
 import sys
 
 import yaml
 
-path, runner = sys.argv[1], sys.argv[2]
+path, runner, suite_path = sys.argv[1], sys.argv[2], sys.argv[3]
 with open(path, encoding="utf-8") as handle:
     workflow = yaml.safe_load(handle)
+with open(suite_path, encoding="utf-8") as handle:
+    suite_workflow = yaml.safe_load(handle)
 
 # YAML reads a bare `on:` key as the boolean true.
 triggers = workflow.get("on") or workflow.get(True) or {}
@@ -78,15 +86,33 @@ if not on_windows:
         f"the one nothing was ever compiled for before the tag"
     )
 
-for event in ("push", "pull_request"):
-    if event not in triggers:
-        complaints.append(
-            f"{path} does not run on {event}, so the windows job stands at a gate nobody opens"
-        )
+push = triggers.get("push") if isinstance(triggers, dict) else None
+if "push" not in triggers or "master" not in ((push or {}).get("branches") or []):
+    complaints.append(
+        f"{path} does not run on a push to master, so nothing judges windows after a landing"
+    )
+if "pull_request" in triggers:
+    complaints.append(
+        f"{path} runs on pull_request, so windows holds merges up, which the owner ruled out "
+        f"on 2026-11-06"
+    )
 
-elsewhere = sorted(
-    {suite for key, job in jobs.items() if key not in on_windows for suite in suites(job)}
-)
+report = [
+    key
+    for key, job in jobs.items()
+    if key not in on_windows
+    and "failure()" in str(job.get("if") or "")
+    and set(on_windows) & set([job.get("needs")] if isinstance(job.get("needs"), str) else job.get("needs") or [])
+    and any("gh issue" in (step.get("run") or "") for step in job.get("steps") or [])
+]
+if not report:
+    complaints.append(
+        f"{path} has no job that, when the windows job fails, opens or updates the windows "
+        f"issue, so a red leg on master is a mark nobody reads"
+    )
+
+suite_jobs = suite_workflow.get("jobs") or {}
+elsewhere = sorted({suite for job in suite_jobs.values() for suite in suites(job)})
 for key, job in on_windows.items():
     if job.get("if"):
         complaints.append(
@@ -104,7 +130,7 @@ for key, job in on_windows.items():
     for suite in ran:
         if suite not in elsewhere:
             complaints.append(
-                f"{path}: job '{key}' runs `{suite}` and the other jobs run "
+                f"{path}: job '{key}' runs `{suite}` and {suite_path} runs "
                 f"{elsewhere or 'nothing'}: the platforms have to be held to one suite"
             )
     for step in job.get("steps") or []:
@@ -126,9 +152,9 @@ for key, job in on_windows.items():
 PY
 )" || exit 1
 
-echo "$workflow runs the suite on $runner as job '$job', on push and pull request"
+echo "$workflow runs the suite on $runner as job '$job', on push to master and never on a pull request"
 
-# --- the run: master's newest CI run, and what that job did in it -------------
+# --- the run: master's newest windows run, and what that job did in it --------
 run="$(gh run list --workflow "$(basename "$workflow")" --branch "$branch" --limit 1 \
   --json databaseId,headSha,status,conclusion 2>/dev/null)" || {
   echo "gh could not list the runs of $workflow on $branch. The check refuses to pass on a run nobody looked at." >&2

@@ -18,11 +18,13 @@ use common::{fixture, fixture_file, Repo};
 const CASE: &str = "paths";
 
 /// Every guardrail path the rule names, as the fire fixture writes them.
-const GUARDRAILS: [&str; 5] = [
+const GUARDRAILS: [&str; 7] = [
     ".claude/settings.json",
     ".codex/config.toml",
     ".gemini/settings.json",
     ".githooks/pre-commit",
+    "garden.json",
+    "garden.lock",
     "weeder.toml",
 ];
 

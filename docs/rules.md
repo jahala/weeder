@@ -2,8 +2,9 @@
 
 weeder's whole catalogue: what each rule reports, what it reads to decide, and the
 level it carries until a repository says otherwise. `weeder rules` prints the same
-rows from the same table in the binary, so this page and the judgement cannot
-come apart. Every SARIF result weeder writes links back here by rule id.
+rows from the same table in the binary, under a header naming its columns: the
+id, the level, the face, what the rule may reach over the network, and what it
+reports. This page and the judgement cannot come apart. Every SARIF result weeder writes links back here by rule id.
 
 `check` judges a diff and may stop a change. `scan` judges the tree and never
 does. `bite` runs a test command over two states of a repository, which makes it
@@ -124,7 +125,7 @@ Most findings carry their rule's level: the one listed below, or the one
 `[rules]` writes for the rule. A few carry a level of their own, because the
 detector knows something about that one finding the config cannot. D1 blocks on
 a manifest outside the run's scope. C3 blocks on a workflow `[guardrails] paths`
-names. T2 and T8 warn where the fall or the hidden set cannot be proved. S1
+names. T1, T2 and T8 warn where the fall or the hidden set cannot be proved. S1
 warns on a base method an entry file hands out. X1 reports a published example
 key as a note, and R1 does the same for a bare name nothing pins to a place.
 
@@ -182,14 +183,14 @@ allowance a gate honours has to be the person's act.
 
 `check` · blocks by default
 
-A test file was removed, or a test case disappeared from a changed test file, counted from the file's classification and its test shape at HEAD against the working tree. A case the same change put into another test file moved rather than went, and is left out of the count and of what the finding claims.
+A test file was removed, or a test case disappeared from a changed test file, counted from the file's classification and its test shape at HEAD against the working tree. A case generated from a table counts once for each row of every table around it, a table nested in a table or spread from another included. A case the same change put into another test file moved rather than went, and is left out of the count and of what the finding claims. A fall whose cases now come from a new table the file does not write down is reported as a warning rather than a block, since that table may hold every case that left and only a person can say whether it does.
 
 <a id="T2"></a>
 ## T2: Assertions were dropped from a changed test file
 
 `check` · blocks by default
 
-The assertion count of a changed test file fell between HEAD and the working tree, and no allowance carries a reason for it. An assertion inside a parametrized case or a loop counts once for each case the file writes down, so a table that loses a row loses a claim. A fall that leaves claims under a new loop whose cases the file does not write down is reported as a warning rather than a block, since that loop may run every assertion that left and only a person can say whether it does. An assertion the same change makes in another test file moved rather than went, and is left out of the count and of what the finding claims.
+The assertion count of a changed test file fell between HEAD and the working tree, and no allowance carries a reason for it. An assertion inside a parametrized case or a loop counts once for each case the file writes down, so a table that loses a row loses a claim. Loose assertions on one value that the change replaces with an exact one on the same value, an equality with the whole of it, are covered by that one and not counted as dropped. A fall that leaves claims under a new loop whose cases the file does not write down is reported as a warning rather than a block, since that loop may run every assertion that left and only a person can say whether it does. An assertion the same change makes in another test file moved rather than went, and is left out of the count and of what the finding claims.
 
 <a id="T3"></a>
 ## T3: A skip or focus marker was added
@@ -296,7 +297,7 @@ A changed file matches no scope glob the run allows, and the finding names what 
 
 `check` · blocks by default
 
-A change touched a harness settings file, a git hook, `weeder.toml`, or a section of `AGENTS.md` or `CLAUDE.md` whose heading says hard limits or non-negotiables, or opens with never, or names one of `[guardrails] sections`.
+A change touched a harness settings file, a git hook, `weeder.toml`, the garden's `garden.lock` or `garden.json`, or a section of `AGENTS.md` or `CLAUDE.md` whose heading says hard limits or non-negotiables, or opens with never, or names one of `[guardrails] sections`.
 
 <a id="C2"></a>
 ## C2: An ignore file was broadened over source or tests
