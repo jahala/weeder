@@ -153,7 +153,7 @@ D2 and `tests/core_purity.rs` both miss `use crate::{seams::exec}` and inline `s
 
 Tags: **now** is executable by an agent; **human** needs the owner, an account or hardware; **decision** needs the owner's call (see the table below).
 
-The gaps worth fixing are shaped as three loops on the map: `docs/tend2/law.tend2.html` (G1, G5, and G2 without its fsmonitor, filter and skip-worktree cases), `docs/tend2/precision.tend2.html` (G6, G12, G13 and the husky half of G3) and `docs/tend2/release.tend2.html` (G7, G8, G10). G3's hook-integrity half, G4, G9 and G11 were left off the map on purpose: each needs an agent working deliberately against the local layers, and CI is the wall once `law` lands. The law loop's Tried records why.
+The gaps worth fixing are shaped as three loops on the map: `docs/tend/law.tend.html` (G1, G5, and G2 without its fsmonitor, filter and skip-worktree cases), `docs/tend/precision.tend.html` (G6, G12, G13 and the husky half of G3) and `docs/tend/release.tend.html` (G7, G8, G10). G3's hook-integrity half, G4, G9 and G11 were left off the map on purpose: each needs an agent working deliberately against the local layers, and CI is the wall once `law` lands. The law loop's Tried records why.
 
 | # | Gap | Tag | Acceptance |
 |---|---|---|---|
