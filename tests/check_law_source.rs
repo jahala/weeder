@@ -274,7 +274,11 @@ fn a_base_whose_law_weeder_cannot_read_is_a_run_that_never_happened() {
     let repo = Repo::init();
     repo.write("weeder.toml", "[rules]\nG1 = \"loud\"\n");
     repo.commit("a law with a typo in it");
+    // A change that repaired the law and touched nothing else would be judged
+    // at the catalogue's levels (#100, `tests/law_migration.rs`). This one
+    // writes a module too, and nothing can say which law that is judged under.
     repo.write("weeder.toml", "[rules]\nG1 = \"warn\"\n");
+    repo.write("src/parse.py", PY_SOURCE);
 
     let run = repo.weeder(&["check", "--format", "sarif"]);
 
