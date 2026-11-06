@@ -150,10 +150,16 @@ for rule in BLOCKING:
             continue
         if row["level"] != "block":
             complaints.append(f"{rule} is reported as {row['level']}, and the bar is for what blocks")
+        # A language that cannot carry the rule's shape plants nothing and says
+        # why in a line of its own. A corpus that merely held no site for it
+        # measured nothing, and that is short of the bar.
         if row["cases"] == 0:
-            complaints.append(
-                f"{rule} in {language}: no cases at all, so nothing was measured to hold to the bar"
-            )
+            reason = re.search(rf"^- {rule} · {language}, (.+)$", section, re.M)
+            if reason is None or reason.group(1).startswith("no commit of the corpus held a site"):
+                complaints.append(
+                    f"{rule} in {language}: no cases, and the language can carry the shape, "
+                    "so nothing was measured to hold to the bar"
+                )
             continue
         measured = row["hits"] * 100.0 / row["cases"]
         if measured < BAR:

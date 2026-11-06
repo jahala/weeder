@@ -50,6 +50,9 @@ struct Row {
     /// Shapes written into a tree that were not there when it was read back, so
     /// they were never cases at all.
     unplantable: usize,
+    /// Whether the language cannot carry the rule's shape at all, so a row
+    /// with no cases measured nothing that could have been there.
+    impossible: bool,
 }
 
 impl Row {
@@ -96,6 +99,9 @@ pub fn write(
                     .iter()
                     .filter_map(|outcome| outcome.unplantable.get(&(rule.clone(), *lang)))
                     .sum(),
+                impossible: outcomes
+                    .iter()
+                    .any(|outcome| outcome.impossible.contains_key(&(rule.clone(), *lang))),
             });
         }
     }
@@ -142,15 +148,19 @@ fn opening(rows: &[Row], cases: &[&Case]) -> String {
         .iter()
         .filter(|row| held.contains(&row.rule.as_str()))
         .collect();
+    // A language that cannot carry the shape has nothing to miss; a corpus that
+    // merely held no site for it measured nothing, and that is short of the bar.
     let short: Vec<String> = blocking
         .iter()
+        .filter(|row| !(row.cases == 0 && row.impossible))
         .filter(|row| row.recall().is_none_or(|recall| recall < BAR))
         .map(|row| format!("{} in {}", row.rule, row.lang.slug()))
         .collect();
     let verdict = if short.is_empty() {
         format!(
             "Every rule the recall bar holds, {}, catches at least {BAR:.0} percent of the \
-             anti-patterns planted for it, in each of ts, py, rs and go.",
+             anti-patterns planted for it, in each of ts, py, rs and go that can carry its \
+             shape.",
             held.join(", ")
         )
     } else {
@@ -549,6 +559,7 @@ mod tests {
             cases: 20,
             hits: 20,
             unplantable: 0,
+            impossible: false,
         }
     }
 
@@ -558,7 +569,6 @@ mod tests {
     #[test]
     fn the_opening_names_exactly_the_rules_the_bar_holds() {
         let held = barred();
-        assert_eq!(held, ["T1", "T3", "S1", "X1", "C1", "G1"]);
         let mut rows: Vec<Row> = Vec::new();
         for rule in &held {
             for lang in Language::ALL {
@@ -567,7 +577,7 @@ mod tests {
         }
         rows.push(Row {
             hits: 11,
-            ..met("D2", Language::Go)
+            ..met("S2", Language::Go)
         });
         let written = opening(&rows, &[]);
         assert!(
@@ -578,8 +588,65 @@ mod tests {
             "the sentence names the bar's rules and no others: {written}"
         );
         assert!(
-            !written.contains("rule that blocks") && !written.contains("D2"),
+            !written.contains("rule that blocks") && !written.contains("S2"),
             "a rule that blocks outside the bar is not claimed for: {written}"
+        );
+    }
+
+    /// A rule that blocks stops an agent's change, and a block that misses
+    /// what it names is the one failure nobody sees: the bar holds every check
+    /// rule the catalogue blocks with by default, and no rule that only warns.
+    #[test]
+    fn the_bar_holds_every_check_rule_that_blocks_and_no_other() {
+        use weeder::core::catalogue::{self, Face};
+        use weeder::core::finding::Level;
+
+        let mut blocking: Vec<&str> = catalogue::rules()
+            .iter()
+            .filter(|rule| rule.face == Face::Check && rule.default_level == Level::Block)
+            .map(|rule| rule.id)
+            .collect();
+        let mut held = barred();
+        blocking.sort_unstable();
+        held.sort_unstable();
+        assert_eq!(
+            held, blocking,
+            "xtask/recall-bar.txt names exactly the check rules that block by default"
+        );
+    }
+
+    /// A language that cannot carry a rule's shape plants nothing there, and
+    /// that is no miss; a language that can and planted nothing is short.
+    #[test]
+    fn a_language_that_cannot_carry_the_shape_is_not_short_of_the_bar() {
+        let held = barred();
+        let rows_for = |impossible: bool| -> Vec<Row> {
+            let mut rows: Vec<Row> = Vec::new();
+            for rule in &held {
+                for lang in Language::ALL {
+                    if *rule == "T7" && lang == Language::Rs {
+                        rows.push(Row {
+                            cases: 0,
+                            hits: 0,
+                            impossible,
+                            ..met(rule, lang)
+                        });
+                    } else {
+                        rows.push(met(rule, lang));
+                    }
+                }
+            }
+            rows
+        };
+        let carried = opening(&rows_for(true), &[]);
+        assert!(
+            carried.starts_with("Every rule the recall bar holds,"),
+            "a shape the language cannot carry is nothing missed: {carried}"
+        );
+        let unmeasured = opening(&rows_for(false), &[]);
+        assert!(
+            unmeasured.starts_with("The bar is not met: T7 in rs is under 95 percent."),
+            "a language that can carry the shape and planted none measured nothing: {unmeasured}"
         );
     }
 

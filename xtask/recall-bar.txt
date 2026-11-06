@@ -2,6 +2,9 @@
 # `cargo xtask mutate` names them in the sentence the recall section opens with,
 # and scripts/check/recall-bar.sh holds the measured figures to the bar, both
 # reading this file, so the sentence and the check cannot name different rules.
-# It is a subset of the rules that block: which of those the bar should cover
-# is the owner's call, and this list is where that call is written down.
-T1 T3 S1 X1 C1 G1
+# It is every check rule that blocks by default, and no other: a block that
+# misses what it names is the failure nobody sees (plotplot's ruling of
+# 2026-11-06, after T2 fell to 70 percent in Go unwatched). The test
+# `the_bar_holds_every_check_rule_that_blocks_and_no_other` in
+# xtask/src/mutate/report.rs fails when this list and the catalogue disagree.
+T1 T2 T3 T7 T8 S1 D2 X1 X2 C1 G1
