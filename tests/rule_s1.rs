@@ -22,7 +22,7 @@
 
 mod common;
 
-use common::{fixture, fixture_file};
+use common::{fixture, fixture_file, Finding, Run};
 
 /// A language, the production file the stubs land in, and the forms it spells
 /// them with.
@@ -78,7 +78,7 @@ fn s1_fires_at_block_level_on_every_stub_form_in_production_code() {
         let name = language.name;
 
         assert_eq!(run.code, 2, "{name}: a stub blocks\n{}", run.stderr);
-        let findings = run.findings();
+        let findings = stubs(&run);
         let expected = stub_lines(&language, "fire/after");
         assert!(
             expected.len() >= language.forms.len(),
@@ -123,7 +123,7 @@ fn s1_stays_silent_in_a_test_file_and_on_a_marker_inside_a_string() {
 
         let run = repo.weeder(&["check"]);
         assert_eq!(
-            run.findings(),
+            stubs(&run),
             Vec::new(),
             "{name}: a marker a test carries and a marker a string holds are not stubs"
         );
@@ -133,6 +133,17 @@ fn s1_stays_silent_in_a_test_file_and_on_a_marker_inside_a_string() {
 
 /// Where the forms the rule names are written in a fixture's production file,
 /// counted from one and each line named once however many forms it carries.
+/// What S1 itself reported. These fixtures run under every rule, and a change
+/// that adds a base only a test extends, or a helper only a test calls, is S4's
+/// shape on the way past. `tests/catalogue_matrix.rs` already holds each fixture
+/// to its own rule and nothing else, under a law that leaves only that rule on.
+fn stubs(run: &Run) -> Vec<Finding> {
+    run.findings()
+        .into_iter()
+        .filter(|finding| finding.rule == "S1")
+        .collect()
+}
+
 fn stub_lines(language: &Language, case: &str) -> Vec<u64> {
     let source = fixture_file("S1", language.name, case, language.path);
     let mut lines: Vec<u64> = source
@@ -167,7 +178,7 @@ fn s1_stays_silent_on_an_ellipsis_that_declares_a_type_and_fires_on_one_that_def
 
     let run = fixture("S1", "py", "silent").weeder(&["check"]);
     assert_eq!(
-        run.findings(),
+        stubs(&run),
         Vec::new(),
         "an ellipsis under a protocol or an abstract base is the declaration, not a body nobody wrote"
     );
@@ -320,7 +331,7 @@ fn s1_stays_silent_where_something_in_the_tree_overrides_the_method() {
 
         let run = repo.weeder(&["check"]);
         assert_eq!(
-            run.findings(),
+            stubs(&run),
             Vec::new(),
             "{name}: a base method something in the tree writes is a contract, not a stub"
         );
