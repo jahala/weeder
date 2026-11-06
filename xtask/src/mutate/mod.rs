@@ -108,9 +108,6 @@ pub struct Outcome {
     pub cases: Vec<Case>,
     /// Commits that held no site for a rule in a language.
     pub absent: BTreeMap<(String, Language), usize>,
-    /// Rules a language cannot be made to break at all, and why the injector
-    /// says so.
-    pub impossible: BTreeMap<(String, Language), &'static str>,
     /// Sites passed over because the commit itself already fires that rule
     /// there, where a hit would prove nothing.
     pub passed_over: BTreeMap<(String, Language), usize>,
@@ -282,7 +279,6 @@ fn joined(mut walked: Vec<(String, usize, Outcome)>) -> Vec<Outcome> {
                 for (key, counted) in outcome.absent {
                     *held.absent.entry(key).or_default() += counted;
                 }
-                held.impossible.extend(outcome.impossible);
                 for (key, counted) in outcome.passed_over {
                     *held.passed_over.entry(key).or_default() += counted;
                 }
@@ -501,11 +497,6 @@ fn walk(
                     Ok(planted) => planted,
                     Err(NoSite::Absent) => {
                         *outcome.absent.entry(key).or_default() += 1;
-                        continue;
-                    }
-                    Err(NoSite::NotInLanguage(reason)) => {
-                        outcome.impossible.insert(key, reason);
-                        *wanted.entry((rule.clone(), *lang)).or_default() = 0;
                         continue;
                     }
                 };

@@ -50,9 +50,6 @@ struct Row {
     /// Shapes written into a tree that were not there when it was read back, so
     /// they were never cases at all.
     unplantable: usize,
-    /// Whether the language cannot carry the rule's shape at all, so a row
-    /// with no cases measured nothing that could have been there.
-    impossible: bool,
 }
 
 impl Row {
@@ -99,9 +96,6 @@ pub fn write(
                     .iter()
                     .filter_map(|outcome| outcome.unplantable.get(&(rule.clone(), *lang)))
                     .sum(),
-                impossible: outcomes
-                    .iter()
-                    .any(|outcome| outcome.impossible.contains_key(&(rule.clone(), *lang))),
             });
         }
     }
@@ -148,19 +142,15 @@ fn opening(rows: &[Row], cases: &[&Case]) -> String {
         .iter()
         .filter(|row| held.contains(&row.rule.as_str()))
         .collect();
-    // A language that cannot carry the shape has nothing to miss; a corpus that
-    // merely held no site for it measured nothing, and that is short of the bar.
     let short: Vec<String> = blocking
         .iter()
-        .filter(|row| !(row.cases == 0 && row.impossible))
         .filter(|row| row.recall().is_none_or(|recall| recall < BAR))
         .map(|row| format!("{} in {}", row.rule, row.lang.slug()))
         .collect();
     let verdict = if short.is_empty() {
         format!(
             "Every rule the recall bar holds, {}, catches at least {BAR:.0} percent of the \
-             anti-patterns planted for it, in each of ts, py, rs and go that can carry its \
-             shape.",
+             anti-patterns planted for it, in each of ts, py, rs and go.",
             held.join(", ")
         )
     } else {
@@ -311,9 +301,6 @@ fn absences(outcomes: &[Outcome], plan: &Plan) -> String {
             if cases > 0 {
                 continue;
             }
-            let impossible = outcomes
-                .iter()
-                .find_map(|outcome| outcome.impossible.get(&key));
             let looked: usize = outcomes
                 .iter()
                 .filter_map(|outcome| outcome.absent.get(&key))
@@ -326,16 +313,12 @@ fn absences(outcomes: &[Outcome], plan: &Plan) -> String {
                 .iter()
                 .filter_map(|outcome| outcome.unplantable.get(&key))
                 .sum();
-            let reason = if let Some(impossible) = impossible {
-                (*impossible).to_string()
-            } else {
-                format!(
-                    "no commit of the corpus held a site for this shape: {looked} commits offered \
-                     none, {passed} more were passed over because the commit itself already fires \
-                     the rule there, and {unplantable} were written and read back without the \
-                     shape in them"
-                )
-            };
+            let reason = format!(
+                "no commit of the corpus held a site for this shape: {looked} commits offered \
+                 none, {passed} more were passed over because the commit itself already fires \
+                 the rule there, and {unplantable} were written and read back without the \
+                 shape in them"
+            );
             written.push_str(&format!("- {rule} · {}, {reason}\n", lang.slug()));
         }
     }
@@ -559,7 +542,6 @@ mod tests {
             cases: 20,
             hits: 20,
             unplantable: 0,
-            impossible: false,
         }
     }
 
@@ -612,41 +594,6 @@ mod tests {
         assert_eq!(
             held, blocking,
             "xtask/recall-bar.txt names exactly the check rules that block by default"
-        );
-    }
-
-    /// A language that cannot carry a rule's shape plants nothing there, and
-    /// that is no miss; a language that can and planted nothing is short.
-    #[test]
-    fn a_language_that_cannot_carry_the_shape_is_not_short_of_the_bar() {
-        let held = barred();
-        let rows_for = |impossible: bool| -> Vec<Row> {
-            let mut rows: Vec<Row> = Vec::new();
-            for rule in &held {
-                for lang in Language::ALL {
-                    if *rule == "T7" && lang == Language::Rs {
-                        rows.push(Row {
-                            cases: 0,
-                            hits: 0,
-                            impossible,
-                            ..met(rule, lang)
-                        });
-                    } else {
-                        rows.push(met(rule, lang));
-                    }
-                }
-            }
-            rows
-        };
-        let carried = opening(&rows_for(true), &[]);
-        assert!(
-            carried.starts_with("Every rule the recall bar holds,"),
-            "a shape the language cannot carry is nothing missed: {carried}"
-        );
-        let unmeasured = opening(&rows_for(false), &[]);
-        assert!(
-            unmeasured.starts_with("The bar is not met: T7 in rs is under 95 percent."),
-            "a language that can carry the shape and planted none measured nothing: {unmeasured}"
         );
     }
 

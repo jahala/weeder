@@ -331,7 +331,7 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 
 ## Recall
 
-The bar is not met: T2 in go, D2 in go are under 95 percent. 3008 cases were planted one anti-pattern at a time in real commits, and 2974 of them were caught on the site they were planted in.
+The bar is not met: T2 in go, T7 in rs, T8 in rs, D2 in go are under 95 percent. 3008 cases were planted one anti-pattern at a time in real commits, and 2974 of them were caught on the site they were planted in.
 
 The campaign is `cargo xtask mutate`. For each case it checks out a real commit of a corpus repository, plants one anti-pattern in its tree with a scanner that knows nothing about weeder's detectors, and runs `weeder check --base <parent> --strict`. A case counts as caught only where the rule fires on the file the shape was planted in, on the lines it was planted on where it has lines. A site the unmutated commit already fires that rule on is passed over, so no hit is inherited from the commit itself.
 
@@ -494,8 +494,8 @@ Each of these was planted and not reported. The before and after of every one is
 ### Where a shape had nowhere to go
 
 - T4 · go, no commit of the corpus held a site for this shape: 400 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
-- T7 · rs, the language's runner does not collect by name, so no rename takes a case out of the run
-- T8 · rs, the language's runner collects a case by the attribute above it, and this history holds no integration target for a setting to keep out of the run
+- T7 · rs, no commit of the corpus held a site for this shape: 191 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
+- T8 · rs, no commit of the corpus held a site for this shape: 191 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
 - S4 · rs, no commit of the corpus held a site for this shape: 191 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
 - D1 · py, no commit of the corpus held a site for this shape: 206 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
 
