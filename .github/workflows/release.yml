@@ -15,8 +15,19 @@ jobs:
   # disagree about which weeder this is.
   version-check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read # the Windows gate reads windows.yml's runs on the tagged commit
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v6
+      # Pull requests do not run Windows, so the tagged commit may reach here
+      # before anything judged it on that platform. Nothing is built or published
+      # until windows.yml has passed on this exact commit.
+      - name: Windows passed on the tagged commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: bash scripts/windows-green.sh "$GITHUB_SHA"
       - name: The tag, Cargo.toml and npm/package.json name one version
         run: |
           TAG="${GITHUB_REF#refs/tags/v}"
