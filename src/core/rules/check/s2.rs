@@ -18,7 +18,9 @@
 //!
 //! A fallible call turned into a value that cannot fail, with nothing asked
 //! about what went wrong. The shell writes this one as `|| true` or `|| :`
-//! after a command: whatever the command did, the line succeeds.
+//! after a command that threw its own error output away: whatever the command
+//! did, the line succeeds and nothing of the failure is left. A `|| true` whose
+//! error still prints is a script choosing to go on, and is left alone.
 //!
 //! The last two are a choice a program may make on purpose, and the next
 //! action asks for a comment saying why: one on the line, or alone on the line
@@ -135,8 +137,10 @@ fn swallowed(table: &Handling, lang: Lang, mask: &Mask, line: u32) -> Option<Swa
     if let Some(word) = spoken.iter().find(|word| discards(&code, word)) {
         return Some(Swallowed::discarded(word.text));
     }
-    if let Some(command) = answered_with_success(&code, table.succeeding) {
-        return Some(Swallowed::succeeded(command));
+    if let Some((command, at)) = answered_with_success(&code, table.succeeding) {
+        if discards_errors(mask, line, &code[..at]) {
+            return Some(Swallowed::succeeded(command));
+        }
     }
     let converted = spoken.iter().find(|word| {
         word.is_member() && word.is_called() && table.discarding.contains(&word.text)
@@ -241,17 +245,42 @@ fn discards(code: &str, word: &Word<'_>) -> bool {
 /// The command that cannot fail which a line answers a failed command with:
 /// `|| true` or `|| :`, the whole of what follows the `||` up to the end of
 /// the command. `|| truncate` is another command, and one that can fail.
-fn answered_with_success(code: &str, succeeding: &[&'static str]) -> Option<&'static str> {
+fn answered_with_success(code: &str, succeeding: &[&'static str]) -> Option<(&'static str, usize)> {
     code.match_indices("||").find_map(|(at, _)| {
         let rest = code[at + 2..].trim_start();
-        succeeding.iter().copied().find(|command| {
-            rest.strip_prefix(command).is_some_and(|after| {
-                after.chars().next().is_none_or(|next| {
-                    next.is_whitespace() || matches!(next, ';' | ')' | '}' | '&' | '|')
+        succeeding
+            .iter()
+            .copied()
+            .find(|command| {
+                rest.strip_prefix(command).is_some_and(|after| {
+                    after.chars().next().is_none_or(|next| {
+                        next.is_whitespace() || matches!(next, ';' | ')' | '}' | '&' | '|')
+                    })
                 })
             })
-        })
+            .map(|command| (command, at))
     })
+}
+
+/// Whether the command a `|| true` answers threw its own error output away
+/// first: `2>/dev/null`, `&>/dev/null` or `>/dev/null 2>&1`, anywhere in the
+/// statement up to the `||`, the lines it continues from included. Without
+/// that, the failure still prints where the person running the script reads
+/// it, and the `|| true` only keeps the script going; with it, nothing of the
+/// failure is left anywhere.
+fn discards_errors(mask: &Mask, line: u32, before: &str) -> bool {
+    let mut statement = String::new();
+    for earlier in statement_start(mask, line)..line {
+        statement.push_str(&mask.code(earlier));
+        statement.push(' ');
+    }
+    statement.push_str(before);
+    let squeezed: String = statement.split_whitespace().collect();
+    squeezed.contains("2>/dev/null")
+        || squeezed.contains("&>/dev/null")
+        || squeezed.contains("&>>/dev/null")
+        || squeezed.contains("2>&-")
+        || (squeezed.contains(">/dev/null") && squeezed.contains("2>&1"))
 }
 
 /// How many characters of a line come before a byte offset. A block is counted

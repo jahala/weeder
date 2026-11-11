@@ -43,14 +43,16 @@ const SHAPES: [(&str, &str, &[&str]); 5] = [
         "client.go",
         &["if err := post(payload); err != nil {", "_ = err"],
     ),
-    // The shell answers a failed command with one that cannot fail (#79).
+    // The shell answers a failed command with one that cannot fail, having
+    // thrown the command's own error output away first (#79). A `|| true`
+    // whose stderr still shows tells the reader what went wrong.
     (
         "sh",
         "scripts/sync.sh",
         &[
-            "rsync -a \"$1\" \"$2\" || true",
+            "rsync -a \"$1\" \"$2\" >/dev/null 2>&1 || true",
             "rm -r \"$2/.cache\" 2>/dev/null || :",
-            "[ -d \"$2\" ] && touch \"$2/.synced\" ||true",
+            "[ -d \"$2\" ] && touch \"$2/.synced\" &>/dev/null ||true",
         ],
     ),
 ];
@@ -200,8 +202,8 @@ fn s2_reads_a_reason_written_above_the_statement_a_dropped_failure_belongs_to() 
         (
             "scripts/fetch.sh",
             "#!/usr/bin/env bash\nfetch() {\n  curl -fsS \"$1\"\n}\n",
-            "#!/usr/bin/env bash\nfetch() {\n  # a mirror that is down is tried again on the next run\n  curl -fsS \"$1\" \\\n    -o out || true\n}\n",
-            "#!/usr/bin/env bash\nfetch() {\n  # the url arrives checked\n  local url=\"$1\"\n  curl -fsS \"$url\" \\\n    -o out || true\n}\n",
+            "#!/usr/bin/env bash\nfetch() {\n  # a mirror that is down is tried again on the next run\n  curl -fsS \"$1\" \\\n    -o out 2>/dev/null || true\n}\n",
+            "#!/usr/bin/env bash\nfetch() {\n  # the url arrives checked\n  local url=\"$1\"\n  curl -fsS \"$url\" \\\n    -o out 2>/dev/null || true\n}\n",
         ),
     ];
     for (path, before, explained, elsewhere) in cases {

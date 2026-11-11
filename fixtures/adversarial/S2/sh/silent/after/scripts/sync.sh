@@ -9,5 +9,6 @@ sync_tree() {
   rm -f "$2/.lock" || true # nothing holds the lock once the copy is done
   : > "$2/.log" || truncate -s 0 "$2/.log"
   echo "copied; a failure here is never answered with || true"
+  rsync -a "$1/mirror" "$2" || true
   touch "$2/.synced"
 }
