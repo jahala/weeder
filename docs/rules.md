@@ -237,12 +237,39 @@ An added or changed line of the runner's settings stops an existing test file un
 
 The settings a repository writes are found the way its manifest is: by what the classifier makes of the file and by the name its ecosystem gives it. What a key means is read from the words it is spelled with — `ignore`, `exclude`, `deselect` on one side, `path`, `files`, `match`, `include` on the other — and a key counts as being about the run only where the key, the table it sits under, or the file's own name says so. A gate written at the top of a suite, on a condition an ordinary run never sets, is the same exclusion written inside the file it hides. `weeder check --strict` refuses the run, at exit 3, where a setting weeder cannot read is among the lines the change wrote.
 
-<a id="M1"></a>
-## M1: A test mocks the unit under change
+<a id="T10"></a>
+## T10: An added test restates a constant of the code
 
 `check` · warns by default
 
-A test in the diff mocks a module whose production file is also in the diff, so the test no longer exercises the change it covers.
+A test case the change added checks nothing but a value the code defines against a literal: every assertion compares one name, read and not called, with a literal, and the name is the code's rather than the case's, imported by the file, defined by a production file outside the tests it carries, or reached without an import through Go's package scope or a glob import. A name the case binds, takes as a parameter or its own file defines is the test's own expectation and is left alone.
+
+`expect(SERVICE).toBe("build.example.app")` passes whatever the code does with `SERVICE`, because changing the value changes the case with it. A case that hands the constant to the code and checks what comes back, `expect(endpoint(SERVICE)).toBe("https://build.example.app/")`, can fail, and T10 leaves it alone. So does an expected value imported from the code and compared with what the code returns, `expect(status()).toBe(Status.Ready)`: the import only names the answer.
+
+<a id="T11"></a>
+## T11: An added test asserts only on its own double
+
+`check` · warns by default
+
+A test case the change added asserts on nothing but a double it built itself: every assertion reads a name the case bound to a double, made by a call or a type whose name says it makes one, or a value the case read off that double, and the case hands the double to nothing else, so no assertion reads what the code under test did. A double handed to the unit, with an assertion on the unit's output or on what the unit did to the double, is left alone.
+
+A double is read through the same words M1 reads one by, `mock`, `stub`, `fake`, `spy`, `patch` and `double`, and through the script frameworks' mock function, a member called `fn` and called. A case that tells `vi.fn()` to answer `true` and then checks that it answered `true` has tested the mock. Configuring the double, `save.mockReturnValue(true)` or `clock.set(5)`, is not handing it on; passing it as an argument, or as a value in an object, is.
+
+<a id="T12"></a>
+## T12: An added test only checks that its input came back
+
+`check` · warns by default
+
+A test case the change added checks nothing but that a string it passed in comes back out: every assertion holds what it reads to a string literal, outside the value it reads, that the case already wrote on an earlier line that is not a check, a prop, an argument or a fake's message. A literal of nothing but punctuation is no message and is passed over. A check that holds the answer to a literal of its own, the input with what the code adds to it, is left alone.
+
+A case that builds `new Error("Workspace not found")`, hands it to the code and checks that the answer contains `Workspace not found` stays green as long as the string gets through, whatever the code does around it. A case that stores a value and reads it back has the same shape and can be honest, which is one reason T12 warns rather than blocks.
+
+<a id="M1"></a>
+## M1: A test mocks the unit it should exercise
+
+`check` · warns by default
+
+A test in the diff mocks a module whose production file is also in the diff, so the test no longer exercises the change it covers. A double the change sets up of what the test is about is reported too, whether the change edits that unit or not: a module double of the file the test file is named for, or a double of what the title of the added case it serves, or of a suite around that case, names.
 
 <a id="S1"></a>
 ## S1: A stub or a TODO reached production code
