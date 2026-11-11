@@ -150,8 +150,8 @@ const CATALOGUE: &[Rule] = &[
         id: "M1",
         face: Face::Check,
         default_level: Level::Warn,
-        short_description: "A test mocks the unit under change",
-        full_description: "A test in the diff mocks a module whose production file is also in the diff, so the test no longer exercises the change it covers.",
+        short_description: "A test mocks the unit it should exercise",
+        full_description: "A test in the diff mocks a module whose production file is also in the diff, so the test no longer exercises the change it covers. A double the change sets up of what the test is about is reported too, whether the change edits that unit or not: a module double of the file the test file is named for, or a double of what the title of the added case it serves, or of a suite around that case, names.",
         network: Network::None,
     },
     Rule {

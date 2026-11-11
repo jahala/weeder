@@ -265,11 +265,11 @@ A test case the change added checks nothing but that a string it passed in comes
 A case that builds `new Error("Workspace not found")`, hands it to the code and checks that the answer contains `Workspace not found` stays green as long as the string gets through, whatever the code does around it. A case that stores a value and reads it back has the same shape and can be honest, which is one reason T12 warns rather than blocks.
 
 <a id="M1"></a>
-## M1: A test mocks the unit under change
+## M1: A test mocks the unit it should exercise
 
 `check` · warns by default
 
-A test in the diff mocks a module whose production file is also in the diff, so the test no longer exercises the change it covers.
+A test in the diff mocks a module whose production file is also in the diff, so the test no longer exercises the change it covers. A double the change sets up of what the test is about is reported too, whether the change edits that unit or not: a module double of the file the test file is named for, or a double of what the title of the added case it serves, or of a suite around that case, names.
 
 <a id="S1"></a>
 ## S1: A stub or a TODO reached production code
