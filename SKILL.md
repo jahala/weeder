@@ -78,9 +78,9 @@ test moved into an excluded path is still judged as the test it deleted.
 
 T2 counts the assertions each framework spells, and a bats suite's `[ … ]`,
 `[[ … ]]`, `test` and `assert_*` lines. A suite that asserts through a helper of
-its own names it under `[tests] assertions`, and T2 then counts a call to it as
-an assertion in every language. A spec that checks output with `t "prints the
-help" 'Usage:' "$out"` is held to its claims with:
+its own names it under `[tests] assertions`, and T2 and T9 then count a call to
+it as an assertion in every language. A spec that checks output with `t "prints
+the help" 'Usage:' "$out"` is held to its claims with:
 
 ```toml
 [tests]

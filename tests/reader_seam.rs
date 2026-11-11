@@ -119,6 +119,7 @@ fn the_readers_data_types_need_nothing_but_themselves() {
                 start_line: 1,
                 end_line: 9,
                 depth: 0,
+                attributes: Vec::new(),
             },
             TestUnit {
                 kind: TestUnitKind::Case,
@@ -126,6 +127,7 @@ fn the_readers_data_types_need_nothing_but_themselves() {
                 start_line: 2,
                 end_line: 8,
                 depth: 1,
+                attributes: Vec::new(),
             },
         ],
     };
@@ -273,6 +275,30 @@ fn a_test_is_told_from_a_helper_that_shares_its_prefix() {
         [
             (TestUnitKind::Suite, "tests", 0),
             (TestUnitKind::Case, "adds_up", 1)
+        ]
+    );
+
+    // The attributes above a Rust test travel with it, so a rule can read a
+    // case declared to expect a failure.
+    let panicking = reader::test_shape(
+        Path::new("basket.rs"),
+        "#[cfg(test)]\nmod tests {\n    #[test]\n    // the empty basket is refused\n    #[should_panic(expected = \"empty\")]\n    fn refuses_nothing() {\n        total(&[]);\n    }\n}\n",
+    );
+    assert_eq!(
+        panicking
+            .units
+            .iter()
+            .map(|unit| (unit.name.as_str(), unit.attributes.clone()))
+            .collect::<Vec<_>>(),
+        [
+            ("tests", vec!["cfg(test)".to_string()]),
+            (
+                "refuses_nothing",
+                vec![
+                    "should_panic(expected = \"empty\")".to_string(),
+                    "test".to_string()
+                ]
+            )
         ]
     );
 }

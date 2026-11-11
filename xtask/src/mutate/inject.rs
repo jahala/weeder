@@ -107,6 +107,7 @@ fn planter(rule: &str) -> Option<Planter> {
         }
         "T7" => rename_out_of_the_runner,
         "T8" => keep_a_suite_out_of_the_run,
+        "T9" => |lang, tree, seed| check_nothing(lang, tree, seed).ok_or(NoSite::Absent),
         "T10" => |lang, tree, seed| restate_a_constant(lang, tree, seed).ok_or(NoSite::Absent),
         "T11" => |lang, tree, seed| assert_on_a_double(lang, tree, seed).ok_or(NoSite::Absent),
         "T12" => |lang, tree, seed| echo_a_literal(lang, tree, seed).ok_or(NoSite::Absent),
@@ -1147,6 +1148,57 @@ fn echo_a_literal(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
             case,
             &[],
             "a case checks that its input came back",
+        ));
+    }
+    None
+}
+
+/// The string T9's planted case builds a value from and never looks at again.
+pub(super) const UNCHECKED_VALUE: &str = "nothing checked";
+
+/// T9: a case is added that builds a value and checks nothing about it, so it
+/// passes whatever the code does.
+fn check_nothing(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
+    let value = UNCHECKED_VALUE;
+    for source in rotate(tree.tests(lang), seed) {
+        let Some(last_case) = source.cases().last().cloned() else {
+            continue;
+        };
+        let indent = leading(&source.lines[last_case.first as usize]);
+        let case: Vec<String> = match lang {
+            Language::Ts => vec![
+                String::new(),
+                format!("{indent}test(\"a value is built\", () => {{"),
+                format!("{indent}  String(\"{value}\");"),
+                format!("{indent}}});"),
+            ],
+            Language::Py => vec![
+                String::new(),
+                String::new(),
+                "def test_a_value_is_built():".to_string(),
+                format!("    str(\"{value}\")"),
+            ],
+            Language::Rs => vec![
+                String::new(),
+                format!("{indent}#[test]"),
+                format!("{indent}fn a_value_is_built() {{"),
+                format!("{indent}    String::from(\"{value}\");"),
+                format!("{indent}}}"),
+            ],
+            Language::Go => vec![
+                String::new(),
+                "func TestAValueIsBuilt(t *testing.T) {".to_string(),
+                format!("\tbuilt := len(\"{value}\")"),
+                "\t_ = built".to_string(),
+                "}".to_string(),
+            ],
+        };
+        return Some(beside_the_cases(
+            source,
+            &last_case,
+            case,
+            &[],
+            "a case is added that checks nothing",
         ));
     }
     None
@@ -2392,6 +2444,11 @@ mod tests {
                 planted.shape
             );
         }
+    }
+
+    #[test]
+    fn a_case_that_checks_nothing_is_planted_and_read_back_in_every_language() {
+        read_back("T9", check_nothing);
     }
 
     #[test]

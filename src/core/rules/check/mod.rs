@@ -43,6 +43,7 @@ pub mod t5;
 pub mod t6;
 pub mod t7;
 pub mod t8;
+pub mod t9;
 pub mod vocab;
 pub mod x1;
 pub mod x2;
@@ -108,6 +109,7 @@ const DETECTORS: &[(&str, Detector)] = &[
     ("T6", t6::evaluate),
     ("T7", t7::evaluate),
     ("T8", t8::evaluate),
+    ("T9", t9::evaluate),
     ("T10", t10::evaluate),
     ("T11", t11::evaluate),
     ("T12", t12::evaluate),

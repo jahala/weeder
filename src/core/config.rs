@@ -82,7 +82,8 @@ pub struct Config {
     pub guardrail_sections: Vec<String>,
     /// `[tests] assertions`: the names of the helpers this repository's suites
     /// assert with, which no framework's vocabulary can know. A call to one is
-    /// a claim wherever a test file makes it, in every language. T2 reads them.
+    /// a claim wherever a test file makes it, in every language. T2 and T9 read
+    /// them.
     pub test_assertions: Vec<String>,
 }
 

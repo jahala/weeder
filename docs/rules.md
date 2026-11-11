@@ -55,7 +55,7 @@ first, on its own. `scan` judges the tree it is given, and reads the
 | `[docs] external` | the names the docs cite on purpose that live outside the tree: file names, paths, globs, variables | R1 |
 | `[guard] protected` | the branches the git hooks refuse to rewrite | `weeder guard` |
 | `[guardrails] paths` | the path globs this repository holds at the constitution tier | C3 |
-| `[tests] assertions` | the names of the repository's own test helpers, each matched whole, whose calls are assertions in every language | T2 |
+| `[tests] assertions` | the names of the repository's own test helpers, each matched whole, whose calls are assertions in every language | T2, T9 |
 | `[guardrails] sections` | the headings of `AGENTS.md` and `CLAUDE.md` whose sections state this repository's law, beside the ones saying hard limits or non-negotiables, or opening with never, matched as words in any case | C1 |
 | `[[overrides]] paths` | the path patterns an override applies to, gitignore-style from the root | the rules it names |
 | `[[overrides]] rules` | a level per rule id under those paths, as `[rules]` spells them | the rules it names |
@@ -202,7 +202,7 @@ The assertion count of a changed test file fell between HEAD and the working tre
 
 T2 reads bash. A bats suite or a shell spec asserts with the shell's own tests, a command that opens with `[`, `[[` or `test`, and with the `assert_*` and `refute_*` helpers bats suites load. A test an `if`, an `elif`, a `while` or an `until` asks is a condition, and claims nothing. A `for name in a b c` loop runs its claims once for each word it writes out, and a loop over `"$@"`, a glob or a substitution is one whose cases the file does not write down. A bats case has no name weeder can read yet, so a claim is followed between files by its line alone.
 
-A suite that asserts through a helper of its own names it under `[tests] assertions` in `weeder.toml`, and T2 counts a call to it as an assertion in every language weeder reads: `t(...)` in TypeScript, Python, Rust and Go, and a `t` command in bash. The name is matched whole, so naming `t` leaves `test(...)` and `t.Run(...)` what they were.
+A suite that asserts through a helper of its own names it under `[tests] assertions` in `weeder.toml`, and T2 counts a call to it as an assertion in every language weeder reads, as T9 does when it asks whether an added case asserts at all: `t(...)` in TypeScript, Python, Rust and Go, and a `t` command in bash. The name is matched whole, so naming `t` leaves `test(...)` and `t.Run(...)` what they were.
 
 ```toml
 [tests]
@@ -252,6 +252,15 @@ A test file or case was renamed out of the naming convention its runner collects
 An added or changed line of the runner's settings stops an existing test file under the settings file's own directory from being collected, read from the settings file's kind and name rather than from any product. A setup, teardown or coverage setting chooses no test file. A line that names the file, or a pattern matching one, blocks; a line that narrows what the runner reads leaves the hidden set to be worked out, and warns. A setting whose value is built rather than written is reported unreadable instead of guessed at.
 
 The settings a repository writes are found the way its manifest is: by what the classifier makes of the file and by the name its ecosystem gives it. What a key means is read from the words it is spelled with — `ignore`, `exclude`, `deselect` on one side, `path`, `files`, `match`, `include` on the other — and a key counts as being about the run only where the key, the table it sits under, or the file's own name says so. A gate written at the top of a suite, on a condition an ordinary run never sets, is the same exclusion written inside the file it hides. `weeder check --strict` refuses the run, at exit 3, where a setting weeder cannot read is among the lines the change wrote.
+
+<a id="T9"></a>
+## T9: A test case was added with no assertion
+
+`check` · warns by default
+
+A test case the change added asserts nothing: none of its own lines makes an assertion of its language's frameworks or calls a helper `[tests] assertions` names, it is not declared to expect a failure, it hands no failure back from a case declared to return one, and no function the same file defines that it calls asserts in its own body. Following a helper stops at that one level, so a helper of another file is named under `[tests] assertions`.
+
+T2 counts the assertions that leave a file, so a case that arrives with none passes it: nothing left. A case that expects a failure asserts through it, `expect(() => parse("")).toThrow()`, `await expect(load("")).rejects.toThrow()`, `assert.rejects(…)`, `pytest.raises(…)`, `t.Fatalf(…)`, and so does a Rust test under `#[should_panic]` or one that returns a `Result` and hands a failure back with `?`. A Rust test that returns a `Result` and never uses `?` has declared the return and checks nothing with it. A case that only proves the unit runs without panicking is an honest test in Rust and Go, which is why T9 warns rather than blocks.
 
 <a id="T10"></a>
 ## T10: An added test restates a constant of the code

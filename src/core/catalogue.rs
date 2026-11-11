@@ -116,12 +116,20 @@ const CATALOGUE: &[Rule] = &[
         full_description: "An added or changed line of the runner's settings stops an existing test file under the settings file's own directory from being collected, read from the settings file's kind and name rather than from any product. A setup, teardown or coverage setting chooses no test file. A line that names the file, or a pattern matching one, blocks; a line that narrows what the runner reads leaves the hidden set to be worked out, and warns. A setting whose value is built rather than written is reported unreadable instead of guessed at.",
         network: Network::None,
     },
-    // T9 is held for a case added with no assertion at all (issue #16), so the
-    // added cases that assert and still cannot fail (issue #107) take the next
-    // ids in the order the issue names their shapes: T10 a constant restated,
-    // T11 a double asserted on alone, T12 a literal echoed back. The fourth
-    // shape, a double of the unit the case is about, is M1's question asked of
-    // more than the diff, so M1 answers it rather than an id of its own.
+    Rule {
+        id: "T9",
+        face: Face::Check,
+        default_level: Level::Warn,
+        short_description: "A test case was added with no assertion",
+        full_description: "A test case the change added asserts nothing: none of its own lines makes an assertion of its language's frameworks or calls a helper `[tests] assertions` names, it is not declared to expect a failure, it hands no failure back from a case declared to return one, and no function the same file defines that it calls asserts in its own body. Following a helper stops at that one level, so a helper of another file is named under `[tests] assertions`.",
+        network: Network::None,
+    },
+    // T9 reads an added case with no assertion at all (issue #16). The added
+    // cases that assert and still cannot fail (issue #107) take the next ids
+    // in the order the issue names their shapes: T10 a constant restated, T11
+    // a double asserted on alone, T12 a literal echoed back. The fourth shape,
+    // a double of the unit the case is about, is M1's question asked of more
+    // than the diff, so M1 answers it rather than an id of its own.
     Rule {
         id: "T10",
         face: Face::Check,
