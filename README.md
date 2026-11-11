@@ -56,9 +56,9 @@ tar xzf "weeder-$target.tar.gz" weeder
 install -m 755 weeder ~/.local/bin/weeder
 ```
 
-The windows tarball holds `weeder.exe`. The crate on crates.io and the npm wrapper
-(`@plotplot/weeder`) publish from the same release workflow once the registries are set up;
-until then the tarball is the install.
+The windows tarball holds `weeder.exe`. The release page is the install. The crate on
+crates.io and the npm wrapper (`@plotplot/weeder`) publish from the same release workflow, run by
+hand on a tag with `publish` set, once crates.io takes `tilth-core` and npm has a publisher.
 
 ## Switch it on
 
