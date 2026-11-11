@@ -8,7 +8,10 @@
 //! text, so an assertion moved between cases, rewritten around, or re-indented
 //! still counts as one. What makes an assertion is the language's own
 //! vocabulary, read off the code alone: the same words in a comment or inside a
-//! string are talk about a test rather than a test.
+//! string are talk about a test rather than a test. A helper the repository
+//! names under `[tests] assertions` is part of that vocabulary in every
+//! language, because a suite that asserts through its own `t` makes its claims
+//! there and nowhere else.
 //!
 //! An assertion is made once for every case it runs for. Three written out and
 //! one inside a table of the same three cases are the same three claims, so a
@@ -63,7 +66,8 @@ pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let changes = judged.changes;
     // A file's claims are read once and asked two questions: what this file no
     // longer claims, and what every other file in the change claims now.
-    let read: Vec<Made> = changes.iter().map(made).collect();
+    let helpers = &judged.config.test_assertions;
+    let read: Vec<Made> = changes.iter().map(|change| made(change, helpers)).collect();
     let arrived = arrivals(changes, &read);
     changes
         .iter()
@@ -182,11 +186,12 @@ fn uncounted(before: usize, after: usize, remaining: usize, moved: &Followed) ->
     }
 }
 
-/// Both sides of one changed file, read for the claims they make.
-fn made(change: &Change) -> Made {
+/// Both sides of one changed file, read for the claims they make, with the
+/// helpers the repository names counted among them.
+fn made(change: &Change, helpers: &[String]) -> Made {
     Made {
-        before: claims(&change.before),
-        after: claims(&change.after),
+        before: claims(&change.before, helpers),
+        after: claims(&change.after, helpers),
     }
 }
 
@@ -326,13 +331,13 @@ fn answers(left: &Claim, made: &Claim) -> bool {
 /// line inside a table makes its claims once for every case the table runs it
 /// for. A side that holds no tests makes none and is not read for any: every
 /// changed file passes through here, and most of them are not tests.
-fn claims(side: &Side) -> Said {
+fn claims(side: &Side, helpers: &[String]) -> Said {
     let mut said = Said::default();
     if !side.holds_tests() {
         return said;
     }
     let mask = side.mask();
-    let suite = Suite::of(side.lang(), mask);
+    let suite = Suite::of(side.lang(), mask).counting(helpers);
     let cases: Vec<&TestUnit> = side.tests.cases().collect();
     // The tables are read only once a line has made a claim, since most of the
     // files that pass through here make none.

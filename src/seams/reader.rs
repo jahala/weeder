@@ -56,12 +56,13 @@ pub fn language(path: &Path) -> Lang {
         Some(tilth_core::Lang::Python) => Lang::Python,
         Some(tilth_core::Lang::Rust) => Lang::Rust,
         Some(tilth_core::Lang::Go) => Lang::Go,
+        Some(tilth_core::Lang::Bash) => Lang::Bash,
         _ => Lang::Other,
     }
 }
 
 /// Whether a path is code in a language weeder carries no rules for: tilth
-/// knows it for a language, a shell script, a makefile, Java, and weeder reads
+/// knows it for a language, a makefile, Java, Ruby, and weeder reads
 /// it as [`Lang::Other`], so no rule judges a line of it. A file that is not
 /// code at all, prose or data, is not one: there is no language in it to read.
 #[must_use]

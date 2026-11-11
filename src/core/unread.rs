@@ -1,7 +1,7 @@
 //! The changed files weeder could not judge, said once per run.
 //!
-//! weeder's rules read TypeScript, JavaScript, Python, Rust and Go. A change in
-//! any other language reaches none of them, and a run over a change made only
+//! weeder's rules read TypeScript, JavaScript, Python, Rust, Go and bash. A
+//! change in any other language reaches none of them, and a run over a change made only
 //! of such files used to end with nothing to say, which a reader takes for a
 //! clean bill. One note names what went unread, by extension and count, so a
 //! clean result never passes for a judged one (#79).
@@ -48,7 +48,7 @@ pub fn notice(paths: &[&str]) -> Option<Finding> {
                 listed.join(", ")
             ),
             why: "no rule judged a line of them, so a clean result says nothing about what they changed.".to_string(),
-            next: "read those changes yourself; weeder judges TypeScript, JavaScript, Python, Rust and Go.".to_string(),
+            next: "read those changes yourself; weeder judges TypeScript, JavaScript, Python, Rust, Go and bash.".to_string(),
         },
         fix: None,
         suppressed: None,

@@ -18,7 +18,7 @@ use common::{fixture, fixture_file};
 /// touches, and the line each swallowed failure is written on. The lines are
 /// read back out of the fixture, so the expectation is the fixture rather than
 /// a list of numbers that drifts the moment a line is added above it.
-const SHAPES: [(&str, &str, &[&str]); 4] = [
+const SHAPES: [(&str, &str, &[&str]); 5] = [
     (
         "ts",
         "src/client.ts",
@@ -42,6 +42,18 @@ const SHAPES: [(&str, &str, &[&str]); 4] = [
         "go",
         "client.go",
         &["if err := post(payload); err != nil {", "_ = err"],
+    ),
+    // The shell answers a failed command with one that cannot fail, having
+    // thrown the command's own error output away first (#79). A `|| true`
+    // whose stderr still shows tells the reader what went wrong.
+    (
+        "sh",
+        "scripts/sync.sh",
+        &[
+            "rsync -a \"$1\" \"$2\" >/dev/null 2>&1 || true",
+            "rm -r \"$2/.cache\" 2>/dev/null || :",
+            "[ -d \"$2\" ] && touch \"$2/.synced\" &>/dev/null ||true",
+        ],
     ),
 ];
 
@@ -172,7 +184,7 @@ fn s2_reads_a_reason_written_above_the_statement_a_dropped_failure_belongs_to() 
     // A reason above some other statement says nothing about this one. Python's
     // handler and Go's discard open a statement of their own, which the test
     // above reads already.
-    let cases: [(&str, &str, &str, &str); 2] = [
+    let cases: [(&str, &str, &str, &str); 3] = [
         (
             "src/lib.rs",
             "pub fn first(lines: &[&str]) -> String {\n    lines[0].to_string()\n}\n",
@@ -184,6 +196,14 @@ fn s2_reads_a_reason_written_above_the_statement_a_dropped_failure_belongs_to() 
             "export function ping(post: () => Promise<void>): void {\n  void post();\n}\n",
             "export function ping(post: () => Promise<void>): void {\n  // a best-effort ping; its failure changes nothing here\n  post()\n    .then(() => undefined)\n    .catch(() => {});\n}\n",
             "export function ping(post: () => Promise<void>): void {\n  // the ping runs once a minute\n  const started = Date.now();\n  post()\n    .then(() => started)\n    .catch(() => {});\n}\n",
+        ),
+        // A shell command continued with a backslash drops its failure on its
+        // last line, and its reason sits above its first.
+        (
+            "scripts/fetch.sh",
+            "#!/usr/bin/env bash\nfetch() {\n  curl -fsS \"$1\"\n}\n",
+            "#!/usr/bin/env bash\nfetch() {\n  # a mirror that is down is tried again on the next run\n  curl -fsS \"$1\" \\\n    -o out 2>/dev/null || true\n}\n",
+            "#!/usr/bin/env bash\nfetch() {\n  # the url arrives checked\n  local url=\"$1\"\n  curl -fsS \"$url\" \\\n    -o out 2>/dev/null || true\n}\n",
         ),
     ];
     for (path, before, explained, elsewhere) in cases {

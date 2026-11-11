@@ -55,6 +55,7 @@ first, on its own. `scan` judges the tree it is given, and reads the
 | `[docs] external` | the names the docs cite on purpose that live outside the tree: file names, paths, globs, variables | R1 |
 | `[guard] protected` | the branches the git hooks refuse to rewrite | `weeder guard` |
 | `[guardrails] paths` | the path globs this repository holds at the constitution tier | C3 |
+| `[tests] assertions` | the names of the repository's own test helpers, each matched whole, whose calls are assertions in every language | T2 |
 | `[guardrails] sections` | the headings of `AGENTS.md` and `CLAUDE.md` whose sections state this repository's law, beside the ones saying hard limits or non-negotiables, or opening with never, matched as words in any case | C1 |
 | `[[overrides]] paths` | the path patterns an override applies to, gitignore-style from the root | the rules it names |
 | `[[overrides]] rules` | a level per rule id under those paths, as `[rules]` spells them | the rules it names |
@@ -115,10 +116,16 @@ the SARIF log carries it, so a reviewer sees what was not judged, and `check`
 still leaves with whatever the files it did read deserve.
 
 `check` also says, once per run, which changed files it did not read: code in a
-language weeder has no rules for, a shell script, a makefile, Java. The note
-carries the id `UNREAD`, counts the files by extension, and stops nothing. The
-rules judge TypeScript, JavaScript, Python, Rust and Go, and a change made only of
+language weeder has no rules for, a makefile, Java, Ruby. The note carries the
+id `UNREAD`, counts the files by extension, and stops nothing. The rules judge
+TypeScript, JavaScript, Python, Rust, Go and bash, and a change made only of
 other code would otherwise end in a clean count over lines no rule read.
+
+Bash is the newest of the six, and not every rule reads it yet. `.sh`, `.bash`
+and `.bats` files are bash. A `.bats` file, and a script named `*.spec.sh`,
+`*_test.sh` or `test_*.sh`, is a test, as is any file under a `tests/`
+directory; every other bash file is production code. A rule that reads bash
+says so in its section below, and a rule that does not say so reads none of it.
 
 ### How a finding's level is settled
 
@@ -192,6 +199,15 @@ A test file was removed, or a test case disappeared from a changed test file, co
 `check` · blocks by default
 
 The assertion count of a changed test file fell between HEAD and the working tree, and no allowance carries a reason for it. An assertion inside a parametrized case or a loop counts once for each case the file writes down, so a table that loses a row loses a claim. Loose assertions on one value that the change replaces with an exact one on the same value, an equality with the whole of it, are covered by that one and not counted as dropped. A fall that leaves claims under a new loop whose cases the file does not write down is reported as a warning rather than a block, since that loop may run every assertion that left and only a person can say whether it does. An assertion the same change makes in another test file moved rather than went, and is left out of the count and of what the finding claims.
+
+T2 reads bash. A bats suite or a shell spec asserts with the shell's own tests, a command that opens with `[`, `[[` or `test`, and with the `assert_*` and `refute_*` helpers bats suites load. A test an `if`, an `elif`, a `while` or an `until` asks is a condition, and claims nothing. A `for name in a b c` loop runs its claims once for each word it writes out, and a loop over `"$@"`, a glob or a substitution is one whose cases the file does not write down. A bats case has no name weeder can read yet, so a claim is followed between files by its line alone.
+
+A suite that asserts through a helper of its own names it under `[tests] assertions` in `weeder.toml`, and T2 counts a call to it as an assertion in every language weeder reads: `t(...)` in TypeScript, Python, Rust and Go, and a `t` command in bash. The name is matched whole, so naming `t` leaves `test(...)` and `t.Run(...)` what they were.
+
+```toml
+[tests]
+assertions = ["t", "assert_rendered"]
+```
 
 <a id="T3"></a>
 ## T3: A skip or focus marker was added
@@ -278,6 +294,8 @@ A test in the diff mocks a module whose production file is also in the diff, so 
 
 An added line in a production file carries a stub marker, an unimplemented body, or a function body that only returns nothing. A body left unwritten in a base type states a contract rather than a stub, so the finding is dropped where production code somewhere in the tree is built on that type and writes the method, and reported at warn where nothing writes it and an entry file states the type, because the implementation may be in another repository.
 
+S1 reads bash. A stub there is a work marker in code or in a comment, an `exit` or a `return` on a line whose message says the work is not implemented, or a function whose only command is `:`, the shell's command for doing nothing. A marker inside a string or a heredoc is what the script prints, and is left alone.
+
 <a id="S2"></a>
 ## S2: An error was swallowed
 
@@ -285,12 +303,16 @@ An added line in a production file carries a stub marker, an unimplemented body,
 
 An added handler in production code discards a failure without logging it, wrapping it, passing it on, or saying in a comment why it is right to drop it.
 
+S2 reads bash. A command that throws its own error output away (`2>/dev/null`, `&>/dev/null`, `>/dev/null 2>&1`) and is then answered with `|| true` or `|| :` is a failure turned into success with nothing left of it. A `|| true` whose error still prints only keeps the script going, and S2 leaves it alone. A comment on the line, or above the command it ends, is the reason S2 asks for. A backslash that carries the command onto the next line keeps it one command.
+
 <a id="S3"></a>
 ## S3: A debug leftover reached production code
 
 `check` · warns by default
 
 An added line in a production file prints or breaks for debugging, outside the entry points the config names as command-line faces.
+
+S3 reads bash, where printing is most of what a script is for. So a print is a leftover only when it says it is one: an `echo` or a `printf` whose first word is the label `DEBUG`, or `debug:` or `[debug]`. The other shape is the shell told to trace itself, `set -x`, `set -v`, `set -o xtrace` or a run of flags holding either letter, such as `set -euxo pipefail`. `set +x`, a sentence that happens to begin with the word, and anything inside a string, a comment or a heredoc are output, and are left alone. A test file, a file named `main.*`, a `main` function and a path `[entrypoints] cli` names are exempt, as in every other language.
 
 <a id="S4"></a>
 ## S4: Production code was added that only its tests call

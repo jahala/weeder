@@ -776,3 +776,215 @@ fn t2_blocks_when_the_exact_claim_is_about_something_else() {
         assert_eq!(code, 2, "{name}: the change is stopped");
     }
 }
+
+/// The bats suite every bash test here reads.
+const BATS: &str = "test/gate.bats";
+
+/// How many claims a bats suite makes, read the way bats runs one (#79): a
+/// line that runs the shell's own test, `[`, `[[` or `test`, or one of the
+/// `assert` and `refute` helpers bats suites load. A test that an `if` asks is
+/// the condition of the `if`, and claims nothing.
+fn bash_claims(case: &str) -> usize {
+    fixture_file("T2", "sh", case, BATS)
+        .lines()
+        .filter(|line| {
+            let first = line.split_whitespace().next().unwrap_or_default();
+            matches!(first, "[" | "[[" | "test")
+                || first.starts_with("assert")
+                || first.starts_with("refute")
+        })
+        .count()
+}
+
+#[test]
+fn t2_counts_the_claims_a_bats_suite_makes_and_blocks_when_they_fall() {
+    let (before, after) = (bash_claims("fire/before"), bash_claims("fire/after"));
+    assert!(
+        after < before && after > 0,
+        "the fixture has to drop claims and keep some"
+    );
+
+    let run = fixture("T2", "sh", "fire").weeder(&["check"]);
+    let findings = t2(run.findings());
+    assert_eq!(findings.len(), 1, "one file, one finding: {findings:#?}");
+    assert_eq!(findings[0].level, "error", "T2 blocks");
+    assert_eq!(findings[0].path, BATS);
+    assert!(
+        findings[0].message.contains(&format!(
+            "{} assertions went out of this file: it made {before} and now makes {after}.",
+            before - after
+        )),
+        "the finding counts the shell's tests and the helpers alike: {}",
+        findings[0].message
+    );
+    assert_eq!(run.code, 2, "the change is stopped\n{}", run.stderr);
+}
+
+#[test]
+fn t2_stays_silent_when_a_bats_suite_moves_a_claim_and_drops_a_condition() {
+    assert_eq!(
+        bash_claims("silent/before"),
+        bash_claims("silent/after"),
+        "the neighbour moves a claim and drops none"
+    );
+    let before = fixture_file("T2", "sh", "silent", &format!("before/{BATS}"));
+    assert!(
+        before.contains("if [ -f gate.log ]"),
+        "the neighbour's setup tests a file under an `if`, and the change takes that test out"
+    );
+
+    let run = fixture("T2", "sh", "silent").weeder(&["check"]);
+    assert_eq!(
+        run.findings(),
+        Vec::new(),
+        "a moved claim is still made, and an `if` asking a question claimed nothing\n{}",
+        run.output()
+    );
+    assert_eq!(run.code, 0);
+}
+
+/// One language's test file and how it calls a helper of the repository's own:
+/// the file's path, what comes before the calls, one call written with `{}`
+/// where its argument goes, and what comes after.
+const HELPED: [(&str, &str, &str, &str); 5] = [
+    (
+        "src/format.test.ts",
+        "import { check } from './check';\nimport { format } from './format';\n\ntest('pads to the width', () => {\n",
+        "  check(format('{}'), '{}');\n",
+        "});\n",
+    ),
+    (
+        "tests/test_format.py",
+        "from checks import check\nfrom format import format_value\n\n\ndef test_pads_to_the_width():\n",
+        "    check(format_value('{}'), '{}')\n",
+        "",
+    ),
+    (
+        "tests/format.rs",
+        "mod checks;\nuse checks::check;\n\n#[test]\nfn pads_to_the_width() {\n",
+        "    check(format(\"{}\"), \"{}\");\n",
+        "}\n",
+    ),
+    (
+        "format_test.go",
+        "package demo\n\nimport \"testing\"\n\nfunc TestPadsToTheWidth(t *testing.T) {\n",
+        "\tcheck(t, Format(\"{}\"), \"{}\")\n",
+        "}\n",
+    ),
+    (
+        "tests/format.spec.sh",
+        "#!/usr/bin/env bash\nsource tests/checks.sh\n\n",
+        "check \"pads {}\" \"$(./format.sh '{}')\" '{}'\n",
+        "",
+    ),
+];
+
+/// A test file making as many calls to its helper as it is given values.
+fn helped(head: &str, call: &str, tail: &str, values: &[&str]) -> String {
+    let calls: String = values
+        .iter()
+        .map(|value| call.replace("{}", value))
+        .collect();
+    format!("{head}{calls}{tail}")
+}
+
+/// A repository may name the helpers its suites assert with in `weeder.toml`,
+/// and T2 counts a call to one as a claim in every language weeder reads. A
+/// repository that names none keeps T2 to the vocabulary it ships with, so the
+/// same fall says nothing there.
+#[test]
+fn t2_counts_a_call_to_a_helper_weeder_toml_names_as_a_claim_in_every_language() {
+    for (path, head, call, tail) in HELPED {
+        for named in [true, false] {
+            let repo = common::Repo::init();
+            if named {
+                repo.write("weeder.toml", "[tests]\nassertions = [\"check\"]\n");
+            }
+            repo.write(path, &helped(head, call, tail, &["a", "ab", "abc"]));
+            repo.commit("the suite before the change");
+            repo.write(path, &helped(head, call, tail, &["a"]));
+
+            let run = repo.weeder(&["check"]);
+            let findings = t2(run.findings());
+            if !named {
+                assert_eq!(
+                    findings,
+                    Vec::new(),
+                    "{path}: with no helper named, `check` is a call like any other\n{}",
+                    run.output()
+                );
+                continue;
+            }
+            assert_eq!(
+                findings.len(),
+                1,
+                "{path}: the helper's calls are the file's claims\n{}",
+                run.output()
+            );
+            assert!(
+                findings[0]
+                    .message
+                    .contains("2 assertions went out of this file: it made 3 and now makes 1."),
+                "{path}: {}",
+                findings[0].message
+            );
+            assert_eq!(run.code, 2, "{path}: the change is stopped");
+        }
+    }
+}
+
+#[test]
+fn a_helper_named_with_no_name_is_refused() {
+    let repo = common::Repo::init();
+    repo.write("weeder.toml", "[tests]\nassertions = [\" \"]\n");
+    repo.write("tests/format.spec.sh", "check \"pads\" a a\n");
+    repo.commit("the suite before the change");
+    repo.write("tests/format.spec.sh", "check \"pads\" a b\n");
+
+    let run = repo.weeder(&["check"]);
+    assert_eq!(run.code, 3, "weeder cannot run on a law it cannot read");
+    assert!(
+        run.stderr.contains("tests.assertions"),
+        "the refusal names the key: {}",
+        run.stderr
+    );
+}
+
+/// Three claims written out and one claim inside a `for` loop over the same
+/// three words are the same three claims, and a loop over two of them makes
+/// two. A loop over a glob runs as many times as the disk says, which the file
+/// does not, so the fall is one weeder cannot prove and only warns.
+#[test]
+fn t2_counts_a_bash_loop_over_written_words_once_for_each_and_warns_on_one_it_cannot_count() {
+    let written = "#!/usr/bin/env bats\n\n@test \"the build writes its files\" {\n  run ./build.sh\n  [ -f out/a ]\n  [ -f out/b ]\n  [ -f out/c ]\n}\n";
+    let looped = |over: &str| {
+        format!(
+            "#!/usr/bin/env bats\n\n@test \"the build writes its files\" {{\n  run ./build.sh\n  for name in {over}; do\n    [ -f \"out/$name\" ]\n  done\n}}\n"
+        )
+    };
+    for (over, expected) in [
+        ("a b c", None),
+        ("a b", Some("error")),
+        ("out/*", Some("warning")),
+    ] {
+        let repo = common::Repo::init();
+        repo.write(BATS, written);
+        repo.commit("the suite before the change");
+        repo.write(BATS, &looped(over));
+
+        let run = repo.weeder(&["check"]);
+        let levels: Vec<String> = t2(run.findings())
+            .into_iter()
+            .map(|finding| finding.level)
+            .collect();
+        assert_eq!(
+            levels,
+            expected
+                .into_iter()
+                .map(String::from)
+                .collect::<Vec<String>>(),
+            "`for name in {over}`\n{}",
+            run.output()
+        );
+    }
+}

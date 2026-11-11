@@ -140,7 +140,7 @@ fn in_open_scope(side: &Side, name: &str) -> bool {
             .imports
             .iter()
             .any(|import| import.source.ends_with("::*")),
-        Lang::TypeScript | Lang::JavaScript | Lang::Other => false,
+        Lang::TypeScript | Lang::JavaScript | Lang::Bash | Lang::Other => false,
     };
     open && !side
         .outline

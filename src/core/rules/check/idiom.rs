@@ -16,6 +16,9 @@ use crate::core::syntax::Mask;
 pub const DO_NOTHING: &[&str] = &[
     "pass",
     "...",
+    // The shell's command for doing nothing, which is what a function body
+    // nobody wrote is given so that it parses.
+    ":",
     "return",
     "return null",
     "return nil",
@@ -213,9 +216,12 @@ fn braced_body(lines: &[String]) -> Option<String> {
     (close > open).then(|| text[open + 1..close].to_string())
 }
 
-/// Whether a line is only the punctuation that holds a body together.
+/// Whether a line is only the punctuation that holds a body together. The
+/// shell's `:` is spelled like punctuation and is a command, the one that does
+/// nothing, so a statement [`DO_NOTHING`] names is a statement.
 fn is_punctuation(statement: &str) -> bool {
     !statement.is_empty()
+        && !DO_NOTHING.contains(&statement)
         && statement
             .chars()
             .all(|character| matches!(character, '{' | '}' | '(' | ')' | ',' | ':'))

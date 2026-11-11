@@ -196,7 +196,7 @@ pub fn bases(lang: Lang, declaration: &str) -> Vec<String> {
         Lang::Python => python_bases(declaration),
         Lang::TypeScript | Lang::JavaScript => script_bases(declaration),
         Lang::Rust => rust_bases(declaration),
-        Lang::Go | Lang::Other => Vec::new(),
+        Lang::Go | Lang::Bash | Lang::Other => Vec::new(),
     };
     named
         .iter()

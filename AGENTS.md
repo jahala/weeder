@@ -32,7 +32,7 @@ Dependency direction is weeder's own doctrine and its D2 rule enforces it on its
 
 ## Engineering rules
 
-- The failing test is the spec. Every rule lands as a failing fixture first, in every listed language (TypeScript/JavaScript, Python, Rust, Go), then the detector. A test that cannot fail is not a test.
+- The failing test is the spec. Every rule lands as a failing fixture first, in every listed language (TypeScript/JavaScript, Python, Rust, Go, and bash for the rules `BASH_RULES` in `tests/catalogue_matrix.rs` names), then the detector. A test that cannot fail is not a test.
 - Nothing mocked. Tests build a real git repo in a temp dir from the fixture, run the built binary, parse its SARIF. No in-process shortcuts for the faces.
 - No stubs, TODOs, placeholders, fallbacks, or "phase two" comments in committed code. weeder refuses them in other people's diffs; it does not carry them.
 - Rules detect shapes, never vendor or product names.

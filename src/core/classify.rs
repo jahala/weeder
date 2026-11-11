@@ -24,6 +24,8 @@ pub enum Lang {
     Python,
     Rust,
     Go,
+    /// A shell script: `.sh`, `.bash`, and bats suites written as `.bats`.
+    Bash,
     Other,
 }
 
@@ -103,6 +105,7 @@ fn classify_lang(path: &Path) -> Lang {
         "py" => Lang::Python,
         "rs" => Lang::Rust,
         "go" => Lang::Go,
+        "sh" | "bash" | "bats" => Lang::Bash,
         _ => Lang::Other,
     }
 }
@@ -204,6 +207,15 @@ fn is_test(path: &Path, path_text: &str, lang: Lang) -> bool {
         || name.contains(".spec.")
         || (lang == Lang::Python && (name.starts_with("test_") || name.ends_with("_test.py")))
         || (lang == Lang::Go && name.ends_with("_test.go"))
+        // bats names its own suites by their extension, and a shell suite run
+        // by hand is named the way the other languages name theirs: `.spec.sh`
+        // is caught above, `_test.sh` and `test_*.sh` here.
+        || (lang == Lang::Bash
+            && (name.ends_with(".bats")
+                || path
+                    .file_stem()
+                    .and_then(|stem| stem.to_str())
+                    .is_some_and(|stem| stem.ends_with("_test") || stem.starts_with("test_"))))
         || (lang == Lang::Rust
             && (path_text.starts_with("benches/")
                 || path_text.contains("/benches/")

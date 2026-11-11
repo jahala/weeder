@@ -650,6 +650,7 @@ fn declared_language(lang: Lang) -> Option<&'static str> {
         Lang::Python => Some("python"),
         Lang::Rust => Some("rust"),
         Lang::Go => Some("go"),
+        Lang::Bash => Some("bash"),
         // Not a language weeder reads: the rules that fire on such a file read
         // its bytes and its path, never its syntax.
         Lang::Other => None,

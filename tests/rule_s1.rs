@@ -32,7 +32,7 @@ struct Language {
     forms: &'static [&'static str],
 }
 
-const LANGUAGES: [Language; 4] = [
+const LANGUAGES: [Language; 5] = [
     Language {
         name: "ts",
         path: "src/client.ts",
@@ -59,15 +59,24 @@ const LANGUAGES: [Language; 4] = [
             "return nil",
         ],
     },
+    // Bash has no word of its own for a body nobody wrote: a stub there is a
+    // marker, a failure that says it is not implemented, or a function whose
+    // only command is `:`, the shell's command for doing nothing (#79).
+    Language {
+        name: "sh",
+        path: "scripts/client.sh",
+        forms: &["TODO", "FIXME", "XXX", "not implemented", "{ :; }"],
+    },
 ];
 
 /// The files the neighbour writes the same tokens in, and what makes each one
 /// honest.
-const NEIGHBOURS: [(&str, &str, &str); 4] = [
+const NEIGHBOURS: [(&str, &str, &str); 5] = [
     ("ts", "src/client.test.ts", "src/client.ts"),
     ("py", "tests/test_client.py", "src/client.py"),
     ("rs", "tests/client.rs", "src/client.rs"),
     ("go", "client_test.go", "client.go"),
+    ("sh", "test/client.bats", "scripts/client.sh"),
 ];
 
 #[test]

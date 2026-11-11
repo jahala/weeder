@@ -80,6 +80,10 @@ pub struct Config {
     /// a repository states its law under, beside the ones weeder recognises in
     /// every repository. C1 reads them.
     pub guardrail_sections: Vec<String>,
+    /// `[tests] assertions`: the names of the helpers this repository's suites
+    /// assert with, which no framework's vocabulary can know. A call to one is
+    /// a claim wherever a test file makes it, in every language. T2 reads them.
+    pub test_assertions: Vec<String>,
 }
 
 /// One `[[overrides]]` table: the levels it writes for the rules it names,
@@ -176,6 +180,7 @@ impl Default for Config {
             protected_branches: vec!["main".to_string(), "master".to_string()],
             guardrail_paths: Vec::new(),
             guardrail_sections: Vec::new(),
+            test_assertions: Vec::new(),
         }
     }
 }
@@ -292,6 +297,19 @@ pub fn parse_config(input: Option<&str>) -> Result<Config, ConfigError> {
                 });
             }
             config.guardrail_sections = sections;
+        }
+    }
+    if let Some(tests) = raw.tests {
+        if let Some(assertions) = tests.assertions {
+            if let Some(blank) = assertions.iter().find(|name| name.trim().is_empty()) {
+                return Err(ConfigError {
+                    key: "tests.assertions".to_string(),
+                    message: format!(
+                        "`{blank}` names no helper. write the name a test file calls the helper by"
+                    ),
+                });
+            }
+            config.test_assertions = assertions;
         }
     }
 
@@ -512,6 +530,7 @@ struct RawConfig {
     docs: Option<RawDocs>,
     guard: Option<RawGuard>,
     guardrails: Option<RawGuardrails>,
+    tests: Option<RawTests>,
     overrides: Option<Vec<RawOverride>>,
 }
 
@@ -575,4 +594,10 @@ struct RawGuard {
 struct RawGuardrails {
     paths: Option<Vec<String>>,
     sections: Option<Vec<String>>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawTests {
+    assertions: Option<Vec<String>>,
 }

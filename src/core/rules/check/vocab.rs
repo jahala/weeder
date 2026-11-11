@@ -9,6 +9,12 @@
 //! what is written down is the shape, a call, a member on a receiver, a
 //! keyword, a macro, and the roots those shapes are built from.
 //!
+//! A repository's own helpers are the one part of the vocabulary no table can
+//! carry, so `[tests] assertions` names them and [`Suite::counting`] reads a
+//! call to one as an assertion in any language. The shell calls nothing: its
+//! suites assert by running a command, so a bash line is read as the commands
+//! it runs rather than as the calls it makes.
+//!
 //! A line is read through the syntax mask, so a word inside a string or a
 //! comment says nothing. Names are read as paths, `self.assertEqual`,
 //! `require.NoError`, `Error::Empty`, because the receiver is half of what a
@@ -18,6 +24,7 @@
 use std::collections::BTreeSet;
 
 use crate::core::classify::Lang;
+use crate::core::shell;
 use crate::core::syntax::{is_identifier, Mask};
 
 /// One name as a line writes it: the segments of a path spelled with `.` or
@@ -182,6 +189,11 @@ struct Assertions {
     /// Members that open a test inside a test on that same handle. Only a
     /// language whose runner declares one test and runs many under it has one.
     handle_subtests: &'static [&'static str],
+    /// Commands that assert by running, in a language whose calls are
+    /// commands: the name at the front of a command, read the way the shell
+    /// reads one. A language with any of these is read for commands rather
+    /// than for calls.
+    commands: &'static [&'static str],
 }
 
 const NOTHING: Assertions = Assertions {
@@ -190,6 +202,7 @@ const NOTHING: Assertions = Assertions {
     receivers: &[],
     handle_members: &[],
     handle_subtests: &[],
+    commands: &[],
 };
 
 fn assertions(lang: Lang) -> Assertions {
@@ -222,15 +235,25 @@ fn assertions(lang: Lang) -> Assertions {
             handle_subtests: &["Run"],
             ..NOTHING
         },
+        // A shell suite fails on a command that fails, and the commands that
+        // exist to fail are the shell's own tests. The helper libraries bats
+        // suites load assert and refute by name.
+        Lang::Bash => Assertions {
+            roots: &["assert", "refute"],
+            commands: &["[", "[[", "test"],
+            ..NOTHING
+        },
         Lang::Other => NOTHING,
     }
 }
 
-/// One file's vocabulary: its language's table, and what the file itself calls
-/// the handle its runner passes in, which no table can know in advance.
+/// One file's vocabulary: its language's table, what the file itself calls the
+/// handle its runner passes in, and the helpers the repository says its suites
+/// assert with, none of which a table can know in advance.
 pub struct Suite {
     lang: Lang,
     handles: BTreeSet<String>,
+    helpers: Vec<String>,
 }
 
 impl Suite {
@@ -245,7 +268,21 @@ impl Suite {
         } else {
             handles(mask)
         };
-        Suite { lang, handles }
+        Suite {
+            lang,
+            handles,
+            helpers: Vec::new(),
+        }
+    }
+
+    /// The same vocabulary, with the repository's own helpers read as
+    /// assertions: `[tests] assertions` in `weeder.toml`. A helper is matched
+    /// by the whole name it is called by, so naming `t` makes `t(…)` a claim
+    /// and leaves `test(…)` and `t.Run(…)` what they were.
+    #[must_use]
+    pub fn counting(mut self, helpers: &[String]) -> Suite {
+        self.helpers = helpers.to_vec();
+        self
     }
 
     /// Whether the 1-based line opens a test inside a test: the member a runner
@@ -286,6 +323,9 @@ impl Suite {
     #[must_use]
     pub fn assertions(&self, mask: &Mask, line: u32) -> usize {
         let code = mask.code(line);
+        if !assertions(self.lang).commands.is_empty() {
+            return self.asserting_commands(&code);
+        }
         names(&code)
             .iter()
             .filter(|name| self.asserts(name))
@@ -302,6 +342,27 @@ impl Suite {
             .collect()
     }
 
+    /// How many commands a line of a shell suite runs that assert: a test the
+    /// shell runs, `[`, `[[` or `test`, a helper whose name carries a root, or
+    /// one the repository named. A test that an `if`, an `elif`, a `while` or
+    /// an `until` asks is the condition of that statement, and claims nothing.
+    fn asserting_commands(&self, code: &str) -> usize {
+        let table = assertions(self.lang);
+        shell::commands(code)
+            .iter()
+            .filter(|command| {
+                let (command, condition) = shell::simple(command);
+                let Some(name) = command.first() else {
+                    return false;
+                };
+                !condition
+                    && (table.commands.contains(&name.as_str())
+                        || table.roots.iter().any(|root| begins_with_root(name, root))
+                        || self.helpers.contains(name))
+            })
+            .count()
+    }
+
     /// Whether one name is an assertion.
     fn asserts(&self, name: &Name<'_>) -> bool {
         let table = assertions(self.lang);
@@ -311,6 +372,9 @@ impl Suite {
         }
         if !name.is_called() && !name.is_macro() {
             return false;
+        }
+        if self.helpers.iter().any(|helper| helper == name.text) {
+            return true;
         }
         if table.roots.iter().any(|root| begins_with_root(last, root)) {
             return true;

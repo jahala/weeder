@@ -292,6 +292,32 @@ fn script(command: &[String]) -> Option<String> {
     None
 }
 
+/// The reserved words that open or carry on a compound command. They come
+/// before the name of the command a list runs, so `then echo` runs `echo`.
+const RESERVED: [&str; 13] = [
+    "if", "then", "else", "elif", "fi", "do", "done", "while", "until", "!", "{", "}", "time",
+];
+
+/// The reserved words whose command is a condition rather than a step.
+const CONDITIONS: [&str; 4] = ["if", "elif", "while", "until"];
+
+/// One command as it runs: its words with the reserved words in front of it
+/// taken off, and whether one of those made it the condition of an `if`, an
+/// `elif`, a `while` or an `until`.
+#[must_use]
+pub fn simple(command: &[String]) -> (&[String], bool) {
+    let mut condition = false;
+    let mut at = 0;
+    while let Some(word) = command.get(at) {
+        if !RESERVED.contains(&word.as_str()) {
+            break;
+        }
+        condition |= CONDITIONS.contains(&word.as_str());
+        at += 1;
+    }
+    (&command[at..], condition)
+}
+
 /// Whether a word sets an environment variable for the command that follows it.
 fn is_assignment(word: &str) -> bool {
     let Some((name, _)) = word.split_once('=') else {

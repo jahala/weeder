@@ -33,9 +33,10 @@ A file you wrote and never staged is judged too, as the added file it is. `git
 diff` never lists one, so weeder reads them off the working tree itself; the
 files your ignore rules hide are not part of the tree and are not read.
 
-The rules read TypeScript, JavaScript, Python, Rust and Go. A changed file in any
-other language, a shell script, a makefile, Java, reaches no rule, so `check`
-adds one note per run under the id `UNREAD`, counting those files by extension.
+The rules read TypeScript, JavaScript, Python, Rust and Go, and bash where a
+rule's section in `docs/rules.md` says so. A changed file in any other language,
+a makefile, Java, Ruby, reaches no rule, so `check` adds one note per run under
+the id `UNREAD`, counting those files by extension.
 It stops nothing. A clean count beside it means the files weeder read were clean,
 and the rest are yours to read.
 
@@ -74,6 +75,17 @@ person's settings, not yours. Proposing one is a change to `weeder.toml`, which
 C1 blocks until a person signs it with a trailer, and it applies only after it
 lands. A finding you cannot fix is reported to the person, never excluded. A
 test moved into an excluded path is still judged as the test it deleted.
+
+T2 counts the assertions each framework spells, and a bats suite's `[ … ]`,
+`[[ … ]]`, `test` and `assert_*` lines. A suite that asserts through a helper of
+its own names it under `[tests] assertions`, and T2 then counts a call to it as
+an assertion in every language. A spec that checks output with `t "prints the
+help" 'Usage:' "$out"` is held to its claims with:
+
+```toml
+[tests]
+assertions = ["t"]
+```
 
 ```bash
 weeder check --base origin/master --strict --format sarif > weeder.sarif

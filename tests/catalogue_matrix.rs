@@ -329,3 +329,103 @@ fn every_silent_fixture_reports_nothing() {
         spoke.join("\n")
     );
 }
+
+/// The fifth language, and the rules that read it so far (#79). Bash joins a
+/// rule when the rule is extended to it, so the matrix above holds every rule to
+/// four languages and this list holds the rules that answer for a fifth.
+const BASH: &str = "sh";
+const BASH_RULES: [&str; 4] = ["S1", "S2", "S3", "T2"];
+
+/// The catalogue's rows for the rules that read bash, each one checked to be a
+/// rule the catalogue prints.
+fn bash_rules(rules: &[Rule]) -> Vec<Rule> {
+    BASH_RULES
+        .iter()
+        .map(|id| {
+            rules
+                .iter()
+                .find(|rule| rule.id == *id)
+                .unwrap_or_else(|| panic!("{id} reads bash and the catalogue does not print it"))
+                .clone()
+        })
+        .collect()
+}
+
+#[test]
+fn the_rules_that_read_bash_carry_bash_fixtures_and_no_other_rule_does() {
+    let rules = catalogue();
+    let listed = bash_rules(&rules);
+    let mut missing = Vec::new();
+    for rule in &listed {
+        for case in CASES {
+            let path = fixture_root().join(&rule.id).join(BASH).join(case);
+            if !path.join("before").is_dir() {
+                missing.push(cell(rule, BASH, case));
+            }
+        }
+    }
+    assert!(
+        missing.is_empty(),
+        "a rule that reads bash answers for it with a fire and a silent fixture:\n{}",
+        missing.join("\n")
+    );
+    for rule in &rules {
+        let carries = fixture_root().join(&rule.id).join(BASH).is_dir();
+        assert!(
+            !carries || BASH_RULES.contains(&rule.id.as_str()),
+            "{} carries bash fixtures and is not on the list of rules that read bash",
+            rule.id
+        );
+    }
+}
+
+#[test]
+fn every_bash_fire_fixture_reports_its_own_rule_and_nothing_else() {
+    let rules = catalogue();
+    let desk = TempDir::new().expect("the one-rule laws need somewhere to sit");
+    for rule in bash_rules(&rules) {
+        let run = judge(&rule, BASH, "fire", &rules, &desk);
+        let expected: BTreeSet<String> = [rule.id.clone()].into_iter().collect();
+        assert_eq!(
+            reported(&run),
+            expected,
+            "{} answers with its own rule and nothing else\n{}",
+            cell(&rule, BASH, "fire"),
+            run.stderr
+        );
+        for finding in run.findings() {
+            assert_eq!(
+                finding.level,
+                rule.sarif_level(),
+                "{} reports {} at the level the catalogue prints",
+                cell(&rule, BASH, "fire"),
+                rule.id
+            );
+        }
+        assert_eq!(
+            run.code,
+            rule.firing_code(),
+            "{} left with the wrong code for a {} rule\n{}",
+            cell(&rule, BASH, "fire"),
+            rule.level,
+            run.stderr
+        );
+    }
+}
+
+#[test]
+fn every_bash_silent_fixture_reports_nothing() {
+    let rules = catalogue();
+    let desk = TempDir::new().expect("the one-rule laws need somewhere to sit");
+    for rule in bash_rules(&rules) {
+        let run = judge(&rule, BASH, "silent", &rules, &desk);
+        assert_eq!(
+            reported(&run),
+            BTreeSet::new(),
+            "{} reports nothing\n{}",
+            cell(&rule, BASH, "silent"),
+            run.stderr
+        );
+        assert_eq!(run.code, 0, "{} found nothing", cell(&rule, BASH, "silent"));
+    }
+}
