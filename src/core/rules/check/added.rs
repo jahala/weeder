@@ -36,9 +36,8 @@ impl Added<'_> {
     /// it.
     #[must_use]
     pub fn lines(&self) -> Vec<u32> {
-        let cases: Vec<&TestUnit> = self.side.tests.cases().collect();
         (self.case.start_line..=self.case.end_line)
-            .filter(|line| enclosing(&cases, *line) == Some(self.case))
+            .filter(|line| self.side.tests.case_at(*line) == Some(self.case))
             .collect()
     }
 
@@ -76,10 +75,9 @@ pub fn cases(changes: &[Change]) -> Vec<Added<'_>> {
         let side = &change.after;
         let mask = side.mask();
         let suite = Suite::of(side.lang(), mask);
-        let cases: Vec<&TestUnit> = side.tests.cases().collect();
         for case in added_cases(change) {
             let checks: Vec<Check> = (case.start_line..=case.end_line)
-                .filter(|line| enclosing(&cases, *line) == Some(case))
+                .filter(|line| side.tests.case_at(*line) == Some(case))
                 .filter_map(|line| {
                     let count = suite.assertions(mask, line);
                     (count > 0).then(|| Check {
@@ -122,14 +120,4 @@ pub fn added_cases(change: &Change) -> Vec<&TestUnit> {
         .cases()
         .filter(|case| !held.contains(case.name.as_str()))
         .collect()
-}
-
-/// The case a line sits in: the narrowest one that spans it, so a case written
-/// inside another answers for its own lines.
-fn enclosing<'a>(cases: &[&'a TestUnit], line: u32) -> Option<&'a TestUnit> {
-    cases
-        .iter()
-        .filter(|case| case.start_line <= line && line <= case.end_line)
-        .min_by_key(|case| case.end_line.saturating_sub(case.start_line))
-        .copied()
 }
