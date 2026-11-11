@@ -74,6 +74,11 @@ const MACRO_OPENERS: &[char] = &['(', '[', '{'];
 /// A message given to one of these is the code describing itself.
 const RAISING: &[&str] = &["throw", "raise", "panic"];
 
+/// The shell has no exception to raise: a script fails by exiting, and a
+/// function by returning, with a status. A message written on the same line as
+/// either one is the script describing why it stopped.
+const SHELL_RAISING: &[&str] = &["exit", "return"];
+
 /// The keywords a body hands its answer out with: the ones that raise, and the
 /// one that returns.
 const HANDING_OUT: &[&str] = &["throw", "raise", "panic", "return"];
@@ -222,7 +227,11 @@ fn stub_on(lang: Lang, mask: &Mask, line: u32) -> Option<Stub> {
         return Some(Stub::token(&written));
     }
 
-    let raising = spoken.iter().any(|word| RAISING.contains(&word.text));
+    let failing = match lang {
+        Lang::Bash => SHELL_RAISING,
+        _ => RAISING,
+    };
+    let raising = spoken.iter().any(|word| failing.contains(&word.text));
     if raising && says_unfinished(&mask.literals(line)) {
         return Some(Stub::announcement());
     }

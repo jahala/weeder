@@ -43,7 +43,7 @@ const BLOCKING: [(&str, &[&str]); 8] = [
     ("T2", &["ts", "py", "rs", "go"]),
     ("T3", &["ts", "py", "rs", "go"]),
     ("T7", &["ts", "py", "rs", "go"]),
-    ("S1", &["ts", "py", "rs", "go"]),
+    ("S1", &["ts", "py", "rs", "go", "sh"]),
     ("X1", &["ts", "py", "rs", "go"]),
     ("C1", &["paths"]),
     ("G1", &["ts", "py", "rs", "go"]),

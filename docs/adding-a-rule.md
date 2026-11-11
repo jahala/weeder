@@ -78,6 +78,11 @@ a `before` and an `after` directory. `before` is committed as HEAD and `after`
 becomes the working tree. So G1 keeps eight fixtures, a fire and a silent one
 in each language.
 
+Bash is a fifth language for the rules that have been extended to it. Such a
+rule carries `sh/` fixtures as well, and its id goes into `BASH_RULES` in
+`tests/catalogue_matrix.rs`, which holds each listed rule to a fire and a
+silent cell in bash and fails when a rule carries `sh/` without being listed.
+
 `fire` is the dishonest change the rule exists for. `silent` is its nearest
 honest neighbour. G1's silent fixtures add `=======` inside a string and as a
 markdown rule, which is punctuation and not a conflict.
