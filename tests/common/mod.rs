@@ -850,6 +850,49 @@ pub fn make_runnable(path: &Path) {
 #[cfg(windows)]
 pub fn make_runnable(_path: &Path) {}
 
+/// A command that runs `script` with bash, for the tests that drive one of this
+/// repository's shell scripts. Every such test goes through here, and
+/// `tests/harness_bash.rs` holds them to it.
+///
+/// On Windows a bare `bash` is the wrong program: the process search looks in
+/// System32 before PATH, and finds the launcher for the Windows Subsystem for
+/// Linux, which runs nothing on a machine with no distribution installed. The
+/// bash Git for Windows ships sits beside the git these tests already drive, so
+/// that is the one they run.
+pub fn bash(script: &Path) -> Command {
+    let mut command = Command::new(bash_program());
+    command.arg(script);
+    command
+}
+
+#[cfg(unix)]
+fn bash_program() -> PathBuf {
+    PathBuf::from("bash")
+}
+
+/// Git for Windows keeps its programs under one root: its exec path is
+/// `<root>/mingw64/libexec/git-core`, and its bash is `<root>/bin/bash.exe`.
+#[cfg(windows)]
+fn bash_program() -> PathBuf {
+    let output = Command::new("git")
+        .arg("--exec-path")
+        .output()
+        .expect("git should name its exec path");
+    let exec = PathBuf::from(String::from_utf8_lossy(&output.stdout).trim());
+    let bash = exec
+        .ancestors()
+        .nth(3)
+        .expect("git's exec path sits three folders under its root")
+        .join("bin")
+        .join("bash.exe");
+    assert!(
+        bash.is_file(),
+        "Git for Windows keeps its bash at {}, and there is none there",
+        bash.display()
+    );
+    bash
+}
+
 /// A script a test owns, written into a directory it owns and made runnable.
 /// A PATH built out of these is how a test sees which programs weeder reached
 /// for: the program it would have run is right there, and it answers.

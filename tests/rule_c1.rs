@@ -343,3 +343,196 @@ fn a_blank_guardrails_section_is_refused() {
         run.stderr
     );
 }
+
+/// The fixture folder for a release: a `garden.json` that carries the
+/// product's own version and the asset URLs named after it (#135). The silent
+/// case and `fire-judge-version` also carry an entry with a `version` of its
+/// own deeper in the file, which the schema does not define. It stands for any
+/// version that is not the product's, and C1 reads only the top-level one.
+const RELEASE: &str = "release";
+
+/// The garden manifest, the one guardrail a release has to move.
+const GARDEN: &str = "garden.json";
+
+#[test]
+fn c1_stays_silent_on_a_release_that_moves_only_the_product_s_own_version() {
+    let repo = fixture("C1", RELEASE, "silent");
+    let changed = repo.git(&["diff", "HEAD", "--name-only"]);
+    for path in [GARDEN, "Cargo.toml"] {
+        assert!(
+            changed.lines().any(|line| line == path),
+            "{path} must be in the diff, or the silence proves nothing"
+        );
+    }
+    let before = fixture_file("C1", RELEASE, "silent/before", GARDEN);
+    let after = fixture_file("C1", RELEASE, "silent/after", GARDEN);
+    let moved: Vec<(&str, &str)> = before
+        .lines()
+        .zip(after.lines())
+        .filter(|(old, new)| old != new)
+        .collect();
+    assert!(
+        moved.iter().any(|(old, _)| old.contains("\"version\"")),
+        "the release moves the version value"
+    );
+    assert!(
+        moved.iter().any(|(old, _)| old.contains("/v0.4.0/")),
+        "and the asset URLs named after it"
+    );
+
+    let run = repo.weeder(&["check", "--strict"]);
+    assert_eq!(
+        run.findings(),
+        Vec::new(),
+        "a release moves the product's own version and decides nothing about the checks\n{}",
+        run.output()
+    );
+    assert_eq!(run.code, 0, "nothing found, nothing blocked");
+}
+
+/// A case whose one C1 finding is `garden.json`, at block level.
+fn blocks_on_garden(case: &str) {
+    let repo = fixture("C1", RELEASE, case);
+    let run = repo.weeder(&["check"]);
+    assert_eq!(
+        run.code,
+        2,
+        "{case}: a guardrail edit beside a release still blocks\n{}",
+        run.output()
+    );
+    let found: Vec<common::Finding> = run
+        .findings()
+        .into_iter()
+        .filter(|finding| finding.rule == "C1")
+        .collect();
+    assert_eq!(
+        found.len(),
+        1,
+        "{case}: garden.json is named once\n{}",
+        run.output()
+    );
+    assert_eq!(found[0].path, GARDEN, "{case}: the manifest is named");
+    assert_eq!(found[0].level, "error", "{case}: C1 blocks");
+}
+
+#[test]
+fn c1_still_blocks_a_release_that_also_loosens_the_check_command() {
+    blocks_on_garden("fire");
+}
+
+#[test]
+fn c1_still_blocks_a_judge_s_pinned_version_that_moves_with_the_release() {
+    blocks_on_garden("fire-judge-version");
+}
+
+/// A garden manifest at `version`, with its one asset at `host` and a judge
+/// pinned at `judge`.
+fn garden(version: &str, host: &str, judge: &str) -> String {
+    format!(
+        "{{\n  \"name\": \"sprout\",\n  \"kind\": [\"gate\"],\n  \"version\": \"{version}\",\n  \"install\": {{\n    \"binaries\": {{\n      \"x86_64-apple-darwin\": \"https://{host}/sprout/releases/download/v{version}/sprout.tar.gz\"\n    }}\n  }},\n  \"judges\": [\n    {{ \"name\": \"weeder\", \"version\": \"{judge}\" }}\n  ]\n}}\n"
+    )
+}
+
+/// A repository whose `garden.json` went from `before` to `after`.
+fn garden_changed(before: &str, after: &str) -> Repo {
+    let repo = Repo::init();
+    repo.write(GARDEN, before);
+    repo.commit("the garden manifest");
+    repo.write(GARDEN, after);
+    repo
+}
+
+#[test]
+fn a_release_written_by_hand_in_the_same_shape_is_silent_too() {
+    let run = garden_changed(
+        &garden("0.4.0", "github.com", "0.4.0"),
+        &garden("0.5.0", "github.com", "0.4.0"),
+    )
+    .weeder(&["check"]);
+    assert_eq!(run.findings(), Vec::new(), "{}", run.output());
+    assert_eq!(run.code, 0);
+}
+
+/// The garden manifest this repository ships, bumped the way every release
+/// bumps it: the `version` value and each asset URL's `v<version>` segment.
+#[test]
+fn this_repository_s_own_garden_json_bumped_is_a_release() {
+    let shipped =
+        std::fs::read_to_string(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(GARDEN))
+            .expect("the repository ships a garden manifest");
+    let manifest: serde_json::Value =
+        serde_json::from_str(&shipped).expect("the garden manifest is json");
+    let version = manifest["version"]
+        .as_str()
+        .expect("the manifest states its own version");
+    let next = format!("{version}-next.1");
+    let bumped = shipped
+        .replace(
+            &format!("\"version\": \"{version}\""),
+            &format!("\"version\": \"{next}\""),
+        )
+        .replace(&format!("/v{version}/"), &format!("/v{next}/"));
+    assert_eq!(
+        bumped
+            .lines()
+            .zip(shipped.lines())
+            .filter(|(new, old)| new != old)
+            .count(),
+        1 + manifest["install"]["binaries"]
+            .as_object()
+            .expect("the manifest names its assets")
+            .len(),
+        "the bump moves the version and every asset URL"
+    );
+
+    let run = garden_changed(&shipped, &bumped).weeder(&["check", "--strict"]);
+    assert_eq!(run.findings(), Vec::new(), "{}", run.output());
+    assert_eq!(run.code, 0);
+}
+
+#[test]
+fn a_judge_s_pinned_version_moving_alone_is_a_guardrail_edit() {
+    let run = garden_changed(
+        &garden("0.4.0", "github.com", "0.4.0"),
+        &garden("0.4.0", "github.com", "0.5.0"),
+    )
+    .weeder(&["check"]);
+    assert_eq!(
+        run.code,
+        2,
+        "a judge moved is the checks moved\n{}",
+        run.output()
+    );
+    assert_eq!(run.paths(), vec![GARDEN.to_string()]);
+}
+
+#[test]
+fn an_asset_url_that_moves_more_than_its_version_is_a_guardrail_edit() {
+    let run = garden_changed(
+        &garden("0.4.0", "github.com", "0.4.0"),
+        &garden("0.5.0", "mirror.example", "0.4.0"),
+    )
+    .weeder(&["check"]);
+    assert_eq!(
+        run.code,
+        2,
+        "an asset fetched from somewhere else is not a release\n{}",
+        run.output()
+    );
+    assert_eq!(run.paths(), vec![GARDEN.to_string()]);
+}
+
+#[test]
+fn a_version_that_is_not_a_version_is_a_guardrail_edit() {
+    let run = garden_changed(
+        &garden("0.4.0", "github.com", "0.4.0"),
+        &garden("0.5.0/../../elsewhere", "github.com", "0.4.0"),
+    )
+    .weeder(&["check"]);
+    assert_eq!(
+        run.code,
+        2,
+        "a version that walks the asset URL somewhere else is not a release\n{}",
+        run.output()
+    );
+}

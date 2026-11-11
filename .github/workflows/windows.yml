@@ -70,10 +70,24 @@ jobs:
         run: |
           set -euo pipefail
           job="$(gh run view "$RUN_ID" --json jobs --jq '.jobs[] | select(.name == "windows") | .databaseId')"
-          gh api "repos/$GH_REPO/actions/jobs/$job/logs" > windows.log
-          failing="$(grep -oE 'test [^ ]+ \.\.\. FAILED' windows.log | sed -E 's/^test (.+) \.\.\. FAILED$/\1/' | sort -u | while read -r name; do printf "%s\n" "- \`$name\`"; done || true)"
-          if [ -z "$failing" ]; then
-            failing="- no test reported FAILED; the build or another step failed, see the run"
+          # The log is read with curl rather than `gh api`, which refuses a body
+          # holding terminal escape sequences, and a cargo log is full of them.
+          # GitHub can answer 404 for a while after a job ends, until the log is
+          # published, so the read is retried. The issue is the alert, so it is
+          # opened even when the log cannot be read.
+          if curl --fail --silent --show-error --location \
+              --retry 6 --retry-delay 20 --retry-all-errors \
+              --header "Authorization: Bearer $GH_TOKEN" \
+              --output windows.log \
+              "https://api.github.com/repos/$GH_REPO/actions/jobs/$job/logs"; then
+            # -a, because a program that writes UTF-16 puts NUL bytes in the
+            # log, and grep then reads the whole file as binary and finds none.
+            failing="$(grep -aoE 'test [^ ]+ \.\.\. FAILED' windows.log | sed -E 's/^test (.+) \.\.\. FAILED$/\1/' | sort -u | while read -r name; do printf "%s\n" "- \`$name\`"; done || true)"
+            if [ -z "$failing" ]; then
+              failing="- no test reported FAILED; the build or another step failed, see the run"
+            fi
+          else
+            failing="- the job's log could not be read, so the failing tests are not listed; see the run"
           fi
           body="$(printf 'The Windows suite failed on %s (run %s).\n\nFailing tests:\n%s\n\nRun: https://github.com/%s/actions/runs/%s\n' "${SHA:0:12}" "$RUN_ID" "$failing" "$GH_REPO" "$RUN_ID")"
           gh label create windows --color 0E8A16 --description "Fails on the Windows runner" 2>/dev/null || true

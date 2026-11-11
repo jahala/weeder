@@ -197,10 +197,11 @@ stage, and any other is refused by name with the call to add to it.
 A guardrail change a person means is allowed by what that person writes on the
 commit, and the hooks are the two halves of reading it. `guard pre-commit` runs
 before a message exists, so it honours nothing: it prints one line naming what
-blocks and, for each rule, the exact trailer that would allow it,
+would block unless the message allows it and, for each rule, the exact trailer that would allow it,
 `Weeder-allow: <RULE> <reason>`, and says commit-msg is the stage that reads it. `guard commit-msg`
 judges the same index with the message in hand, prints the findings once, and is
-the deciding stage for anything a trailer may allow. `guard pre-push` honours the trailer again,
+the deciding stage for anything a trailer may allow. Its last line is the verdict:
+which trailers allowed the findings, or that the commit is refused. `guard pre-push` honours the trailer again,
 because a commit carries the message it was allowed by.
 
 `guard pre-commit` defers only while there is a stage to defer to. The stage is
