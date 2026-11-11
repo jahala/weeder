@@ -116,7 +116,11 @@ impl Tree {
     pub fn production(&self, lang: Language) -> Vec<&Source> {
         self.sources(lang)
             .iter()
-            .filter(|source| !source.holds_tests() && !lang.collects_file(&source.path))
+            .filter(|source| {
+                !source.holds_tests()
+                    && !lang.collects_file(&source.path)
+                    && lang.may_hold_production(&source.path)
+            })
             .collect()
     }
 

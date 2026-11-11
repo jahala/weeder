@@ -6,8 +6,8 @@
   "metric": "block-level false-positive share across the calibration repositories",
   "regrade": [
     {
-      "agreed": 14,
-      "agreement_percent": 70.0,
+      "agreed": 17,
+      "agreement_percent": 85.0,
       "regraded": 20,
       "sample": "blocked commits in docs/calibration-audit-blind-2026-09.md"
     },

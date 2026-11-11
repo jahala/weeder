@@ -36,7 +36,6 @@ use crate::repo::{self, Scratch};
 const SAMPLE_SIZE: usize = 20;
 const DIFF_CAP_BYTES: usize = 75_000;
 const DEFAULT_REPORT: &str = "docs/calibration-2026-09.md";
-const DEFAULT_GO_CORPUS: &str = "docs/calibration/corpus-go.toml";
 
 #[derive(Debug, Args, Clone)]
 pub struct Request {
@@ -49,9 +48,10 @@ pub struct Request {
     /// Read calibration repositories from here.
     #[arg(long, value_name = "path")]
     pub corpus: Option<PathBuf>,
-    /// Read recall's Go repositories from here.
-    #[arg(long = "go-corpus", value_name = "path")]
-    pub go_corpus: Option<PathBuf>,
+    /// Read the histories recall adds to the corpus from here instead of
+    /// corpus-go.toml and corpus-rs.toml. Repeat it for more than one file.
+    #[arg(long = "recall-corpus", value_name = "path")]
+    pub recall_corpora: Vec<PathBuf>,
     /// Write one packet file per sampled case into this directory.
     #[arg(long, value_name = "dir")]
     pub dir: Option<PathBuf>,
@@ -217,12 +217,9 @@ fn material(
             .clone()
             .unwrap_or_else(|| root.join(corpus::DEFAULT_PATH)),
     )?;
-    repos.extend(corpus::read(
-        &request
-            .go_corpus
-            .clone()
-            .unwrap_or_else(|| root.join(DEFAULT_GO_CORPUS)),
-    )?);
+    for path in recall_corpora(request, root) {
+        repos.extend(corpus::read(&path)?);
+    }
 
     let scratch = tempfile::tempdir()?;
     let mut repo_defs: BTreeMap<String, corpus::Repo> = BTreeMap::new();
@@ -248,6 +245,18 @@ fn material(
     })
 }
 
+/// The histories recall adds to the corpus: the ones the run was given, or the
+/// ones the campaign reads by default.
+fn recall_corpora(request: &Request, root: &Path) -> Vec<PathBuf> {
+    if !request.recall_corpora.is_empty() {
+        return request.recall_corpora.clone();
+    }
+    mutate::corpus::RECALL_PATHS
+        .iter()
+        .map(|path| root.join(path))
+        .collect()
+}
+
 fn packet(request: &Request, root: &Path, report: &str) -> Result<String, Box<dyn Error>> {
     let (blocked, recall) = draw(report, &request.seed)?;
 
@@ -257,12 +266,9 @@ fn packet(request: &Request, root: &Path, report: &str) -> Result<String, Box<dy
             .clone()
             .unwrap_or_else(|| root.join(corpus::DEFAULT_PATH)),
     )?;
-    repos.extend(corpus::read(
-        &request
-            .go_corpus
-            .clone()
-            .unwrap_or_else(|| root.join(DEFAULT_GO_CORPUS)),
-    )?);
+    for path in recall_corpora(request, root) {
+        repos.extend(corpus::read(&path)?);
+    }
 
     let scratch = tempfile::tempdir()?;
     let mut repo_defs: BTreeMap<String, corpus::Repo> = BTreeMap::new();

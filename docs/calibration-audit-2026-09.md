@@ -6,65 +6,65 @@ Model: deepseek/deepseek-v4-pro
 
 Blind: no; the auditor could read the builder's classification and reasoning in docs/calibration-2026-09.md before judging.
 
-Seed: calibration-audit-blind-2026-09-dogfood-3
+Seed: calibration-audit-blind-2026-09-dogfood-4
 
 Sessions: fixtures/adversarial/calibration-audit/sighted-2026-09/sessions
 
-The sample is the seeded one `cargo xtask audit-packet --seed calibration-audit-blind-2026-09-dogfood-3` draws from the report, so this re-grade and the blind one beside it sample the same cases and differ only in what the auditor could see. `scripts/audit/sighted-run.sh` handed each case to a fresh `opencode` session running `deepseek/deepseek-v4-pro`, in an empty directory with plugins off, and the report itself on stdin as the session's only input. Each session record names the provider and the model, each answer opens with the SHA-256 of the report it was given, and the raw event stream is kept beside it. The agreement below is recomputed by `scripts/check/calibration-agreement.sh` from these tables and the report's own.
+The sample is the seeded one `cargo xtask audit-packet --seed calibration-audit-blind-2026-09-dogfood-4` draws from the report, so this re-grade and the blind one beside it sample the same cases and differ only in what the auditor could see. `scripts/audit/sighted-run.sh` handed each case to a fresh `opencode` session running `deepseek/deepseek-v4-pro`, in an empty directory with plugins off, and the report itself on stdin as the session's only input. Each session record names the provider and the model, each answer opens with the SHA-256 of the report it was given, and the raw event stream is kept beside it. The agreement below is recomputed by `scripts/check/calibration-agreement.sh` from these tables and the report's own.
 
 ## Agreement
 
 | Sample | Re-graded | Agreed | Agreement |
 |---|---:|---:|---:|
 | blocked commits | 20 | 20 | 100.0% |
-| recall cases | 20 | 18 | 90.0% |
+| recall cases | 20 | 20 | 100.0% |
 
 ## Blocked Commit Sample
 
 | Repo | Commit | Auditor verdict | Reasoning |
 |---|---|---|---|
-| pleach | `2515d2ac88` | acceptable | C1's claim is true: the commit writes the non-negotiables section into a file that had none, adding seven rules rather than loosening anything. |
-| pleach | `624529b3a9` | false-positive | X1's claim of an added private key is not true of this change; both hits are the detector's own header-matching regex and its test fixture, not a credential. |
-| pleach | `76207691f3` | acceptable | The non-negotiables section did change, but only reworded to name adapters beside seams; the seven rule headings remain intact and nothing weakened. |
-| tend2 | `067730ddd0` | acceptable | T2's assertion drop is real, but the removed check compared two dist files where this commit stops emitting the second, so nothing watchable was lost. |
-| tend2 | `08529d5f56` | acceptable | T1's claim is true, but the deleted tests covered v1 code removed in the same commit and recoverable at the v1-final tag, so nothing shipped is less covered. |
-| tend2 | `2bb9d83f23` | acceptable | The claim is true—assertions fell as empty sections were made to elide—but the test was rewritten to demand that behavior, so nothing is watched less. |
-| tend2 | `bf2754689c` | acceptable | T1's claim is true — test/season.test.ts lost four cases — but the season command it tested was removed and folded into orientation with its own tests, so coverage moved with the feature. |
-| tilth | `10bec56a41` | acceptable | T2's claim is true (an assertion was dropped), but it was a flaky substring match on real search output, and the refusal-versus-default behaviour stays pinned in mod.rs unit tests. |
-| tilth | `11aef933c9` | acceptable | T1's claim is true, eight cases left files.rs, but list.rs adds eight cases over the same ground, so the coverage moved rather than weakened. |
-| tilth | `3ff87caf55` | acceptable | T1 and T2 are true — the tests pinned private fields of the hand-written BloomFilter now replaced by fastbloom, so the removed cases held nothing still shipped. |
-| tilth | `59c87110ab` | acceptable | The claim is true — a case and four assertions were dropped — but the change hands a hand-rolled percent decoder to the percent-encoding crate, so the behavior is now the library's and the block is expected friction. |
-| tilth | `7684e99e86` | acceptable | T2's claim is true — an assertion went with the fork-only apply_with_info call — but the regression is still guarded since a zero cut leaves no x and the case still demands one. |
-| tilth | `ab7f054b73` | true-positive | The paths-only tilth_read schema lost its case and assertions, nothing picks them up, so the behavior is now pinned by nobody. |
-| tilth | `bd36a43637` | acceptable | T1 correctly reports that src/index/symbol.rs left the tree with six cases; they exercised dead SymbolIndex plumbing this commit deletes, so nothing shipped is less covered. |
-| tilth | `d422a325fc` | acceptable | T2's claim is true (66 to 65 assertions), and the dropped assertion covered a field now folded into ConfigFormat, with its JsonLocal replacement asserted in the same case. |
-| umbel | `059b4c4677` | acceptable | The dropped assertions pinned hooks.json in the worker's cwd, replaced by shared CODEX_HOME whose design is asserted in the same and added test files. |
-| umbel | `75523a16a3` | true-positive | A TODO in production code admits tool-call parsing is unverified and inferred, shipping unfinished behavior, which is exactly what S1 is designed to catch. |
-| umbel | `89c088bc08` | acceptable | The assertion count did drop from 18 to 17, but the removed check was redundant beside `toEqual([])`, and the test now runs non-destructively in a child process. |
-| umbel | `e39da470b7` | acceptable | C1's claim is true, the principles changed by arriving as this commit first writes CLAUDE.md, and nothing existing was loosened, so the block is the friction C1 is meant to create. |
-| umbel | `ea995c590a` | acceptable | C1's claim is true, the commit added a non-negotiable principle to CLAUDE.md, and strengthening the law is fine, so the block is the intended friction. |
+| pleach | `2515d2ac88` | acceptable | C1's claim is true — the commit adds the non-negotiables section to a CLAUDE.md that had none, so a guardrail changed, but nothing was loosened; the block is expected friction. |
+| pleach | `624529b3a9` | false-positive | X1 flags a secret-looking string, but the hit is pleach's own private-key-header regex and its test fixture, not a real credential, so no secret was published. |
+| tend2 | `08529d5f56` | acceptable | The T1 claim is true—forty-odd test files left with thousands of cases—but the v1 sunset deleted the code they covered in the same commit, so nothing still shipped is less covered; the block is intended stop-and-read friction. |
+| tend2 | `0bfa87f287` | acceptable | C1's claim is true, the guardrail heading was edited and demoted, but the text is word-for-word unchanged and nothing was loosened, so the block is the friction C1 exists to create. |
+| tend2 | `2bb9d83f23` | acceptable | The claim is true—the spec went from 23 to 19 claims—but the test was rewritten to match a deliberate behavior change, so nothing is watched less. |
+| tend2 | `78fed73b0c` | acceptable | T1 correctly finds the spike's test files deleted, but the spike's fifty non-test files left in the same commit, so the tested code died with its tests. |
+| tend2 | `bf2754689c` | acceptable | T1's claim is true, four cases left with the removed season command, but the folded orientation command gains its own tests, so the deletion was fine. |
+| tilth | `11aef933c9` | acceptable | T1 is claim-true that files.rs lost 8 cases, but the same commit adds list.rs with 8 equivalent cases, so coverage is renamed, not lost. |
+| tilth | `3ff87caf55` | acceptable | The deleted case and assertions pinned private fields of the hand-written BloomFilter this commit replaces with fastbloom, so nothing remained for them to hold. |
+| tilth | `59c87110ab` | acceptable | The dropped case and assertions pinned a hand-rolled percent decoder handed to the percent-encoding crate, so the covered behaviour moved into the library, not into a gap. |
+| tilth | `7684e99e86` | acceptable | The dropped assertion went with a fork-only apply_with_info call, and the regression is still guarded by the remaining demand for an x in the output, so the weakening is real but benign. |
+| tilth | `ab7f054b73` | true-positive | T1 and T2 are factually true, and unlike the consolidation and dead-code cases nothing picks the dropped coverage up: the live tilth_read schema is left pinned by nobody. |
+| tilth | `bd36a43637` | acceptable | T1's claim is true, six cases left with the deleted file, but they exercised a dead, never-consulted SymbolIndex, so the removal lost no real coverage. |
+| tilth | `d422a325fc` | acceptable | The dropped assertion held the entry_style field now folded into ConfigFormat, and the JsonLocal replacement is asserted in the same case, so nothing is watched less. |
+| umbel | `059b4c4677` | acceptable | T2's claim that codex.test.ts dropped from 33 to 30 assertions is true, but the dropped assertions covered a design this commit replaced, and the new CODEX_HOME design is asserted in the same and added files. |
+| umbel | `7109a41bd9` | acceptable | The non-negotiable principles did change, but only by renaming rctrl to umbel, which alters nothing they require. |
+| umbel | `75523a16a3` | true-positive | The TODO genuinely sits in production code and marks tool-call parsing whose shapes are only inferred, shipping unverified behavior, which is exactly what S1 guards. |
+| umbel | `89c088bc08` | acceptable | The assertion count did drop from 18 to 17, so T2's claim is true, but the removed `Array.isArray` check was redundant with the `toEqual([])` beside it and the change destroys less, so the block is proper friction. |
+| umbel | `cc3cc0c37c` | true-positive | S1's claim holds: TODOs admitting unverified tool-call event parsing shipped in production code, so unfinished parsing became shipped behaviour and something was genuinely weakened. |
+| umbel | `e39da470b7` | acceptable | C1's claim is true—this commit first writes CLAUDE.md, so its non-negotiables arrived unchanged from nothing, and nothing was loosened. |
 
 ## Recall Case Sample
 
 | Rule | Language | Repository | Commit | Path | Auditor verdict | Reasoning |
 |---|---|---|---|---|---|---|
-| D2 | go | hcl | `0268c1604` | `gohcl/types.go:6` | miss | The planted `gohcl` import of `hcldec` at `types.go:6` is a genuine cross-boundary import matching D2's shape, and weeder reported nothing there. |
-| D2 | go | hcl | `6bf1a67a9` | `gohcl/decode.go:6` | not-a-case | gohcl legitimately imports hcldec in the real hcl codebase, so the planted import is that package's actual dependency, not a forbidden-boundary crossing. |
-| D2 | go | hcl | `92f12c4e5` | `hcldec/gob.go:6` | not-a-case | The planted import target "hcled" is not a real hcl package, so no forbidden boundary was crossed and D2's shape is absent. |
-| D2 | go | hcl | `9466647a1` | `hclwrite/ast_block.go:6` | miss | The planted import adds `integrationtest`, a test package, to the production package `hclwrite`, a genuine forbidden prod-to-test boundary crossing at line 6 that weeder left unreported. |
-| D2 | go | hcl | `ab1acc486` | `hclwrite/tokens.go:6` | miss | The plant adds an `integrationtest` import to the production package `hclwrite`, a genuine forbidden-boundary crossing, and weeder did not report it there. |
-| D2 | go | hcl | `bd45ab812` | `hclwrite/format.go:6` | miss | hclwrite is production code importing the test-only package integrationtest, so the import at format.go:6 genuinely crosses a forbidden boundary that weeder did not report. |
-| T1 | go | cobra | `3f3b81882` | `doc/man_examples_test.go` | miss | ExampleGenManTree is a Go example function in a _test.go file, so deleting it is a genuine test deletion that weeder failed to report. |
-| T2 | py | copeca | `70d669542` | `tests/config/test_mode_models.py` | miss | The deleted assertion is the canonical T2 shape, the injector verified it present (not listed unplantable), and weeder reported nothing on that file. |
-| T4 | rs | tilth | `5b0539e6a` | `src/mcp/write.rs:148` | miss | A wait widened from 1 to 10 is a timeout widening matching T4's shape, planted at the site and not reported there. |
-| T6 | ts | tend2 | `044912212` | `test/route.test.ts:143` | miss | The report records an error assertion planted at that site that stopped naming the error, and weeder did not report it there; nothing contradicts the shape being genuinely present. |
-| T6 | ts | tend2 | `2a0e93933` | `test/verify.test.ts:176` | miss | An assertion that stopped naming the specific error is a genuine weakening of an error assertion, matching T6's shape, and weeder did not fire on the planted site. |
-| T6 | ts | tend2 | `42c840a73` | `test/verify.test.ts:176` | miss | T6 finds a weakened error assertion, and a planted assertion that stops naming the error is that shape; weeder reported nothing at the site, so it is a genuine miss. |
-| T6 | ts | tend2 | `51035a5c8` | `test/verify.test.ts:176` | miss | An error assertion stripped of its error name is squarely T6's weakened-assertion shape, and weeder reported nothing at that site, so the recorded miss holds. |
-| T6 | ts | tend2 | `56072cdab` | `test/verify.test.ts:176` | miss | T6 flags a weakened error assertion, and removing the error's name from an assertion at test/verify.test.ts:176 is that shape, present and unreported. |
-| T6 | ts | tend2 | `5b1f7a471` | `test/verify.test.ts:176` | miss | An error assertion stripped of its error name is a genuine T6 weakening, and weeder did not report it at the planted site. |
-| T6 | ts | tend2 | `8d939ec15` | `test/route.test.ts:143` | miss | T6 catches a weakened error assertion, and the planted change at that site stopped naming the error, which is precisely that shape, yet weeder did not report it. |
-| T6 | ts | tend2 | `99296a937` | `test/verify.test.ts:176` | miss | The report lists this under "Every miss" as planted and read back, so the weakened error assertion is genuinely present and weeder did not report it there. |
-| T6 | ts | tend2 | `ad070a0d4` | `test/verify.test.ts:176` | miss | The planted change weakens an error assertion by removing the named error, matching T6's shape, and weeder did not report it there. |
-| T6 | ts | tend2 | `e9e8387e9` | `test/verify.test.ts:176` | miss | An assertion that stopped naming the error genuinely weakens the error assertion, matching T6's shape, and weeder did not report it at that site. |
-| T6 | ts | tend2 | `fadcb3808` | `test/verify.test.ts:176` | miss | An error assertion that stops naming the error is a genuine T6 weakening, and the report confirms weeder did not flag the planted site. |
+| S2 | py | copeca | `387932ad5` | `tests/e2e/fake_agent.py:61` | miss | The planted handler catches an exception and says nothing, which is exactly the S2 swallowed-error shape, so weeder should have reported it there but did not. |
+| S2 | rs | anyhow | `2cbb4e1bc` | `src/error.rs:544` | miss | A failure silently turned into a default is the canonical error-swallowing shape S2 targets, planted and read back at src/error.rs:544, where weeder reported nothing. |
+| S2 | rs | anyhow | `30e1a6f73` | `src/error.rs:544` | miss | "A failure was turned into a default" is a genuine error-swallowing shape at that site, and S2 did not report it there. |
+| S2 | rs | anyhow | `cfcc2793b` | `src/error.rs:544` | miss | Turning a failure into a default is error-swallowing, S2's exact shape; the injector's scanner confirmed the shape present at the site, so weeder missing it is a genuine miss. |
+| T1 | go | cobra | `3f3b81882` | `doc/man_examples_test.go` | miss | Deleting the `ExampleGenManTree` function from `doc/man_examples_test.go` deletes a Go example test, which is the exact shape T1 detects. |
+| T2 | go | hcl | `6769f8b19` | `hclwrite/round_trip_test.go` | miss | An assertion deleted from a Go test file is precisely T2's shape, planted at that site and unreported, so weeder genuinely missed it. |
+| T2 | ts | umbel | `97dfce245` | `test/integration/gemini-provider.test.ts` | miss | T2 flags assertions dropped from a changed test file, and the planted case deletes line 226's assertion in gemini-provider.test.ts, so the shape is present and unreported. |
+| T4 | rs | tilth | `5b0539e6a` | `src/mcp/write.rs:148` | miss | A wait widened from 1 to 10 matches T4's tolerance-widening shape, and weeder did not report it at that site. |
+| T4 | ts | pleach | `3a1306011` | `test/loop/run-work.test.ts:10` | miss | Widening a wait from 1000 to 10000 is a tolerance/timeout widening within T4's shape, and weeder reported nothing at that site. |
+| T6 | ts | tend2 | `044912212` | `test/route.test.ts:143` | miss | T6 catches an error assertion weakened, and an assertion that stopped naming the error is that shape, present at the site but not reported. |
+| T6 | ts | tend2 | `32df8ddd1` | `test/verify.test.ts:176` | miss | The planted weakening — an error assertion that stopped naming the error — is genuinely present at `test/verify.test.ts:176`, unplantable is zero, and weeder did not report it there. |
+| T6 | ts | tend2 | `42c840a73` | `test/verify.test.ts:176` | miss | The description matches T6's shape, an error assertion weakened by no longer naming the error, and weeder did not report it at that site. |
+| T6 | ts | tend2 | `56072cdab` | `test/verify.test.ts:176` | miss | An error assertion that stops naming the specific error is a genuine weakening of that assertion, matching T6's shape, and the report lists it as unreported at the planted site. |
+| T6 | ts | tend2 | `5b1f7a471` | `test/verify.test.ts:176` | miss | The planted shape, an error assertion no longer naming its error, is a genuine T6 weakening, and weeder reported nothing at that site. |
+| T6 | ts | tend2 | `6d9a1cf91` | `test/route.test.ts:143` | miss | The planted change removed the error name or message from an assertion, exactly the weakened error assertion T6 detects, and weeder reported nothing at test/route.test.ts:143. |
+| T6 | ts | tend2 | `99296a937` | `test/verify.test.ts:176` | miss | The T6 shape, an error assertion weakened by ceasing to name the error, is present at test/verify.test.ts:176 and weeder did not report it there. |
+| T6 | ts | tend2 | `ad070a0d4` | `test/verify.test.ts:176` | miss | The planted change strips the specific error name from an assertion, which genuinely weakens it as T6 defines, and the miss log shows weeder did not report it. |
+| T6 | ts | tend2 | `e2adbab97` | `test/verify.test.ts:176` | miss | Dropping the error name from an assertion is precisely T6's "weakened error assertion" shape, and weeder reported nothing at that site. |
+| T6 | ts | tend2 | `e9e8387e9` | `test/verify.test.ts:176` | miss | Removing the error name from an assertion is exactly the "weakened error assertion" shape T6 detects, and weeder planted it there without reporting it. |
+| T6 | ts | tend2 | `fadcb3808` | `test/verify.test.ts:176` | miss | The injected change, an error assertion that stopped naming its error, is T6's weakening shape, present at the site with no report from weeder; the fourteen identical ts misses confirm a detector gap. |
