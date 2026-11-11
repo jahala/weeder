@@ -3,6 +3,16 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  # The registries are asked for by hand. A tag builds the release page, which
+  # is the install, and publishes nowhere else until crates.io takes tilth-core
+  # (#45) and npm has a publisher. Dispatched on a tag with `publish` set, the
+  # same run builds again and publishes to both.
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish this tag to crates.io and npm"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -19,7 +29,7 @@ jobs:
       contents: read
       actions: read # the Windows gate reads windows.yml's runs on the tagged commit
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v6
       # Pull requests do not run Windows, so the tagged commit may reach here
       # before anything judged it on that platform. Nothing is built or published
       # until windows.yml has passed on this exact commit.
@@ -28,6 +38,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: bash scripts/windows-green.sh "$GITHUB_SHA"
+      - name: The run is for a version tag
+        run: |
+          case "$GITHUB_REF" in
+            refs/tags/v*) ;;
+            *) echo "::error::release.yml runs on a version tag, and this run is for $GITHUB_REF"; exit 1 ;;
+          esac
       - name: The tag, Cargo.toml and npm/package.json name one version
         run: |
           TAG="${GITHUB_REF#refs/tags/v}"
@@ -75,13 +91,13 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v6
 
       - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # ratchet:dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # ratchet:Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # ratchet:Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
 
@@ -108,7 +124,7 @@ jobs:
         shell: bash
         run: bash scripts/package-release.sh "${{ matrix.target }}" "target/${{ matrix.target }}/release" .
 
-      - uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # ratchet:softprops/action-gh-release@v3
+      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # ratchet:softprops/action-gh-release@v3
         with:
           files: |
             weeder-*.tar.gz
@@ -117,12 +133,14 @@ jobs:
           # appends freshly generated notes to the body, so every extra matrix
           # leg would add another copy of what changed.
           generate_release_notes: ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
+          body: ${{ matrix.target == 'x86_64-unknown-linux-musl' && 'This page is the install. Download the archive for your platform, check it against its `.sha256`, and put `weeder` on your PATH.' || '' }}
 
   publish-crate:
     needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v6
       - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # ratchet:dtolnay/rust-toolchain@stable
       - name: Publish weeder
         run: cargo publish --locked
@@ -131,6 +149,7 @@ jobs:
 
   publish-npm:
     needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
     runs-on: ubuntu-latest
     # Two ways in. A token from the NPM_TOKEN secret, which is what the first
     # publish of a scoped package has to use: trusted publishing is configured on
@@ -141,8 +160,8 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v6
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # ratchet:actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v6
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # ratchet:actions/setup-node@v6
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
