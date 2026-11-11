@@ -11,16 +11,17 @@
 //! the workflow asks it. Anything it cannot place as prose is code, and an
 //! empty list is code too, because a list git failed to write says nothing.
 
+mod common;
+
 use std::io::Write;
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
 /// What the script answers for these paths, written the way the workflow
 /// hands them over: each path ended by a NUL, as `git diff -z` writes them.
 fn answer(paths: &[&str]) -> String {
     let script = Path::new(env!("CARGO_MANIFEST_DIR")).join("scripts/ci-changes.sh");
-    let mut child = Command::new("bash")
-        .arg(&script)
+    let mut child = common::bash(&script)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
