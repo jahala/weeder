@@ -935,3 +935,35 @@ fn t1_still_blocks_a_case_gone_beside_a_table_it_cannot_count_that_did_not_chang
         assert_eq!(run.code, 2, "{name}: the change is stopped");
     }
 }
+
+#[test]
+fn a_deleted_test_file_whose_cases_weeder_cannot_count_is_a_warning_not_silence() {
+    // A bats suite's cases are not read yet (jahala/tilth#318), so the file
+    // counts as no cases at all. Deleting it took a suite out of the run all
+    // the same, and saying nothing about that is the one wrong answer. weeder
+    // cannot say how much went, so it warns rather than blocks: a person reads
+    // whether the file held tests or only helped them.
+    let repo = common::Repo::init();
+    repo.write(
+        "test/check.bats",
+        "@test \"the gate refuses an empty input\" {\n  run ./check.sh \"\"\n  [ \"$status\" -eq 1 ]\n}\n",
+    );
+    repo.commit("a suite the change starts from");
+    std::fs::remove_file(repo.root().join("test/check.bats")).expect("the suite is deleted");
+
+    let run = repo.weeder(&["check"]);
+    let t1: Vec<common::Finding> = run
+        .findings()
+        .into_iter()
+        .filter(|finding| finding.rule == "T1")
+        .collect();
+    assert_eq!(t1.len(), 1, "the deleted suite is reported: {t1:#?}\n{}", run.stderr);
+    assert_eq!(t1[0].level, "warning", "an uncounted fall is read by a person");
+    assert_eq!(t1[0].path, "test/check.bats");
+    assert!(
+        t1[0].message.contains("could not count"),
+        "the finding says why it cannot say how much went: {}",
+        t1[0].message
+    );
+    assert_eq!(run.code, 0, "a warning stops nobody");
+}

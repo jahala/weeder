@@ -96,6 +96,12 @@ fn deletion(change: &Change, held: &Held, arrived: &[Arrival]) -> Option<Detecti
     let census = generated::census(&change.before);
     let now = generated::census(&change.after);
     let (before, after) = (census.count, now.count);
+    // A test file deleted with no case weeder could count in it, a bats suite
+    // before its cases are read, or a file of helpers, still took whatever it
+    // held out of the run. How much is not known, so a person reads it.
+    if change.is_deletion() && before == 0 {
+        return Some(uncounted_file_gone(path));
+    }
     let gone = if change.is_deletion() {
         before
     } else if after < before {
@@ -272,6 +278,21 @@ fn written(mask: &Mask, suite: &Suite, unit: &TestUnit) -> Case {
         name: unit.name.clone(),
         body,
         assertions,
+    }
+}
+
+/// What T1 says where a test file went and weeder could count no case in it.
+fn uncounted_file_gone(path: &str) -> Detection {
+    Detection {
+        stamp: Stamp::Override(Level::Warn),
+        path: path.to_string(),
+        region: None,
+        message: Message {
+            what: "a test file was deleted, and weeder could not count the cases it held.".to_string(),
+            why: "a file of tests that is gone runs none of them, and only a person can say whether this one held tests or only helped them.".to_string(),
+            next: "restore the file, move its tests where they still run, or write why it went in a `Weeder-allow: T1` trailer.".to_string(),
+        },
+        fix: None,
     }
 }
 
