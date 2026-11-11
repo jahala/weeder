@@ -15,6 +15,7 @@ use crate::core::hierarchy::Hierarchy;
 use crate::core::read::CallerSite;
 use crate::core::rules::report;
 
+pub mod added;
 pub mod c1;
 pub mod c2;
 pub mod c3;
@@ -32,6 +33,7 @@ pub mod s3;
 pub mod s4;
 pub mod subject;
 pub mod t1;
+pub mod t10;
 pub mod t2;
 pub mod t3;
 pub mod t4;
@@ -104,6 +106,7 @@ const DETECTORS: &[(&str, Detector)] = &[
     ("T6", t6::evaluate),
     ("T7", t7::evaluate),
     ("T8", t8::evaluate),
+    ("T10", t10::evaluate),
     ("M1", m1::evaluate),
     ("S1", s1::evaluate),
     ("S2", s2::evaluate),

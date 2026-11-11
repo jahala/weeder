@@ -237,6 +237,15 @@ An added or changed line of the runner's settings stops an existing test file un
 
 The settings a repository writes are found the way its manifest is: by what the classifier makes of the file and by the name its ecosystem gives it. What a key means is read from the words it is spelled with — `ignore`, `exclude`, `deselect` on one side, `path`, `files`, `match`, `include` on the other — and a key counts as being about the run only where the key, the table it sits under, or the file's own name says so. A gate written at the top of a suite, on a condition an ordinary run never sets, is the same exclusion written inside the file it hides. `weeder check --strict` refuses the run, at exit 3, where a setting weeder cannot read is among the lines the change wrote.
 
+<a id="T10"></a>
+## T10: An added test restates a constant of the code
+
+`check` · warns by default
+
+A test case the change added checks nothing but a value the code defines against a literal: every assertion compares one name, read and not called, with a literal, and the name is the code's rather than the case's, imported by the file, defined by a production file outside the tests it carries, or reached without an import through Go's package scope or a glob import. A name the case binds, takes as a parameter or its own file defines is the test's own expectation and is left alone.
+
+`expect(SERVICE).toBe("build.example.app")` passes whatever the code does with `SERVICE`, because changing the value changes the case with it. A case that hands the constant to the code and checks what comes back, `expect(endpoint(SERVICE)).toBe("https://build.example.app/")`, can fail, and T10 leaves it alone. So does an expected value imported from the code and compared with what the code returns, `expect(status()).toBe(Status.Ready)`: the import only names the answer.
+
 <a id="M1"></a>
 ## M1: A test mocks the unit under change
 

@@ -36,6 +36,19 @@ pub struct Reading {
     pub subjects: Vec<Subject>,
     /// Whether the assertion compares its subjects whole.
     pub exact: bool,
+    /// The 1-based line the comparison is written on: the assertion's own line,
+    /// or in Go the `if` whose condition is the failure the handle is told of.
+    pub line: u32,
+    /// Whether a side the assertion compares is a literal, which is what a
+    /// subject held to a value written out is held to. A string on the line
+    /// that no subject holds counts, so a message the assertion fails with
+    /// counts too, and a caller that needs the difference reads how many
+    /// subjects there are.
+    pub against_literal: bool,
+    /// The string literals on that line outside every subject, without their
+    /// delimiters: what the assertion holds its subjects to, and the message
+    /// it fails with where it writes one there.
+    pub literals: Vec<String>,
 }
 
 /// One value an assertion reads.
@@ -160,16 +173,35 @@ pub fn read(lang: Lang, mask: &Mask, line: u32, floor: u32) -> Option<Reading> {
         Lang::Other => None,
     }?;
     let view = View::of(mask, shape.line);
-    let subjects: Vec<Subject> = shape
+    let (written, literal): (Vec<Span>, Vec<Span>) = shape
         .spans
         .into_iter()
         .map(|span| trimmed(&view.code, span))
-        .filter(|span| span.0 < span.1 && !is_literal(&view.code(*span)))
+        .filter(|span| span.0 < span.1)
+        .partition(|span| !is_literal(&view.code(*span)));
+    // A string is blanked out of the code view, so a side that is one trims
+    // to nothing and leaves no span behind; it is found among the line's
+    // literals instead, as one no subject holds.
+    let literals: Vec<String> = mask
+        .literal_runs(shape.line)
+        .into_iter()
+        .filter(|run| {
+            !written
+                .iter()
+                .any(|span| span.0 <= run.start && run.start < span.1)
+        })
+        .map(|run| run.text.trim_matches(['"', '\'', '`']).to_string())
+        .collect();
+    let subjects: Vec<Subject> = written
+        .into_iter()
         .map(|span| bound(mask, &view, span, shape.line, floor))
         .collect();
     (!subjects.is_empty()).then_some(Reading {
         subjects,
         exact: shape.exact,
+        line: shape.line,
+        against_literal: !literal.is_empty() || !literals.is_empty(),
+        literals,
     })
 }
 

@@ -72,6 +72,7 @@ fn reader(rule: &str) -> Option<Reader> {
         "T4" => Reader::Site(|site, _, _| a_slack_grew(site)),
         "T5" => Reader::Site(|site, _, tree| an_expectation_moved(site, tree)),
         "T6" => Reader::Site(|site, _, _| a_claim_stopped_naming_the_failure(site)),
+        "T10" => Reader::Site(|site, _, tree| a_constant_is_restated(site, tree)),
         "M1" => Reader::Site(|site, _, tree| a_double_stands_in_for_the_change(site, tree)),
         "S1" => Reader::Site(|site, _, _| a_marker_for_work_is_in_shipped_code(site)),
         "S2" => Reader::Site(|site, _, _| a_failure_goes_nowhere(site)),
@@ -431,6 +432,39 @@ fn names_the_unit(raw: &str, source: &Source) -> bool {
     let stem = name.rsplit_once('.').map_or(name, |(head, _)| head);
     (!stem.is_empty() && raw.contains(stem))
         || inject::exported_type(source).is_some_and(|named| raw.contains(&named))
+}
+
+// ---------------------------------------------------------------------------
+// The cases that cannot fail
+// ---------------------------------------------------------------------------
+
+/// The lines the shape was written on, as the file holds them now.
+fn planted_lines(site: &Site) -> Vec<&String> {
+    let (Some(first), Some(last)) = (site.first, site.last) else {
+        return Vec::new();
+    };
+    site.after
+        .lines
+        .iter()
+        .skip(first)
+        .take(last.saturating_sub(first) + 1)
+        .collect()
+}
+
+/// T10: the planted lines hold a case, and a check in it writes a constant a
+/// production file declares beside the very string the file declares it as.
+fn a_constant_is_restated(site: &Site, tree: &Tree) -> bool {
+    let planted = planted_lines(site);
+    if !site.after.holds_tests() || site.after.cases().is_empty() {
+        return false;
+    }
+    tree.production(site.lang).iter().any(|source| {
+        inject::declared_constant(source).is_some_and(|(name, literal)| {
+            planted
+                .iter()
+                .any(|line| line.contains(&name) && line.contains(&literal))
+        })
+    })
 }
 
 // ---------------------------------------------------------------------------

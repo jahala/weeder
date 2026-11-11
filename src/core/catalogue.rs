@@ -116,6 +116,20 @@ const CATALOGUE: &[Rule] = &[
         full_description: "An added or changed line of the runner's settings stops an existing test file under the settings file's own directory from being collected, read from the settings file's kind and name rather than from any product. A setup, teardown or coverage setting chooses no test file. A line that names the file, or a pattern matching one, blocks; a line that narrows what the runner reads leaves the hidden set to be worked out, and warns. A setting whose value is built rather than written is reported unreadable instead of guessed at.",
         network: Network::None,
     },
+    // T9 is held for a case added with no assertion at all (issue #16), so the
+    // added cases that assert and still cannot fail (issue #107) take the next
+    // ids in the order the issue names their shapes: T10 a constant restated,
+    // T11 a double asserted on alone, T12 a literal echoed back. The fourth
+    // shape, a double of the unit the case is about, is M1's question asked of
+    // more than the diff, so M1 answers it rather than an id of its own.
+    Rule {
+        id: "T10",
+        face: Face::Check,
+        default_level: Level::Warn,
+        short_description: "An added test restates a constant of the code",
+        full_description: "A test case the change added checks nothing but a value the code defines against a literal: every assertion compares one name, read and not called, with a literal, and the name is the code's rather than the case's, imported by the file, defined by a production file outside the tests it carries, or reached without an import through Go's package scope or a glob import. A name the case binds, takes as a parameter or its own file defines is the test's own expectation and is left alone.",
+        network: Network::None,
+    },
     Rule {
         id: "M1",
         face: Face::Check,
