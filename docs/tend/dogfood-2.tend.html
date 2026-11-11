@@ -17,7 +17,7 @@
 - [x] (code) S1 matches each language's own stub markers only in that language, so `todo !== null` in TypeScript is silent and `todo!()` in Rust still blocks (#95) · tests/rule_s1.rs @ea3c010 · by cli
 - [x] (code) a test case turned skip, focus or todo is reported by T3 alone and not counted by T1 as disappeared, in ts, py, rs and go (#74) · tests/rule_t1.rs @95cba7a979e81c · by cli
 - [x] (code) C1 guards a hard-rules section of AGENTS.md or CLAUDE.md under any heading the repository names in `[guardrails] sections`, and by default under headings that say hard limits, non-negotiables, or never; docs/rules.md lists the key (#77) · tests/rule_c1.rs @872ff67f1f8b83 · by cli
-- [x] (code) S2 reports an empty catch written on one line, `catch {}` and `catch (e) {}`, as it does one spread over two (#75) · tests/rule_s2.rs @6daa87a · by cli
+- [x] (code) S2 reports an empty catch written on one line, `catch {}` and `catch (e) {}`, as it does one spread over two (#75) · tests/rule_s2.rs @abf37210cf0970 · by cli
 - [x] (code) T8 does not count a `setupFiles` or other setup entry as narrowing what the runner collects, and a runner config applies only to files under its own root (#96) · tests/rule_t8.rs @c254fa3 · by cli
 - [x] (code) T5's next names the `Weeder-allow: T5` trailer, as every other rule's does (#89) · tests/rule_messages.rs @9eebd5ce2da04f · by cli
 - [x] (code) `check` reports, once per run as a note, the changed files in languages it does not read, by extension and count, so a change in bash alone is never judged clean in silence (#79) · tests/check_unread.rs @6ac07ab · by cli
@@ -27,7 +27,7 @@
 - [x] (code) README's examples protect the branch each repository actually uses, `master` here (#81) · scripts/check/readme.sh @ea52ca0 · by cli
 - [x] (code) `cargo xtask calibrate` and `cargo xtask mutate` run again on the pinned corpus after these land, every new block classified, both bars hold, and both re-grades re-taken if the block set moved · scripts/check/calibration-bar.sh · reads: docs/calibration-2026-09.md @f01c5e8f0c159e · by cli
 
-- [x] (code) S2 reads a comment on a dropped failure's line, or alone on the line above it, as the reason its next action asks for, for a failure bound to `_` and a fallible call turned into a value, and still warns where no comment is near (#116) · tests/rule_s2.rs @a8ae0b4 · by cli
+- [x] (code) S2 reads a comment on a dropped failure's line, or alone on the line above it, as the reason its next action asks for, for a failure bound to `_` and a fallible call turned into a value, and still warns where no comment is near (#116) · tests/rule_s2.rs @c1d3c4a0cf0970 · by cli
 - [x] (code) S4 warns on an export a change adds to production code whose every reference outside its own file is in a test, in ts, py, rs and go, stays silent where production code calls it or it is an entry point, and the recall campaign plants and reads an S4 case per language (#103) · tests/rule_s4.rs @40bcd9fcad1765 · by cli
 - [x] (code) `release.yml` refuses to build a tagged commit whose newest `windows.yml` run is missing, unfinished or red, in the job every build waits on · scripts/check/windows-ci.sh @419af9a · by cli
 - [x] (code) no helper worktree under `.claude/worktrees/` outlives its merged branch: `scripts/worktrees-prune.sh` removes each one that is clean and whose HEAD origin/master holds, never one with work in it, one not landed, or one a running session holds, and the check fails while one is left (#133) · scripts/check/worktrees.sh @7fb48a4519df2f · by cli
