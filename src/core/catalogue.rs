@@ -139,6 +139,14 @@ const CATALOGUE: &[Rule] = &[
         network: Network::None,
     },
     Rule {
+        id: "T12",
+        face: Face::Check,
+        default_level: Level::Warn,
+        short_description: "An added test only checks that its input came back",
+        full_description: "A test case the change added checks nothing but that a string it passed in comes back out: every assertion holds what it reads to a string literal, outside the value it reads, that the case already wrote on an earlier line that is not a check, a prop, an argument or a fake's message. A literal of nothing but punctuation is no message and is passed over. A check that holds the answer to a literal of its own, the input with what the code adds to it, is left alone.",
+        network: Network::None,
+    },
+    Rule {
         id: "M1",
         face: Face::Check,
         default_level: Level::Warn,

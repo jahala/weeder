@@ -109,6 +109,7 @@ fn planter(rule: &str) -> Option<Planter> {
         "T8" => keep_a_suite_out_of_the_run,
         "T10" => |lang, tree, seed| restate_a_constant(lang, tree, seed).ok_or(NoSite::Absent),
         "T11" => |lang, tree, seed| assert_on_a_double(lang, tree, seed).ok_or(NoSite::Absent),
+        "T12" => |lang, tree, seed| echo_a_literal(lang, tree, seed).ok_or(NoSite::Absent),
         "M1" => {
             |lang, tree, seed| mock_the_unit_under_change(lang, tree, seed).ok_or(NoSite::Absent)
         }
@@ -1025,10 +1026,7 @@ pub(super) const ANSWERING_DOUBLE: &str = "answer";
 
 /// T11: a case is added that builds a double, tells it what to answer, and
 /// checks that it answered, with nothing of the code under test between.
-///
-/// The case goes after the last case of a suite the runner collects, so it
-/// sits where the suite's cases sit; Python's goes at the foot of the file, a
-/// function of its own, with the import the double is made by.
+/// Python's case brings the import its double is made by.
 fn assert_on_a_double(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
     let name = ANSWERING_DOUBLE;
     for source in rotate(tree.tests(lang), seed) {
@@ -1083,31 +1081,105 @@ fn assert_on_a_double(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation
                 "}".to_string(),
             ],
         };
-        let (at, imports): (usize, Vec<String>) = match lang {
-            Language::Py => (
-                source.lines.len(),
-                vec!["from unittest.mock import Mock".to_string()],
-            ),
-            _ => (last_case.last as usize + 1, Vec::new()),
+        let imports = match lang {
+            Language::Py => vec!["from unittest.mock import Mock".to_string()],
+            _ => Vec::new(),
         };
-        let mut lines = source.lines.clone();
-        let import_at = source.last_import().map_or(0, |line| line + 1);
-        for (offset, import) in imports.iter().enumerate() {
-            lines.insert(import_at.min(lines.len()) + offset, import.clone());
-        }
-        let at = at + imports.len();
-        let first = at + case.iter().take_while(|line| line.is_empty()).count() + 1;
-        let last = at + case.len();
-        for (offset, line) in case.into_iter().enumerate() {
-            lines.insert(at.min(lines.len()) + offset, line);
-        }
-        return Some(
-            Mutation::new("a case asserts on the double it built", &source.path)
-                .writing(&source.path, joined(&lines))
-                .at(first as u32, last as u32),
-        );
+        return Some(beside_the_cases(
+            source,
+            &last_case,
+            case,
+            &imports,
+            "a case asserts on the double it built",
+        ));
     }
     None
+}
+
+/// The string T12's planted case passes in and reads back.
+pub(super) const ECHOED_MESSAGE: &str = "nothing to report";
+
+/// T12: a case is added that writes a string into a value, and checks that
+/// the value holds the same string, with nothing the code adds between.
+fn echo_a_literal(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
+    let message = ECHOED_MESSAGE;
+    for source in rotate(tree.tests(lang), seed) {
+        let Some(last_case) = source.cases().last().cloned() else {
+            continue;
+        };
+        let indent = leading(&source.lines[last_case.first as usize]);
+        let case: Vec<String> = match lang {
+            Language::Ts => vec![
+                String::new(),
+                format!("{indent}test(\"a message passes through\", () => {{"),
+                format!("{indent}  const message = \"{message}\";"),
+                format!("{indent}  expect(String(message)).toBe(\"{message}\");"),
+                format!("{indent}}});"),
+            ],
+            Language::Py => vec![
+                String::new(),
+                String::new(),
+                "def test_a_message_passes_through():".to_string(),
+                format!("    message = \"{message}\""),
+                format!("    assert str(message) == \"{message}\""),
+            ],
+            Language::Rs => vec![
+                String::new(),
+                format!("{indent}#[test]"),
+                format!("{indent}fn a_message_passes_through() {{"),
+                format!("{indent}    let message = String::from(\"{message}\");"),
+                format!("{indent}    assert_eq!(message.as_str(), \"{message}\");"),
+                format!("{indent}}}"),
+            ],
+            Language::Go => vec![
+                String::new(),
+                "func TestAMessagePassesThrough(t *testing.T) {".to_string(),
+                format!("\tmessage := \"{message}\""),
+                format!("\tif got := message; got != \"{message}\" {{"),
+                "\t\tt.Errorf(\"the message reads %q\", got)".to_string(),
+                "\t}".to_string(),
+                "}".to_string(),
+            ],
+        };
+        return Some(beside_the_cases(
+            source,
+            &last_case,
+            case,
+            &[],
+            "a case checks that its input came back",
+        ));
+    }
+    None
+}
+
+/// A suite with one more case: after its last case, where the suite's cases
+/// sit, or for Python at the foot of the file as a function of its own, with
+/// any import the case needs after the suite's own imports.
+fn beside_the_cases(
+    source: &Source,
+    last_case: &Case,
+    case: Vec<String>,
+    imports: &[String],
+    shape: &str,
+) -> Mutation {
+    let at = match source.lang {
+        Language::Py => source.lines.len(),
+        _ => last_case.last as usize + 1,
+    };
+    let mut lines = source.lines.clone();
+    let import_at = source.last_import().map_or(0, |line| line + 1);
+    for (offset, import) in imports.iter().enumerate() {
+        lines.insert(import_at.min(lines.len()) + offset, import.clone());
+    }
+    let at = at + imports.len();
+    let first = at + case.iter().take_while(|line| line.is_empty()).count() + 1;
+    let last = at + case.len();
+    for (offset, line) in case.into_iter().enumerate() {
+        lines.insert(at.min(lines.len()) + offset, line);
+    }
+    Mutation::new(shape, &source.path)
+        .writing(&source.path, joined(&lines))
+        .at(first as u32, last as u32)
 }
 
 // ---------------------------------------------------------------------------
@@ -2330,6 +2402,11 @@ mod tests {
     #[test]
     fn a_case_on_its_own_double_is_planted_and_read_back_in_every_language() {
         read_back("T11", assert_on_a_double);
+    }
+
+    #[test]
+    fn an_echoed_literal_is_planted_and_read_back_in_every_language() {
+        read_back("T12", echo_a_literal);
     }
 
     #[test]

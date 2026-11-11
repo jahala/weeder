@@ -21,6 +21,7 @@
 | T7 | test uncollected by rename: a test file or case renamed so the runner no longer collects it | block | rename detection plus naming conventions: `*.test.ts`/`*.spec.ts`, `test_*.py`/`*_test.py`, `#[test]` kept, `*_test.go` and `TestXxx` |
 | T10 | an added case restates a constant of the code: every check compares one name the code defines with a literal | warn | `subject::read` on each check of a case the change adds: exact, one subject, a literal on the other side, a bare name not bound in the case, imported, defined beside its tests, or reached through Go's package scope or a glob import |
 | T11 | an added case asserts only on a double it built and hands to nothing | warn | each check of a case the change adds reads a name the case bound to a double (the mock words, or a script `fn` member called), directly or through a value read off it, and the double is never written as an argument or a value |
+| T12 | an added case only checks that a string it passed in came back out | warn | each check of a case the change adds holds its subject to a string literal, outside the subject, that the case wrote earlier on a line that is no check |
 | M1 | mock over the unit under change: a test in the diff mocks a module whose production file is also in the diff | warn | mock specifiers (`vi.mock`, `jest.mock`, `unittest.mock.patch`, `mockall`, `gomock`) resolved against the diff's prod paths through the reader's import resolution |
 
 tend2's `src/verify/mock.ts` (in tend2's own repository, github.com/jahala/tend) is prior art for M1 on TypeScript: read it for the shapes it catches, do not port it.
@@ -37,6 +38,7 @@ tend2's `src/verify/mock.ts` (in tend2's own repository, github.com/jahala/tend)
 
 - [ ] (code) T10 warns when a case the change adds checks nothing but a constant of the code against a literal, reached by import in ts and py, defined beside its tests in rs and through the package scope in go, stays silent when the case hands the constant to the code and checks what comes back against an independent literal, and leaves a case already committed alone · tests/rule_t10.rs
 - [ ] (code) T11 warns when a case the change adds asserts on nothing but a double it built itself, a mock function in ts, a `Mock` in py and a fake in rs and go, stays silent when the case hands the double to the unit and checks the unit's output or what the unit did to the double, and leaves a case already committed alone · tests/rule_t11.rs
+- [ ] (code) T12 warns when a case the change adds checks nothing but that a string it passed in, an error's message, comes back out, in ts, py, rs and go, stays silent when the case checks the whole answer against a string of its own that holds what the code adds, and leaves a case already committed alone · tests/rule_t12.rs
 ## Needs #rules-block
 
 ## Tried

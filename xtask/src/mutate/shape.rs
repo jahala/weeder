@@ -74,6 +74,7 @@ fn reader(rule: &str) -> Option<Reader> {
         "T6" => Reader::Site(|site, _, _| a_claim_stopped_naming_the_failure(site)),
         "T10" => Reader::Site(|site, _, tree| a_constant_is_restated(site, tree)),
         "T11" => Reader::Site(|site, _, _| a_double_answers_alone(site)),
+        "T12" => Reader::Site(|site, _, _| a_literal_comes_back(site)),
         "M1" => Reader::Site(|site, _, tree| a_double_stands_in_for_the_change(site, tree)),
         "S1" => Reader::Site(|site, _, _| a_marker_for_work_is_in_shipped_code(site)),
         "S2" => Reader::Site(|site, _, _| a_failure_goes_nowhere(site)),
@@ -508,6 +509,36 @@ fn a_double_answers_alone(site: &Site) -> bool {
         .any(|written| line.contains(written.as_str()))
     });
     site.after.holds_tests() && binds && asserted && !handed
+}
+
+/// T12: the planted lines write the same string twice, once on a line that
+/// is no assertion and once on a later line that is one, or in Go the `if`
+/// whose failure the assertion under it reports.
+fn a_literal_comes_back(site: &Site) -> bool {
+    let (Some(first), Some(last)) = (site.first, site.last) else {
+        return false;
+    };
+    let quoted = format!("\"{}\"", inject::ECHOED_MESSAGE);
+    let claims = site.after.assertions();
+    let reported_below = site.lang == Language::Go;
+    let checks = |at: usize| {
+        claims
+            .iter()
+            .any(|claim| *claim as usize == at || (reported_below && *claim as usize == at + 1))
+    };
+    let written: Vec<usize> = (first..=last)
+        .filter(|at| {
+            site.after
+                .lines
+                .get(*at)
+                .is_some_and(|line| line.contains(&quoted))
+        })
+        .collect();
+    site.after.holds_tests()
+        && written.iter().any(|at| !checks(*at))
+        && written
+            .iter()
+            .any(|at| checks(*at) && written.iter().any(|input| input < at && !checks(*input)))
 }
 
 // ---------------------------------------------------------------------------

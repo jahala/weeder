@@ -255,6 +255,15 @@ A test case the change added asserts on nothing but a double it built itself: ev
 
 A double is read through the same words M1 reads one by, `mock`, `stub`, `fake`, `spy`, `patch` and `double`, and through the script frameworks' mock function, a member called `fn` and called. A case that tells `vi.fn()` to answer `true` and then checks that it answered `true` has tested the mock. Configuring the double, `save.mockReturnValue(true)` or `clock.set(5)`, is not handing it on; passing it as an argument, or as a value in an object, is.
 
+<a id="T12"></a>
+## T12: An added test only checks that its input came back
+
+`check` · warns by default
+
+A test case the change added checks nothing but that a string it passed in comes back out: every assertion holds what it reads to a string literal, outside the value it reads, that the case already wrote on an earlier line that is not a check, a prop, an argument or a fake's message. A literal of nothing but punctuation is no message and is passed over. A check that holds the answer to a literal of its own, the input with what the code adds to it, is left alone.
+
+A case that builds `new Error("Workspace not found")`, hands it to the code and checks that the answer contains `Workspace not found` stays green as long as the string gets through, whatever the code does around it. A case that stores a value and reads it back has the same shape and can be honest, which is one reason T12 warns rather than blocks.
+
 <a id="M1"></a>
 ## M1: A test mocks the unit under change
 
