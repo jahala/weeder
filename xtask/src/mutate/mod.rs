@@ -14,7 +14,7 @@
 //! site, with its before and after kept on disk, so a number nobody believes can
 //! be replayed by hand.
 
-mod corpus;
+pub mod corpus;
 mod git;
 mod inject;
 mod judge;
@@ -45,8 +45,8 @@ pub struct Request {
     #[arg(long, default_value_t = 200)]
     pub commits: usize,
     /// Read the corpus from here instead of docs/calibration/corpus.toml and
-    /// docs/calibration/corpus-go.toml. Repeat it for more than one file;
-    /// naming any leaves both of those unread.
+    /// the histories recall adds to it, corpus-go.toml and corpus-rs.toml.
+    /// Repeat it for more than one file; naming any leaves all of those unread.
     #[arg(long = "corpus", value_name = "path")]
     pub corpora: Vec<PathBuf>,
     /// The file the recall section is written into.
@@ -296,15 +296,15 @@ fn joined(mut walked: Vec<(String, usize, Outcome)>) -> Vec<Outcome> {
 }
 
 /// The corpus files this run reads: the ones it was given, or calibration's
-/// corpus and the Go history recall adds to it.
+/// corpus and the histories recall adds to it.
 fn corpora(request: &Request, root: &Path) -> Vec<PathBuf> {
     if !request.corpora.is_empty() {
         return request.corpora.clone();
     }
-    vec![
-        root.join(crate::corpus::DEFAULT_PATH),
-        root.join(corpus::GO_PATH),
-    ]
+    std::iter::once(crate::corpus::DEFAULT_PATH)
+        .chain(corpus::RECALL_PATHS)
+        .map(|path| root.join(path))
+        .collect()
 }
 
 /// Fetch every repository at its pin, and read what each one writes. A source

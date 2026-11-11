@@ -2,7 +2,7 @@
 
 weeder ships as a gate, pending the independent re-grade: over 635 commits of real history in 5 repositories it blocked 24, of which 1 were block-level false positives, 0.16 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level, and the classification under it untrusted until a re-grade agrees at the bar. The re-grade behind it is a sighted one: docs/calibration-audit-2026-09.md declares `Blind: no`, so its auditor could read the builder's class beside each case before judging. The blind re-grade in docs/calibration-audit-blind-2026-09.md is under the bar, so no blind agreement stands behind this number yet.
 
-The classification under that number is the builder's own, and the re-grade is under the 90 percent bar: blocked commits in docs/calibration-audit-blind-2026-09.md agrees on 70.0 percent of 20 cases. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing. The floor under that share is 0.94 percent, 6 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 0.16 percent, 1 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table. Both numbers stay in this file: under the three classes in use before the ruling of 2026-09-06 the same 23 blocked commits counted 7 false positives, 1.10 percent, and under it, where a blocked commit is claim-true or claim-false and `acceptable` is a label the audit never counts, they count 4, 0.63 percent. The definition changed on that date and the question was corrected, not the goalpost moved.
+The classification under that number is the builder's own, and the re-grade is under the 90 percent bar: blocked commits in docs/calibration-audit-blind-2026-09.md agrees on 85.0 percent of 20 cases. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing. The floor under that share is 0.47 percent, 3 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 0.16 percent, 1 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table. Both numbers stay in this file: under the three classes in use before the ruling of 2026-09-06 the same 23 blocked commits counted 7 false positives, 1.10 percent, and under it, where a blocked commit is claim-true or claim-false and `acceptable` is a label the audit never counts, they count 4, 0.63 percent. The definition changed on that date and the question was corrected, not the goalpost moved.
 
 ## How this was measured
 
@@ -47,7 +47,7 @@ No `weeder.toml` was passed and none was read: every rule ran at the level the c
 
 No commit in the corpus carried a `weeder.toml` of its own, so no repository moved a rule off the level above.
 
-## tilth, 200 commits judged, 8 blocked, 71 warned
+## tilth, 200 commits judged, 8 blocked, 70 warned
 
 The window ends at `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905`, fetched from `https://github.com/jahala/tilth.git`: the last 200 commits reaching it that are not merges, 200 of which have a parent to be judged against.
 
@@ -109,12 +109,12 @@ The window ends at `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d`, fetched from `htt
 
 | Repo | Commits judged | Blocked | Warned | True positive | Acceptable | False positive | False-positive share |
 |---|---|---|---|---|---|---|---|
-| tilth | 200 | 8 | 71 | 1 | 7 | 0 | 0.00% |
+| tilth | 200 | 8 | 70 | 1 | 7 | 0 | 0.00% |
 | pleach | 152 | 3 | 33 | 0 | 2 | 1 | 0.66% |
 | tend2 | 200 | 6 | 35 | 0 | 6 | 0 | 0.00% |
 | copeca | 25 | 0 | 8 | 0 | 0 | 0 | 0.00% |
 | umbel | 58 | 7 | 15 | 2 | 5 | 0 | 0.00% |
-| **pooled** | **635** | **24** | **162** | **3** | **20** | **1** | **0.16%** |
+| **pooled** | **635** | **24** | **161** | **3** | **20** | **1** | **0.16%** |
 
 The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 0.16 percent of 635 commits, and 0 commits weeder could not judge.
 
@@ -331,7 +331,7 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 
 ## Recall
 
-The bar is not met: T7 in rs, T8 in rs, D2 in go are under 95 percent. 3008 cases were planted one anti-pattern at a time in real commits, and 2978 of them were caught on the site they were planted in.
+Every rule the recall bar holds, T1, T2, T3, T7, T8, S1, D2, X1, X2, C1, G1, catches at least 95 percent of the anti-patterns planted for it, in each of ts, py, rs and go. 3015 cases were planted one anti-pattern at a time in real commits, and 2989 of them were caught on the site they were planted in.
 
 The campaign is `cargo xtask mutate`. For each case it checks out a real commit of a corpus repository, plants one anti-pattern in its tree with a scanner that knows nothing about weeder's detectors, and runs `weeder check --base <parent> --strict`. A case counts as caught only where the rule fires on the file the shape was planted in, on the lines it was planted on where it has lines. A site the unmutated commit already fires that rule on is passed over, so no hit is inherited from the commit itself.
 
@@ -339,21 +339,22 @@ The campaign is `cargo xtask mutate`. For each case it checks out a real commit 
 
 | Repository | Source | Window ends at | Commits walked | Cases |
 |---|---|---|---|---|
+| anyhow | `https://github.com/dtolnay/anyhow.git` | `87c8571326d60b90391d0555c9675b5ac6f044b1` | 200 | 360 |
 | cobra | `https://github.com/spf13/cobra.git` | `adbc8813901bba65827259daa8e22ff94ec1f30e` | 200 | 360 |
 | copeca | `https://github.com/jahala/copeca.git` | `fc9c5b9e5f34085755c10746f1d46fd46edf2945` | 15 | 279 |
 | hcl | `https://github.com/hashicorp/hcl.git` | `6abbb088cdb82416d1b3d9fcbaab29534133567a` | 200 | 400 |
 | pleach | `https://github.com/jahala/pleach.git` | `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9` | 22 | 308 |
 | tend2 | `https://github.com/jahala/tend.git` | `51035a5c827b1a8c2f49049f07487dcfac9036c6` | 76 | 308 |
-| tilth | `https://github.com/jahala/tilth.git` | `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905` | 191 | 1059 |
+| tilth | `https://github.com/jahala/tilth.git` | `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905` | 191 | 706 |
 | umbel | `https://github.com/jahala/umbel.git` | `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d` | 58 | 294 |
 
-The garden five are the repositories calibration measures precision on, read from `docs/calibration/corpus.toml` at the commits it pins them at. They carry no Go between them and weeder judges Go, so the Go column is measured on two Go projects that `docs/calibration/corpus-go.toml` pins the same way, read exactly as the five are.
+The garden five are the repositories calibration measures precision on, read from `docs/calibration/corpus.toml` at the commits it pins them at. They carry no Go between them and weeder judges Go, so the Go column is measured on two Go projects that `docs/calibration/corpus-go.toml` pins the same way, read exactly as the five are. Their Rust holds no integration target, the one place a Rust test can be renamed or set out of the run, so `docs/calibration/corpus-rs.toml` pins a crate that has them.
 
 Every window ends at the pin. A commit pushed to one of these sources later is outside the walk, so it plants no case and moves no number, and two runs over one corpus write this section byte for byte the same.
 
 Files the injector planted nothing in, counted once for each commit they were read at:
 
-- added by the commit, so nothing in it was there to change: 449
+- added by the commit, so nothing in it was there to change: 451
 - carrying a NUL byte, which git writes no text diff for: 165
 - saying a generator wrote it: 714
 
@@ -367,7 +368,7 @@ Files the injector planted nothing in, counted once for each commit they were re
 | T1 | block | go | 40 | 39 | 1 | 0 | 97.5% |
 | T2 | block | ts | 42 | 41 | 1 | 0 | 97.6% |
 | T2 | block | py | 34 | 33 | 1 | 0 | 97.1% |
-| T2 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
+| T2 | block | rs | 40 | 39 | 1 | 0 | 97.5% |
 | T2 | block | go | 40 | 39 | 1 | 0 | 97.5% |
 | T3 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
 | T3 | block | py | 34 | 34 | 0 | 0 | 100.0% |
@@ -375,27 +376,27 @@ Files the injector planted nothing in, counted once for each commit they were re
 | T3 | block | go | 40 | 40 | 0 | 0 | 100.0% |
 | T4 | warn | ts | 42 | 41 | 1 | 0 | 97.6% |
 | T4 | warn | py | 14 | 14 | 0 | 0 | 100.0% |
-| T4 | warn | rs | 40 | 39 | 1 | 0 | 97.5% |
+| T4 | warn | rs | 20 | 19 | 1 | 0 | 95.0% |
 | T4 | warn | go | 0 | 0 | 0 | 0 | no cases |
 | T5 | warn | ts | 28 | 28 | 0 | 0 | 100.0% |
 | T5 | warn | py | 16 | 16 | 0 | 0 | 100.0% |
-| T5 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
+| T5 | warn | rs | 20 | 20 | 0 | 0 | 100.0% |
 | T5 | warn | go | 20 | 20 | 0 | 0 | 100.0% |
 | T6 | warn | ts | 42 | 28 | 14 | 0 | 66.7% |
 | T6 | warn | py | 14 | 14 | 0 | 0 | 100.0% |
-| T6 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
+| T6 | warn | rs | 20 | 20 | 0 | 0 | 100.0% |
 | T6 | warn | go | 20 | 20 | 0 | 0 | 100.0% |
 | T7 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
 | T7 | block | py | 34 | 34 | 0 | 0 | 100.0% |
-| T7 | block | rs | 0 | 0 | 0 | 0 | no cases |
+| T7 | block | rs | 20 | 20 | 0 | 0 | 100.0% |
 | T7 | block | go | 40 | 40 | 0 | 0 | 100.0% |
 | T8 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
 | T8 | block | py | 34 | 34 | 0 | 0 | 100.0% |
-| T8 | block | rs | 0 | 0 | 0 | 0 | no cases |
+| T8 | block | rs | 20 | 20 | 0 | 0 | 100.0% |
 | T8 | block | go | 40 | 40 | 0 | 0 | 100.0% |
 | M1 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
 | M1 | warn | py | 7 | 7 | 0 | 0 | 100.0% |
-| M1 | warn | rs | 18 | 18 | 0 | 0 | 100.0% |
+| M1 | warn | rs | 37 | 37 | 0 | 0 | 100.0% |
 | M1 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
 | S1 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
 | S1 | block | py | 34 | 34 | 0 | 0 | 100.0% |
@@ -403,7 +404,7 @@ Files the injector planted nothing in, counted once for each commit they were re
 | S1 | block | go | 40 | 40 | 0 | 0 | 100.0% |
 | S2 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
 | S2 | warn | py | 34 | 33 | 1 | 0 | 97.1% |
-| S2 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
+| S2 | warn | rs | 40 | 36 | 4 | 0 | 90.0% |
 | S2 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
 | S3 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
 | S3 | warn | py | 34 | 34 | 0 | 0 | 100.0% |
@@ -411,16 +412,16 @@ Files the injector planted nothing in, counted once for each commit they were re
 | S3 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
 | S4 | warn | ts | 42 | 42 | 0 | 2 | 100.0% |
 | S4 | warn | py | 34 | 34 | 0 | 0 | 100.0% |
-| S4 | warn | rs | 0 | 0 | 0 | 0 | no cases |
+| S4 | warn | rs | 20 | 20 | 0 | 0 | 100.0% |
 | S4 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
 | D1 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
 | D1 | warn | py | 0 | 0 | 0 | 0 | no cases |
-| D1 | warn | rs | 32 | 32 | 0 | 0 | 100.0% |
+| D1 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
 | D1 | warn | go | 20 | 20 | 0 | 0 | 100.0% |
 | D2 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
 | D2 | block | py | 14 | 14 | 0 | 0 | 100.0% |
-| D2 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
-| D2 | block | go | 20 | 11 | 9 | 0 | 55.0% |
+| D2 | block | rs | 20 | 20 | 0 | 0 | 100.0% |
+| D2 | block | go | 20 | 20 | 0 | 0 | 100.0% |
 | X1 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
 | X1 | block | py | 34 | 34 | 0 | 0 | 100.0% |
 | X1 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
@@ -456,19 +457,15 @@ Unplantable is the column the misses have to be read beside. The injector writes
 
 Each of these was planted and not reported. The before and after of every one is kept under the campaign's cache directory, as `cases/<rule>/<language>/<repository>-<commit>`, so a number nobody believes can be replayed by hand. `WEEDER_RECALL_CACHE` says where that directory is; it sits under the temporary directory otherwise.
 
+- S2 · rs · anyhow `bf3ed9149` · `src/error.rs:544`, a failure was turned into a default
+- T2 · rs · anyhow `d9dc3faf7` · `tests/test_chain.rs`, the assertion on line 37 was deleted
+- S2 · rs · anyhow `30e1a6f73` · `src/error.rs:544`, a failure was turned into a default
+- S2 · rs · anyhow `2cbb4e1bc` · `src/error.rs:544`, a failure was turned into a default
+- S2 · rs · anyhow `cfcc2793b` · `src/error.rs:544`, a failure was turned into a default
 - T1 · go · cobra `3f3b81882` · `doc/man_examples_test.go`, the case `ExampleGenManTree` was deleted
 - T2 · py · copeca `70d669542` · `tests/config/test_mode_models.py`, the assertion on line 66 was deleted
 - S2 · py · copeca `387932ad5` · `tests/e2e/fake_agent.py:61`, a handler was added that catches and says nothing
-- D2 · go · hcl `9466647a1` · `hclwrite/ast_block.go:6`, `hclwrite` was made to import `integrationtest`
-- D2 · go · hcl `bd45ab812` · `hclwrite/format.go:6`, `hclwrite` was made to import `integrationtest`
-- D2 · go · hcl `e73f21667` · `gohcl/schema.go:6`, `gohcl` was made to import `hcldec`
-- D2 · go · hcl `6bf1a67a9` · `gohcl/decode.go:6`, `gohcl` was made to import `hcldec`
-- D2 · go · hcl `2efc26623` · `hclwrite/ast_body.go:6`, `hclwrite` was made to import `integrationtest`
 - T2 · go · hcl `6769f8b19` · `hclwrite/round_trip_test.go`, the assertion on line 151 was deleted
-- D2 · go · hcl `92f12c4e5` · `hcldec/gob.go:6`, `hcldec` was made to import `hcled`
-- D2 · go · hcl `ab1acc486` · `hclwrite/tokens.go:6`, `hclwrite` was made to import `integrationtest`
-- D2 · go · hcl `6a91a7547` · `gohcl/types.go:6`, `gohcl` was made to import `hcldec`
-- D2 · go · hcl `0268c1604` · `gohcl/types.go:6`, `gohcl` was made to import `hcldec`
 - T4 · ts · pleach `3a1306011` · `test/loop/run-work.test.ts:10`, a wait was widened from 1000 to 10000
 - T6 · ts · tend2 `51035a5c8` · `test/verify.test.ts:176`, an error assertion stopped naming the error
 - T6 · ts · tend2 `32df8ddd1` · `test/verify.test.ts:176`, an error assertion stopped naming the error
@@ -490,9 +487,6 @@ Each of these was planted and not reported. The before and after of every one is
 ### Where a shape had nowhere to go
 
 - T4 · go, no commit of the corpus held a site for this shape: 400 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
-- T7 · rs, no commit of the corpus held a site for this shape: 191 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
-- T8 · rs, no commit of the corpus held a site for this shape: 191 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
-- S4 · rs, no commit of the corpus held a site for this shape: 191 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
 - D1 · py, no commit of the corpus held a site for this shape: 206 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
 
 <!-- recall:end -->

@@ -16,6 +16,10 @@
 # and the blind re-grade sample the same report by the same rule and differ only
 # in what the auditor could see. Redoing the ledger moves that sample, which is
 # why this is a script and not a file somebody typed once.
+#
+# Run it last: after blind-run.sh, and after `cargo xtask calibrate` has written
+# the blind agreement into the report. Every answer here names the report's
+# SHA-256, and audit-transcript.sh refuses one that names a report since changed.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"

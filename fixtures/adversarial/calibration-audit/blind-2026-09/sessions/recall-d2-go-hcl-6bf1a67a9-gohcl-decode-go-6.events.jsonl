@@ -1,2 +1,0 @@
-{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-d2-go-hcl-6bf1a67a9-gohcl-decode-go-6.md", "sha256": "337f0ba3abda0cb29cb0e6e06513e6c5b003b1e58f0bc8003a72bff82bcbbf0e", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered packet SHA-256: 337f0ba3abda0cb29cb0e6e06513e6c5b003b1e58f0bc8003a72bff82bcbbf0e\nVerdict: miss\nReasoning: The diff adds an import of `hcldec` into `gohcl/decode.go`, which is the forbidden boundary crossing D2 describes, and weeder reported no finding there."}

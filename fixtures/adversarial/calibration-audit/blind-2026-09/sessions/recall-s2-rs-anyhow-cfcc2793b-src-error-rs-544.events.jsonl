@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-s2-rs-anyhow-cfcc2793b-src-error-rs-544.md", "sha256": "552606fccfbfe56312a61c2b10e36d2dea41db516a6c9308500efc8c5933faf3", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered packet SHA-256: 552606fccfbfe56312a61c2b10e36d2dea41db516a6c9308500efc8c5933faf3\nVerdict: miss\nReasoning: Replacing `?` with `.unwrap_or_default()` at src/error.rs:544 turns a failure into a default, swallowing the error, and weeder reported nothing there."}

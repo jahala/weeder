@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:S2:rs:anyhow:30e1a6f73:src/error.rs:544", "sha256": "9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4\nVerdict: miss\nReasoning: \"A failure was turned into a default\" is a genuine error-swallowing shape at that site, and S2 did not report it there."}
