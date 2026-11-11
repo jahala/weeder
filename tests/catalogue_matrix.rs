@@ -334,7 +334,7 @@ fn every_silent_fixture_reports_nothing() {
 /// rule when the rule is extended to it, so the matrix above holds every rule to
 /// four languages and this list holds the rules that answer for a fifth.
 const BASH: &str = "sh";
-const BASH_RULES: [&str; 2] = ["S1", "S2"];
+const BASH_RULES: [&str; 3] = ["S1", "S2", "S3"];
 
 /// The catalogue's rows for the rules that read bash, each one checked to be a
 /// rule the catalogue prints.

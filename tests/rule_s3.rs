@@ -16,7 +16,7 @@ use tempfile::TempDir;
 
 /// The shapes the check names, one language at a time: the production file the
 /// change touches, and the line each leftover is written on.
-const SHAPES: [(&str, &str, &[&str]); 4] = [
+const SHAPES: [(&str, &str, &[&str]); 5] = [
     (
         "ts",
         "src/report.ts",
@@ -37,11 +37,25 @@ const SHAPES: [(&str, &str, &[&str]); 4] = [
         "report.go",
         &["fmt.Println(\"rows\", rows)", "inspect.Dump(rows)"],
     ),
+    // A script prints for a living, so bash's leftovers are the two shapes
+    // that are plainly a trace: the shell told to trace itself, and a line
+    // labelled as debug output (#79).
+    (
+        "sh",
+        "scripts/deploy.sh",
+        &[
+            "set -euxo pipefail",
+            "set -x",
+            "echo \"DEBUG version=$version\"",
+            ">&2 printf 'debug: %s\\n' \"$version\"",
+            "set -o xtrace",
+        ],
+    ),
 ];
 
 /// The files the silent neighbour writes a leftover into, and why each one is
 /// allowed to: a test, the entry point, and a module `weeder.toml` names.
-const EXEMPT: [(&str, &[&str]); 4] = [
+const EXEMPT: [(&str, &[&str]); 5] = [
     ("ts", &["src/report.test.ts", "src/cli/render.ts"]),
     ("py", &["tests/test_report.py", "src/cli/render.py"]),
     (
@@ -49,6 +63,14 @@ const EXEMPT: [(&str, &[&str]); 4] = [
         &["tests/report.rs", "src/main.rs", "src/cli/render.rs"],
     ),
     ("go", &["report_test.go", "main.go", "cli/render.go"]),
+    (
+        "sh",
+        &[
+            "test/deploy.bats",
+            "scripts/main.sh",
+            "scripts/cli/render.sh",
+        ],
+    ),
 ];
 
 #[test]
@@ -124,6 +146,31 @@ fn the_config_is_what_exempts_a_command_line_face_and_not_its_name() {
         run.stderr
     );
     assert!(run.findings().iter().all(|finding| finding.rule == "S3"));
+}
+
+/// A script's output is its product. The bash neighbour's production file
+/// prints what it did, turns tracing off, prints a line that starts with the
+/// word without being a label, and talks about `set -x` and `DEBUG` inside a
+/// string, a comment and a heredoc: none of that is a leftover.
+#[test]
+fn s3_leaves_the_ordinary_output_of_a_bash_script_alone() {
+    let path = "scripts/deploy.sh";
+    let repo = fixture("S3", "sh", "silent");
+    let changed = repo.git(&["diff", "HEAD", "--name-only"]);
+    assert!(
+        changed.lines().any(|line| line == path),
+        "{path} must be in the diff, or the silence proves nothing"
+    );
+    let after = fixture_file("S3", "sh", "silent/after", path);
+    for line in ["echo \"deployed $version\"", "set +x", "Debug builds"] {
+        assert!(after.contains(line), "the neighbour writes `{line}`");
+    }
+    let run = repo.weeder(&["check"]);
+    assert!(
+        run.findings().iter().all(|finding| finding.path != path),
+        "a script saying what it did is the script working\n{}",
+        run.output()
+    );
 }
 
 /// Where the fixture writes each shape, counted from one.

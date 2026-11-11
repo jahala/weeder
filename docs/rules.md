@@ -302,6 +302,8 @@ S2 reads bash. A failed command answered with `|| true` or `|| :` is a failure t
 
 An added line in a production file prints or breaks for debugging, outside the entry points the config names as command-line faces.
 
+S3 reads bash, where printing is most of what a script is for. So a print is a leftover only when it says it is one: an `echo` or a `printf` whose first word is the label `DEBUG`, or `debug:` or `[debug]`. The other shape is the shell told to trace itself, `set -x`, `set -v`, `set -o xtrace` or a run of flags holding either letter, such as `set -euxo pipefail`. `set +x`, a sentence that happens to begin with the word, and anything inside a string, a comment or a heredoc are output, and are left alone. A test file, a file named `main.*`, a `main` function and a path `[entrypoints] cli` names are exempt, as in every other language.
+
 <a id="S4"></a>
 ## S4: Production code was added that only its tests call
 
