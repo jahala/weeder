@@ -104,6 +104,30 @@ fn d2_judges_every_module_a_statement_names() {
 }
 
 #[test]
+fn d2_resolves_a_module_to_the_path_it_leaves_least_unexplained() {
+    // A command that wraps the seam sits under `cmd/`, named like the layer
+    // it wraps and in no layer itself. The core's import names the seam, and
+    // so does the command's path, one directory further from the root. The
+    // path with nothing in front of what the import spells is the module; a
+    // tie between the two read as "weeder does not know" and blocked nothing.
+    // Python's import here spells `src` too, so it resolves either way and
+    // holds the answer; TypeScript imports by relative path and has no tie.
+    for (lang, offender, _) in LAYERS {
+        if lang == "ts" {
+            continue;
+        }
+        let run = fixture("D2", lang, "shadowed").weeder(&["check"]);
+        assert_eq!(
+            d2(&run),
+            [offender],
+            "{lang}: the import reaches the seam, not the command named after it\n{}",
+            run.stderr
+        );
+        assert_eq!(run.code, 2, "{lang}: a forbidden direction blocks");
+    }
+}
+
+#[test]
 fn d2_stays_silent_on_a_direction_the_repository_allows() {
     for (lang, _, allowed) in LAYERS {
         let repo = fixture("D2", lang, "silent");

@@ -99,6 +99,20 @@ impl Language {
             Language::Rs => directories == ["tests"] || directories == ["benches"],
         }
     }
+
+    /// Whether a file at this path can be production code at all. cargo builds
+    /// `tests/`, `benches/` and `examples/` into targets of their own and never
+    /// into the library, so nothing under them is, at any depth. The other
+    /// languages draw that line by file name, which `collects_file` reads.
+    pub fn may_hold_production(self, path: &str) -> bool {
+        match self {
+            Language::Rs => !matches!(
+                path.split('/').next(),
+                Some("tests" | "benches" | "examples")
+            ),
+            Language::Ts | Language::Py | Language::Go => true,
+        }
+    }
 }
 
 /// The extension of a path, without its dot.
@@ -726,6 +740,25 @@ fn closes(characters: &[char], at: usize, quote: Quote) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_rust_file_under_tests_benches_or_examples_is_never_production() {
+        // cargo builds each of those directories into a target of its own and
+        // none of them into the library, so a file one level down, a trybuild
+        // case or a helper module, is no more production than the targets are.
+        for path in [
+            "tests/ui/chained-comparison.rs",
+            "tests/common/mod.rs",
+            "tests/it.rs",
+            "benches/parse.rs",
+            "examples/demo.rs",
+        ] {
+            assert!(!Language::Rs.may_hold_production(path), "{path}");
+        }
+        for path in ["src/lib.rs", "src/tests/mod.rs", "crates/core/src/lib.rs"] {
+            assert!(Language::Rs.may_hold_production(path), "{path}");
+        }
+    }
 
     #[test]
     fn a_marker_inside_a_string_is_not_code() {

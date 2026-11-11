@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t4-ts-pleach-3a1306011-test-loop-run-work-test-ts-10.md", "sha256": "72eb26f74342a344324358ee6e94246c6780d62a4d61a7227745fe82e68c51de", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered packet SHA-256: 72eb26f74342a344324358ee6e94246c6780d62a4d61a7227745fe82e68c51de\nVerdict: miss\nReasoning: The timeout was widened from 1000 to 10000 at line 10, matching T4, but weeder reported D1 at package.json:40 instead of the planted site."}

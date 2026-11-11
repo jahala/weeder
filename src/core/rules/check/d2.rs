@@ -82,36 +82,63 @@ fn points_at(importer: &str, source: &str, judged: &Judgement) -> Option<String>
     if named.is_empty() {
         return None;
     }
-    let mut best = 0;
+    let mut best: Option<Answer> = None;
     let mut found: Option<String> = None;
     for path in judged.paths {
-        let score = resolves(&named, path);
-        if score == 0 || score < best {
+        let Some(answer) = resolves(&named, path) else {
             continue;
-        }
+        };
         let layer = layer_of(path, &judged.config.layers);
-        if score > best {
-            best = score;
-            found = layer;
-            continue;
-        }
-        // Two paths answer the import equally well. They are the same answer
-        // only where they sit in the same layer; otherwise weeder does not know.
-        if layer != found {
-            found = None;
+        match best.map(|best| answer.cmp(&best)) {
+            Some(std::cmp::Ordering::Less) => continue,
+            Some(std::cmp::Ordering::Equal) => {
+                // Two paths answer the import equally well. They are the same
+                // answer only where they sit in the same layer; otherwise
+                // weeder does not know.
+                if layer != found {
+                    found = None;
+                }
+            }
+            _ => {
+                best = Some(answer);
+                found = layer;
+            }
         }
     }
     found
 }
 
-/// How well a repository path answers a module name: the longest run of the
-/// path's own last segments that the name spells out. The path is read both
-/// whole and as the directory it sits in, because a language that imports a
-/// package imports the directory rather than a file in it.
-fn resolves(named: &[String], path: &str) -> usize {
+/// How well a repository path answers a module name: first the longest run of
+/// the path's own last segments the name spells out, then, between paths the
+/// name spells as far, the one it leaves least unexplained, with the fewest
+/// directories in front of what it spells. A command under `cmd/hcldec/` and
+/// the package `hcldec/` both end the way `…/hcldec` does; the package is the
+/// one nothing stands in front of. Ordered so that the better answer is the
+/// greater.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+struct Answer {
+    spelled: usize,
+    explained: std::cmp::Reverse<usize>,
+}
+
+/// How a repository path answers a module name, or `None` where the name spells
+/// none of it. The path is read both whole and as the directory it sits in,
+/// because a language that imports a package imports the directory rather than
+/// a file in it.
+fn resolves(named: &[String], path: &str) -> Option<Answer> {
     let whole = path_segments(path);
     let directory = whole.split_last().map(|(_, rest)| rest).unwrap_or_default();
-    tail_within(&whole, named).max(tail_within(directory, named))
+    [whole.as_slice(), directory]
+        .into_iter()
+        .map(|candidate| {
+            let spelled = tail_within(candidate, named);
+            Answer {
+                spelled,
+                explained: std::cmp::Reverse(candidate.len() - spelled),
+            }
+        })
+        .filter(|answer| answer.spelled > 0)
+        .max()
 }
 
 /// The longest run of `candidate`'s last segments that appears whole inside

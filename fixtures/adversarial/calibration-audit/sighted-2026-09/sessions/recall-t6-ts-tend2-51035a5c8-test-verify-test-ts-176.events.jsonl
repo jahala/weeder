@@ -1,2 +1,0 @@
-{"type": "input", "case": "recall:T6:ts:tend2:51035a5c8:test/verify.test.ts:176", "sha256": "0927501b826f9c61ebff9d366cd80c1a622b1a975bca84104ba80b90786beb49", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered report SHA-256: 0927501b826f9c61ebff9d366cd80c1a622b1a975bca84104ba80b90786beb49\nVerdict: miss\nReasoning: An error assertion stripped of its error name is squarely T6's weakened-assertion shape, and weeder reported nothing at that site, so the recorded miss holds."}

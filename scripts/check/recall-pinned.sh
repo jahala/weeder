@@ -328,12 +328,16 @@ PY
 # -------------------------------------------------------- the shipped corpus --
 # Both files, fetched at their pins, and the campaign run over them twice.
 corpus="docs/calibration/corpus.toml"
-go="docs/calibration/corpus-go.toml"
+added=("docs/calibration/corpus-go.toml" "docs/calibration/corpus-rs.toml")
 [ -f "$corpus" ] || { echo "$corpus is missing: the campaign names no repositories to walk" >&2; exit 1; }
-[ -f "$go" ] || { echo "$go is missing: the Go column has no history to be measured on" >&2; exit 1; }
+for file in "${added[@]}"; do
+  [ -f "$file" ] || { echo "$file is missing: recall has no history to measure that column on" >&2; exit 1; }
+done
 
 bash "$root/scripts/corpus-scratch.sh" "$scratch/pins" "$corpus" > "$scratch/pins.tsv"
-bash "$root/scripts/corpus-scratch.sh" "$scratch/pins" "$go" >> "$scratch/pins.tsv"
+for file in "${added[@]}"; do
+  bash "$root/scripts/corpus-scratch.sh" "$scratch/pins" "$file" >> "$scratch/pins.tsv"
+done
 [ -s "$scratch/pins.tsv" ] || { echo "the corpus fetched nothing" >&2; exit 1; }
 
 shipped() { # <run-name> <out.md> <out.json>

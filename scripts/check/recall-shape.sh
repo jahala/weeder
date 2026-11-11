@@ -306,9 +306,10 @@ PY
 # keeps held to the two shapes the re-grade named — read off disk here, in this
 # script's own words, rather than taken from the campaign.
 corpus="docs/calibration/corpus.toml"
-go="docs/calibration/corpus-go.toml"
 [ -f "$corpus" ] || { echo "$corpus is missing: the campaign names no repositories to walk" >&2; exit 1; }
-[ -f "$go" ] || { echo "$go is missing: the Go column has no history to be measured on" >&2; exit 1; }
+for file in docs/calibration/corpus-go.toml docs/calibration/corpus-rs.toml; do
+  [ -f "$file" ] || { echo "$file is missing: recall has no history to measure that column on" >&2; exit 1; }
+done
 
 cases="${WEEDER_SHAPE_CASES:-6}"
 commits="${WEEDER_SHAPE_COMMITS:-60}"

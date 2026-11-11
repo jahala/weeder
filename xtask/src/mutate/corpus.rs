@@ -10,8 +10,11 @@
 //!
 //! The garden five write no Go between them and weeder judges Go, so
 //! `docs/calibration/corpus-go.toml` pins two Go projects the same way, read
-//! exactly as the five are. Any other corpus file is read with `--corpus`,
-//! which is how the suites measure a history they built themselves.
+//! exactly as the five are. Their Rust holds no integration target, the one
+//! place a Rust test can be renamed or set out of the run, so
+//! `docs/calibration/corpus-rs.toml` pins a crate that has them. Any other
+//! corpus file is read with `--corpus`, which is how the suites measure a
+//! history they built themselves.
 //!
 //! Nothing here writes to a source repository: a fetch runs `upload-pack` over
 //! there and takes objects away, and every checkout and every mutation happens
@@ -24,9 +27,14 @@ use super::git;
 use super::source::Language;
 use crate::corpus::Repo;
 
-/// The Go history recall adds to the corpus calibration judges, pinned the same
-/// way and named in the report as what it is.
-pub const GO_PATH: &str = "docs/calibration/corpus-go.toml";
+/// The histories recall adds to the corpus calibration judges, each pinned the
+/// same way and named in the report as what it is: Go, which the garden writes
+/// none of, and a Rust crate with integration targets, which the garden's Rust
+/// has none of.
+pub const RECALL_PATHS: [&str; 2] = [
+    "docs/calibration/corpus-go.toml",
+    "docs/calibration/corpus-rs.toml",
+];
 
 /// The one branch a clone carries, so the walk never has to ask which of the
 /// source's branches it landed on: it walks the pin.

@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T4:ts:pleach:3a1306011:test/loop/run-work.test.ts:10", "sha256": "9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4\nVerdict: miss\nReasoning: Widening a wait from 1000 to 10000 is a tolerance/timeout widening within T4's shape, and weeder reported nothing at that site."}
