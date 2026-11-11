@@ -164,3 +164,47 @@ fn s2_reads_a_comment_beside_a_dropped_failure_as_the_reason_the_next_action_ask
         );
     }
 }
+
+#[test]
+fn s2_reads_a_reason_written_above_the_statement_a_dropped_failure_belongs_to() {
+    // A chain written over several lines drops its failure on its last line,
+    // and the reason sits where people put a reason, above the statement (#130).
+    // A reason above some other statement says nothing about this one. Python's
+    // handler and Go's discard open a statement of their own, which the test
+    // above reads already.
+    let cases: [(&str, &str, &str, &str); 2] = [
+        (
+            "src/lib.rs",
+            "pub fn first(lines: &[&str]) -> String {\n    lines[0].to_string()\n}\n",
+            "pub fn first(lines: &[&str]) -> String {\n    // an empty file has no first line, and its text is empty\n    lines\n        .first()\n        .map(|line| line.trim().to_string())\n        .unwrap_or_default()\n}\n",
+            "pub fn first(lines: &[&str]) -> String {\n    // the lines arrive trimmed\n    let count = lines.len();\n    lines\n        .first()\n        .map(|line| line.trim().to_string())\n        .unwrap_or_default()\n        + &count.to_string()\n}\n",
+        ),
+        (
+            "src/client.ts",
+            "export function ping(post: () => Promise<void>): void {\n  void post();\n}\n",
+            "export function ping(post: () => Promise<void>): void {\n  // a best-effort ping; its failure changes nothing here\n  post()\n    .then(() => undefined)\n    .catch(() => {});\n}\n",
+            "export function ping(post: () => Promise<void>): void {\n  // the ping runs once a minute\n  const started = Date.now();\n  post()\n    .then(() => started)\n    .catch(() => {});\n}\n",
+        ),
+    ];
+    for (path, before, explained, elsewhere) in cases {
+        let repo = common::Repo::init();
+        repo.write(path, before);
+        repo.commit("the code before the change");
+
+        repo.write(path, explained);
+        let run = repo.weeder(&["check"]);
+        assert!(
+            run.findings().iter().all(|finding| finding.rule != "S2"),
+            "{path}: the reason above the statement is the answer S2 asks for\n{}",
+            run.output()
+        );
+
+        repo.write(path, elsewhere);
+        let run = repo.weeder(&["check"]);
+        assert!(
+            run.findings().iter().any(|finding| finding.rule == "S2"),
+            "{path}: a comment above another statement explains nothing about this one\n{}",
+            run.output()
+        );
+    }
+}
