@@ -3,6 +3,16 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  # The registries are asked for by hand. A tag builds the release page, which
+  # is the install, and publishes nowhere else until crates.io takes tilth-core
+  # (#45) and npm has a publisher. Dispatched on a tag with `publish` set, the
+  # same run builds again and publishes to both.
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish this tag to crates.io and npm"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -28,6 +38,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: bash scripts/windows-green.sh "$GITHUB_SHA"
+      - name: The run is for a version tag
+        run: |
+          case "$GITHUB_REF" in
+            refs/tags/v*) ;;
+            *) echo "::error::release.yml runs on a version tag, and this run is for $GITHUB_REF"; exit 1 ;;
+          esac
       - name: The tag, Cargo.toml and npm/package.json name one version
         run: |
           TAG="${GITHUB_REF#refs/tags/v}"
@@ -117,9 +133,11 @@ jobs:
           # appends freshly generated notes to the body, so every extra matrix
           # leg would add another copy of what changed.
           generate_release_notes: ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
+          body: ${{ matrix.target == 'x86_64-unknown-linux-musl' && 'This page is the install. Download the archive for your platform, check it against its `.sha256`, and put `weeder` on your PATH.' || '' }}
 
   publish-crate:
     needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v6
@@ -131,6 +149,7 @@ jobs:
 
   publish-npm:
     needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
     runs-on: ubuntu-latest
     # Two ways in. A token from the NPM_TOKEN secret, which is what the first
     # publish of a scoped package has to use: trusted publishing is configured on
