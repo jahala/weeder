@@ -24,6 +24,7 @@ pub mod d1;
 pub mod d2;
 pub mod g1;
 pub mod g2;
+pub mod g3;
 pub mod generated;
 pub mod idiom;
 pub mod m1;
@@ -125,6 +126,7 @@ const DETECTORS: &[(&str, Detector)] = &[
     ("C3", c3::evaluate),
     ("G1", g1::evaluate),
     ("G2", g2::evaluate),
+    ("G3", g3::evaluate),
 ];
 
 /// Every enabled detector's findings, in catalogue order, at the configured level.

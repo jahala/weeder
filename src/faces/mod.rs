@@ -173,8 +173,23 @@ pub fn gather(
         judged.iter().map(|diff| diff.old_path.as_deref()).collect();
     let after_paths: Vec<Option<&str>> =
         judged.iter().map(|diff| diff.new_path.as_deref()).collect();
-    let before = sides(root, &Source::Reference(base.to_string()), &before_paths)?;
-    let after = sides(root, after, &after_paths)?;
+    let before = sides(
+        root,
+        &Source::Reference(base.to_string()),
+        &before_paths,
+        &vec![Base::Other; judged.len()],
+    )?;
+    let bases: Vec<Base> = before
+        .iter()
+        .map(|side| {
+            if side.size.is_some() && !side.binary {
+                Base::Text
+            } else {
+                Base::Other
+            }
+        })
+        .collect();
+    let after = sides(root, after, &after_paths, &bases)?;
     Ok(judged
         .into_iter()
         .zip(before)
@@ -205,18 +220,25 @@ pub fn gather(
 
 /// One side of each of these files, in the order they were asked for. A side
 /// with no file is nothing to read at all, and keeps its place in the answer.
-fn sides(root: &Path, source: &Source, paths: &[Option<&str>]) -> Result<Vec<Side>, String> {
+/// Each path comes with what its base says about reading it.
+fn sides(
+    root: &Path,
+    source: &Source,
+    paths: &[Option<&str>],
+    bases: &[Base],
+) -> Result<Vec<Side>, String> {
     let named: Vec<&str> = paths.iter().flatten().copied().collect();
     let mut read = blobs(root, source, &named)?.into_iter();
     paths
         .iter()
-        .map(|path| match path {
+        .zip(bases)
+        .map(|(path, base)| match path {
             None => Ok(Side::default()),
             Some(path) => {
                 let blob = read
                     .next()
                     .ok_or_else(|| format!("git answered for fewer files than weeder asked about, and {path} was one of them. report it with the change that caused it."))?;
-                Ok(blob.map_or_else(Side::default, |blob| side(path, &blob)))
+                Ok(blob.map_or_else(Side::default, |blob| side(path, &blob, *base)))
             }
         })
         .collect()
@@ -250,16 +272,35 @@ pub(crate) fn blobs(
 /// looks like. A byte that is not utf-8 is replaced, as everywhere weeder reads a
 /// file, because a rule matches ascii shapes.
 pub(crate) fn readable(path: &str, blob: &Blob) -> Option<String> {
-    (!blob.is_binary() || reads_as_text(path))
-        .then(|| String::from_utf8_lossy(&blob.bytes).into_owned())
+    (!blob.is_binary() || reads_as_text(path)).then(|| lossy(blob))
+}
+
+/// The bytes as text, every byte that is not utf-8 replaced.
+fn lossy(blob: &Blob) -> String {
+    String::from_utf8_lossy(&blob.bytes).into_owned()
+}
+
+/// What a file's base says about reading its other side.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Base {
+    /// The base held this file as text, so its other side is read as text
+    /// whatever its bytes now hold: a NUL that arrives in a text file is a
+    /// change to a text file, and G3 names the line it arrived on.
+    Text,
+    /// The base had no such file, held it as a blob, or is this side itself.
+    Other,
 }
 
 /// One side of one file, as the bytes git handed over. A file whose bytes are
 /// not text has no lines for a rule to judge, and still has a path and a
 /// weight, which is what G2 asks about.
-pub(crate) fn side(path: &str, blob: &Blob) -> Side {
+pub(crate) fn side(path: &str, blob: &Blob, base: Base) -> Side {
     let (size, binary) = (Some(blob.size()), blob.is_binary());
-    let Some(content) = readable(path, blob) else {
+    let read = match base {
+        Base::Text => Some(lossy(blob)),
+        Base::Other => readable(path, blob),
+    };
+    let Some(content) = read else {
         return Side {
             classification: Some(classify_file(path, "")),
             size,

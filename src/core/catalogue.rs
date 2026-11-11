@@ -259,6 +259,14 @@ const CATALOGUE: &[Rule] = &[
         network: Network::None,
     },
     Rule {
+        id: "G3",
+        face: Face::Check,
+        default_level: Level::Block,
+        short_description: "A control character was added to a text source file",
+        full_description: "An added line carries a control character other than tab, newline or carriage return, in a file weeder reads as text by its path (source in a language it reads, a manifest, a guardrail, a workflow) or one git counted as text at the base. A character the change only carried over from a line it took out is not counted again. A NUL blocks, because git then takes the whole file for binary and shows no line of any change to it; every other control character warns.",
+        network: Network::None,
+    },
+    Rule {
         id: "B1",
         face: Face::Bite,
         default_level: Level::Block,

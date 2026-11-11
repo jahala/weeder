@@ -88,6 +88,7 @@ fn reader(rule: &str) -> Option<Reader> {
         "C2" => Reader::Site(|site, _, tree| an_ignore_reaches_the_source(site, tree)),
         "C3" => Reader::Site(|site, _, _| a_workflow_was_rewritten(site)),
         "G1" => Reader::Site(|site, _, _| a_merge_was_left_half_finished(site)),
+        "G3" => Reader::Site(|site, _, _| a_nul_arrived_in_the_text(site)),
         _ => return None,
     })
 }
@@ -879,6 +880,18 @@ fn a_merge_was_left_half_finished(site: &Site) -> bool {
     let between = held.iter().position(|line| line.starts_with("======="));
     let closed = held.iter().position(|line| line.starts_with(">>>>>>>"));
     matches!((opened, between, closed), (Some(one), Some(two), Some(three)) if one < two && two < three)
+}
+
+/// G3: a NUL on the line the case said, in a file that held none before.
+fn a_nul_arrived_in_the_text(site: &Site) -> bool {
+    let held = |source: &Source| {
+        source
+            .lines
+            .iter()
+            .map(|line| line.matches('\u{0}').count())
+            .sum::<usize>()
+    };
+    site.line().is_some_and(|line| line.contains('\u{0}')) && held(&site.after) > held(&site.before)
 }
 
 /// G2: bytes a diff has no lines to show.

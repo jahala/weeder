@@ -87,6 +87,12 @@ control bytes opening with a NUL, which is git's own test for a file it cannot
 show a diff of and the one weeder asks too. G2's `fire/` fixtures write it, and
 this repository carries no blob of its own to prove the point with.
 
+One control character is spelled `{{weeder:control-XX}}`, where `XX` is its
+byte in two hex digits: `{{weeder:control-00}}` is a NUL, `{{weeder:control-0c}}`
+a form feed and `{{weeder:control-0d}}` a carriage return. G3's fixtures write
+them, so every file here stays text that a reviewer can read a diff of, which is
+what a raw NUL would take away.
+
 `calibration-audit/` is the one directory here that is not a rule's fixture set:
 it holds the blind re-grade's case packets, verbatim hunks from the pinned corpus
 with weeder's own findings beside them, and the raw record of each auditor session.

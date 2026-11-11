@@ -210,6 +210,38 @@ fn binary_run() -> String {
     (0..=0x1f_u8).map(char::from).collect()
 }
 
+/// What a fixture writes where one control character belongs. The two hex
+/// digits after it name the byte, so `{{weeder:control-00}}` is a NUL and
+/// `{{weeder:control-1b}}` an escape. A fixture that carried a NUL as a byte
+/// would turn its own diff into `Binary files differ` for whoever reviews this
+/// repository, which is the very thing G3 refuses.
+const CONTROL: &str = "{{weeder:control-";
+
+/// The text with every control placeholder turned into the byte it names.
+fn controls(text: &str) -> String {
+    let mut expanded = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(at) = rest.find(CONTROL) {
+        expanded.push_str(&rest[..at]);
+        let tail = &rest[at + CONTROL.len()..];
+        let byte = tail
+            .get(..2)
+            .and_then(|hex| u8::from_str_radix(hex, 16).ok())
+            .filter(u8::is_ascii_control)
+            .unwrap_or_else(|| {
+                panic!("a control placeholder names a control byte in two hex digits: {tail:.8}")
+            });
+        assert!(
+            tail[2..].starts_with("}}"),
+            "a control placeholder closes after its two hex digits: {tail:.8}"
+        );
+        expanded.push(char::from(byte));
+        rest = &tail[4..];
+    }
+    expanded.push_str(rest);
+    expanded
+}
+
 /// A conflict marker line as git writes it: seven of `character` at the start of
 /// the line, then a space and `label` when the marker carries one.
 pub fn marker(character: char, label: &str) -> String {
@@ -983,8 +1015,11 @@ fn expand(contents: &str) -> String {
             &altered_example(name),
         )
     });
-    text.replace(KEY_BLOCK, &key_block())
-        .replace(BINARY_RUN, &binary_run())
+    controls(
+        &text
+            .replace(KEY_BLOCK, &key_block())
+            .replace(BINARY_RUN, &binary_run()),
+    )
 }
 
 /// The caller's git configuration, their hooks and their template directory stay
