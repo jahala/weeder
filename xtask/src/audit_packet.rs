@@ -686,7 +686,14 @@ fn seeded_sample<T: CaseKey + Clone>(items: Vec<T>, seed: &str, label: &str) -> 
             hasher.update(label.as_bytes());
             hasher.update([0]);
             hasher.update(item.key().as_bytes());
-            (format!("{:x}", hasher.finalize()), item)
+            // Lowercase hex, two digits a byte, as `{:x}` wrote the digest
+            // before sha2 0.11, so a seed draws the sample it always drew.
+            let hex: String = hasher
+                .finalize()
+                .iter()
+                .map(|byte| format!("{byte:02x}"))
+                .collect();
+            (hex, item)
         })
         .collect();
     scored.sort_by(|left, right| left.0.cmp(&right.0).then(left.1.key().cmp(&right.1.key())));

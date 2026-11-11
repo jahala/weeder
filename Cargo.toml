@@ -19,14 +19,14 @@ tilth-core = { git = "https://github.com/jahala/tilth", rev = "4bfce427dbbfb054d
 clap = { version = "4", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-toml = "0.8"
+toml = "1.1"
 
 [dev-dependencies]
 assert_cmd = "2"
 tempfile = "3"
 # No default features: the vendored schema is self-contained, so the validator
 # never resolves a reference over the network or off the filesystem.
-jsonschema = { version = "0.53", default-features = false }
+jsonschema = { version = "0.56", default-features = false }
 # The hostile-input tests: core is handed inputs nobody wrote on purpose, and
 # has to answer or refuse rather than fall over.
 proptest = "1.11.0"
