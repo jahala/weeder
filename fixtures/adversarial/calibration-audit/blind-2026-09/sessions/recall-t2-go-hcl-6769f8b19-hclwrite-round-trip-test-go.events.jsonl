@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-t2-go-hcl-6769f8b19-hclwrite-round-trip-test-go.md", "sha256": "b7502a8de61fb4f452fe11b0f68c3e536eed6d61cbd17d0df6774375aae4fde1", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered packet SHA-256: b7502a8de61fb4f452fe11b0f68c3e536eed6d61cbd17d0df6774375aae4fde1\nVerdict: miss\nReasoning: The change deletes a `t.Fatalf` assertion from `hclwrite/round_trip_test.go`, matching T2's shape, but weeder reported only C3 elsewhere."}

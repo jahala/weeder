@@ -1,2 +1,0 @@
-{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/recall-d2-go-hcl-ab1acc486-hclwrite-tokens-go-6.md", "sha256": "aaebb463d60c8d6c921b33d9aef71bbdadee32a2d2fb8da9250603fb022c4a84", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered packet SHA-256: aaebb463d60c8d6c921b33d9aef71bbdadee32a2d2fb8da9250603fb022c4a84\nVerdict: miss\nReasoning: The diff adds an `integrationtest` import to the `hclwrite` production package, matching D2's forbidden-boundary shape, but weeder reported no findings."}
