@@ -255,3 +255,35 @@ fn an_added_source_file_that_carries_a_control_character_is_judged_too() {
         run.stderr
     );
 }
+
+/// A NUL that arrives in a file the base held as text hides none of its other
+/// lines from the rules. Before the face read such a side as text, a NUL in a
+/// markdown file turned the whole side into a blob, and a credential written
+/// beside it was a line no rule saw.
+#[test]
+fn a_nul_in_a_text_file_hides_none_of_its_lines_from_the_other_rules() {
+    let repo = Repo::init();
+    repo.write("docs/notes.md", "# notes\n\nfirst step\n");
+    repo.commit("the notes");
+    // Joined here, the way the harness joins every credential, so this file
+    // carries neither half as a token.
+    let key = format!("{}{}", "ghp_", "0123456789abcdefghijklmnopqrstuvwx");
+    repo.write(
+        "docs/notes.md",
+        &format!("# notes\n\nfirst \u{0} step\ntoken: {key}\n"),
+    );
+
+    let run = repo.weeder(&["check"]);
+    let blocked: Vec<String> = run
+        .findings()
+        .into_iter()
+        .filter(|finding| finding.level == "error")
+        .map(|finding| format!("{}:{}", finding.rule, finding.line.unwrap_or_default()))
+        .collect();
+    assert_eq!(
+        blocked,
+        ["G3:3", "X1:4"],
+        "the NUL is named, and the credential beside it still blocks\n{}",
+        run.output()
+    );
+}
