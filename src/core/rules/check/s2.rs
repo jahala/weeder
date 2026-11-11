@@ -17,7 +17,8 @@
 //! weeder reads spells that `_`.
 //!
 //! A fallible call turned into a value that cannot fail, with nothing asked
-//! about what went wrong.
+//! about what went wrong. The shell writes this one as `|| true` or `|| :`
+//! after a command: whatever the command did, the line succeeds.
 //!
 //! The last two are a choice a program may make on purpose, and the next
 //! action asks for a comment saying why: one on the line, or alone on the line
@@ -43,12 +44,16 @@ struct Handling {
     nothing: Option<&'static str>,
     /// Members that turn a failure into a value without reading it.
     discarding: &'static [&'static str],
+    /// Commands that cannot fail, which a failed command is answered with
+    /// after `||`.
+    succeeding: &'static [&'static str],
 }
 
 const NOTHING_HANDLED: Handling = Handling {
     handler: None,
     nothing: None,
     discarding: &[],
+    succeeding: &[],
 };
 
 fn handling(lang: Lang) -> Handling {
@@ -71,7 +76,14 @@ fn handling(lang: Lang) -> Handling {
             nothing: Some("nil"),
             ..NOTHING_HANDLED
         },
-        Lang::Bash | Lang::Other => NOTHING_HANDLED,
+        // The shell has no handler and no error value: a failed command is
+        // its exit status, and the line that answers it with a command that
+        // always succeeds has made the failure disappear.
+        Lang::Bash => Handling {
+            succeeding: &["true", ":"],
+            ..NOTHING_HANDLED
+        },
+        Lang::Other => NOTHING_HANDLED,
     }
 }
 
@@ -123,6 +135,9 @@ fn swallowed(table: &Handling, lang: Lang, mask: &Mask, line: u32) -> Option<Swa
     if let Some(word) = spoken.iter().find(|word| discards(&code, word)) {
         return Some(Swallowed::discarded(word.text));
     }
+    if let Some(command) = answered_with_success(&code, table.succeeding) {
+        return Some(Swallowed::succeeded(command));
+    }
     let converted = spoken.iter().find(|word| {
         word.is_member() && word.is_called() && table.discarding.contains(&word.text)
     })?;
@@ -142,8 +157,9 @@ fn explained(mask: &Mask, line: u32) -> bool {
 
 /// The line the statement holding `line` opens on: up through the lines that
 /// continue the one above them, a line that opens with `.`, `?`, `)` or `]`, or
-/// one under a line left open by a bracket, an `=`, a `.` or an operator. A
-/// line holding only a comment sits inside the statement it is written in.
+/// one under a line left open by a bracket, an `=`, a `.`, an operator or the
+/// backslash that carries a shell command onto the next line. A line holding
+/// only a comment sits inside the statement it is written in.
 fn statement_start(mask: &Mask, line: u32) -> u32 {
     let mut first = line;
     loop {
@@ -156,10 +172,12 @@ fn statement_start(mask: &Mask, line: u32) -> u32 {
         }
         let here = mask.code(first);
         let opens_on_the_last = here.trim_start().starts_with(['.', '?', ')', ']']);
-        let previous = mask.code(above);
+        // Read with its literals in place: `name="$1"` ends with the string it
+        // assigns, and with the string blanked it would seem to end on the `=`.
+        let previous = mask.outside_comments(above);
         let left_open = previous
             .trim_end()
-            .ends_with(['(', '[', '=', '.', '+', '-', '*', '/', '|', '&']);
+            .ends_with(['(', '[', '=', '.', '+', '-', '*', '/', '|', '&', '\\']);
         if !(opens_on_the_last || left_open) {
             return first;
         }
@@ -220,6 +238,22 @@ fn discards(code: &str, word: &Word<'_>) -> bool {
     mentions_failure(assigned)
 }
 
+/// The command that cannot fail which a line answers a failed command with:
+/// `|| true` or `|| :`, the whole of what follows the `||` up to the end of
+/// the command. `|| truncate` is another command, and one that can fail.
+fn answered_with_success(code: &str, succeeding: &[&'static str]) -> Option<&'static str> {
+    code.match_indices("||").find_map(|(at, _)| {
+        let rest = code[at + 2..].trim_start();
+        succeeding.iter().copied().find(|command| {
+            rest.strip_prefix(command).is_some_and(|after| {
+                after.chars().next().is_none_or(|next| {
+                    next.is_whitespace() || matches!(next, ';' | ')' | '}' | '&' | '|')
+                })
+            })
+        })
+    })
+}
+
 /// How many characters of a line come before a byte offset. A block is counted
 /// in characters, because that is what the mask holds.
 fn characters(code: &str, at: usize) -> usize {
@@ -260,6 +294,13 @@ impl Swallowed {
         Swallowed {
             what: format!("a failure was assigned to `{name}`, the name for a value nobody reads."),
             why: "the compiler stops asking about the error, and so does everyone else.",
+        }
+    }
+
+    fn succeeded(command: &str) -> Swallowed {
+        Swallowed {
+            what: format!("a failed command is answered with `|| {command}`, which always succeeds."),
+            why: "the script carries on as though the command had worked, and nobody hears that it did not.",
         }
     }
 

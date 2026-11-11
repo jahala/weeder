@@ -24,6 +24,7 @@
 
 ## Tests
 - [x] (code) S2 warns on each swallowed-error shape per language in prod files and stays silent when the error is logged, wrapped, rethrown, or the empty catch carries a comment naming why · tests/rule_s2.rs @c3d04de0cf0970 · by cli
+- [ ] (code) S2 reads bash: it warns on a command answered with `|| true` or `|| :` in a production script, alone or at the end of a chain, and stays silent when the failure is reported and returned, when a comment on the line or above the command says why, across a backslash continuation, on `|| truncate` and on `|| true` inside a string (#79) · tests/rule_s2.rs
 - [x] (code) S3 warns on each debug leftover shape per language in prod files and stays silent in test files, in `main.rs`, and in a module the config names as a CLI entry · tests/rule_s3.rs @a4d6ddd · by cli
 - [x] (code) D1 warns on each manifest and lockfile per language, blocks when a scope excludes the manifest, and stays silent on a README that mentions a package · tests/rule_d1.rs @14d8d7b · by cli
 - [x] (code) D2 fires at block level on a fixture where a layer imports from a layer `[deps]` forbids, per language, and on weeder's own tree when a core file imports from seams; stays silent on allowed directions · tests/rule_d2.rs @134d978e35a6f7 · by cli

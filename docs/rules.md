@@ -293,6 +293,8 @@ S1 reads bash. A stub there is a work marker in code or in a comment, an `exit` 
 
 An added handler in production code discards a failure without logging it, wrapping it, passing it on, or saying in a comment why it is right to drop it.
 
+S2 reads bash. A failed command answered with `|| true` or `|| :` is a failure turned into success, and a comment on the line, or above the command it ends, is the reason S2 asks for. A backslash that carries the command onto the next line keeps it one command.
+
 <a id="S3"></a>
 ## S3: A debug leftover reached production code
 
