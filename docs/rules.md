@@ -169,9 +169,10 @@ commit's message. An allowance must not outlive the change it was written for.
 The two ways differ in whose hand wrote them, and the git hooks are where that
 matters. `weeder guard commit-msg` judges the index with the message's trailers
 honoured, and is the deciding stage for any block-level finding a trailer may
-allow, and it prints the findings. `weeder guard pre-commit` runs before the
-message exists, so it honours nothing: it prints one line naming what blocks and,
-for each rule, the exact trailer that would allow it, `Weeder-allow: <RULE> <reason>`,
+allow, and it prints the findings and ends on its verdict: which trailers allowed
+them, or that the commit is refused. `weeder guard pre-commit` runs before the
+message exists, so it honours nothing: it prints one line naming what would block
+unless the message allows it and, for each rule, the exact trailer that would allow it, `Weeder-allow: <RULE> <reason>`,
 and says commit-msg is the stage that reads it. The table comes once, from
 commit-msg, because the two stages judge one index. `weeder guard pre-push` honours a trailer again over the commits
 being pushed, because a commit carries the message it was allowed by.
@@ -354,7 +355,7 @@ A changed file matches no scope glob the run allows, and the finding names what 
 
 `check` · blocks by default
 
-A change touched a harness settings file, a git hook, `weeder.toml`, the garden's `garden.lock` or `garden.json`, or a section of `AGENTS.md` or `CLAUDE.md` whose heading says hard limits or non-negotiables, or opens with never, or names one of `[guardrails] sections`.
+A change touched a harness settings file, a git hook, `weeder.toml`, the garden's `garden.lock` or `garden.json`, or a section of `AGENTS.md` or `CLAUDE.md` whose heading says hard limits or non-negotiables, or opens with never, or names one of `[guardrails] sections`. A release that moves only the product's own version in `garden.json`, its `version` and the `v<version>` segment of each asset URL, is not an edit.
 
 <a id="C2"></a>
 ## C2: An ignore file was broadened over source or tests
