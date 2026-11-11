@@ -150,7 +150,7 @@ fn a_rules_key_the_catalogue_does_not_hold_is_refused_and_named() {
     let said = unknown.to_string();
     assert!(said.contains("Z9"), "the error names the key: {said}");
     assert!(
-        said.contains("`T1`"),
+        said.contains("`T9`"),
         "the error names the nearest id weeder has: {said}"
     );
 
@@ -182,7 +182,7 @@ fn a_weeder_toml_with_a_rule_weeder_does_not_have_exits_three() {
     );
     assert_eq!(run.stderr_lines().len(), 1, "one line, naming the cause");
     assert!(
-        run.stderr.contains("Z9") && run.stderr.contains("`T1`"),
+        run.stderr.contains("Z9") && run.stderr.contains("`T9`"),
         "the line names the key and the nearest rule id: {}",
         run.stderr
     );

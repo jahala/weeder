@@ -183,11 +183,7 @@ fn about(
         return Some(About::TheFile);
     }
     let units = &change.after.tests.units;
-    let inside = units
-        .iter()
-        .filter(|unit| unit.kind == TestUnitKind::Case)
-        .filter(|unit| unit.start_line <= line && line <= unit.end_line)
-        .min_by_key(|unit| unit.end_line.saturating_sub(unit.start_line));
+    let inside = change.after.tests.case_at(line);
     let served: Vec<&TestUnit> = match inside {
         Some(case) => cases
             .iter()

@@ -72,6 +72,7 @@ fn reader(rule: &str) -> Option<Reader> {
         "T4" => Reader::Site(|site, _, _| a_slack_grew(site)),
         "T5" => Reader::Site(|site, _, tree| an_expectation_moved(site, tree)),
         "T6" => Reader::Site(|site, _, _| a_claim_stopped_naming_the_failure(site)),
+        "T9" => Reader::Site(|site, _, _| a_case_checks_nothing(site)),
         "T10" => Reader::Site(|site, _, tree| a_constant_is_restated(site, tree)),
         "T11" => Reader::Site(|site, _, _| a_double_answers_alone(site)),
         "T12" => Reader::Site(|site, _, _| a_literal_comes_back(site)),
@@ -451,6 +452,32 @@ fn planted_lines(site: &Site) -> Vec<&String> {
         .skip(first)
         .take(last.saturating_sub(first) + 1)
         .collect()
+}
+
+/// T9: the planted lines open a case the file did not hold before, and not
+/// one of them asserts anything.
+fn a_case_checks_nothing(site: &Site) -> bool {
+    let (Some(first), Some(last)) = (site.first, site.last) else {
+        return false;
+    };
+    let planted = first..=last;
+    let held: Vec<String> = site
+        .before
+        .cases()
+        .into_iter()
+        .map(|case| case.name)
+        .collect();
+    let added = site
+        .after
+        .cases()
+        .iter()
+        .any(|case| planted.contains(&(case.first as usize)) && !held.contains(&case.name));
+    let asserted = site
+        .after
+        .assertions()
+        .iter()
+        .any(|at| planted.contains(&(*at as usize)));
+    site.after.holds_tests() && added && !asserted
 }
 
 /// T10: the planted lines hold a case, and a check in it writes a constant a

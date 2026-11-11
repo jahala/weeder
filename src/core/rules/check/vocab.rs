@@ -9,6 +9,11 @@
 //! what is written down is the shape, a call, a member on a receiver, a
 //! keyword, a macro, and the roots those shapes are built from.
 //!
+//! T9 asks the other question of the same table, whether an added case
+//! asserts at all, and a case can do that without a line that asserts: Rust
+//! declares a test that should panic, or one that returns a `Result` and hands
+//! a failure back with `?`, and the table carries both.
+//!
 //! A repository's own helpers are the one part of the vocabulary no table can
 //! carry, so `[tests] assertions` names them and [`Suite::counting`] reads a
 //! call to one as an assertion in any language. The shell calls nothing: its
@@ -24,6 +29,7 @@
 use std::collections::BTreeSet;
 
 use crate::core::classify::Lang;
+use crate::core::read::TestUnit;
 use crate::core::shell;
 use crate::core::syntax::{is_identifier, Mask};
 
@@ -194,6 +200,25 @@ struct Assertions {
     /// reads one. A language with any of these is read for commands rather
     /// than for calls.
     commands: &'static [&'static str],
+    /// Attributes a case can be declared under that make it pass only by
+    /// failing, matched by the last segment of the path they are written with.
+    expecting: &'static [&'static str],
+    /// How a case can fail by what it returns, in a language where a test may
+    /// return a failure to its runner.
+    returned: Option<Returned>,
+}
+
+/// How a test hands a failure back to its runner instead of asserting: it is
+/// declared to return a type that carries one, and an operator inside it
+/// returns early with whatever failure it meets.
+#[derive(Clone, Copy)]
+struct Returned {
+    /// What a declaration writes before the type it returns.
+    arrow: &'static str,
+    /// The type, by the last segment of its path, that carries a failure.
+    carrier: &'static str,
+    /// The operator that returns early with a failure.
+    operator: char,
 }
 
 const NOTHING: Assertions = Assertions {
@@ -203,6 +228,8 @@ const NOTHING: Assertions = Assertions {
     handle_members: &[],
     handle_subtests: &[],
     commands: &[],
+    expecting: &[],
+    returned: None,
 };
 
 fn assertions(lang: Lang) -> Assertions {
@@ -221,9 +248,17 @@ fn assertions(lang: Lang) -> Assertions {
             roots: &["assert", "raises", "fail"],
             ..NOTHING
         },
-        // The macros, and the debug forms that compile away in release.
+        // The macros, and the debug forms that compile away in release. A
+        // test may also be declared to panic, or to return a `Result`, and
+        // then a failure it meets is the runner's to report.
         Lang::Rust => Assertions {
             roots: &["assert", "debug_assert"],
+            expecting: &["should_panic"],
+            returned: Some(Returned {
+                arrow: "->",
+                carrier: "Result",
+                operator: '?',
+            }),
             ..NOTHING
         },
         // The standard library asserts nothing: a test fails by telling the
@@ -309,6 +344,58 @@ impl Suite {
                     && table.handle_subtests.contains(&name.last())
             })
             .map(|name| code[..name.end].chars().count())
+    }
+
+    /// Whether a case is declared to pass only by failing: written under an
+    /// attribute its runner reads as an expected failure. Such a case asserts
+    /// through how it ends rather than through a line of its body.
+    #[must_use]
+    pub fn expects_failure(&self, case: &TestUnit) -> bool {
+        let table = assertions(self.lang);
+        case.attributes.iter().any(|attribute| {
+            let path = attribute.split('(').next().unwrap_or(attribute);
+            names(path)
+                .first()
+                .is_some_and(|name| table.expecting.contains(&name.last()))
+        })
+    }
+
+    /// Whether a declaration says its case fails by what it returns: the type
+    /// it names after the language's return arrow is one that carries a
+    /// failure, whatever path it is reached through.
+    #[must_use]
+    pub fn returns_failure(&self, signature: &str) -> bool {
+        let Some(returned) = assertions(self.lang).returned else {
+            return false;
+        };
+        signature
+            .split_once(returned.arrow)
+            .is_some_and(|(_, after)| {
+                names(after)
+                    .first()
+                    .is_some_and(|name| name.last() == returned.carrier)
+            })
+    }
+
+    /// How many failures the 1-based line hands back to the runner, where the
+    /// case it sits in returns them: the operator for that, written as code.
+    /// The same character in front of a name is a bound on a type, `?Sized`,
+    /// and hands nothing back.
+    #[must_use]
+    pub fn hands_back(&self, mask: &Mask, line: u32) -> usize {
+        let Some(returned) = assertions(self.lang).returned else {
+            return 0;
+        };
+        let code = mask.code(line);
+        code.char_indices()
+            .filter(|(at, character)| {
+                *character == returned.operator
+                    && !code[at + character.len_utf8()..]
+                        .chars()
+                        .next()
+                        .is_some_and(is_identifier)
+            })
+            .count()
     }
 
     /// How many assertions the whole file makes.

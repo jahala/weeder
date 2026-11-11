@@ -54,7 +54,6 @@ use std::collections::BTreeSet;
 
 use crate::core::change::{Change, Side};
 use crate::core::finding::{Detection, Level, Message, Region, Stamp};
-use crate::core::read::TestUnit;
 use crate::core::rules::check::generated::{nested_functions, Runs, Times};
 use crate::core::rules::check::idiom::Block;
 use crate::core::rules::check::subject::{self, Subject};
@@ -338,7 +337,6 @@ fn claims(side: &Side, helpers: &[String]) -> Said {
     }
     let mask = side.mask();
     let suite = Suite::of(side.lang(), mask).counting(helpers);
-    let cases: Vec<&TestUnit> = side.tests.cases().collect();
     // The tables are read only once a line has made a claim, since most of the
     // files that pass through here make none.
     let mut runs: Option<(Runs, Vec<Block>)> = None;
@@ -347,7 +345,7 @@ fn claims(side: &Side, helpers: &[String]) -> Said {
         if count == 0 {
             continue;
         }
-        let case = enclosing(&cases, line);
+        let case = side.tests.case_at(line);
         let name = case.map_or("", |case| case.name.as_str());
         // A line that makes several claims is read for none of their subjects:
         // which value each one is about is not a question one line answers.
@@ -404,17 +402,6 @@ fn claims(side: &Side, helpers: &[String]) -> Said {
         }
     }
     said
-}
-
-/// The case a line sits in: the narrowest one that spans it, so a case written
-/// inside another answers for its own lines. A line outside every case sits in
-/// none.
-fn enclosing<'a>(cases: &[&'a TestUnit], line: u32) -> Option<&'a TestUnit> {
-    cases
-        .iter()
-        .filter(|case| case.start_line <= line && line <= case.end_line)
-        .min_by_key(|case| case.end_line.saturating_sub(case.start_line))
-        .copied()
 }
 
 /// A line as the program writes it: the whole of it apart from the comments,
