@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T2:go:hcl:6769f8b19:hclwrite/round_trip_test.go", "sha256": "9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4\nVerdict: miss\nReasoning: An assertion deleted from a Go test file is precisely T2's shape, planted at that site and unreported, so weeder genuinely missed it."}

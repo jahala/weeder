@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:T2:ts:umbel:97dfce245:test/integration/gemini-provider.test.ts", "sha256": "9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4\nVerdict: miss\nReasoning: T2 flags assertions dropped from a changed test file, and the planted case deletes line 226's assertion in gemini-provider.test.ts, so the shape is present and unreported."}

@@ -1,0 +1,2 @@
+{"type": "input", "case": "recall:S2:py:copeca:387932ad5:tests/e2e/fake_agent.py:61", "sha256": "9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4\nVerdict: miss\nReasoning: The planted handler catches an exception and says nothing, which is exactly the S2 swallowed-error shape, so weeder should have reported it there but did not."}

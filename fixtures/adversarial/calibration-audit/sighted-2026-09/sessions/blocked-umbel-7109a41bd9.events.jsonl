@@ -1,0 +1,2 @@
+{"type": "input", "case": "blocked:umbel:7109a41bd9", "sha256": "9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4\nVerdict: acceptable\nReasoning: The non-negotiable principles did change, but only by renaming rctrl to umbel, which alters nothing they require."}
