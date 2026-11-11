@@ -226,7 +226,7 @@ pub fn collects_file(lang: Lang, path: &str) -> bool {
                 || directories == ["benches"]
                 || directories.first() == Some(&"src")
         }
-        Lang::Other => false,
+        Lang::Bash | Lang::Other => false,
     }
 }
 

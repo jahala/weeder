@@ -97,7 +97,7 @@ fn debugging(lang: Lang) -> Debugging {
             inspects: &["dump"],
             ..NOTHING_WATCHED
         },
-        Lang::Other => NOTHING_WATCHED,
+        Lang::Bash | Lang::Other => NOTHING_WATCHED,
     }
 }
 

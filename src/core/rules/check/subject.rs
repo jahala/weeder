@@ -170,7 +170,7 @@ pub fn read(lang: Lang, mask: &Mask, line: u32, floor: u32) -> Option<Reading> {
             rust(&View::of(mask, line)).map(|(spans, exact)| Shape { line, spans, exact })
         }
         Lang::Go => go(mask, line, floor),
-        Lang::Other => None,
+        Lang::Bash | Lang::Other => None,
     }?;
     let view = View::of(mask, shape.line);
     let (written, literal): (Vec<Span>, Vec<Span>) = shape

@@ -71,7 +71,7 @@ fn handling(lang: Lang) -> Handling {
             nothing: Some("nil"),
             ..NOTHING_HANDLED
         },
-        Lang::Other => NOTHING_HANDLED,
+        Lang::Bash | Lang::Other => NOTHING_HANDLED,
     }
 }
 

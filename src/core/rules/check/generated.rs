@@ -288,7 +288,7 @@ impl Runs {
                 drivers.extend(case_attributes(mask));
                 drivers.extend(macro_bodies(mask));
             }
-            Lang::Go | Lang::Other => {}
+            Lang::Go | Lang::Bash | Lang::Other => {}
         }
         Runs { drivers }
     }
@@ -904,7 +904,7 @@ fn declares_a_case(lang: Lang, code: &str) -> bool {
                     word.text == PYTHON_CASE || word.text.starts_with(&format!("{PYTHON_CASE}_"))
                 })
         }
-        Lang::Rust | Lang::Go | Lang::Other => false,
+        Lang::Rust | Lang::Go | Lang::Bash | Lang::Other => false,
     }
 }
 
@@ -1333,7 +1333,7 @@ fn opens_function(lang: Lang, code: &str) -> Option<usize> {
             .filter(|word| !code[..word.start].trim().is_empty())
             .filter(|word| !code[..word.start].contains(".Run("))
             .map(|word| column(word.start)),
-        Lang::Other => None,
+        Lang::Bash | Lang::Other => None,
     }
 }
 

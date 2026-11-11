@@ -47,6 +47,7 @@
   },
   "coverage": {
     "languages": [
+      "bash",
       "go",
       "javascript",
       "python",

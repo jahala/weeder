@@ -115,10 +115,16 @@ the SARIF log carries it, so a reviewer sees what was not judged, and `check`
 still leaves with whatever the files it did read deserve.
 
 `check` also says, once per run, which changed files it did not read: code in a
-language weeder has no rules for, a shell script, a makefile, Java. The note
-carries the id `UNREAD`, counts the files by extension, and stops nothing. The
-rules judge TypeScript, JavaScript, Python, Rust and Go, and a change made only of
+language weeder has no rules for, a makefile, Java, Ruby. The note carries the
+id `UNREAD`, counts the files by extension, and stops nothing. The rules judge
+TypeScript, JavaScript, Python, Rust, Go and bash, and a change made only of
 other code would otherwise end in a clean count over lines no rule read.
+
+Bash is the newest of the six, and not every rule reads it yet. `.sh`, `.bash`
+and `.bats` files are bash. A `.bats` file, and a script named `*.spec.sh`,
+`*_test.sh` or `test_*.sh`, is a test, as is any file under a `tests/`
+directory; every other bash file is production code. A rule that reads bash
+says so in its section below, and a rule that does not say so reads none of it.
 
 ### How a finding's level is settled
 

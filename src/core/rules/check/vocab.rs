@@ -222,7 +222,7 @@ fn assertions(lang: Lang) -> Assertions {
             handle_subtests: &["Run"],
             ..NOTHING
         },
-        Lang::Other => NOTHING,
+        Lang::Bash | Lang::Other => NOTHING,
     }
 }
 

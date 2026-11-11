@@ -61,3 +61,26 @@ fn classifies_v1_languages_tests_manifests_guardrails_and_generated_files() {
     assert_eq!(classify_file("README.md", "").kind, FileKind::Other);
     assert_eq!(classify_file("notes/thing.unknown", "").lang, Lang::Other);
 }
+
+#[test]
+fn bash_is_read_as_bash_and_its_suites_are_told_from_its_scripts() {
+    for path in ["scripts/check.sh", "lib/env.bash", "test/gate.bats"] {
+        assert_eq!(classify_file(path, "").lang, Lang::Bash, "{path}");
+    }
+    for path in [
+        "test/gate.bats",
+        "spec/check.spec.sh",
+        "scripts/release_test.sh",
+        "scripts/test_release.sh",
+    ] {
+        assert_eq!(classify_file(path, "").kind, FileKind::Test, "{path}");
+    }
+    for path in [
+        "scripts/check.sh",
+        "lib/env.bash",
+        "scripts/latest.sh",
+        "scripts/contest.sh",
+    ] {
+        assert_eq!(classify_file(path, "").kind, FileKind::Prod, "{path}");
+    }
+}

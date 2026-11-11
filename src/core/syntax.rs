@@ -7,6 +7,11 @@
 //! comments and its literals with are enough to tell the three apart, and the
 //! scan is total, a file that ends inside a string simply ends there.
 //!
+//! The shell is read by its own scanner, because its delimiters nest: a `#`
+//! is a comment only where a word begins, a quote may hold a command
+//! substitution that holds quotes of its own, and a heredoc runs to a line
+//! rather than to a character.
+//!
 //! The same scan gives a rule its words: an identifier with the character
 //! before it and the one after it, which is what separates `skip` the member
 //! from `skip` inside `skipped`.
@@ -64,8 +69,7 @@ impl Mask {
     /// weeder does not know where its strings end.
     #[must_use]
     pub fn of(lang: Lang, content: &str) -> Mask {
-        let dialect = dialect(lang);
-        let mut state = State::Code;
+        let mut scanner = Scanner::of(lang);
         let mut lines = Vec::new();
         let mut runs = Vec::new();
         // One buffer for the whole file rather than one per line: the scan
@@ -79,7 +83,7 @@ impl Mask {
             characters.extend(line.chars());
             kinds.clear();
             kinds.resize(characters.len(), Syntax::Code);
-            state = scan(&dialect, &characters, &mut kinds, state);
+            scanner.line(&characters, &mut kinds);
             lines.push(Line {
                 start,
                 end: start + line.len(),
@@ -385,8 +389,293 @@ fn dialect(lang: Lang) -> Dialect {
             character_literal: true,
             ..none
         },
-        Lang::Other => none,
+        Lang::Bash | Lang::Other => none,
     }
+}
+
+/// What reads a file one line at a time, and what it carries from one line to
+/// the next.
+enum Scanner {
+    /// A language whose comments and literals are spelled with delimiters
+    /// alone, and the state the next line starts in.
+    Delimited(Dialect, State),
+    /// The shell, whose quotes nest inside one another and whose heredocs are
+    /// closed by a line rather than by a delimiter.
+    Shell(Shell),
+}
+
+impl Scanner {
+    fn of(lang: Lang) -> Scanner {
+        match lang {
+            Lang::Bash => Scanner::Shell(Shell::default()),
+            _ => Scanner::Delimited(dialect(lang), State::Code),
+        }
+    }
+
+    /// Classify one line, carrying what it leaves open to the next.
+    fn line(&mut self, characters: &[char], kinds: &mut [Syntax]) {
+        match self {
+            Scanner::Delimited(dialect, state) => {
+                *state = scan(dialect, characters, kinds, *state);
+            }
+            Scanner::Shell(shell) => shell.line(characters, kinds),
+        }
+    }
+}
+
+/// Where a shell script's scan is, between two characters.
+///
+/// The shell nests what other languages keep flat: a double-quoted string may
+/// hold a command substitution, which may hold a string of its own, so what is
+/// open is a stack rather than one state. Every quote reaches across lines, a
+/// comment ends with its line, and a heredoc's body is the lines after the one
+/// that opened it, up to the line that is its delimiter.
+#[derive(Debug, Default)]
+struct Shell {
+    /// What the scan is inside, the innermost last. Empty is the script's own
+    /// code.
+    open: Vec<Frame>,
+    /// The heredocs whose bodies come next, in the order the lines opening them
+    /// wrote them. The first is the one the scan is in once its line has ended.
+    heredocs: std::collections::VecDeque<Heredoc>,
+    /// Whether the scan has reached the body of the first of [`Shell::heredocs`].
+    in_heredoc: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Frame {
+    /// `'…'`, which reads no escapes, or `$'…'`, which does.
+    Single { escapes: bool },
+    /// `"…"`.
+    Double,
+    /// `$(…)`, and how many plain parentheses inside it are still open.
+    Substitution { parens: u32 },
+    /// `` `…` ``, the older spelling of a command substitution.
+    Backtick,
+}
+
+/// A heredoc waiting for its delimiter line.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Heredoc {
+    delimiter: String,
+    /// `<<-`, which strips the tabs in front of each body line and of the
+    /// delimiter.
+    strips_tabs: bool,
+}
+
+impl Shell {
+    fn line(&mut self, characters: &[char], kinds: &mut [Syntax]) {
+        if self.in_heredoc {
+            for kind in kinds.iter_mut() {
+                *kind = Syntax::Literal;
+            }
+            let ends = self.heredocs.front().is_some_and(|heredoc| {
+                let skip = if heredoc.strips_tabs {
+                    characters.iter().take_while(|c| **c == '\t').count()
+                } else {
+                    0
+                };
+                characters[skip..].iter().collect::<String>() == heredoc.delimiter
+            });
+            if ends {
+                self.heredocs.pop_front();
+                self.in_heredoc = !self.heredocs.is_empty();
+            }
+            return;
+        }
+        let mut index = 0;
+        while index < characters.len() {
+            index += match self.open.last().copied() {
+                Some(Frame::Single { escapes }) => {
+                    self.in_single(characters, kinds, index, escapes)
+                }
+                Some(Frame::Double) => self.in_double(characters, kinds, index),
+                code => self.in_code(characters, kinds, index, code),
+            };
+        }
+        self.in_heredoc = !self.heredocs.is_empty();
+    }
+
+    fn in_single(
+        &mut self,
+        characters: &[char],
+        kinds: &mut [Syntax],
+        index: usize,
+        escapes: bool,
+    ) -> usize {
+        kinds[index] = Syntax::Literal;
+        if escapes && characters[index] == '\\' {
+            if let Some(kind) = kinds.get_mut(index + 1) {
+                *kind = Syntax::Literal;
+            }
+            return 2;
+        }
+        if characters[index] == '\'' {
+            self.open.pop();
+        }
+        1
+    }
+
+    fn in_double(&mut self, characters: &[char], kinds: &mut [Syntax], index: usize) -> usize {
+        match characters[index] {
+            '\\' => {
+                kinds[index] = Syntax::Literal;
+                if let Some(kind) = kinds.get_mut(index + 1) {
+                    *kind = Syntax::Literal;
+                }
+                2
+            }
+            '"' => {
+                kinds[index] = Syntax::Literal;
+                self.open.pop();
+                1
+            }
+            // What a substitution runs is code, wherever it is written.
+            '$' if characters.get(index + 1) == Some(&'(') => {
+                self.open.push(Frame::Substitution { parens: 0 });
+                2
+            }
+            '`' => {
+                self.open.push(Frame::Backtick);
+                1
+            }
+            _ => {
+                kinds[index] = Syntax::Literal;
+                1
+            }
+        }
+    }
+
+    fn in_code(
+        &mut self,
+        characters: &[char],
+        kinds: &mut [Syntax],
+        index: usize,
+        frame: Option<Frame>,
+    ) -> usize {
+        match characters[index] {
+            // An escaped character is that character and nothing it would
+            // otherwise open: `It\'s` opens no string.
+            '\\' => 2,
+            '#' if begins_word(characters, index) => {
+                for kind in kinds.iter_mut().skip(index) {
+                    *kind = Syntax::Comment;
+                }
+                characters.len() - index
+            }
+            '\'' => {
+                let escapes = index > 0 && characters[index - 1] == '$';
+                if escapes {
+                    kinds[index - 1] = Syntax::Literal;
+                }
+                kinds[index] = Syntax::Literal;
+                self.open.push(Frame::Single { escapes });
+                1
+            }
+            '"' => {
+                kinds[index] = Syntax::Literal;
+                self.open.push(Frame::Double);
+                1
+            }
+            '$' if characters.get(index + 1) == Some(&'(') => {
+                self.open.push(Frame::Substitution { parens: 0 });
+                2
+            }
+            '`' => {
+                if frame == Some(Frame::Backtick) {
+                    self.open.pop();
+                } else {
+                    self.open.push(Frame::Backtick);
+                }
+                1
+            }
+            '(' => {
+                if let Some(Frame::Substitution { parens }) = self.open.last_mut() {
+                    *parens += 1;
+                }
+                1
+            }
+            ')' => {
+                match self.open.last_mut() {
+                    Some(Frame::Substitution { parens: 0 }) => {
+                        self.open.pop();
+                    }
+                    Some(Frame::Substitution { parens }) => *parens -= 1,
+                    _ => {}
+                }
+                1
+            }
+            '<' if characters.get(index + 1) == Some(&'<') => self.heredoc(characters, index),
+            _ => 1,
+        }
+    }
+
+    /// Read the `<<` at `index`: a heredoc where a delimiter word follows it,
+    /// and only an operator where it does not. `<<<` is a here-string, and a
+    /// `<<` inside arithmetic is a shift, whose right-hand side is no word a
+    /// line could end on.
+    fn heredoc(&mut self, characters: &[char], index: usize) -> usize {
+        let after = index + 2;
+        let here_string =
+            characters.get(after) == Some(&'<') || (index > 0 && characters[index - 1] == '<');
+        let arithmetic = matches!(
+            self.open.last(),
+            Some(Frame::Substitution { parens }) if *parens > 0
+        ) || characters[..index]
+            .windows(2)
+            .any(|pair| pair == ['(', '(']);
+        if here_string || arithmetic {
+            return 2;
+        }
+        let strips_tabs = characters.get(after) == Some(&'-');
+        let mut at = after + usize::from(strips_tabs);
+        while characters.get(at).is_some_and(|c| *c == ' ' || *c == '\t') {
+            at += 1;
+        }
+        let opens_word = characters
+            .get(at)
+            .is_some_and(|c| c.is_alphabetic() || matches!(c, '_' | '\'' | '"' | '\\'));
+        if !opens_word {
+            return at - index;
+        }
+        // The delimiter is the word as the shell reads it, its quotes and
+        // backslashes taken off. Quoting it turns expansion off in the body,
+        // which changes nothing here: the body is literal either way.
+        let mut delimiter = String::new();
+        let mut quote: Option<char> = None;
+        while let Some(&character) = characters.get(at) {
+            match (quote, character) {
+                (Some(open), c) if c == open => quote = None,
+                (Some(_), c) => delimiter.push(c),
+                (None, '\'' | '"') => quote = Some(character),
+                (None, '\\') => {}
+                (None, c)
+                    if c.is_whitespace()
+                        || matches!(c, ';' | '|' | '&' | '<' | '>' | '(' | ')') =>
+                {
+                    break
+                }
+                (None, c) => delimiter.push(c),
+            }
+            at += 1;
+        }
+        if !delimiter.is_empty() {
+            self.heredocs.push_back(Heredoc {
+                delimiter,
+                strips_tabs,
+            });
+        }
+        at - index
+    }
+}
+
+/// Whether the character at `index` begins a word, which is the only place the
+/// shell reads a `#` as a comment: at the start of the line, after a space, or
+/// after an operator that ends the word before it.
+fn begins_word(characters: &[char], index: usize) -> bool {
+    index == 0
+        || characters[index - 1].is_whitespace()
+        || matches!(characters[index - 1], ';' | '&' | '|' | '(')
 }
 
 /// Where the scan is between two characters.

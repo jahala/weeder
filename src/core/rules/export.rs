@@ -58,7 +58,7 @@ pub fn is_public(lang: Lang, definition: &Definition, declaration: &str) -> bool
             .next()
             .is_some_and(|first| first.is_uppercase()),
         Lang::Python => !definition.name.starts_with('_'),
-        Lang::Other => false,
+        Lang::Bash | Lang::Other => false,
     }
 }
 

@@ -80,7 +80,7 @@ fn marker(lang: Lang, mask: &Mask, line: u32) -> Option<Marker> {
         Lang::Python => decorator_marker(&code),
         Lang::Rust => attribute_marker(&code),
         Lang::Go => handle_marker(&code),
-        Lang::Other => None,
+        Lang::Bash | Lang::Other => None,
     }
 }
 
