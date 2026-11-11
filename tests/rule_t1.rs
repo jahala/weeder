@@ -957,8 +957,16 @@ fn a_deleted_test_file_whose_cases_weeder_cannot_count_is_a_warning_not_silence(
         .into_iter()
         .filter(|finding| finding.rule == "T1")
         .collect();
-    assert_eq!(t1.len(), 1, "the deleted suite is reported: {t1:#?}\n{}", run.stderr);
-    assert_eq!(t1[0].level, "warning", "an uncounted fall is read by a person");
+    assert_eq!(
+        t1.len(),
+        1,
+        "the deleted suite is reported: {t1:#?}\n{}",
+        run.stderr
+    );
+    assert_eq!(
+        t1[0].level, "warning",
+        "an uncounted fall is read by a person"
+    );
     assert_eq!(t1[0].path, "test/check.bats");
     assert!(
         t1[0].message.contains("could not count"),
