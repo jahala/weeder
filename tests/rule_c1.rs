@@ -345,8 +345,10 @@ fn a_blank_guardrails_section_is_refused() {
 }
 
 /// The fixture folder for a release: a `garden.json` that carries the
-/// product's own version, the asset URLs named after it, and a judge pinned at
-/// a version of its own (#135).
+/// product's own version and the asset URLs named after it (#135). The silent
+/// case and `fire-judge-version` also carry an entry with a `version` of its
+/// own deeper in the file, which the schema does not define. It stands for any
+/// version that is not the product's, and C1 reads only the top-level one.
 const RELEASE: &str = "release";
 
 /// The garden manifest, the one guardrail a release has to move.
@@ -414,7 +416,7 @@ fn blocks_on_garden(case: &str) {
 }
 
 #[test]
-fn c1_still_blocks_a_release_beside_a_changed_judge_entry() {
+fn c1_still_blocks_a_release_that_also_loosens_the_check_command() {
     blocks_on_garden("fire");
 }
 
