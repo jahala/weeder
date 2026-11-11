@@ -401,6 +401,22 @@ answers none anybody had. Every rule that judges a line still judges every line
 of a file that size, so this is a cost weeder declines to pay rather than a place
 to hide a change in.
 
+<a id="G3"></a>
+## G3: A control character was added to a text source file
+
+`check` · blocks by default
+
+An added line carries a control character other than tab, newline or carriage return, in a file weeder reads as text by its path (source in a language it reads, a manifest, a guardrail, a workflow) or one git counted as text at the base. A character the change only carried over from a line it took out is not counted again. A NUL blocks, because git then takes the whole file for binary and shows no line of any change to it; every other control character warns.
+
+A NUL is the byte git reads a file as binary by, so a pull request that adds one
+shows `Binary files differ` where its lines should be. weeder asks git for the
+text of every change, so the finding still names the line the character sits on
+and the code point, `U+0000` for a NUL. A form feed, an escape or a stray `0x01`
+warns: each prints as nothing or moves the cursor, and the form feed has an old
+honest use as a page break. A character written as an escape, `"\x00"` or
+`'\0'`, is text and never reported, and a file that is a blob from its first
+commit is G2's.
+
 <a id="B1"></a>
 ## B1: A test passed without the change it covers
 

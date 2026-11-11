@@ -7,4 +7,4 @@
 # 2026-11-06, after T2 fell to 70 percent in Go unwatched). The test
 # `the_bar_holds_every_check_rule_that_blocks_and_no_other` in
 # xtask/src/mutate/report.rs fails when this list and the catalogue disagree.
-T1 T2 T3 T7 T8 S1 D2 X1 X2 C1 G1
+T1 T2 T3 T7 T8 S1 D2 X1 X2 C1 G1 G3

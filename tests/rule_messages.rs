@@ -38,7 +38,7 @@ const NEVER: [&str; 12] = [
 
 /// The rules that block by default, and the fixture folders that make each one
 /// fire. A rule proven in four languages is read in all four.
-const BLOCKING: [(&str, &[&str]); 8] = [
+const BLOCKING: [(&str, &[&str]); 9] = [
     ("T1", &["ts", "py", "rs", "go"]),
     ("T2", &["ts", "py", "rs", "go", "sh"]),
     ("T3", &["ts", "py", "rs", "go"]),
@@ -47,6 +47,7 @@ const BLOCKING: [(&str, &[&str]); 8] = [
     ("X1", &["ts", "py", "rs", "go"]),
     ("C1", &["paths"]),
     ("G1", &["ts", "py", "rs", "go"]),
+    ("G3", &["ts", "py", "rs", "go"]),
 ];
 
 /// The rules that also carry the edit that clears the finding.

@@ -129,6 +129,7 @@ fn planter(rule: &str) -> Option<Planter> {
         "C3" => |lang, tree, seed| edit_a_workflow(lang, tree, seed).ok_or(NoSite::Absent),
         "G1" => |lang, tree, seed| commit_a_conflict(lang, tree, seed).ok_or(NoSite::Absent),
         "G2" => |lang, tree, seed| add_a_blob(lang, tree, seed).ok_or(NoSite::Absent),
+        "G3" => |lang, tree, seed| hide_a_file_behind_a_nul(lang, tree, seed).ok_or(NoSite::Absent),
         _ => return None,
     };
     Some(found)
@@ -2190,6 +2191,45 @@ fn add_a_blob(lang: Language, tree: &Tree, _seed: u64) -> Option<Mutation> {
     Some(Mutation::new("a binary file was added", &path).writing(&path, bytes))
 }
 
+/// G3: a NUL where a character of a comment or a string was meant, the way an
+/// editor leaves one, which turns every later diff of the file into
+/// `Binary files differ`.
+fn hide_a_file_behind_a_nul(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
+    for source in rotate(tree.sources(lang).iter().collect::<Vec<_>>(), seed) {
+        if source.lines.iter().any(|line| line.contains('\u{0}')) {
+            continue;
+        }
+        // The first column of a line that is a comment or a literal rather
+        // than code: the mask blanks those out and leaves code as it is.
+        let site = source
+            .lines
+            .iter()
+            .zip(&source.code)
+            .enumerate()
+            .skip(3)
+            .find_map(|(at, (line, code))| {
+                line.chars()
+                    .zip(code.chars())
+                    .position(|(written, masked)| written != ' ' && masked == ' ')
+                    .map(|column| (at, line, column))
+            });
+        let Some((at, line, column)) = site else {
+            continue;
+        };
+        let mut planted: String = line.chars().take(column).collect();
+        planted.push('\u{0}');
+        planted.extend(line.chars().skip(column));
+        let text = replace(source, at, &[planted]);
+        let number = at as u32 + 1;
+        return Some(
+            Mutation::new("a NUL was written into a source file", &source.path)
+                .writing(&source.path, text)
+                .at(number, number),
+        );
+    }
+    None
+}
+
 // ---------------------------------------------------------------------------
 // Writing lines
 // ---------------------------------------------------------------------------
@@ -2464,6 +2504,11 @@ mod tests {
     #[test]
     fn an_echoed_literal_is_planted_and_read_back_in_every_language() {
         read_back("T12", echo_a_literal);
+    }
+
+    #[test]
+    fn a_nul_in_a_source_file_is_planted_and_read_back_in_every_language() {
+        read_back("G3", hide_a_file_behind_a_nul);
     }
 
     #[test]

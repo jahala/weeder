@@ -45,7 +45,7 @@ use crate::core::suppress::{
 use crate::core::syntax::Mask;
 use crate::core::unread;
 use crate::faces::{
-    blobs, gather, read_law, readable, side, written_law, Answer, Format, LawError, Source,
+    blobs, gather, read_law, readable, side, written_law, Answer, Base, Format, LawError, Source,
     Untracked,
 };
 use crate::seams::{fs, git, reader};
@@ -349,7 +349,7 @@ fn arrivals(root: &Path, config: &Config) -> Result<(Vec<Change>, Vec<String>), 
         let Some(blob) = git::file_in_tree(root, &path).map_err(|error| error.to_string())? else {
             continue;
         };
-        let after = side(&path, &blob);
+        let after = side(&path, &blob, Base::Other);
         arrived.push(Change {
             diff: added_file(&path, after.content.as_deref()),
             before: Side::default(),

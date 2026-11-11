@@ -141,13 +141,18 @@ fn each_blocking_shape_still_blocks_when_git_is_told_to_show_no_lines() {
                 .iter()
                 .any(|finding| finding.rule == rule && finding.level == "error");
             // What git was told to hide is judged as if it had been shown:
-            // the same rules, and G2 besides where a NUL arrived in a new
-            // file, because nobody can review that file on a page either.
+            // the same rules, and where the hiding was a NUL, G3 besides,
+            // naming the NUL itself, and G2 where it arrived in a new file,
+            // because nobody can review that file on a page either.
             let mut hidden = rule_set(&run);
-            if matches!(blind, Blind::NulByte) && !seen.contains("G2") {
-                hidden.remove("G2");
+            let mut named_the_nul = true;
+            if matches!(blind, Blind::NulByte) {
+                named_the_nul = hidden.remove("G3");
+                if !seen.contains("G2") {
+                    hidden.remove("G2");
+                }
             }
-            if run.code != 2 || !blocked || hidden != seen {
+            if run.code != 2 || !blocked || !named_the_nul || hidden != seen {
                 misses.push(format!(
                     "{rule} ({shape}) in {lang} under {blind:?}: exit {}, {hidden:?} where the plain change gives {seen:?}{}",
                     run.code, run.stderr
