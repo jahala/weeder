@@ -65,7 +65,7 @@ const LANGUAGES: [Language; 4] = [
         test: "parse_test.go",
         case_line: 11,
         case: "TestNormaliseTrimsAPaddedNumber",
-        honest: &["t.Fatalf(", "t.Errorf(", "trimsTo(t,"],
+        honest: &["t.Fatalf(", "t.Errorf(", "trimsTo(t,", "t.Run(tc.name,"],
     },
 ];
 
@@ -312,6 +312,52 @@ fn t9_reads_a_result_returning_rust_case_by_what_it_hands_back() {
             run.output()
         );
     }
+}
+
+/// Go's table-driven shape, the most common one Go tests are written in: a
+/// case whose body is a loop of `t.Run` subtests, each a closure that asserts.
+/// The test shape names a Go case by its `Test` function and not by its
+/// subtests, so the closures' lines are the case's own lines and their
+/// assertions are the case's. When the closure checks nothing, the case that
+/// holds it is the one reported.
+#[test]
+fn t9_reads_a_case_whose_assertions_sit_in_the_cases_nested_in_it() {
+    let head =
+        "package parse\n\nimport \"testing\"\n\nfunc Parse(s string) int { return len(s) }\n";
+    let table = |body: &str| {
+        format!(
+            "{head}\nfunc TestParseReadsEachNumber(t *testing.T) {{\n\tcases := []struct {{\n\t\tname  string\n\t\tinput string\n\t\twant  int\n\t}}{{\n\t\t{{\"one digit\", \"7\", 1}},\n\t}}\n\tfor _, tc := range cases {{\n\t\tt.Run(tc.name, func(t *testing.T) {{\n{body}\t\t}})\n\t}}\n}}\n"
+        )
+    };
+    let asserting = table("\t\t\tif got := Parse(tc.input); got != tc.want {\n\t\t\t\tt.Errorf(\"parse gave %d\", got)\n\t\t\t}\n");
+    let silent = table("\t\t\tParse(tc.input)\n");
+
+    let repo = Repo::init();
+    repo.write("parse_test.go", head);
+    repo.commit("the code before the change");
+    repo.write("parse_test.go", &asserting);
+    let run = repo.weeder(&["check"]);
+    assert_eq!(
+        reported(&run.findings()),
+        Vec::new(),
+        "a table-driven case asserts through its subtests\n{}",
+        run.output()
+    );
+
+    repo.write("parse_test.go", &silent);
+    let run = repo.weeder(&["check"]);
+    let findings = reported(&run.findings());
+    assert_eq!(
+        findings.len(),
+        1,
+        "the same table whose subtest checks nothing is reported once\n{}",
+        run.output()
+    );
+    assert!(
+        findings[0].message.contains("`TestParseReadsEachNumber`"),
+        "and it is the case that holds the subtests: {}",
+        findings[0].message
+    );
 }
 
 /// The paths the fixture's change touched, as git sees them.
