@@ -11,6 +11,14 @@
 //! change the gate lets through, because weeder can tell its own hook from one
 //! somebody rewrote; a hook that differs by one byte is a guardrail edit again.
 //!
+//! A release is not an edit either. The garden's `garden.json` declares the
+//! judges a planted repository runs, and it also carries the product's own
+//! version and the asset URLs named after it, which every version bump moves
+//! (#135). A change whose every line moves only that version is the reading
+//! D1 makes for a manifest, asked of [`release`], so the two rules cannot
+//! disagree about what a release is. Any other line beside it, a judge's own
+//! pinned version included, is C1's again.
+//!
 //! The two markdown files are different. `AGENTS.md` and `CLAUDE.md` are mostly
 //! prose that wants editing, and one section of them is law. So weeder reads the
 //! headings, finds the sections that state the law, and reports only a hunk
@@ -26,7 +34,7 @@ use crate::core::change::Change;
 use crate::core::classify::{classify_file, FileKind};
 use crate::core::finding::{Detection, Message, Region, Stamp};
 use crate::core::guard;
-use crate::core::rules::check::Judgement;
+use crate::core::rules::check::{release, Judgement};
 
 /// The files whose law lives in a section rather than in the whole file.
 const INSTRUCTIONS: &[&str] = &["AGENTS.md", "CLAUDE.md"];
@@ -64,6 +72,14 @@ fn edit(change: &Change, headings: &[String]) -> Option<Detection> {
         if guard::is_own_bundle(hook, change.after.text()) {
             return None;
         }
+    }
+    // Only the garden manifest carries a release among the guardrails. A
+    // harness folder may hold a `package.json` of its own, and a version moved
+    // there is still a change to what the harness runs.
+    if release::is_garden_manifest(path)
+        && release::only_releases(change, &release::releases(change))
+    {
+        return None;
     }
     if !is_instructions(path) {
         return Some(guardrail(path));
