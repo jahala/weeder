@@ -73,6 +73,7 @@ fn reader(rule: &str) -> Option<Reader> {
         "T5" => Reader::Site(|site, _, tree| an_expectation_moved(site, tree)),
         "T6" => Reader::Site(|site, _, _| a_claim_stopped_naming_the_failure(site)),
         "T10" => Reader::Site(|site, _, tree| a_constant_is_restated(site, tree)),
+        "T11" => Reader::Site(|site, _, _| a_double_answers_alone(site)),
         "M1" => Reader::Site(|site, _, tree| a_double_stands_in_for_the_change(site, tree)),
         "S1" => Reader::Site(|site, _, _| a_marker_for_work_is_in_shipped_code(site)),
         "S2" => Reader::Site(|site, _, _| a_failure_goes_nowhere(site)),
@@ -465,6 +466,48 @@ fn a_constant_is_restated(site: &Site, tree: &Tree) -> bool {
                 .any(|line| line.contains(&name) && line.contains(&literal))
         })
     })
+}
+
+/// T11: the planted lines hold a case that binds a name to something whose
+/// name says it makes a double, assert on that name, and hand it to nothing:
+/// the name is never written inside a call's brackets.
+fn a_double_answers_alone(site: &Site) -> bool {
+    let (Some(first), Some(last)) = (site.first, site.last) else {
+        return false;
+    };
+    let name = inject::ANSWERING_DOUBLE;
+    let code: Vec<&String> = site
+        .after
+        .code
+        .iter()
+        .skip(first)
+        .take(last.saturating_sub(first) + 1)
+        .collect();
+    let binds = code.iter().any(|line| {
+        let spelled = line.to_ascii_lowercase();
+        let made = ["mock", "fake", "stub", ".fn("]
+            .iter()
+            .any(|word| spelled.contains(word));
+        made && line
+            .trim_start()
+            .split(['=', ':'])
+            .next()
+            .is_some_and(|head| head.split_whitespace().last() == Some(name))
+    });
+    let asserted = site.after.assertions().iter().any(|at| {
+        (first..=last).contains(&(*at as usize)) && site.after.code[*at as usize].contains(name)
+    });
+    let handed = code.iter().any(|line| {
+        [
+            format!("({name})"),
+            format!("({name},"),
+            format!(", {name})"),
+            format!("&{name}"),
+        ]
+        .iter()
+        .any(|written| line.contains(written.as_str()))
+    });
+    site.after.holds_tests() && binds && asserted && !handed
 }
 
 // ---------------------------------------------------------------------------

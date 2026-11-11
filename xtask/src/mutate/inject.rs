@@ -108,6 +108,7 @@ fn planter(rule: &str) -> Option<Planter> {
         "T7" => rename_out_of_the_runner,
         "T8" => keep_a_suite_out_of_the_run,
         "T10" => |lang, tree, seed| restate_a_constant(lang, tree, seed).ok_or(NoSite::Absent),
+        "T11" => |lang, tree, seed| assert_on_a_double(lang, tree, seed).ok_or(NoSite::Absent),
         "M1" => {
             |lang, tree, seed| mock_the_unit_under_change(lang, tree, seed).ok_or(NoSite::Absent)
         }
@@ -1017,6 +1018,96 @@ fn go_package(source: &Source) -> Option<String> {
             .strip_prefix("package ")
             .map(|name| name.trim().to_string())
     })
+}
+
+/// The name T11's planted case binds its double to.
+pub(super) const ANSWERING_DOUBLE: &str = "answer";
+
+/// T11: a case is added that builds a double, tells it what to answer, and
+/// checks that it answered, with nothing of the code under test between.
+///
+/// The case goes after the last case of a suite the runner collects, so it
+/// sits where the suite's cases sit; Python's goes at the foot of the file, a
+/// function of its own, with the import the double is made by.
+fn assert_on_a_double(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
+    let name = ANSWERING_DOUBLE;
+    for source in rotate(tree.tests(lang), seed) {
+        let Some(last_case) = source.cases().last().cloned() else {
+            continue;
+        };
+        let indent = leading(&source.lines[last_case.first as usize]);
+        let case: Vec<String> = match lang {
+            Language::Ts => {
+                let framework = if source.code.iter().any(|code| code.contains("vi.")) {
+                    "vi"
+                } else {
+                    "jest"
+                };
+                vec![
+                    String::new(),
+                    format!("{indent}test(\"a double answers\", () => {{"),
+                    format!("{indent}  const {name} = {framework}.fn().mockReturnValue(true);"),
+                    format!("{indent}  expect({name}()).toBe(true);"),
+                    format!("{indent}}});"),
+                ]
+            }
+            Language::Py => vec![
+                String::new(),
+                String::new(),
+                "def test_a_double_answers():".to_string(),
+                format!("    {name} = Mock(return_value=True)"),
+                format!("    assert {name}() is True"),
+            ],
+            Language::Rs => vec![
+                String::new(),
+                format!("{indent}#[test]"),
+                format!("{indent}fn a_double_answers() {{"),
+                format!("{indent}    struct FakeAnswer;"),
+                format!("{indent}    impl FakeAnswer {{"),
+                format!("{indent}        fn give(&self) -> bool {{"),
+                format!("{indent}            true"),
+                format!("{indent}        }}"),
+                format!("{indent}    }}"),
+                format!("{indent}    let {name} = FakeAnswer;"),
+                format!("{indent}    assert!({name}.give());"),
+                format!("{indent}}}"),
+            ],
+            Language::Go => vec![
+                String::new(),
+                "func TestADoubleAnswers(t *testing.T) {".to_string(),
+                "\ttype fakeAnswer struct{ value int }".to_string(),
+                format!("\t{name} := fakeAnswer{{value: 1}}"),
+                format!("\tif {name}.value != 1 {{"),
+                format!("\t\tt.Errorf(\"the double answered %d\", {name}.value)"),
+                "\t}".to_string(),
+                "}".to_string(),
+            ],
+        };
+        let (at, imports): (usize, Vec<String>) = match lang {
+            Language::Py => (
+                source.lines.len(),
+                vec!["from unittest.mock import Mock".to_string()],
+            ),
+            _ => (last_case.last as usize + 1, Vec::new()),
+        };
+        let mut lines = source.lines.clone();
+        let import_at = source.last_import().map_or(0, |line| line + 1);
+        for (offset, import) in imports.iter().enumerate() {
+            lines.insert(import_at.min(lines.len()) + offset, import.clone());
+        }
+        let at = at + imports.len();
+        let first = at + case.iter().take_while(|line| line.is_empty()).count() + 1;
+        let last = at + case.len();
+        for (offset, line) in case.into_iter().enumerate() {
+            lines.insert(at.min(lines.len()) + offset, line);
+        }
+        return Some(
+            Mutation::new("a case asserts on the double it built", &source.path)
+                .writing(&source.path, joined(&lines))
+                .at(first as u32, last as u32),
+        );
+    }
+    None
 }
 
 // ---------------------------------------------------------------------------
@@ -2234,6 +2325,11 @@ mod tests {
     #[test]
     fn a_restated_constant_is_planted_and_read_back_in_every_language() {
         read_back("T10", restate_a_constant);
+    }
+
+    #[test]
+    fn a_case_on_its_own_double_is_planted_and_read_back_in_every_language() {
+        read_back("T11", assert_on_a_double);
     }
 
     #[test]

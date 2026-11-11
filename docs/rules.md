@@ -246,6 +246,15 @@ A test case the change added checks nothing but a value the code defines against
 
 `expect(SERVICE).toBe("build.example.app")` passes whatever the code does with `SERVICE`, because changing the value changes the case with it. A case that hands the constant to the code and checks what comes back, `expect(endpoint(SERVICE)).toBe("https://build.example.app/")`, can fail, and T10 leaves it alone. So does an expected value imported from the code and compared with what the code returns, `expect(status()).toBe(Status.Ready)`: the import only names the answer.
 
+<a id="T11"></a>
+## T11: An added test asserts only on its own double
+
+`check` · warns by default
+
+A test case the change added asserts on nothing but a double it built itself: every assertion reads a name the case bound to a double, made by a call or a type whose name says it makes one, or a value the case read off that double, and the case hands the double to nothing else, so no assertion reads what the code under test did. A double handed to the unit, with an assertion on the unit's output or on what the unit did to the double, is left alone.
+
+A double is read through the same words M1 reads one by, `mock`, `stub`, `fake`, `spy`, `patch` and `double`, and through the script frameworks' mock function, a member called `fn` and called. A case that tells `vi.fn()` to answer `true` and then checks that it answered `true` has tested the mock. Configuring the double, `save.mockReturnValue(true)` or `clock.set(5)`, is not handing it on; passing it as an argument, or as a value in an object, is.
+
 <a id="M1"></a>
 ## M1: A test mocks the unit under change
 

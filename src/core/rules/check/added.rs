@@ -31,6 +31,31 @@ pub struct Added<'a> {
     pub checks: Vec<Check>,
 }
 
+impl Added<'_> {
+    /// The case's own lines: inside it, and in no narrower case written inside
+    /// it.
+    #[must_use]
+    pub fn lines(&self) -> Vec<u32> {
+        let cases: Vec<&TestUnit> = self.side.tests.cases().collect();
+        (self.case.start_line..=self.case.end_line)
+            .filter(|line| enclosing(&cases, *line) == Some(self.case))
+            .collect()
+    }
+
+    /// Whether the 1-based line asserts something, or is the line an assertion
+    /// compares on.
+    #[must_use]
+    pub fn checks_on(&self, line: u32) -> bool {
+        self.checks.iter().any(|check| {
+            check.line == line
+                || check
+                    .reading
+                    .as_ref()
+                    .is_some_and(|reading| reading.line == line)
+        })
+    }
+}
+
 /// One assertion of an added case.
 pub struct Check {
     /// The 1-based line the assertion is made on.

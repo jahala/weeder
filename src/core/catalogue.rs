@@ -131,6 +131,14 @@ const CATALOGUE: &[Rule] = &[
         network: Network::None,
     },
     Rule {
+        id: "T11",
+        face: Face::Check,
+        default_level: Level::Warn,
+        short_description: "An added test asserts only on its own double",
+        full_description: "A test case the change added asserts on nothing but a double it built itself: every assertion reads a name the case bound to a double, made by a call or a type whose name says it makes one, or a value the case read off that double, and the case hands the double to nothing else, so no assertion reads what the code under test did. A double handed to the unit, with an assertion on the unit's output or on what the unit did to the double, is left alone.",
+        network: Network::None,
+    },
+    Rule {
         id: "M1",
         face: Face::Check,
         default_level: Level::Warn,
