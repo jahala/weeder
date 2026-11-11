@@ -79,10 +79,13 @@ jobs:
   # rather than as a slow gate somebody notices months later. Same invocation as
   # the debug run: whatever the budget covers has to be inside what CI runs.
   # Prose changes neither the binary nor what the budget times, so a pull
-  # request made only of prose skips it, and the job reports skipped.
+  # request made only of prose skips it, and the job reports skipped. Only a
+  # plain `false` skips it: a changes job that failed answers nothing, and
+  # without `always()` a failed `needs` would skip this job, which a required
+  # check reads as a pass.
   latency:
     needs: changes
-    if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true'
+    if: always() && (github.event_name != 'pull_request' || needs.changes.outputs.code != 'false')
     runs-on: ubuntu-latest
     steps:
       # The self-check judges the whole repository against its root commit, so

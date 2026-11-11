@@ -131,11 +131,14 @@ fn the_workflow_skips_only_the_latency_job_and_only_on_prose() {
         latency.contains("needs: changes"),
         "latency waits for the answer:\n{latency}"
     );
+    // A changes job that failed answers nothing, and a job whose `needs` failed
+    // is skipped unless its condition says `always()`. A skipped job passes a
+    // required check, so latency runs unless the answer is plainly prose.
     assert!(
         latency.contains(
-            "github.event_name != 'pull_request' || needs.changes.outputs.code == 'true'"
+            "if: always() && (github.event_name != 'pull_request' || needs.changes.outputs.code != 'false')"
         ),
-        "latency skips a pull request of prose, and nothing else:\n{latency}"
+        "latency skips a pull request of prose, and nothing else, a failed answer included:\n{latency}"
     );
 
     let check = job(&workflow, "check");
