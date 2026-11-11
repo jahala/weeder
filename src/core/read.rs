@@ -113,6 +113,10 @@ pub struct TestUnit {
     pub end_line: u32,
     /// 0 at the top of the file, one more inside each enclosing suite.
     pub depth: u8,
+    /// The attributes written above the declaration, without their `#[` and
+    /// `]`, in a language that marks a test that way: Rust's `test`, and
+    /// `should_panic` beside it. Empty in every other language.
+    pub attributes: Vec<String>,
 }
 
 /// The tests a file declares, in source order, suites before what they hold.
@@ -127,6 +131,18 @@ impl TestShape {
         self.units
             .iter()
             .filter(|unit| unit.kind == TestUnitKind::Case)
+    }
+
+    /// The case a 1-based line sits in: the narrowest one that spans it, so a
+    /// case written inside another answers for its own lines. A line outside
+    /// every case sits in none. Of two cases with the same span, the first the
+    /// file writes answers. Every rule that asks which case a line belongs to
+    /// asks here, so they all read a line the same way.
+    #[must_use]
+    pub fn case_at(&self, line: u32) -> Option<&TestUnit> {
+        self.cases()
+            .filter(|case| case.start_line <= line && line <= case.end_line)
+            .min_by_key(|case| case.end_line.saturating_sub(case.start_line))
     }
 }
 

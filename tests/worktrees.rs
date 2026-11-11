@@ -11,7 +11,6 @@
 mod common;
 
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 use common::Repo;
 
@@ -25,8 +24,7 @@ fn script(name: &str, repo: &Repo) -> (i32, String) {
     // directory, which the test removes, rather than in the owner's trash.
     let aside = repo.root().join(".removed");
     std::fs::create_dir_all(&aside).expect("a folder to move worktrees into");
-    let output = Command::new("bash")
-        .arg(path)
+    let output = common::bash(&path)
         .arg(repo.root())
         .env("WEEDER_MERGED_INTO", "main")
         .env("WEEDER_TRASH_INTO", &aside)

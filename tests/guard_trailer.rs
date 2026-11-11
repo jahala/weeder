@@ -338,6 +338,78 @@ fn pre_commit_that_defers_prints_one_line_and_no_table() {
     );
 }
 
+/// What the two stages print when a trailer allows the finding (#142). The
+/// pre-commit line runs before the message exists, so it says what is true
+/// then: the finding blocks unless the message allows it. Once commit-msg has
+/// read the message, the last line says the trailer allowed it. Nothing on the
+/// way says the commit is blocked and then lets it through.
+#[test]
+fn an_allowed_commit_says_it_was_allowed_and_never_that_it_was_blocked() {
+    let repo = guarded();
+    staged(&repo, PLANTED);
+
+    let landed = repo.try_git(&["commit", "-m", &allowing(RULE, REASON)]);
+
+    assert_eq!(landed.code, 0, "the commit lands: {}", landed.output());
+    // git runs its hooks with their output on its own stderr, and writes the
+    // summary of the commit it made to stdout, so the hooks' lines, in the
+    // order they were printed, are stderr's.
+    let said = landed.stderr.clone();
+    let opening = said
+        .lines()
+        .find(|line| line.starts_with("pre-commit:"))
+        .unwrap_or_else(|| panic!("pre-commit says what it found:\n{said}"));
+    assert!(
+        opening.contains(RULE) && opening.contains("unless"),
+        "pre-commit names the rule and says the message may still allow it:\n{opening}"
+    );
+    for line in said.lines() {
+        assert!(
+            !line.contains(&format!("{RULE} blocks")),
+            "a commit the trailer allows is never said to be blocked:\n{said}"
+        );
+    }
+    let last = last_hook_line(&said);
+    assert!(
+        last.starts_with("commit-msg:") && last.contains(RULE) && last.contains("allow"),
+        "commit-msg's last line says the trailer allowed {RULE}:\n{said}"
+    );
+    assert!(
+        !said.contains("refused"),
+        "and nothing says the commit was refused:\n{said}"
+    );
+}
+
+#[test]
+fn a_refused_commit_ends_on_the_refusal() {
+    let repo = guarded();
+    staged(&repo, PLANTED);
+
+    let refused = repo.try_git(&["commit", "-m", "plant the stem's own hook"]);
+
+    assert_ne!(
+        refused.code,
+        0,
+        "the commit is refused: {}",
+        refused.output()
+    );
+    let said = refused.stderr.clone();
+    assert!(
+        last_hook_line(&said).starts_with("weeder guard refused: commit-msg:"),
+        "the last line says commit-msg refused the commit:\n{said}"
+    );
+}
+
+/// The last line the hooks printed. git adds its own advice after them, such
+/// as a `hint:` that the planted hook is not executable, and that is git's to
+/// say rather than weeder's verdict.
+fn last_hook_line(said: &str) -> &str {
+    said.lines()
+        .rev()
+        .find(|line| !line.trim().is_empty() && !line.starts_with("hint:"))
+        .unwrap_or_default()
+}
+
 #[test]
 fn an_allowed_commit_prints_its_findings_once() {
     let repo = guarded();

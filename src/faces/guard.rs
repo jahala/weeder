@@ -545,8 +545,9 @@ fn uninstall(root: &Path) -> Result<Answer, String> {
 /// Pre-commit judges the index before a message exists, so the one allowance a
 /// person is entitled to write, a `Weeder-allow:` trailer on this commit, is not
 /// on disk yet and this hook can honour none of it. What it does instead is say,
-/// in one line, what blocks and the exact trailer that would allow it, and leave
-/// the verdict to commit-msg, which reads the message the person wrote. The
+/// in one line, what would block unless the message allows it and the exact
+/// trailer that would, and leave the verdict to commit-msg, which reads the
+/// message the person wrote and ends on it. The
 /// table is commit-msg's to print: the two stages judge one index, and printing
 /// it from both showed every finding twice (#78, #88), from a hook that then
 /// passed. The deferral holds only while there is a stage to defer to: with the
@@ -592,11 +593,12 @@ fn commit_msg(root: &Path, version: &str, request: &CommitMsg) -> Result<Answer,
         // in one line and printed no table, so this stage prints it: the allowed
         // findings, as the notes they now are, are the commit's receipt.
         // Anywhere else pre-commit already wrote the receipt for this very
-        // index a moment ago, and a second copy is noise on every commit.
+        // index a moment ago, and a second copy is noise on every commit. The
+        // receipt ends on the verdict, because pre-commit's line left it open.
         let receipt = judged.findings.iter().any(allowed_by_the_message);
         return Ok(Answer {
             stdout: if receipt {
-                answer.stdout
+                format!("{}{}", answer.stdout, allowed_line(&judged.findings))
             } else {
                 String::new()
             },
@@ -617,22 +619,50 @@ fn commit_msg(root: &Path, version: &str, request: &CommitMsg) -> Result<Answer,
 }
 
 /// The one line pre-commit prints when it leaves the verdict to commit-msg:
-/// what blocks, the trailer that would allow each rule, and the stage that
-/// reads it and prints the findings.
+/// what would block, the trailer that would allow each rule, and the stage
+/// that reads it and decides. The message does not exist yet, so the line says
+/// what is true now, a block unless the message allows it, and never that the
+/// commit is blocked: commit-msg may let it through a moment later (#142).
 fn deferred(findings: &[Finding]) -> String {
     let rules = blocking(findings);
     let trailers: Vec<String> = rules
         .iter()
         .map(|rule| format!("`{TRAILER} {rule} <reason>`"))
         .collect();
-    let (verb, allows) = if rules.len() == 1 {
-        ("blocks", "allows it")
+    let (them, allows) = if rules.len() == 1 {
+        ("it", "allows it")
     } else {
-        ("block", "allow them")
+        ("them", "allow them")
     };
     format!(
-        "pre-commit: {} {verb} this index. commit-msg reads this commit's message, where {} {allows}, and prints the findings.\n",
+        "pre-commit: {} would block this index unless this commit's message allows {them}. commit-msg reads the message next, where {} {allows}, and prints the findings with its verdict.\n",
         listed(&rules),
+        listed(&trailers)
+    )
+}
+
+/// The line commit-msg ends on when the message's trailers allowed what would
+/// have blocked: which rules the trailers allowed, and that the commit goes
+/// ahead with the findings above as its record.
+fn allowed_line(findings: &[Finding]) -> String {
+    let mut rules: Vec<&str> = findings
+        .iter()
+        .filter(|finding| allowed_by_the_message(finding))
+        .map(|finding| finding.rule.as_str())
+        .collect();
+    rules.sort_unstable();
+    rules.dedup();
+    let trailers: Vec<String> = rules
+        .iter()
+        .map(|rule| format!("`{TRAILER} {rule}`"))
+        .collect();
+    let (noun, them) = if rules.len() == 1 {
+        ("trailer", "what")
+    } else {
+        ("trailers", "everything")
+    };
+    format!(
+        "commit-msg: this message's {} {noun} allowed {them} pre-commit found, so the commit goes ahead with the findings above as notes on its record.\n",
         listed(&trailers)
     )
 }

@@ -118,6 +118,7 @@ pub fn test_shape(path: &Path, content: &str) -> TestShape {
             start_line: entry.start_line,
             end_line: entry.end_line,
             depth: entry.depth,
+            attributes: Vec::new(),
         })
         .collect();
 
@@ -276,7 +277,15 @@ fn declared_tests(
     into: &mut Vec<TestUnit>,
 ) {
     for definition in definitions {
-        let kind = declared_test_kind(lang, lines, definition);
+        // Rust marks a test with an attribute and the module that holds them
+        // with `#[cfg(test)]`; neither is visible in the outline, so the lines
+        // above the declaration are where they are read.
+        let attributes = if matches!(lang, tilth_core::Lang::Rust) {
+            attributes_above(lines, definition.start_line)
+        } else {
+            Vec::new()
+        };
+        let kind = declared_test_kind(lang, &attributes, definition);
         if let Some(kind) = kind {
             into.push(TestUnit {
                 kind,
@@ -284,6 +293,7 @@ fn declared_tests(
                 start_line: definition.start_line,
                 end_line: definition.end_line,
                 depth,
+                attributes,
             });
         }
         let inside = if kind.is_some() {
@@ -300,7 +310,7 @@ fn declared_tests(
 /// `None` here.
 fn declared_test_kind(
     lang: tilth_core::Lang,
-    lines: &[&str],
+    attributes: &[String],
     definition: &Definition,
 ) -> Option<TestUnitKind> {
     match lang {
@@ -317,29 +327,24 @@ fn declared_test_kind(
             }
             _ => None,
         },
-        // Rust marks a test with an attribute and the module that holds them
-        // with `#[cfg(test)]`; neither is visible in the outline, so the lines
-        // above the declaration are where they are read.
-        tilth_core::Lang::Rust => {
-            let attributes = attributes_above(lines, definition.start_line);
-            match definition.kind {
-                DefinitionKind::Function
-                    if attributes
-                        .iter()
-                        .any(|attribute| is_test_attribute(attribute)) =>
-                {
-                    Some(TestUnitKind::Case)
-                }
-                DefinitionKind::Module
-                    if attributes
-                        .iter()
-                        .any(|attribute| is_cfg_test_attribute(attribute)) =>
-                {
-                    Some(TestUnitKind::Suite)
-                }
-                _ => None,
+        // The attributes written above the declaration say which it is.
+        tilth_core::Lang::Rust => match definition.kind {
+            DefinitionKind::Function
+                if attributes
+                    .iter()
+                    .any(|attribute| is_test_attribute(attribute)) =>
+            {
+                Some(TestUnitKind::Case)
             }
-        }
+            DefinitionKind::Module
+                if attributes
+                    .iter()
+                    .any(|attribute| is_cfg_test_attribute(attribute)) =>
+            {
+                Some(TestUnitKind::Suite)
+            }
+            _ => None,
+        },
         // `go test` runs a function whose name carries the kind of test it is
         // and whose parameter is the handle that runs it.
         tilth_core::Lang::Go => {
