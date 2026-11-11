@@ -107,6 +107,9 @@ fn planter(rule: &str) -> Option<Planter> {
         }
         "T7" => rename_out_of_the_runner,
         "T8" => keep_a_suite_out_of_the_run,
+        "T10" => |lang, tree, seed| restate_a_constant(lang, tree, seed).ok_or(NoSite::Absent),
+        "T11" => |lang, tree, seed| assert_on_a_double(lang, tree, seed).ok_or(NoSite::Absent),
+        "T12" => |lang, tree, seed| echo_a_literal(lang, tree, seed).ok_or(NoSite::Absent),
         "M1" => {
             |lang, tree, seed| mock_the_unit_under_change(lang, tree, seed).ok_or(NoSite::Absent)
         }
@@ -833,6 +836,350 @@ pub(super) fn exported_type(source: &Source) -> Option<String> {
         }
     }
     None
+}
+
+// ---------------------------------------------------------------------------
+// The cases that cannot fail
+// ---------------------------------------------------------------------------
+
+/// T10: a case is added that holds a constant of the code to the literal the
+/// code defines it as, and checks nothing else.
+///
+/// The case goes into a new suite beside the production file, which is where
+/// every runner but Rust's looks for one; Rust's goes into a test module at the
+/// foot of the file itself, which reaches the constant through `super`.
+fn restate_a_constant(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
+    for source in rotate(tree.production(lang), seed) {
+        let Some((name, literal)) = declared_constant(source) else {
+            continue;
+        };
+        let check = match lang {
+            Language::Ts => format!("  expect({name}).toBe({literal});"),
+            Language::Py => format!("    assert {name} == {literal}"),
+            Language::Rs => format!("        assert_eq!({name}, {literal});"),
+            Language::Go => format!("\tif {name} != {literal} {{"),
+        };
+        let snake = name.to_ascii_lowercase();
+        let (path, head, case): (String, Vec<String>, Vec<String>) = match lang {
+            Language::Ts => (
+                beside(&source.path, ".restated.test.ts"),
+                vec![format!(
+                    "import {{ {name} }} from \"./{}\";",
+                    stem(&source.path)
+                )],
+                vec![
+                    String::new(),
+                    format!("test(\"{name} is restated\", () => {{"),
+                    check,
+                    "});".to_string(),
+                ],
+            ),
+            Language::Py => (
+                format!(
+                    "{}test_{}_restated.py",
+                    prefix(&source.path),
+                    stem(&source.path)
+                ),
+                vec![format!(
+                    "from {} import {name}",
+                    dotted_module(&source.path)
+                )],
+                vec![
+                    String::new(),
+                    String::new(),
+                    format!("def test_{snake}_is_restated():"),
+                    check,
+                ],
+            ),
+            Language::Rs => (
+                source.path.clone(),
+                Vec::new(),
+                vec![
+                    String::new(),
+                    "#[cfg(test)]".to_string(),
+                    "mod restated {".to_string(),
+                    "    use super::*;".to_string(),
+                    String::new(),
+                    "    #[test]".to_string(),
+                    format!("    fn {snake}_is_restated() {{"),
+                    check,
+                    "    }".to_string(),
+                    "}".to_string(),
+                ],
+            ),
+            Language::Go => {
+                // A Go file that declares no package is no place to put a
+                // suite beside.
+                let Some(package) = go_package(source) else {
+                    continue;
+                };
+                (
+                    beside(&source.path, "_restated_test.go"),
+                    vec![
+                        format!("package {package}"),
+                        String::new(),
+                        "import \"testing\"".to_string(),
+                    ],
+                    vec![
+                        String::new(),
+                        format!("func Test{name}IsRestated(t *testing.T) {{"),
+                        check,
+                        format!("\t\tt.Errorf(\"{name} is %v\", {name})"),
+                        "\t}".to_string(),
+                        "}".to_string(),
+                    ],
+                )
+            }
+        };
+        if lang != Language::Rs && tree.paths.contains(&path) {
+            continue;
+        }
+        let mut lines: Vec<String> = if lang == Language::Rs {
+            source.lines.clone()
+        } else {
+            head
+        };
+        let first = lines.len() + case.iter().take_while(|line| line.is_empty()).count() + 1;
+        lines.extend(case);
+        let last = lines.len();
+        return Some(
+            Mutation::new(format!("a case restates `{name}`"), &path)
+                .writing(&path, joined(&lines))
+                .at(first as u32, last as u32),
+        );
+    }
+    None
+}
+
+/// A constant a production file declares at its top level with a string as
+/// its value, and that string as the file writes it, quotes included.
+pub(super) fn declared_constant(source: &Source) -> Option<(String, String)> {
+    for (raw, code) in source.lines.iter().zip(&source.code) {
+        let declared = match source.lang {
+            Language::Ts => code.strip_prefix("export const "),
+            Language::Py => Some(code.as_str()).filter(|line| line.starts_with(char::is_uppercase)),
+            Language::Rs => code.strip_prefix("pub const "),
+            Language::Go => code.strip_prefix("const "),
+        };
+        let Some(rest) = declared else {
+            continue;
+        };
+        let name: String = rest
+            .chars()
+            .take_while(|character| character.is_alphanumeric() || *character == '_')
+            .collect();
+        let after = rest[name.len()..].trim_start();
+        let assigns = match source.lang {
+            Language::Rs => after.starts_with(':') && after.contains('='),
+            _ => after.starts_with('='),
+        };
+        if name.len() < 2 || !assigns || !name.starts_with(char::is_uppercase) {
+            continue;
+        }
+        // The value is the one string the line writes, read off the raw line
+        // where the masked one has blanked it: the first quote after the
+        // `=` to the last quote of the line.
+        let equals = raw.find('=')?;
+        let value = raw[equals + 1..].trim().trim_end_matches(';').trim();
+        let quoted = value.len() >= 2
+            && value.starts_with('"')
+            && value.ends_with('"')
+            && !value[1..value.len() - 1].contains(['"', '\\']);
+        if quoted {
+            return Some((name, value.to_string()));
+        }
+    }
+    None
+}
+
+/// A path beside another, with its extension replaced by the suffix given.
+fn beside(path: &str, suffix: &str) -> String {
+    format!("{}{}{suffix}", prefix(path), stem(path))
+}
+
+/// The directory a path sits in, with the separator behind it, or nothing at
+/// the root.
+fn prefix(path: &str) -> String {
+    match directory(path) {
+        "" => String::new(),
+        found => format!("{found}/"),
+    }
+}
+
+/// A file's name without its extension.
+fn stem(path: &str) -> &str {
+    let name = basename(path);
+    name.rsplit_once('.').map_or(name, |(head, _)| head)
+}
+
+/// The package a Go file declares.
+fn go_package(source: &Source) -> Option<String> {
+    source.code.iter().find_map(|code| {
+        code.trim_start()
+            .strip_prefix("package ")
+            .map(|name| name.trim().to_string())
+    })
+}
+
+/// The name T11's planted case binds its double to.
+pub(super) const ANSWERING_DOUBLE: &str = "answer";
+
+/// T11: a case is added that builds a double, tells it what to answer, and
+/// checks that it answered, with nothing of the code under test between.
+/// Python's case brings the import its double is made by.
+fn assert_on_a_double(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
+    let name = ANSWERING_DOUBLE;
+    for source in rotate(tree.tests(lang), seed) {
+        let Some(last_case) = source.cases().last().cloned() else {
+            continue;
+        };
+        let indent = leading(&source.lines[last_case.first as usize]);
+        let case: Vec<String> = match lang {
+            Language::Ts => {
+                let framework = if source.code.iter().any(|code| code.contains("vi.")) {
+                    "vi"
+                } else {
+                    "jest"
+                };
+                vec![
+                    String::new(),
+                    format!("{indent}test(\"a double answers\", () => {{"),
+                    format!("{indent}  const {name} = {framework}.fn().mockReturnValue(true);"),
+                    format!("{indent}  expect({name}()).toBe(true);"),
+                    format!("{indent}}});"),
+                ]
+            }
+            Language::Py => vec![
+                String::new(),
+                String::new(),
+                "def test_a_double_answers():".to_string(),
+                format!("    {name} = Mock(return_value=True)"),
+                format!("    assert {name}() is True"),
+            ],
+            Language::Rs => vec![
+                String::new(),
+                format!("{indent}#[test]"),
+                format!("{indent}fn a_double_answers() {{"),
+                format!("{indent}    struct FakeAnswer;"),
+                format!("{indent}    impl FakeAnswer {{"),
+                format!("{indent}        fn give(&self) -> bool {{"),
+                format!("{indent}            true"),
+                format!("{indent}        }}"),
+                format!("{indent}    }}"),
+                format!("{indent}    let {name} = FakeAnswer;"),
+                format!("{indent}    assert!({name}.give());"),
+                format!("{indent}}}"),
+            ],
+            Language::Go => vec![
+                String::new(),
+                "func TestADoubleAnswers(t *testing.T) {".to_string(),
+                "\ttype fakeAnswer struct{ value int }".to_string(),
+                format!("\t{name} := fakeAnswer{{value: 1}}"),
+                format!("\tif {name}.value != 1 {{"),
+                format!("\t\tt.Errorf(\"the double answered %d\", {name}.value)"),
+                "\t}".to_string(),
+                "}".to_string(),
+            ],
+        };
+        let imports = match lang {
+            Language::Py => vec!["from unittest.mock import Mock".to_string()],
+            _ => Vec::new(),
+        };
+        return Some(beside_the_cases(
+            source,
+            &last_case,
+            case,
+            &imports,
+            "a case asserts on the double it built",
+        ));
+    }
+    None
+}
+
+/// The string T12's planted case passes in and reads back.
+pub(super) const ECHOED_MESSAGE: &str = "nothing to report";
+
+/// T12: a case is added that writes a string into a value, and checks that
+/// the value holds the same string, with nothing the code adds between.
+fn echo_a_literal(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
+    let message = ECHOED_MESSAGE;
+    for source in rotate(tree.tests(lang), seed) {
+        let Some(last_case) = source.cases().last().cloned() else {
+            continue;
+        };
+        let indent = leading(&source.lines[last_case.first as usize]);
+        let case: Vec<String> = match lang {
+            Language::Ts => vec![
+                String::new(),
+                format!("{indent}test(\"a message passes through\", () => {{"),
+                format!("{indent}  const message = \"{message}\";"),
+                format!("{indent}  expect(String(message)).toBe(\"{message}\");"),
+                format!("{indent}}});"),
+            ],
+            Language::Py => vec![
+                String::new(),
+                String::new(),
+                "def test_a_message_passes_through():".to_string(),
+                format!("    message = \"{message}\""),
+                format!("    assert str(message) == \"{message}\""),
+            ],
+            Language::Rs => vec![
+                String::new(),
+                format!("{indent}#[test]"),
+                format!("{indent}fn a_message_passes_through() {{"),
+                format!("{indent}    let message = String::from(\"{message}\");"),
+                format!("{indent}    assert_eq!(message.as_str(), \"{message}\");"),
+                format!("{indent}}}"),
+            ],
+            Language::Go => vec![
+                String::new(),
+                "func TestAMessagePassesThrough(t *testing.T) {".to_string(),
+                format!("\tmessage := \"{message}\""),
+                format!("\tif got := message; got != \"{message}\" {{"),
+                "\t\tt.Errorf(\"the message reads %q\", got)".to_string(),
+                "\t}".to_string(),
+                "}".to_string(),
+            ],
+        };
+        return Some(beside_the_cases(
+            source,
+            &last_case,
+            case,
+            &[],
+            "a case checks that its input came back",
+        ));
+    }
+    None
+}
+
+/// A suite with one more case: after its last case, where the suite's cases
+/// sit, or for Python at the foot of the file as a function of its own, with
+/// any import the case needs after the suite's own imports.
+fn beside_the_cases(
+    source: &Source,
+    last_case: &Case,
+    case: Vec<String>,
+    imports: &[String],
+    shape: &str,
+) -> Mutation {
+    let at = match source.lang {
+        Language::Py => source.lines.len(),
+        _ => last_case.last as usize + 1,
+    };
+    let mut lines = source.lines.clone();
+    let import_at = source.last_import().map_or(0, |line| line + 1);
+    for (offset, import) in imports.iter().enumerate() {
+        lines.insert(import_at.min(lines.len()) + offset, import.clone());
+    }
+    let at = at + imports.len();
+    let first = at + case.iter().take_while(|line| line.is_empty()).count() + 1;
+    let last = at + case.len();
+    for (offset, line) in case.into_iter().enumerate() {
+        lines.insert(at.min(lines.len()) + offset, line);
+    }
+    Mutation::new(shape, &source.path)
+        .writing(&source.path, joined(&lines))
+        .at(first as u32, last as u32)
 }
 
 // ---------------------------------------------------------------------------
@@ -1989,7 +2336,7 @@ mod tests {
                 ("tests/text.rs", "use fixture::text::trim;\n\n#[test]\nfn trims() {\n    assert_eq!(trim(\" a \"), \"a\");\n}\n"),
             ],
             Language::Go => [
-                ("text.go", "package text\n\nimport \"strings\"\n\nfunc Trim(value string) string {\n\treturn strings.TrimSpace(value)\n}\n"),
+                ("text.go", "package text\n\nimport \"strings\"\n\nconst Name = \"text\"\n\nfunc Trim(value string) string {\n\treturn strings.TrimSpace(value)\n}\n"),
                 ("text_test.go", "package text\n\nimport \"testing\"\n\nfunc TestTrim(t *testing.T) {\n\tif Trim(\" a \") != \"a\" {\n\t\tt.Fatal(\"trim\")\n\t}\n}\n"),
             ],
         }
@@ -2013,18 +2360,53 @@ mod tests {
     }
 
     /// Write a mutation into the tree the way the campaign does, and hand back
-    /// what each file held before.
+    /// what each file held before: nothing, for a file the mutation adds.
     fn written(planted: &Mutation, tree: &Tree) -> Vec<(String, Option<String>)> {
         let mut before = Vec::new();
         for (path, text) in &planted.writes {
             let whole = tree.root.join(path);
-            // Both files exist before the write, so each has a text to give back.
-            let held = std::fs::read_to_string(&whole).expect("the file reads before the write");
-            before.push((path.clone(), Some(held)));
-            std::fs::write(&whole, text.as_deref().expect("S4 only writes"))
-                .expect("the file is writable");
+            // A file the planter adds has nothing to read before the write,
+            // and that absence is exactly what the reader is handed for it.
+            before.push((path.clone(), std::fs::read_to_string(&whole).ok()));
+            std::fs::write(
+                &whole,
+                text.as_deref()
+                    .expect("these planters write and never remove"),
+            )
+            .expect("the file is writable");
         }
         before
+    }
+
+    /// Plant one of the cases that cannot fail in every language's program,
+    /// and hold the rule's reader to finding it there.
+    fn read_back(rule: &str, plant: fn(Language, &Tree, u64) -> Option<Mutation>) {
+        for lang in [Language::Ts, Language::Py, Language::Rs, Language::Go] {
+            let (_root, tree) = planted_tree(lang, &[]);
+            let planted = plant(lang, &tree, 0)
+                .unwrap_or_else(|| panic!("{lang:?}: the program is a site for {rule}"));
+            let before = written(&planted, &tree);
+            assert!(
+                shape::present(rule, lang, &planted, &tree, &before),
+                "{lang:?}: the planted shape is read back: {}",
+                planted.shape
+            );
+        }
+    }
+
+    #[test]
+    fn a_restated_constant_is_planted_and_read_back_in_every_language() {
+        read_back("T10", restate_a_constant);
+    }
+
+    #[test]
+    fn a_case_on_its_own_double_is_planted_and_read_back_in_every_language() {
+        read_back("T11", assert_on_a_double);
+    }
+
+    #[test]
+    fn an_echoed_literal_is_planted_and_read_back_in_every_language() {
+        read_back("T12", echo_a_literal);
     }
 
     #[test]

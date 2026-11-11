@@ -22,7 +22,9 @@ cases turned off, focused or left to do, which T3 reports and T1 does not, T2 ha
 `parametrized/` and `looped/` for three assertions that become one run over a
 table of the same three cases, their `-short/` twins that drop a row, and
 `uncounted/` and `uncounted-kept/` for a loop over cases the file does not
-write down, new (a warning) and unchanged (a block), C3 has a `promoted/`
+write down, new (a warning) and unchanged (a block), M1 has `fire-subject/` and `silent-subject/` for a double of what the test
+is about, the file the test is named for or what an added case's title names,
+with that unit left outside the change, C3 has a `promoted/`
 whose `weeder.toml` names a workflow under `[guardrails] paths`, S1 has
 `handling/` for code that imports, checks against and catches a not-implemented
 error beside the one body that hands it out and `foreign/` for a variable

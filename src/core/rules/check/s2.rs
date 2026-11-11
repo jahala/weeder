@@ -100,6 +100,12 @@ pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
 fn swallowed(table: &Handling, lang: Lang, mask: &Mask, line: u32) -> Option<Swallowed> {
     let code = mask.code(line);
     let spoken = words(&code);
+    // A failure dropped on purpose says so in a comment, which is what the next
+    // action asks for: on the line itself, on the statement the line belongs
+    // to, or alone above that statement (#116, #130).
+    if explained(mask, line) {
+        return None;
+    }
     if let Some(keyword) = table.handler {
         if let Some(word) = spoken.iter().find(|word| word.text == keyword) {
             if is_hollow(lang, mask, line, characters(&code, word.end)) {
@@ -114,11 +120,6 @@ fn swallowed(table: &Handling, lang: Lang, mask: &Mask, line: u32) -> Option<Swa
             }
         }
     }
-    // A failure dropped on purpose says so in a comment, which is what the next
-    // action asks for: on the line itself, or alone on the line above it (#116).
-    if explained(mask, line) {
-        return None;
-    }
     if let Some(word) = spoken.iter().find(|word| discards(&code, word)) {
         return Some(Swallowed::discarded(word.text));
     }
@@ -128,11 +129,42 @@ fn swallowed(table: &Handling, lang: Lang, mask: &Mask, line: u32) -> Option<Swa
     Some(Swallowed::converted(converted.text))
 }
 
-/// Whether a comment beside the line says why its failure is dropped: one on
-/// the line, or a line above holding a comment and no code.
+/// Whether a comment says why the line's failure is dropped: one on any line
+/// of the statement the line belongs to, or a line just above that statement
+/// holding a comment and no code. A chain written over several lines drops its
+/// failure on its last line, and its reason sits above its first.
 fn explained(mask: &Mask, line: u32) -> bool {
     let said = |at: u32| !mask.comments(at).trim().is_empty();
-    said(line) || (line > 1 && said(line - 1) && mask.code(line - 1).trim().is_empty())
+    let first = statement_start(mask, line);
+    (first..=line).any(said)
+        || (first > 1 && said(first - 1) && mask.code(first - 1).trim().is_empty())
+}
+
+/// The line the statement holding `line` opens on: up through the lines that
+/// continue the one above them, a line that opens with `.`, `?`, `)` or `]`, or
+/// one under a line left open by a bracket, an `=`, a `.` or an operator. A
+/// line holding only a comment sits inside the statement it is written in.
+fn statement_start(mask: &Mask, line: u32) -> u32 {
+    let mut first = line;
+    loop {
+        let mut above = first.saturating_sub(1);
+        while above > 0 && mask.code(above).trim().is_empty() {
+            above -= 1;
+        }
+        if above == 0 {
+            return first;
+        }
+        let here = mask.code(first);
+        let opens_on_the_last = here.trim_start().starts_with(['.', '?', ')', ']']);
+        let previous = mask.code(above);
+        let left_open = previous
+            .trim_end()
+            .ends_with(['(', '[', '=', '.', '+', '-', '*', '/', '|', '&']);
+        if !(opens_on_the_last || left_open) {
+            return first;
+        }
+        first = above;
+    }
 }
 
 /// Whether the block opened at `after` on this line holds nothing that does

@@ -3,8 +3,9 @@
 //! Four rules read a suite for the same kinds of word, so the words live in one
 //! table. T2 counts what a file asserts. T4 reads the number that says how much
 //! a test will put up with. T6 reads what an assertion says about a failure. M1
-//! reads the word that puts a double where a unit was. Each language spells all
-//! four in the grammar of its own frameworks, and none of them is named here:
+//! reads the word that puts a double where a unit was, and T11 the one that
+//! makes a double a case can assert on. Each language spells all four in the
+//! grammar of its own frameworks, and none of them is named here:
 //! what is written down is the shape, a call, a member on a receiver, a
 //! keyword, a macro, and the roots those shapes are built from.
 //!
@@ -291,6 +292,16 @@ impl Suite {
             .count()
     }
 
+    /// The names a line of code asserts with, in the order the line writes
+    /// them.
+    #[must_use]
+    pub fn asserting<'c>(&self, code: &'c str) -> Vec<Name<'c>> {
+        names(code)
+            .into_iter()
+            .filter(|name| self.asserts(name))
+            .collect()
+    }
+
     /// Whether one name is an assertion.
     fn asserts(&self, name: &Name<'_>) -> bool {
         let table = assertions(self.lang);
@@ -482,6 +493,27 @@ const MOCK_WORDS: &[&str] = &["mock", "patch", "stub", "fake", "double", "spy"];
 #[must_use]
 pub fn is_mock(identifier: &str) -> bool {
     holds_word(identifier, MOCK_WORDS)
+}
+
+/// The member the script frameworks make a mock function with: a function
+/// made by a member called `fn`, reached through the framework's object and
+/// called. It is read as that shape, so no framework is named.
+const SCRIPT_DOUBLE_MEMBER: &str = "fn";
+
+/// Whether a name, called or built, makes a double: the thing called, or a
+/// type it is reached through, says so, or, in the script languages, it is the
+/// member that makes a mock function. A value merely called `fake` makes
+/// nothing when a method of it is called: `fake.Count()` reads a double rather
+/// than making one.
+#[must_use]
+pub fn makes_a_double(lang: Lang, name: &Name<'_>) -> bool {
+    let last = name.segments.len().saturating_sub(1);
+    name.segments.iter().enumerate().any(|(at, segment)| {
+        (at == last || segment.starts_with(char::is_uppercase)) && is_mock(segment)
+    }) || (matches!(lang, Lang::TypeScript | Lang::JavaScript)
+        && name.is_called()
+        && name.receiver().is_some()
+        && name.last() == SCRIPT_DOUBLE_MEMBER)
 }
 
 /// What a doubled name stands in for: the words left over once the word that
