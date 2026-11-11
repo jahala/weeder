@@ -47,12 +47,42 @@ jobs:
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
 
+  # Whether a pull request changed code or only prose (#35). The check job
+  # runs either way, because the self-check judges every file in the tree and
+  # several tests read the docs; only the latency job skips a pull request of
+  # prose. A push to master is always code, so the main line runs both.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.paths.outputs.code }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - id: paths
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        # A diff git cannot write reaches the script as an empty list, which it
+        # reads as code.
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            git diff -z --name-only "$BASE...$HEAD" | bash scripts/ci-changes.sh >> "$GITHUB_OUTPUT"
+          else
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          fi
+
   # The latency budget is measured on the release binary, so the suite runs a
   # second time on the release profile. A rule that starts reading a file it did
   # not need, or a seam that stops being lazy, shows up here as a failing test
   # rather than as a slow gate somebody notices months later. Same invocation as
   # the debug run: whatever the budget covers has to be inside what CI runs.
+  # Prose changes neither the binary nor what the budget times, so a pull
+  # request made only of prose skips it, and the job reports skipped.
   latency:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       # The self-check judges the whole repository against its root commit, so
