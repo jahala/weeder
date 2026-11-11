@@ -1,0 +1,19 @@
+# The Rust history the recall campaign adds to the corpus calibration judges.
+#
+# cargo collects a unit test by the `#[test]` attribute above it, so the two
+# ways a Rust test is taken out of the run without being deleted both need an
+# integration target: a file under `tests/` has a name to lose (T7), and a
+# `[[test]]` setting can leave it out (T8). The garden's Rust holds none, so
+# those rules had no Rust site to be measured on. anyhow is small, widely
+# depended on, dual-licensed MIT and Apache-2.0, and has kept its suite in
+# `tests/` through a long merged history. It is pinned by full sha and read
+# exactly the way the others are. Precision is not measured here, for the
+# reason corpus-go.toml gives.
+#
+# The pins move the same way the others do: a deliberate edit, and the run after
+# it is a new measurement.
+
+[[repo]]
+name = "anyhow"
+source = "https://github.com/dtolnay/anyhow.git"
+tip = "87c8571326d60b90391d0555c9675b5ac6f044b1"

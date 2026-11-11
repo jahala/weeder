@@ -17,7 +17,7 @@ xtask/         weeder's own measurements, the bench and never the product, a wor
 scripts/check/ evidence scripts a loop cites; run.sh is the runner tend verify uses, and scripts/corpus-scratch.sh fetches the calibration corpus at its pins so the evidence reads the same history the measurement did. scripts/umbrella-brand.sh fetches the umbrella's .brand and petals/scripts at the version `.brand/products/weeder/petalsrc.example` names, so the page checks are held to the umbrella's own gate rather than to a copy of it kept here
 scripts/audit/ the re-grades, run by code rather than typed: blind-run.sh hands one case packet to one fresh auditor session, sighted-run.sh hands the report itself, and each writes its own `docs/calibration-audit*.md` from the answers. Redoing the ledger moves the sample both draw, so both are re-run when it is
 scripts/proof/ evidence that starts a real agent session and writes what happened into docs/proof-2026-09.md
-docs/          sarif.md · pleach.md · tend2-seam.md · calibration-2026-09.md · proof-2026-09.md · dogfood.md · dogfood/<loop>.md · ideas/ (free-standing ideas, not yet a loop) · tend/ (the map) · calibration/ (corpus.toml pins every repository the calibration judges by source and full sha, corpus-go.toml pins the Go history the recall campaign adds to it, judgements.toml classifies each block, first-run.toml is what the first run refused and is history rather than output)
+docs/          sarif.md · pleach.md · tend2-seam.md · calibration-2026-09.md · proof-2026-09.md · dogfood.md · dogfood/<loop>.md · ideas/ (free-standing ideas, not yet a loop) · tend/ (the map) · calibration/ (corpus.toml pins every repository the calibration judges by source and full sha, corpus-go.toml pins the Go history the recall campaign adds to it, corpus-rs.toml a Rust crate with integration targets the same way, judgements.toml classifies each block, first-run.toml is what the first run refused and is history rather than output)
 examples/      pleach/plan.json · ci/github.yml
 garden.json    the manifest the umbrella reads (F1); schemas/garden.schema.json is its vendored, flagged schema
 index.html     the landing page, one static file with no build step: the umbrella's tokens inlined, fonts from the Google Fonts CDN, the mark and the favicon drawn from `.brand/products/weeder/assets/`, and the garden footer copied from the umbrella's reference implementation. GitHub Pages serves it from the default branch at jahala.github.io/weeder/ once the owner enables it
@@ -66,8 +66,9 @@ tend next docs/tend                           # where things stand
 `docs/calibration/corpus.toml`, and walks the window that ends at each entry's
 pinned tip, so a commit pushed to a source after the pin plants no case and
 moves no number. The garden five write no Go between them, so
-`docs/calibration/corpus-go.toml` pins two Go projects the same way and the
-campaign reads both files; `--corpus <path>` reads another instead, which is how
+`docs/calibration/corpus-go.toml` pins two Go projects the same way, and their
+Rust holds no integration target, so `docs/calibration/corpus-rs.toml` pins a
+crate that has them; the campaign reads all three files; `--corpus <path>` reads another instead, which is how
 the suites measure a history they built themselves. Every source is fetched at
 its pin into `weeder-recall-corpus` under the temporary directory, or wherever
 `WEEDER_RECALL_CACHE` names, and is only ever read from.

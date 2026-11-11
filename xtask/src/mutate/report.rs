@@ -207,7 +207,9 @@ fn corpus_table(outcomes: &[Outcome]) -> String {
         "\nThe garden five are the repositories calibration measures precision on, read from \
          `docs/calibration/corpus.toml` at the commits it pins them at. They carry no Go between \
          them and weeder judges Go, so the Go column is measured on two Go projects that \
-         `docs/calibration/corpus-go.toml` pins the same way, read exactly as the five are.\n\n\
+         `docs/calibration/corpus-go.toml` pins the same way, read exactly as the five are. Their \
+         Rust holds no integration target, the one place a Rust test can be renamed or set out \
+         of the run, so `docs/calibration/corpus-rs.toml` pins a crate that has them.\n\n\
          Every window ends at the pin. A commit pushed to one of these sources later is outside \
          the walk, so it plants no case and moves no number, and two runs over one corpus write \
          this section byte for byte the same.\n",
