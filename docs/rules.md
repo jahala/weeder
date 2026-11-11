@@ -55,6 +55,7 @@ first, on its own. `scan` judges the tree it is given, and reads the
 | `[docs] external` | the names the docs cite on purpose that live outside the tree: file names, paths, globs, variables | R1 |
 | `[guard] protected` | the branches the git hooks refuse to rewrite | `weeder guard` |
 | `[guardrails] paths` | the path globs this repository holds at the constitution tier | C3 |
+| `[tests] assertions` | the names of the repository's own test helpers, each matched whole, whose calls are assertions in every language | T2 |
 | `[guardrails] sections` | the headings of `AGENTS.md` and `CLAUDE.md` whose sections state this repository's law, beside the ones saying hard limits or non-negotiables, or opening with never, matched as words in any case | C1 |
 | `[[overrides]] paths` | the path patterns an override applies to, gitignore-style from the root | the rules it names |
 | `[[overrides]] rules` | a level per rule id under those paths, as `[rules]` spells them | the rules it names |
@@ -198,6 +199,15 @@ A test file was removed, or a test case disappeared from a changed test file, co
 `check` · blocks by default
 
 The assertion count of a changed test file fell between HEAD and the working tree, and no allowance carries a reason for it. An assertion inside a parametrized case or a loop counts once for each case the file writes down, so a table that loses a row loses a claim. Loose assertions on one value that the change replaces with an exact one on the same value, an equality with the whole of it, are covered by that one and not counted as dropped. A fall that leaves claims under a new loop whose cases the file does not write down is reported as a warning rather than a block, since that loop may run every assertion that left and only a person can say whether it does. An assertion the same change makes in another test file moved rather than went, and is left out of the count and of what the finding claims.
+
+T2 reads bash. A bats suite or a shell spec asserts with the shell's own tests, a command that opens with `[`, `[[` or `test`, and with the `assert_*` and `refute_*` helpers bats suites load. A test an `if`, an `elif`, a `while` or an `until` asks is a condition, and claims nothing. A `for name in a b c` loop runs its claims once for each word it writes out, and a loop over `"$@"`, a glob or a substitution is one whose cases the file does not write down. A bats case has no name weeder can read yet, so a claim is followed between files by its line alone.
+
+A suite that asserts through a helper of its own names it under `[tests] assertions` in `weeder.toml`, and T2 counts a call to it as an assertion in every language weeder reads: `t(...)` in TypeScript, Python, Rust and Go, and a `t` command in bash. The name is matched whole, so naming `t` leaves `test(...)` and `t.Run(...)` what they were.
+
+```toml
+[tests]
+assertions = ["t", "assert_rendered"]
+```
 
 <a id="T3"></a>
 ## T3: A skip or focus marker was added

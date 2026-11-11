@@ -176,3 +176,60 @@ fn every_mode_says_it_and_a_deleted_script_counts_too() {
     let found = run.findings();
     assert_eq!(notes(&found).len(), 1, "a range says it too: {found:#?}");
 }
+
+/// The change petals planted to find #79, in the shape petals writes: a spec
+/// whose claims are calls to its own helper `t`, and a production script. Bash
+/// is read now, so the claim that went blocks once the repository names its
+/// helper, the debug line warns, and nothing is left unread.
+#[test]
+fn the_change_petals_planted_is_judged_now() {
+    let claim = |what: &str, pattern: &str, flag: &str| {
+        format!("t \"prints the {what}\" '{pattern}' \"$(weeder --{flag})\"\n")
+    };
+    let head = "#!/usr/bin/env bash\nsource tests/lib.sh\n\n";
+    let script = "#!/usr/bin/env bash\nset -euo pipefail\nweeder check \"$@\"\n";
+    let repo = Repo::init();
+    repo.write("weeder.toml", "[tests]\nassertions = [\"t\"]\n");
+    repo.write(
+        "tests/check.spec.sh",
+        &format!(
+            "{head}{}{}",
+            claim("version", "weeder [0-9]", "version"),
+            claim("help", "Usage:", "help")
+        ),
+    );
+    repo.write("scripts/check.sh", script);
+    repo.commit("the state the change starts from");
+
+    repo.write(
+        "tests/check.spec.sh",
+        &format!("{head}{}", claim("version", "weeder [0-9]", "version")),
+    );
+    repo.write(
+        "scripts/check.sh",
+        &format!("{script}echo \"DEBUG weeder plant\"\n"),
+    );
+    repo.stage_all();
+
+    let run = repo.weeder(&["check", "--format", "sarif"]);
+    let found = run.findings();
+    let said: Vec<(&str, &str, &str)> = found
+        .iter()
+        .map(|finding| {
+            (
+                finding.rule.as_str(),
+                finding.level.as_str(),
+                finding.path.as_str(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        said,
+        vec![
+            ("S3", "warning", "scripts/check.sh"),
+            ("T2", "error", "tests/check.spec.sh"),
+        ],
+        "the dropped claim and the debug line are both found, and nothing is unread: {found:#?}"
+    );
+    assert_eq!(run.code, 2, "the dropped claim stops the change");
+}

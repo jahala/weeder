@@ -50,6 +50,7 @@ use crate::core::read::TestUnit;
 use crate::core::rules::check::idiom::{self, Block};
 use crate::core::rules::check::t3;
 use crate::core::rules::check::vocab::{names, Suite};
+use crate::core::shell;
 use crate::core::syntax::{is_identifier, words, Mask};
 
 /// The keyword every language weeder reads opens a loop over a collection with.
@@ -519,6 +520,9 @@ fn annotations_above(mask: &Mask, line: u32, marker: &str) -> Vec<u32> {
 
 /// Every loop the file opens, with the lines each one runs over.
 fn loops(lang: Lang, mask: &Mask) -> Vec<Loop> {
+    if lang == Lang::Bash {
+        return shell_loops(mask);
+    }
     let mut found = Vec::new();
     for at in 1..=mask.line_count() {
         let code = mask.code(at);
@@ -555,6 +559,82 @@ fn loops(lang: Lang, mask: &Mask) -> Vec<Loop> {
         }
     }
     found
+}
+
+/// The words the shell opens and closes a loop's body with.
+const SHELL_BODY: (&str, &str) = ("do", "done");
+
+/// Every `for` loop a shell script opens, with the lines from its header to its
+/// `done`. A loop over words its header writes out runs once for each of them;
+/// one over anything the shell expands, `"$@"`, a glob, a substitution, or with
+/// no list at all, runs some number of times the file does not say.
+fn shell_loops(mask: &Mask) -> Vec<Loop> {
+    let mut found = Vec::new();
+    for at in 1..=mask.line_count() {
+        let code = mask.code(at);
+        if !words(&code).iter().any(|word| word.text == LOOP_KEYWORD) {
+            continue;
+        }
+        let commands = shell::commands(&mask.outside_comments(at));
+        let Some(header) = commands
+            .iter()
+            .map(|command| shell::simple(command).0)
+            .find(|command| command.first().is_some_and(|name| name == LOOP_KEYWORD))
+        else {
+            continue;
+        };
+        let continued = code.trim_end().ends_with('\\');
+        let entries = if continued {
+            None
+        } else {
+            shell_entries(header)
+        };
+        if let Some(last) = shell_body_end(mask, at) {
+            found.push(Loop {
+                at,
+                body: Block { first: at, last },
+                entries,
+            });
+        }
+    }
+    found
+}
+
+/// How many words a `for name in …` header writes out, where every one of them
+/// is a word the shell takes as it is written.
+fn shell_entries(header: &[String]) -> Option<usize> {
+    let [_, _, keyword, listed @ ..] = header else {
+        return None;
+    };
+    if keyword != "in" {
+        return None;
+    }
+    listed
+        .iter()
+        .all(|word| !word.contains(['$', '*', '?', '[', '`', '{', '(', '~']))
+        .then_some(listed.len())
+}
+
+/// The line a loop opened on `from` closes on: the `done` that answers its
+/// `do`, counting the loops opened inside it.
+fn shell_body_end(mask: &Mask, from: u32) -> Option<u32> {
+    let (opens, closes) = SHELL_BODY;
+    let mut depth = 0_i32;
+    let mut opened = false;
+    for line in from..=mask.line_count() {
+        for word in words(&mask.code(line)) {
+            if word.text == opens {
+                depth += 1;
+                opened = true;
+            } else if word.text == closes {
+                depth -= 1;
+                if opened && depth <= 0 {
+                    return Some(line);
+                }
+            }
+        }
+    }
+    None
 }
 
 /// The adapters a loop may walk a table through and still run once for each of

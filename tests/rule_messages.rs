@@ -40,7 +40,7 @@ const NEVER: [&str; 12] = [
 /// fire. A rule proven in four languages is read in all four.
 const BLOCKING: [(&str, &[&str]); 8] = [
     ("T1", &["ts", "py", "rs", "go"]),
-    ("T2", &["ts", "py", "rs", "go"]),
+    ("T2", &["ts", "py", "rs", "go", "sh"]),
     ("T3", &["ts", "py", "rs", "go"]),
     ("T7", &["ts", "py", "rs", "go"]),
     ("S1", &["ts", "py", "rs", "go", "sh"]),
