@@ -31,7 +31,7 @@ SPENT_SEEDS = {
 # sentence in the sealed bytes is what made a rename cost forty sessions.
 FINDINGS_HEADER = "| Rule | Level | Path | Line |"
 FINDING_ROW = re.compile(
-    r"^\| (?:none|[A-Z][0-9]) \| (?:none|error|warning|note) \| (?:`[^`]*`)? \| [0-9]+ \|$"
+    r"^\| (?:none|[A-Z][0-9]+) \| (?:none|error|warning|note) \| (?:`[^`]*`)? \| [0-9]+ \|$"
 )
 complaints = []
 
@@ -106,7 +106,7 @@ def populations(report):
         found["blocked commits"] = int(pooled.group(1))
     misses = re.search(r"^### Every miss\n(.*?)(?=^### |^<!-- recall:end -->|\Z)", report, re.M | re.S)
     if misses:
-        found["recall cases"] = len(re.findall(r"^- [A-Z][0-9] · ", misses.group(1), re.M))
+        found["recall cases"] = len(re.findall(r"^- [A-Z][0-9]+ · ", misses.group(1), re.M))
     return found
 
 
@@ -164,7 +164,7 @@ with tempfile.TemporaryDirectory() as tmp:
             if "Diff capped: yes" in kept_text and "exceeds the stated cap" not in kept_text:
                 complaints.append(f"{kept_path} is capped without saying why the full diff is absent")
             if re.search(r"(?im)^Case: blocked:", kept_text):
-                if not re.search(r"(?m)^\| [A-Z][0-9] \| error \| `[^`]+` \| [0-9]+ \|$", kept_text):
+                if not re.search(r"(?m)^\| [A-Z][0-9]+ \| error \| `[^`]+` \| [0-9]+ \|$", kept_text):
                     complaints.append(f"{kept_path} has no printed weeder finding row")
             complaints.extend(judged_content_only(kept_path, kept_text))
             if re.search(r"(?im)^Case: recall:", kept_text):

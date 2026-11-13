@@ -1,6 +1,6 @@
 {
   "bar_percent": 2.0,
-  "blocked": 24,
+  "blocked": 27,
   "commits_judged": 635,
   "false_positives": 1,
   "metric": "block-level false-positive share across the calibration repositories",
@@ -27,14 +27,14 @@
       "share_percent": 0.0
     },
     {
-      "blocked": 3,
+      "blocked": 4,
       "commits_judged": 152,
       "false_positives": 1,
       "repo": "pleach",
       "share_percent": 0.66
     },
     {
-      "blocked": 6,
+      "blocked": 8,
       "commits_judged": 200,
       "false_positives": 0,
       "repo": "tend2",
