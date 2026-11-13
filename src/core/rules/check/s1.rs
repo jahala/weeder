@@ -4,7 +4,10 @@
 //!
 //! A work marker, one of the shouted words in [`WORK_MARKERS`], written as a
 //! word of its own, in code or in a comment but never inside a string, where it
-//! is a message the program hands out rather than a note to the author.
+//! is a message the program hands out rather than a note to the author. A
+//! marker counts where the change leaves the file holding more of it than the
+//! base did: a comment the change fixed a typo in, or moved, carried its marker
+//! over and added none (#181).
 //!
 //! An unfinished signal: the token a language keeps for a body nobody wrote
 //! (`todo!`, `unimplemented!`, `NotImplementedError`), or a throw, a raise or a
@@ -36,7 +39,7 @@
 //! stated through an entry file it warns instead, because a contract a package
 //! exports is one another repository may be filling in.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::core::change::Change;
 use crate::core::classify::{FileKind, Lang};
@@ -151,9 +154,16 @@ fn stubs(change: &Change) -> Vec<Found> {
     }
     let lang = change.after.lang();
     let mask = change.after.mask();
+    let gained = gained_markers(change);
     let mut found: Vec<(u32, Stub)> = change
         .added()
-        .filter_map(|(line, _)| Some((line, stub_on(lang, mask, line)?)))
+        .filter_map(|(line, _)| {
+            let stub = match gained.get(&line) {
+                Some(word) => Stub::marker(word),
+                None => signal_on(lang, mask, line)?,
+            };
+            Some((line, stub))
+        })
         .collect();
     // A body that does nothing is found through the outline rather than line by
     // line, so it arrives out of order and may land on a line a marker already
@@ -195,16 +205,89 @@ fn contract_at(outline: &Outline, line: u32) -> Option<Contract> {
         })
 }
 
-/// The stub an added line carries on its own, without the outline's help.
-fn stub_on(lang: Lang, mask: &Mask, line: u32) -> Option<Stub> {
-    let outside = mask.outside_literals(line);
-    if let Some(word) = words(&outside)
+/// The work markers a line holds outside its literals, in the order it writes
+/// them, each as often as it is written.
+fn markers(mask: &Mask, line: u32) -> Vec<&'static str> {
+    words(&mask.outside_literals(line))
         .into_iter()
-        .find(|word| WORK_MARKERS.contains(&word.text))
-    {
-        return Some(Stub::marker(word.text));
-    }
+        .filter_map(|word| {
+            WORK_MARKERS
+                .iter()
+                .copied()
+                .find(|marker| *marker == word.text)
+        })
+        .collect()
+}
 
+/// The added lines that put a work marker in the file the base did not have,
+/// each with the first such marker it writes.
+///
+/// A marker is counted the way G3 counts a control character: what the added
+/// lines carry, less what the removed lines carried. A comment edited for a
+/// typo, and a marker moved down its function, take a marker out and write it
+/// back, and the file holds no more of them than it did. Where it does hold
+/// more, the lines that answer for the gain are found in two steps. A line
+/// answers for what it carries beyond the line it rewrote, so a second marker
+/// written beside the first is the new one. Among those, a line the change also
+/// took out word for word only moved, and is charged last.
+fn gained_markers(change: &Change) -> BTreeMap<u32, &'static str> {
+    let mut left = change.gained(|side, line, _| markers(side.mask(), line));
+    left.retain(|_, net| *net > 0);
+    if left.is_empty() {
+        return BTreeMap::new();
+    }
+    let rewrote: BTreeMap<u32, u32> = change
+        .replacements()
+        .iter()
+        .map(|replacement| (replacement.new_line, replacement.old_line))
+        .collect();
+    let spaced = |text: &str| text.split_whitespace().collect::<Vec<&str>>().join(" ");
+    let taken_out: BTreeSet<String> = change.removed().map(|(_, text)| spaced(text)).collect();
+
+    let mut answering: Vec<(bool, u32, &'static str, usize)> = Vec::new();
+    for (line, text) in change.added() {
+        let carries = markers(change.after.mask(), line);
+        // A line that rewrote no other carried nothing over: no partner is an
+        // answer here, not a failure.
+        let carried = rewrote
+            .get(&line)
+            .map(|old| markers(change.before.mask(), *old))
+            .unwrap_or_default();
+        let moved = taken_out.contains(&spaced(text));
+        let mut seen: Vec<&'static str> = Vec::new();
+        for word in carries.iter().copied() {
+            if seen.contains(&word) {
+                continue;
+            }
+            seen.push(word);
+            let count = |held: &[&str]| held.iter().filter(|marker| **marker == word).count();
+            let surplus = count(&carries).saturating_sub(count(&carried));
+            if surplus > 0 {
+                answering.push((moved, line, word, surplus));
+            }
+        }
+    }
+    // A stable sort keeps a line's markers in the order it writes them.
+    answering.sort_by_key(|(moved, line, _, _)| (*moved, *line));
+
+    let mut found = BTreeMap::new();
+    for (_, line, word, surplus) in answering {
+        let Some(net) = left.get_mut(word) else {
+            continue;
+        };
+        if *net <= 0 {
+            continue;
+        }
+        *net -= i64::try_from(surplus).unwrap_or(i64::MAX);
+        found.entry(line).or_insert(word);
+    }
+    found
+}
+
+/// The unfinished signal an added line carries on its own, without the
+/// outline's help: the language's word for a body nobody wrote, or a failure
+/// that says as much.
+fn signal_on(lang: Lang, mask: &Mask, line: u32) -> Option<Stub> {
     let code = mask.code(line);
     let spoken = words(&code);
     if let Some(word) = spoken.iter().enumerate().find_map(|(at, word)| {

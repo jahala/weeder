@@ -7,7 +7,7 @@
 //! only ever looks at them, which is what keeps a rule runnable on a diff that
 //! never touched a disk.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::core::classify::{Classification, FileKind, Lang};
 use crate::core::diff::{ChangeKind, FileDiff, HunkLine, LineKind};
@@ -191,6 +191,30 @@ impl Change {
             .flat_map(|hunk| hunk.lines.iter())
             .filter(|line| line.kind == LineKind::Removed)
             .filter_map(|line| Some((line.old_line?, line.text.as_str())))
+    }
+
+    /// How many more of each thing the change put in than it took out.
+    /// `carried` names what one line holds, asked of the side the line was
+    /// read from: a removed line of the base, an added line of the new file.
+    /// The lines the change kept are the same on both sides, so the count is
+    /// how many more the file holds than it did, and a thing an edit took out
+    /// of one line and wrote back on that line or another is not counted.
+    pub fn gained<K: Ord>(
+        &self,
+        mut carried: impl FnMut(&Side, u32, &str) -> Vec<K>,
+    ) -> BTreeMap<K, i64> {
+        let mut net = BTreeMap::new();
+        for (line, text) in self.removed() {
+            for thing in carried(&self.before, line, text) {
+                *net.entry(thing).or_insert(0) -= 1;
+            }
+        }
+        for (line, text) in self.added() {
+            for thing in carried(&self.after, line, text) {
+                *net.entry(thing).or_insert(0) += 1;
+            }
+        }
+        net
     }
 
     /// Where in the new file the change first touched something, so a finding
