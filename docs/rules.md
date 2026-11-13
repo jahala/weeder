@@ -23,9 +23,10 @@ unshipped, and what would turn it back on.
 `weeder.toml` at the root of the repository, every section optional.
 
 For `check` and the hooks it is read from the base of the judged range, never
-from the change: HEAD for the working tree and for `--staged`, the base commit for
-`--base` and for pre-push. A change to `weeder.toml` is judged under the law it
-is changing, C1 included, and takes effect once it lands. A base with no
+from the change: HEAD for the working tree and for `--staged`, the merge-base of
+the ref and HEAD for `--base`, and the base commit of the pushed range for
+pre-push. A change to `weeder.toml` is judged under the law it is changing, C1
+included, and takes effect once it lands. A base with no
 `weeder.toml` is judged at the levels below. `check --config <path>` names
 another law for one run.
 
