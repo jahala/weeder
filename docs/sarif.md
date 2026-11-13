@@ -206,3 +206,4 @@ fingerprint that survives a rename is a later loop's problem.
 No timestamps. SARIF has places for them (`invocations[].startTimeUtc`, `endTimeUtc`) and a log
 carrying one cannot be compared byte for byte with the log of the same diff an hour later. A loop
 that adds one has to strip it in `tests/determinism.rs` and record why there.
+
