@@ -15,7 +15,7 @@ any=false
 while IFS= read -r -d '' path; do
   any=true
   case "$path" in
-    *.md | docs/* | .brand/* | index.html | LICENSE) ;;
+    *.md | docs/* | .brand/* | LICENSE) ;;
     *)
       echo "code=true"
       exit 0
