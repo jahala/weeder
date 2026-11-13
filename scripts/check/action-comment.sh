@@ -14,7 +14,9 @@
 #     the newest run and edited during it, and its text is the body that run's
 #     write leg judged, as its job log carries it;
 #   - the newest run's read leg could not write, said so as a warning, put the
-#     same body in its job summary, and passed.
+#     same body in its job summary, and passed;
+#   - code scanning holds an analysis in the `weeder` category on the pull
+#     request's merge ref from the newest run, the write leg's upload.
 #
 # The pull request is the one named as the first argument, or the one whose head
 # is the branch checked out here. A run, a leg or a log that is not there is a
@@ -78,6 +80,12 @@ while IFS= read -r job; do
   gh api "repos/$repository/actions/jobs/$job/logs" > "$scratch/log-$job.txt"
 done < <(python3 -c 'import json,sys; [print(json.loads(l)["id"]) for l in open(sys.argv[1]) if l.strip()]' "$scratch/jobs.jsonl")
 
+# What code scanning holds from weeder for this pull request: the write leg
+# uploads as `auto` does on a public repository, so the newest run leaves an
+# analysis in the `weeder` category on the pull request's merge ref.
+gh api "repos/$repository/code-scanning/analyses?ref=refs/pull/$number/merge&per_page=100" \
+  --jq '.[]' > "$scratch/analyses.jsonl"
+
 python3 - "$scratch" "$number" "$newest" <<'PY'
 import json
 import os
@@ -110,6 +118,13 @@ if run["head_sha"] != pull["head"]["sha"]:
     complaints.append(f"the newest run judged {run['head_sha'][:12]}, and the pull request is at {pull['head']['sha'][:12]}")
 
 jobs = {job["name"]: job for job in lines("jobs.jsonl")}
+
+uploaded = [
+    analysis for analysis in lines("analyses.jsonl")
+    if analysis.get("category") == "weeder" and analysis.get("created_at", "") >= run["run_started_at"]
+]
+if not uploaded:
+    complaints.append("code scanning holds no `weeder` analysis on this pull request from its newest run, so the write leg's upload did not land")
 
 
 def log(job):

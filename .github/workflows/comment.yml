@@ -7,7 +7,8 @@ name: Comment
 # action fetches it, checks its SHA-256 and judges with it, the way it fetches a
 # release anywhere else.
 #
-# Two legs. `write` may write on the pull request and keeps the one comment.
+# Two legs. `write` may write on the pull request, keeps the one comment, and
+# sends the findings to code scanning, as `auto` does on a public repository.
 # `read` may not, which is what a pull request from a fork gets, so it proves
 # the other half: the body goes to the job summary and the job is decided by
 # weeder's exit code alone. scripts/check/action-comment.sh reads both from
@@ -34,6 +35,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      security-events: write
     steps:
       # weeder diffs against the base branch, so the clone carries it.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v6
@@ -65,6 +67,9 @@ jobs:
           key: comment
       - run: cargo build --locked
       - run: bash scripts/package-release.sh x86_64-unknown-linux-gnu target/debug "$RUNNER_TEMP/release"
+      # A fork's pull request skips the upload by the action's own condition;
+      # this leg is not a fork, only as unable to write as one, so it says so.
       - uses: ./
         with:
           archive: file://${{ runner.temp }}/release/weeder-x86_64-unknown-linux-gnu.tar.gz
+          code-scanning: "off"

@@ -149,19 +149,26 @@ pull request rather than for the agent.
 `examples/ci/github.yml` is a workflow you can copy. It runs the action this repository ships,
 which installs the weeder released with the tag you name, checks it against its SHA-256, judges
 the pull request against the branch it is opening onto, and leaves the verdict as one comment on
-the pull request, edited in place on every push. The job needs `contents: read` and
-`pull-requests: write` and nothing else. On a pull request from a fork, where GitHub gives the job
-no right to write, the same text goes to the job summary, and weeder's exit code decides the job.
+the pull request, edited in place on every push. The findings also go to GitHub's code scanning,
+as annotations on the diff, where code scanning can take them: from a public repository, except on
+a pull request from a fork, and from a private one with Advanced Security once its repository
+variable `WEEDER_CODE_SCANNING` is `on`. The job needs `contents: read` and `pull-requests: write`,
+and `security-events: write` for the annotations. On a pull request from a fork, where GitHub gives
+the job no right to write, the same text goes to the job summary, and weeder's exit code decides the
+job.
 
 ```yaml
 permissions:
   contents: read
   pull-requests: write
+  security-events: write
 steps:
   - uses: actions/checkout@v6
     with:
       fetch-depth: 0
   - uses: jahala/weeder@v0.5.0
+    with:
+      code-scanning: ${{ vars.WEEDER_CODE_SCANNING || 'auto' }}
 ```
 
 For a pleach plan, `examples/pleach/plan.json` gates every node on weeder and `docs/pleach.md`

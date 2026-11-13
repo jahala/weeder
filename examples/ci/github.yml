@@ -32,6 +32,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write # the one comment weeder writes and edits
+      security-events: write # the annotations, where code scanning takes them
     steps:
       - uses: actions/checkout@v6
         with:
@@ -41,5 +42,12 @@ jobs:
 
       # Installs the weeder released with this tag, checks it against the
       # SHA-256 published beside it, judges the pull request and writes the
-      # comment.
+      # comment, every time. The findings also go to code scanning as
+      # annotations on the diff where it can take them: on a public repository,
+      # where code scanning is free, except from a fork's pull request, whose
+      # token cannot upload. A private repository has code scanning only with
+      # Advanced Security, which GitHub does not tell a workflow about, so it
+      # opts in by setting the repository variable WEEDER_CODE_SCANNING to `on`.
       - uses: jahala/weeder@v0.5.0
+        with:
+          code-scanning: ${{ vars.WEEDER_CODE_SCANNING || 'auto' }}

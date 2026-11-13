@@ -5,11 +5,13 @@ branding:
   icon: scissors
   color: green
 
-# The job that uses this needs two permissions and no others:
+# The job that uses this needs two permissions, and a third where it sends the
+# findings to code scanning (see the `code-scanning` input):
 #
 #   permissions:
 #     contents: read
 #     pull-requests: write
+#     security-events: write   # only where code scanning takes the findings
 #
 # and a checkout with the base branch in it (`fetch-depth: 0`). On a pull
 # request from a fork GitHub gives the job no right to write, so the comment
@@ -27,6 +29,15 @@ inputs:
       own manifest names, as a URL with its `.sha256` beside it. Leave it out to
       install the weeder released with the tag this action was used by.
     default: ""
+  code-scanning:
+    description: >
+      Whether the findings also go to GitHub's code scanning, where they show as
+      annotations on the diff. `auto` sends them from a public repository, where
+      code scanning is free, and never from a pull request out of a fork, whose
+      token cannot upload. `on` sends them from a private repository too, for
+      one that has Advanced Security, which GitHub does not tell a workflow
+      about. `off` never sends them. Sending needs `security-events: write`.
+    default: auto
 
 runs:
   using: composite
@@ -100,11 +111,22 @@ runs:
           exit 3
         fi
         body="$RUNNER_TEMP/weeder-comment.md"
+        sarif="$RUNNER_TEMP/weeder.sarif"
         code=0
         "$WEEDER" check --base "origin/$BASE_REF" --strict --format markdown \
           --link-base "$SERVER_URL/$REPOSITORY/blob/$HEAD_SHA" > "$body" || code=$?
+        # The same judgement as SARIF, for code scanning. The same change gives
+        # the same verdict in either format, so two that differ mean weeder
+        # could not be trusted to have judged, and the job is refused.
+        sarif_code=0
+        "$WEEDER" check --base "origin/$BASE_REF" --strict --format sarif > "$sarif" || sarif_code=$?
+        if [ "$sarif_code" != "$code" ]; then
+          echo "::error title=weeder::the SARIF judgement ended with $sarif_code and the comment's with $code, and one change gives one verdict. report it."
+          code=3
+        fi
         echo "code=$code" >> "$GITHUB_OUTPUT"
         echo "body=$body" >> "$GITHUB_OUTPUT"
+        echo "sarif=$sarif" >> "$GITHUB_OUTPUT"
 
     - id: summary
       shell: bash
@@ -166,6 +188,21 @@ runs:
             || unwritten "weeder could not write its comment, which is what happens where GitHub gives the job no right to write, as on a pull request from a fork."
           echo "weeder wrote its comment on pull request $NUMBER."
         fi
+
+    # Annotations on the diff through code scanning, where it can take them. It
+    # runs whatever weeder decided, before the verdict, because the run that
+    # blocked is the one whose findings a reviewer most needs on the diff. A
+    # failed upload fails the job: it was asked for, so its failure is real.
+    - id: upload
+      if: >-
+        inputs.code-scanning == 'on'
+        || (inputs.code-scanning == 'auto'
+        && !github.event.repository.private
+        && github.event.pull_request.head.repo.full_name == github.repository)
+      uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
+      with:
+        sarif_file: ${{ steps.judge.outputs.sarif }}
+        category: weeder
 
     - id: verdict
       shell: bash

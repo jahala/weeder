@@ -68,8 +68,8 @@ if len(jobs) != 1:
     complaints.append(f"{path} has {len(jobs)} jobs, and the example is one job a reader copies")
 for name, job in jobs.items():
     granted = job.get("permissions") or {}
-    if granted != {"contents": "read", "pull-requests": "write"}:
-        complaints.append(f"{path}: job '{name}' asks for {granted}, and the comment needs contents: read and pull-requests: write and nothing else")
+    if granted != {"contents": "read", "pull-requests": "write", "security-events": "write"}:
+        complaints.append(f"{path}: job '{name}' asks for {granted}, and the comment and the upload need contents: read, pull-requests: write and security-events: write and nothing else")
     for key, value in (workflow.get("permissions") or {}).items():
         if (key, value) != ("contents", "read"):
             complaints.append(f"{path} grants {key}: {value} above the job")
@@ -81,13 +81,25 @@ for name, job in jobs.items():
     tag = f"jahala/weeder@v{version}"
     if tag not in uses:
         complaints.append(f"{path} does not run the action by the tag of this version, {tag}; it uses {uses}")
+    ran = next((step for step in steps if step.get("uses") == tag), {})
+    if (ran.get("with") or {}).get("code-scanning") != "${{ vars.WEEDER_CODE_SCANNING || 'auto' }}":
+        complaints.append(f"{path} does not let a repository opt into code scanning through its own variable")
     if any(step.get("run") for step in steps):
         complaints.append(f"{path} runs commands of its own, and the action is the one home of installing and running weeder")
 
 steps = (action.get("runs") or {}).get("steps") or []
 ids = [step.get("id") for step in steps]
-if ids != ["install", "judge", "summary", "comment", "verdict"]:
-    complaints.append(f"action.yml runs {ids}, and it installs, judges, writes the summary and the comment, and decides last")
+if ids != ["install", "judge", "summary", "comment", "upload", "verdict"]:
+    complaints.append(f"action.yml runs {ids}, and it installs, judges, writes the summary, the comment and the upload, and decides last")
+upload = next((step for step in steps if step.get("id") == "upload"), {})
+condition = " ".join(str(upload.get("if", "")).split())
+for clause in ("inputs.code-scanning == 'on'", "inputs.code-scanning == 'auto'",
+               "!github.event.repository.private",
+               "github.event.pull_request.head.repo.full_name == github.repository"):
+    if clause not in condition:
+        complaints.append(f"action.yml's upload runs on `{condition}`, which leaves out `{clause}`")
+if any("continue-on-error" in step for step in steps):
+    complaints.append("action.yml tells a step it may fail, and a failed upload that was asked for is a real failure")
 install = next((step.get("run", "") for step in steps if step.get("id") == "install"), "")
 digest, extract = install.find("SHA-256"), install.find("tar xzf")
 if digest < 0 or extract < 0 or digest > extract:
@@ -99,7 +111,7 @@ for complaint in complaints:
     print(complaint, file=sys.stderr)
 if complaints:
     raise SystemExit(1)
-print(f"{path} runs jahala/weeder@v{version} with contents: read and pull-requests: write")
+print(f"{path} runs jahala/weeder@v{version} with contents: read, pull-requests: write and security-events: write, and uploads where code scanning can take it")
 PY
 
 [ "$status" -eq 0 ] || exit "$status"
@@ -214,6 +226,10 @@ def run(label, workspace, chosen, only=None):
     outputs, codes, said = {}, {}, {}
     for at, step in enumerate(steps):
         if only and step["id"] not in only:
+            continue
+        # A step that uses another action runs only on GitHub; the live pull
+        # request in this repository is where the upload is proved.
+        if "uses" in step:
             continue
         known = {
             "inputs.token": "",

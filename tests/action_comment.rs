@@ -369,7 +369,7 @@ fn cargo_version() -> String {
 }
 
 #[test]
-fn the_example_asks_for_contents_read_and_pull_requests_write_and_nothing_else() {
+fn the_example_asks_for_what_the_comment_and_the_upload_need_and_nothing_else() {
     let workflow = example();
     let jobs = workflow["jobs"].as_object().expect("the example has jobs");
     assert_eq!(jobs.len(), 1, "the example is one job a reader copies");
@@ -381,13 +381,17 @@ fn the_example_asks_for_contents_read_and_pull_requests_write_and_nothing_else()
         .iter()
         .map(|(key, value)| (key.clone(), value.as_str().unwrap_or_default().to_string()))
         .collect();
-    let wanted: BTreeMap<String, String> = [("contents", "read"), ("pull-requests", "write")]
-        .iter()
-        .map(|(key, value)| (key.to_string(), value.to_string()))
-        .collect();
+    let wanted: BTreeMap<String, String> = [
+        ("contents", "read"),
+        ("pull-requests", "write"),
+        ("security-events", "write"),
+    ]
+    .iter()
+    .map(|(key, value)| (key.to_string(), value.to_string()))
+    .collect();
     assert_eq!(
         granted, wanted,
-        "the job asks for exactly what the comment needs"
+        "the job asks for exactly what the comment and the upload need"
     );
     let above = workflow["permissions"]
         .as_object()
@@ -449,6 +453,73 @@ fn nothing_here_runs_on_pull_request_target() {
     }
 }
 
+/// Code scanning takes the findings where it can (the owner's ruling of
+/// 2026-11-13): from a public repository unless the pull request comes out of
+/// a fork, whose token cannot upload, and from a private one only when it says
+/// it has Advanced Security. The example passes the repository's own variable.
+#[test]
+fn the_upload_runs_where_code_scanning_can_take_it_and_nowhere_else() {
+    let action = action();
+    let input = &action["inputs"]["code-scanning"];
+    assert_eq!(
+        input["default"], "auto",
+        "the input defaults to auto: {input}"
+    );
+    let upload = action["runs"]["steps"]
+        .as_array()
+        .expect("the action has steps")
+        .iter()
+        .find(|step| step["id"] == "upload")
+        .expect("the action has an upload step");
+    let uses = upload["uses"].as_str().unwrap_or_default();
+    let (name, pin) = uses.split_once('@').expect("the upload names a version");
+    assert_eq!(name, "github/codeql-action/upload-sarif");
+    assert!(
+        pin.len() == 40 && pin.bytes().all(|byte| byte.is_ascii_hexdigit()),
+        "the upload is pinned to a commit, not a tag: {uses}"
+    );
+    let condition: String = upload["if"]
+        .as_str()
+        .unwrap_or_default()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ");
+    for clause in [
+        "inputs.code-scanning == 'on'",
+        "inputs.code-scanning == 'auto'",
+        "!github.event.repository.private",
+        "github.event.pull_request.head.repo.full_name == github.repository",
+    ] {
+        assert!(
+            condition.contains(clause),
+            "the upload's condition holds `{clause}`: {condition}"
+        );
+    }
+    assert_eq!(
+        upload["with"]["sarif_file"], "${{ steps.judge.outputs.sarif }}",
+        "it uploads the log the judge step wrote"
+    );
+
+    let example = example();
+    let step = example["jobs"]
+        .as_object()
+        .and_then(|jobs| jobs.values().next())
+        .and_then(|job| job["steps"].as_array())
+        .and_then(|steps| {
+            steps.iter().find(|step| {
+                step["uses"]
+                    .as_str()
+                    .unwrap_or_default()
+                    .starts_with("jahala/weeder@")
+            })
+        })
+        .expect("the example runs the action");
+    assert_eq!(
+        step["with"]["code-scanning"], "${{ vars.WEEDER_CODE_SCANNING || 'auto' }}",
+        "the example lets a repository opt in through its own variable"
+    );
+}
+
 #[test]
 fn the_action_is_steps_a_runner_runs_in_order_with_no_condition_to_skip_one() {
     let action = action();
@@ -462,13 +533,20 @@ fn the_action_is_steps_a_runner_runs_in_order_with_no_condition_to_skip_one() {
         .collect();
     assert_eq!(
         ids,
-        ["install", "judge", "summary", "comment", "verdict"],
-        "install, judge, then the summary and the comment, and the verdict last"
+        ["install", "judge", "summary", "comment", "upload", "verdict"],
+        "install, judge, then the summary, the comment and the upload, and the verdict last"
     );
     for step in steps {
         assert!(
-            step.get("if").is_none() && step.get("continue-on-error").is_none(),
-            "no step decides by a condition whether it runs: {step}"
+            step.get("continue-on-error").is_none(),
+            "no step is told it may fail: {step}"
+        );
+        if step["id"] == "upload" {
+            continue;
+        }
+        assert!(
+            step.get("if").is_none(),
+            "no step but the upload decides by a condition whether it runs: {step}"
         );
         assert_eq!(step["shell"], "bash", "every step is bash: {step}");
         let script = step["run"].as_str().unwrap_or_default();
@@ -620,6 +698,11 @@ mod running {
             .enumerate()
         {
             let id = step["id"].as_str().unwrap_or_default().to_string();
+            // A step that uses another action runs only on GitHub, which this
+            // suite never stands in for; the live pull request proves it.
+            if step.get("uses").is_some() {
+                continue;
+            }
             let known = expressions(runner, archive, &outputs);
             let script = runner.file(&format!("step-{at}.sh"));
             // A runner hands a step to `bash --noprofile --norc -eo pipefail`;
