@@ -481,6 +481,7 @@ fn checks_taken_out(forge: Forge, change: &Change) -> Vec<String> {
     if !before.gates {
         return Vec::new();
     }
+    // A workflow the change took away runs nothing after it.
     let after = change
         .diff
         .new_path
@@ -976,6 +977,7 @@ fn loosened(file: &str, was: Option<&Stated>, now: &Stated) -> Option<Message> {
     let next = "restore the setting, or write why the gate may refuse less in a `Weeder-allow: C4` trailer.".to_string();
 
     if LOOKING_AWAY.iter().any(|word| key.contains(word)) && gate {
+        // A key the base did not write held no codes.
         let held: BTreeSet<String> = was.map(|was| codes(&was.entries)).unwrap_or_default();
         let added: Vec<String> = codes(&now.entries)
             .into_iter()
@@ -992,14 +994,10 @@ fn loosened(file: &str, was: Option<&Stated>, now: &Stated) -> Option<Message> {
         });
     }
     let was = was?;
-    if let (Some(before), Some(after)) = (number(was), number(now)) {
+    if let (Some((before, from)), Some((after, to))) = (number(was), number(now)) {
         if after < before && is_threshold(file, &words) {
             return Some(Message {
-                what: format!(
-                    "`{shown}` was lowered from {} to {}.",
-                    was.number.as_deref().unwrap_or_default(),
-                    now.number.as_deref().unwrap_or_default()
-                ),
+                what: format!("`{shown}` was lowered from {from} to {to}."),
                 why: "the coverage gate still runs and now passes code it used to refuse."
                     .to_string(),
                 next,
@@ -1062,8 +1060,11 @@ fn phrase(listed: &[String]) -> String {
     }
 }
 
-fn number(setting: &Stated) -> Option<f64> {
-    setting.number.as_deref()?.parse().ok()
+/// A number a setting states, as a value and as the file spells it.
+fn number(setting: &Stated) -> Option<(f64, &str)> {
+    let spelled = setting.number.as_deref()?;
+    // A value that does not read as a number is no threshold to compare.
+    spelled.parse().ok().map(|value| (value, spelled))
 }
 
 fn first_text(setting: &Stated) -> Option<String> {
