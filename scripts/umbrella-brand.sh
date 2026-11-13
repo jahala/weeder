@@ -2,9 +2,10 @@
 # Fetch the umbrella brand the way `.brand/products/weeder/petalsrc.example` names
 # it, and print where it landed.
 #
-# The page checks are held to the umbrella's own gate rather than to a copy of
-# it kept here, so they need the umbrella's `.brand` and `petals/scripts/` as
-# the umbrella publishes them. This script is the one place that knows how to
+# The brand check measures weeder's colours against the umbrella's own
+# `.brand`, and the garden-fit check validates `garden.json` against the
+# umbrella's manifest schema, both as the umbrella publishes them rather than a
+# copy kept here. This script is the one place that knows how to
 # get them: it reads the source, the version and the product out of
 # petalsrc.example, resolves the version to a commit at the source, fetches that
 # commit into a cache keyed by it, and refuses a checkout whose brand does not
@@ -88,9 +89,5 @@ if [ -n "$declared" ] && newer "$declared" "$version"; then
   exit 3
 fi
 echo "umbrella $version at $sha declares brand version '${declared:-none}'" >&2
-[ -f "$checkout/petals/scripts/check.sh" ] || {
-  echo "$checkout carries no petals/scripts/check.sh: the gate is not in this fetch" >&2
-  exit 3
-}
 
 printf '%s\t%s\t%s\t%s\n' "$checkout" "$sha" "$version" "$product"

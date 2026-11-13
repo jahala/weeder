@@ -7,38 +7,41 @@
 //! check job still runs on it: the self-check judges every file in the tree,
 //! prose included, and several tests read the docs.
 //!
-//! `scripts/ci-changes.sh` decides, from the paths a pull request changed, and
-//! the workflow asks it. Anything it cannot place as prose is code, and an
-//! empty list is code too, because a list git failed to write says nothing.
+//! `scripts/ci-changes.sh <base> <head>` asks git what the range changed and
+//! decides, and the workflow asks it. Every test here builds a real repository
+//! and a real range, so what the script reads is what git writes, renames
+//! included. Anything it cannot place as prose is code, and so is a range git
+//! cannot answer for.
 
 mod common;
 
-use std::io::Write;
 use std::path::Path;
-use std::process::Stdio;
 
-/// What the script answers for these paths, written the way the workflow
-/// hands them over: each path ended by a NUL, as `git diff -z` writes them.
-fn answer(paths: &[&str]) -> String {
-    let script = Path::new(env!("CARGO_MANIFEST_DIR")).join("scripts/ci-changes.sh");
-    let mut child = common::bash(&script)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("bash should run the script");
-    let mut input = Vec::new();
-    for path in paths {
-        input.extend_from_slice(path.as_bytes());
-        input.push(0);
+use common::Repo;
+
+/// A repository whose first commit holds `base`, and whose second makes the
+/// change `change` writes. The answer is the script's, for the range between.
+fn answer(base: &[(&str, &str)], change: impl Fn(&Repo)) -> String {
+    let repo = Repo::init();
+    for (path, text) in base {
+        repo.write(path, text);
     }
-    child
-        .stdin
-        .take()
-        .expect("the script's stdin is piped")
-        .write_all(&input)
-        .expect("the paths reach the script");
-    let output = child.wait_with_output().expect("the script finishes");
+    repo.commit("the base");
+    let from = repo.head();
+    change(&repo);
+    repo.commit("the change");
+    run(&repo, &from, "HEAD")
+}
+
+/// The script's one line, run inside the repository on a range.
+fn run(repo: &Repo, base: &str, head: &str) -> String {
+    let script = Path::new(env!("CARGO_MANIFEST_DIR")).join("scripts/ci-changes.sh");
+    let output = common::bash(&script)
+        .arg(base)
+        .arg(head)
+        .current_dir(repo.root())
+        .output()
+        .expect("bash should run the script");
     assert!(
         output.status.success(),
         "the script exits 0 whatever it decides: {}",
@@ -47,18 +50,26 @@ fn answer(paths: &[&str]) -> String {
     String::from_utf8_lossy(&output.stdout).into_owned()
 }
 
+const CODE: &[(&str, &str)] = &[
+    ("src/lib.rs", "pub fn one() -> u32 { 1 }\n"),
+    ("README.md", "# notes\n"),
+];
+
 #[test]
 fn a_change_made_only_of_prose_is_not_code() {
-    let prose = [
-        "README.md",
-        "docs/rules.md",
-        "docs/tend/release.tend.html",
-        "docs/calibration/corpus.toml",
-        ".brand/products/weeder/voice.md",
-        "index.html",
-        "LICENSE",
-    ];
-    assert_eq!(answer(&prose), "code=false\n");
+    let said = answer(CODE, |repo| {
+        for path in [
+            "README.md",
+            "docs/rules.md",
+            "docs/tend/release.tend.html",
+            "docs/calibration/corpus.toml",
+            ".brand/products/weeder/voice.md",
+            "LICENSE",
+        ] {
+            repo.write(path, "words, rewritten\n");
+        }
+    });
+    assert_eq!(said, "code=false\n");
 }
 
 #[test]
@@ -72,26 +83,72 @@ fn one_path_outside_prose_makes_the_change_code() {
         "garden.json",
         "scripts/check/run.sh",
     ] {
+        let said = answer(CODE, |repo| {
+            repo.write("README.md", "# notes, rewritten\n");
+            repo.write(path, "changed\n");
+        });
         assert_eq!(
-            answer(&["README.md", path]),
-            "code=true\n",
+            said, "code=true\n",
             "{path} changes what the release suite runs"
         );
     }
 }
 
+/// The suite reads markdown of its own: a fixture's `AGENTS.md` is the input a
+/// rule is proven on, and a test's prose is part of the test. Below `fixtures/`
+/// and `tests/`, markdown is code (#159).
 #[test]
-fn an_empty_list_is_code_because_it_says_nothing() {
-    assert_eq!(answer(&[]), "code=true\n");
+fn markdown_the_suite_reads_is_code() {
+    for path in [
+        "fixtures/adversarial/C1/agents/fire/after/AGENTS.md",
+        "tests/fixtures/notes.md",
+    ] {
+        let said = answer(CODE, |repo| repo.write(path, "the law, rewritten\n"));
+        assert_eq!(said, "code=true\n", "{path} is read by the suite");
+    }
+}
+
+/// A move from code to prose deletes code. git lists a rename by its new path
+/// alone unless it is told not to look for renames, and the new path here is
+/// prose (#159).
+#[test]
+fn a_rename_out_of_code_is_code() {
+    let said = answer(
+        &[
+            (
+                "src/notes.rs",
+                "pub fn notes() -> &'static str { \"notes\" }\n",
+            ),
+            ("README.md", "# notes\n"),
+        ],
+        |repo| {
+            // The same bytes at a new path: git reads it as a rename.
+            repo.write(
+                "docs/notes.md",
+                "pub fn notes() -> &'static str { \"notes\" }\n",
+            );
+            repo.remove("src/notes.rs");
+        },
+    );
+    assert_eq!(said, "code=true\n");
 }
 
 #[test]
+fn a_range_git_cannot_answer_for_is_code() {
+    let repo = Repo::init();
+    repo.write("README.md", "# notes\n");
+    repo.commit("the base");
+    assert_eq!(run(&repo, "no-such-ref", "HEAD"), "code=true\n");
+}
+
+/// A path is read whole even with a newline in it. Read line by line, this one
+/// would be `docs/one` and `two.rs`, and the second would look like code.
+/// Windows keeps no newline in a file name, so the case is unix's alone.
+#[cfg(unix)]
+#[test]
 fn a_path_is_read_whole_even_with_a_newline_in_it() {
-    // Read line by line, this one path would be `docs/one` and `two.rs`, and
-    // the second would look like code. It is one file under `docs/`.
-    assert_eq!(answer(&["docs/one\ntwo.rs"]), "code=false\n");
-    // And the other way: a path that only looks like prose on its first line.
-    assert_eq!(answer(&["README.md\n/../src/lib.rs"]), "code=true\n");
+    let said = answer(CODE, |repo| repo.write("docs/one\ntwo.rs", "words\n"));
+    assert_eq!(said, "code=false\n");
 }
 
 /// A job's block in the workflow: the lines indented under its header, up to
@@ -119,12 +176,8 @@ fn the_workflow_skips_only_the_latency_job_and_only_on_prose() {
 
     let changes = job(&workflow, "changes");
     assert!(
-        changes.contains("scripts/ci-changes.sh"),
-        "the changes job asks the script:\n{changes}"
-    );
-    assert!(
-        changes.contains("git diff -z --name-only"),
-        "the changes job hands the script whole paths:\n{changes}"
+        changes.contains("bash scripts/ci-changes.sh \"$BASE\" \"$HEAD\""),
+        "the changes job hands the script the range, and the script asks git:\n{changes}"
     );
 
     let latency = job(&workflow, "latency");
