@@ -80,7 +80,7 @@ pub enum SarifLevel {
 }
 
 impl SarifLevel {
-    fn word(self) -> &'static str {
+    pub(crate) fn word(self) -> &'static str {
         match self {
             SarifLevel::Error => "error",
             SarifLevel::Warning => "warning",
@@ -462,7 +462,7 @@ fn says_the_same(left: &Row, right: &Row) -> bool {
     left.rule == right.rule && left.why == right.why && left.next == right.next
 }
 
-fn counted(count: usize, word: &str) -> String {
+pub(crate) fn counted(count: usize, word: &str) -> String {
     if count == 1 {
         format!("{count} {word}")
     } else {
@@ -470,7 +470,9 @@ fn counted(count: usize, word: &str) -> String {
     }
 }
 
-fn rank(level: SarifLevel) -> u8 {
+/// Blocks first, then warnings, then notes: the order a person reads in, which
+/// the table and the pull-request comment share.
+pub(crate) fn rank(level: SarifLevel) -> u8 {
     match level {
         SarifLevel::Error => 0,
         SarifLevel::Warning => 1,

@@ -486,8 +486,6 @@ fn the_action_is_steps_a_runner_runs_in_order_with_no_condition_to_skip_one() {
 mod running {
     use super::*;
 
-    use std::process::Command;
-
     use tempfile::TempDir;
 
     /// The world one run of the action sees: a runner's temp directory, the
@@ -624,14 +622,21 @@ mod running {
             let id = step["id"].as_str().unwrap_or_default().to_string();
             let known = expressions(runner, archive, &outputs);
             let script = runner.file(&format!("step-{at}.sh"));
-            std::fs::write(&script, step["run"].as_str().unwrap_or_default())
-                .expect("the step's script writes");
+            // A runner hands a step to `bash --noprofile --norc -eo pipefail`;
+            // the options are written into the script, so the harness's bash
+            // runs it the same way.
+            std::fs::write(
+                &script,
+                format!(
+                    "set -eo pipefail\n{}",
+                    step["run"].as_str().unwrap_or_default()
+                ),
+            )
+            .expect("the step's script writes");
             let output_file = runner.file(&format!("output-{at}"));
             std::fs::write(&output_file, "").expect("an output file");
-            let mut command = Command::new("bash");
+            let mut command = common::bash(&script);
             command
-                .args(["--noprofile", "--norc", "-eo", "pipefail"])
-                .arg(&script)
                 .current_dir(repo.root())
                 .env_clear()
                 .env("PATH", path(runner))

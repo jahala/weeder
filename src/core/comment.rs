@@ -12,7 +12,7 @@
 //! of them from anywhere: the caller hands in the address the files of that
 //! commit sit under. Without one, a place is written as code and links nowhere.
 
-use crate::core::sarif::{Log, SarifLevel, SarifResult};
+use crate::core::sarif::{counted, rank, Log, SarifLevel, SarifResult};
 
 /// The first line of every body: html a reader never sees, and the line the
 /// action looks for at the top of a comment to know it is the one to edit.
@@ -75,37 +75,13 @@ pub fn render(log: &Log, links: Option<&str>) -> String {
     for result in results {
         body.push_str(&format!(
             "- **{}** {} {}\\\n  {}\n",
-            word(result.level),
+            result.level.word(),
             code(&result.rule_id),
             place(result, links),
             paragraph(&result.message.text),
         ));
     }
     body
-}
-
-fn rank(level: SarifLevel) -> u8 {
-    match level {
-        SarifLevel::Error => 0,
-        SarifLevel::Warning => 1,
-        SarifLevel::Note => 2,
-    }
-}
-
-fn word(level: SarifLevel) -> &'static str {
-    match level {
-        SarifLevel::Error => "error",
-        SarifLevel::Warning => "warning",
-        SarifLevel::Note => "note",
-    }
-}
-
-fn counted(count: usize, word: &str) -> String {
-    if count == 1 {
-        format!("{count} {word}")
-    } else {
-        format!("{count} {word}s")
-    }
 }
 
 /// `a`, `a and b`, `a, b and c`.
