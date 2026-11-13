@@ -300,8 +300,7 @@ impl Source {
     fn indented_end(&self, first: usize) -> usize {
         let indent = indent_of(self.code.get(first).map_or("", String::as_str));
         let mut last = first;
-        for at in first + 1..self.code.len() {
-            let line = &self.code[at];
+        for (at, line) in self.code.iter().enumerate().skip(first + 1) {
             if line.trim().is_empty() {
                 continue;
             }
