@@ -5,9 +5,10 @@
 //! A work marker, one of the shouted words in [`WORK_MARKERS`], written as a
 //! word of its own, in code or in a comment but never inside a string, where it
 //! is a message the program hands out rather than a note to the author. A
-//! marker counts where the change leaves the file holding more of it than the
-//! base did: a comment the change fixed a typo in, or moved, carried its marker
-//! over and added none (#181).
+//! marker counts where the change wrote it rather than carried it over: a
+//! comment the change fixed a typo in, or moved word for word, carried its
+//! marker and added none, while a marker taken out in one place and a different
+//! one written in another is new work (#181).
 //!
 //! An unfinished signal: the token a language keeps for a body nobody wrote
 //! (`todo!`, `unimplemented!`, `NotImplementedError`), or a throw, a raise or a
@@ -219,69 +220,68 @@ fn markers(mask: &Mask, line: u32) -> Vec<&'static str> {
         .collect()
 }
 
-/// The added lines that put a work marker in the file the base did not have,
-/// each with the first such marker it writes.
+/// The added lines that write a work marker the change did not only carry
+/// over, each with the first such marker it writes.
 ///
-/// A marker is counted the way G3 counts a control character: what the added
-/// lines carry, less what the removed lines carried. A comment edited for a
-/// typo, and a marker moved down its function, take a marker out and write it
-/// back, and the file holds no more of them than it did. Where it does hold
-/// more, the lines that answer for the gain are found in two steps. A line
-/// answers for what it carries beyond the line it rewrote, so a second marker
-/// written beside the first is the new one. Among those, a line the change also
-/// took out word for word only moved, and is charged last.
+/// A marker is carried over by its own line and by nothing else. A line moved
+/// word for word carried every marker it holds. A line that rewrote another
+/// carried that line's markers, where the rewrite kept at least half of its
+/// words: a typo fixed in a comment, a word changed beside the marker. A
+/// rewrite that kept fewer is a new line in the old one's place, and a marker
+/// on it is new, as is any marker on a line that rewrote nothing. Markers are
+/// never netted across a file by their word, because a change that took one
+/// marker out and wrote a different one elsewhere added work nobody wrote, and
+/// the count would call that nothing (#181).
 fn gained_markers(change: &Change) -> BTreeMap<u32, &'static str> {
-    let mut left = change.gained(|side, line, _| markers(side.mask(), line));
-    left.retain(|_, net| *net > 0);
-    if left.is_empty() {
-        return BTreeMap::new();
-    }
+    let spaced = |text: &str| text.split_whitespace().collect::<Vec<&str>>().join(" ");
+    let removed: BTreeMap<u32, &str> = change.removed().collect();
+    let taken_out: BTreeSet<String> = removed.values().map(|text| spaced(text)).collect();
     let rewrote: BTreeMap<u32, u32> = change
         .replacements()
         .iter()
         .map(|replacement| (replacement.new_line, replacement.old_line))
         .collect();
-    let spaced = |text: &str| text.split_whitespace().collect::<Vec<&str>>().join(" ");
-    let taken_out: BTreeSet<String> = change.removed().map(|(_, text)| spaced(text)).collect();
-
-    let mut answering: Vec<(bool, u32, &'static str, usize)> = Vec::new();
-    for (line, text) in change.added() {
-        let carries = markers(change.after.mask(), line);
-        // A line that rewrote no other carried nothing over: no partner is an
-        // answer here, not a failure.
-        let carried = rewrote
-            .get(&line)
-            .map(|old| markers(change.before.mask(), *old))
-            .unwrap_or_default();
-        let moved = taken_out.contains(&spaced(text));
-        let mut seen: Vec<&'static str> = Vec::new();
-        for word in carries.iter().copied() {
-            if seen.contains(&word) {
-                continue;
-            }
-            seen.push(word);
-            let count = |held: &[&str]| held.iter().filter(|marker| **marker == word).count();
-            let surplus = count(&carries).saturating_sub(count(&carried));
-            if surplus > 0 {
-                answering.push((moved, line, word, surplus));
-            }
-        }
-    }
-    // A stable sort keeps a line's markers in the order it writes them.
-    answering.sort_by_key(|(moved, line, _, _)| (*moved, *line));
 
     let mut found = BTreeMap::new();
-    for (_, line, word, surplus) in answering {
-        let Some(net) = left.get_mut(word) else {
-            continue;
-        };
-        if *net <= 0 {
+    for (line, text) in change.added() {
+        let carries = markers(change.after.mask(), line);
+        if carries.is_empty() || taken_out.contains(&spaced(text)) {
             continue;
         }
-        *net -= i64::try_from(surplus).unwrap_or(i64::MAX);
-        found.entry(line).or_insert(word);
+        // A line that rewrote no other, or rewrote it beyond recognition,
+        // carried nothing over: no partner is an answer here, not a failure.
+        let carried = rewrote
+            .get(&line)
+            .filter(|old| {
+                removed
+                    .get(*old)
+                    .is_some_and(|before| kept_most_words(before, text))
+            })
+            .map(|old| markers(change.before.mask(), *old))
+            .unwrap_or_default();
+        let count = |held: &[&'static str], word: &str| {
+            held.iter().filter(|marker| **marker == word).count()
+        };
+        if let Some(word) = carries
+            .iter()
+            .copied()
+            .find(|word| count(&carries, word) > count(&carried, word))
+        {
+            found.insert(line, word);
+        }
     }
     found
+}
+
+/// Whether a rewritten line kept at least half of the words of the line it
+/// replaced, counted over both: the words the two share, against every word
+/// either holds.
+fn kept_most_words(before: &str, after: &str) -> bool {
+    let old: BTreeSet<&str> = before.split_whitespace().collect();
+    let new: BTreeSet<&str> = after.split_whitespace().collect();
+    let shared = old.intersection(&new).count();
+    let either = old.union(&new).count();
+    either > 0 && shared * 2 >= either
 }
 
 /// The unfinished signal an added line carries on its own, without the

@@ -237,6 +237,66 @@ fn s1_reports_only_the_markers_a_change_adds_beyond_what_it_removes() {
     }
 }
 
+/// A marker taken out of one line and a different one written on another are
+/// not one marker moved: the work the new one names is new, so it is reported.
+/// Counting markers net per word would let a change trade an old TODO for a
+/// new one and say nothing; a marker is carried over only by the line it was
+/// on, rewritten, or by that same line moved word for word.
+#[test]
+fn s1_reports_a_new_marker_where_the_change_took_out_a_different_one() {
+    let cases = [
+        (
+            "src/lib.ts",
+            "// TODO: handle errors\nexport const a = 1;\n",
+            "export const a = 1;\nexport const b = 2; // TODO: retry later\n",
+        ),
+        (
+            "src/app.py",
+            "# TODO: handle errors\nA = 1\n",
+            "A = 1\nB = 2  # TODO: retry later\n",
+        ),
+        (
+            "src/lib.rs",
+            "// TODO: handle errors\npub const A: u32 = 1;\n",
+            "pub const A: u32 = 1;\npub const B: u32 = 2; // TODO: retry later\n",
+        ),
+        (
+            "p.go",
+            "package p\n\n// TODO: handle errors\nconst A = 1\n",
+            "package p\n\nconst A = 1\nconst B = 2 // TODO: retry later\n",
+        ),
+        // The same trade made in place: git pairs the two lines as one
+        // rewritten, and a rewrite that keeps none of the words is a new line.
+        (
+            "src/place.ts",
+            "// TODO: handle errors\nexport const a = 1;\n",
+            "// TODO: retry later\nexport const a = 1;\n",
+        ),
+    ];
+    for (path, before, after) in cases {
+        let repo = common::Repo::init();
+        repo.write(path, before);
+        repo.commit("the code before the change");
+        repo.write(path, after);
+        let run = repo.weeder(&["check"]);
+        let lines: Vec<u64> = stubs(&run)
+            .iter()
+            .filter_map(|finding| finding.line)
+            .collect();
+        let added = after
+            .lines()
+            .position(|line| line.contains("retry later"))
+            .map(|index| index as u64 + 1);
+        assert_eq!(
+            lines,
+            added.into_iter().collect::<Vec<u64>>(),
+            "{path}: the new marker is reported, whatever the change took out\n{}",
+            run.output()
+        );
+        assert_eq!(run.code, 2, "{path}: and it blocks");
+    }
+}
+
 /// Where the forms the rule names are written in a fixture's production file,
 /// counted from one and each line named once however many forms it carries.
 /// What S1 itself reported. These fixtures run under every rule, and a change
