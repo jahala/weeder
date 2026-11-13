@@ -64,11 +64,12 @@ jobs:
           EVENT: ${{ github.event_name }}
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
-        # A diff git cannot write reaches the script as an empty list, which it
-        # reads as code.
+        # The script asks git for the range itself, renames split into the
+        # path left and the path reached, and reads a range git cannot answer
+        # for as code.
         run: |
           if [ "$EVENT" = pull_request ]; then
-            git diff -z --name-only "$BASE...$HEAD" | bash scripts/ci-changes.sh >> "$GITHUB_OUTPUT"
+            bash scripts/ci-changes.sh "$BASE" "$HEAD" >> "$GITHUB_OUTPUT"
           else
             echo "code=true" >> "$GITHUB_OUTPUT"
           fi
