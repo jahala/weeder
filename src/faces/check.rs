@@ -27,6 +27,7 @@ use std::path::{Path, PathBuf};
 
 use crate::core::change::{self, Change, Side};
 use crate::core::classify::{classify_file, FileKind};
+use crate::core::comment;
 use crate::core::config::Config;
 use crate::core::diff::{added_file, parse_diff, removed_file, FileDiff};
 use crate::core::exclude;
@@ -78,13 +79,38 @@ pub struct Request {
     /// trailer is a person's act on this very change. An inline marker is the
     /// agent's own line and is never honoured here, whatever this says.
     pub honour_trailers: bool,
-    pub format: Format,
+    pub format: Output,
     /// Read `weeder.toml` from here instead of from the base of the range.
     pub config: Option<PathBuf>,
     /// The message of the commit being prepared, for its `Weeder-allow:` trailers.
     /// A pre-commit gate has no commit to read, so a hook hands the message in.
     pub message_file: Option<PathBuf>,
     pub version: String,
+}
+
+/// How `check` writes what it found. The two reports every face writes, and the
+/// one only a pull request reads: the comment, whose links need to know where
+/// the judged commit's files are, so the caller hands that in rather than core
+/// reading it from wherever it runs.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Output {
+    Sarif,
+    Table,
+    Markdown {
+        /// The address a finding's path is appended to, such as
+        /// `https://github.com/owner/repo/blob/<sha>`. Without one a place is
+        /// written as code and links nowhere.
+        links: Option<String>,
+    },
+}
+
+impl From<Format> for Output {
+    fn from(format: Format) -> Output {
+        match format {
+            Format::Sarif => Output::Sarif,
+            Format::Table => Output::Table,
+        }
+    }
 }
 
 /// What a run judged: the bytes a caller writes and the code it leaves with,
@@ -639,15 +665,21 @@ fn trailers(request: &Request, root: &Path) -> Result<Vec<Suppression>, String> 
 }
 
 fn write(findings: &[Finding], request: &Request, root: &Path) -> String {
-    match request.format {
-        Format::Table => sarif::render_table(findings),
-        Format::Sarif => {
+    match &request.format {
+        Output::Table => sarif::render_table(findings),
+        Output::Sarif => {
             let mut context = Context::new(&request.version);
             if fs::exists(&root.join(RULES_DOC)) {
                 context = context.with_docs_base(file_uri(root));
             }
             format!("{}\n", sarif::to_json(&sarif::render(findings, &context)))
         }
+        // The comment is read on the forge, where a `file:` address to this
+        // checkout means nothing, so its log is rendered without one.
+        Output::Markdown { links } => comment::render(
+            &sarif::render(findings, &Context::new(&request.version)),
+            links.as_deref(),
+        ),
     }
 }
 
@@ -657,9 +689,14 @@ fn could_not_run(request: &Request, reason: &str) -> Answer {
         code: EXIT_COULD_NOT_RUN,
         // A table has nothing to say about a run that never judged anything; the
         // log is the receipt a machine reads, and stderr is what a person reads.
-        stdout: match request.format {
-            Format::Sarif => format!("{}\n", sarif::to_json(&sarif::render(&[], &context))),
-            Format::Table => String::new(),
+        stdout: match &request.format {
+            Output::Sarif => format!("{}\n", sarif::to_json(&sarif::render(&[], &context))),
+            Output::Table => String::new(),
+            // The comment is what a reviewer reads in place of the log, so a run
+            // that judged nothing says so there too, with the reason.
+            Output::Markdown { links } => {
+                comment::render(&sarif::render(&[], &context), links.as_deref())
+            }
         },
         stderr: vec![reason.to_string()],
     }

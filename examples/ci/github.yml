@@ -1,14 +1,16 @@
 # weeder on a pull request.
 #
 # Copy this to .github/workflows/weeder.yml in your own repository. It judges the
-# pull request against the branch it is opening onto, writes SARIF, and hands
-# that to GitHub's code scanning, so every finding lands as an annotation on the
-# diff a reviewer is already reading.
+# pull request against the branch it is opening onto and leaves its verdict as
+# one comment on the pull request, written on the first run and edited in place
+# on every push after.
 #
 # The job fails when weeder blocks: `weeder check` leaves with 2 for a block-level
 # finding, 0 for a clean run or warnings only, and 3 when it could not run at
-# all. The upload runs either way, because the run that blocked is exactly the
-# one whose findings a reviewer needs to see.
+# all. The comment is written first either way, because the run that blocked is
+# exactly the one whose findings a reviewer needs to see. On a pull request from
+# a fork GitHub gives the job no right to write, so the same text goes to the
+# job summary instead, and the exit code still decides the job.
 
 name: weeder
 
@@ -18,12 +20,18 @@ on:
 permissions:
   contents: read
 
+# A newer push cancels the run for the one before it, so the comment always
+# carries the verdict on the newest commit.
+concurrency:
+  group: weeder-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   weeder:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write # code scanning reads the SARIF this job uploads
+      pull-requests: write # the one comment weeder writes and edits
     steps:
       - uses: actions/checkout@v6
         with:
@@ -31,28 +39,7 @@ jobs:
           # in the clone. A shallow one does not carry it.
           fetch-depth: 0
 
-      - name: Install weeder
-        env:
-          # The release asset for this runner. Every release publishes one
-          # tarball per platform, with its SHA-256 beside it.
-          WEEDER_TARGET: x86_64-unknown-linux-musl
-        run: |
-          base=https://github.com/jahala/weeder/releases/latest/download
-          asset="weeder-$WEEDER_TARGET.tar.gz"
-          cd "$RUNNER_TEMP"
-          curl -fsSLO "$base/$asset" -O "$base/$asset.sha256"
-          # The archive is opened only once it is the one the release published.
-          sha256sum -c "$asset.sha256"
-          mkdir -p weeder-bin
-          tar xzf "$asset" -C weeder-bin weeder
-          echo "$RUNNER_TEMP/weeder-bin" >> "$GITHUB_PATH"
-
-      - name: Judge the pull request
-        run: weeder check --base origin/${{ github.base_ref }} --strict --format sarif > weeder.sarif
-
-      - name: Upload the findings
-        if: always()
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: weeder.sarif
-          category: weeder
+      # Installs the weeder released with this tag, checks it against the
+      # SHA-256 published beside it, judges the pull request and writes the
+      # comment.
+      - uses: jahala/weeder@v0.5.0

@@ -67,7 +67,7 @@ struct BiteArgs {
     timeout: Option<u64>,
     /// Write SARIF or a table, rather than choosing by what stdout is.
     #[arg(long, value_enum, value_name = "format")]
-    format: Option<CheckFormat>,
+    format: Option<ReportFormat>,
     /// Read weeder.toml from here instead of the repository root.
     #[arg(long, value_name = "path")]
     config: Option<PathBuf>,
@@ -167,9 +167,14 @@ struct CheckArgs {
     /// Report suppressed findings at their own level, and refuse to guess.
     #[arg(long)]
     strict: bool,
-    /// Write SARIF or a table, rather than choosing by what stdout is.
+    /// Write SARIF, a table, or the markdown of a pull-request comment, rather
+    /// than choosing between SARIF and a table by what stdout is.
     #[arg(long, value_enum, value_name = "format")]
     format: Option<CheckFormat>,
+    /// Link each finding in the markdown to its line under this address: the
+    /// judged commit's files, such as https://github.com/owner/repo/blob/<sha>.
+    #[arg(long, value_name = "url")]
+    link_base: Option<String>,
     /// Read weeder.toml from here instead of from the base the change is
     /// judged against.
     #[arg(long, value_name = "path")]
@@ -187,7 +192,7 @@ struct ScanArgs {
     rules: Vec<String>,
     /// Write SARIF or a table, rather than choosing by what stdout is.
     #[arg(long, value_enum, value_name = "format")]
-    format: Option<CheckFormat>,
+    format: Option<ReportFormat>,
     /// Read weeder.toml from here instead of the repository root.
     #[arg(long, value_name = "path")]
     config: Option<PathBuf>,
@@ -212,6 +217,13 @@ enum UntrackedFiles {
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 enum CheckFormat {
+    Sarif,
+    Table,
+    Markdown,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum ReportFormat {
     Sarif,
     Table,
 }
@@ -248,13 +260,19 @@ fn main() -> ExitCode {
 }
 
 fn run_check(args: CheckArgs) -> Answer {
-    let format = format_for(
-        args.format.map(|format| match format {
-            CheckFormat::Sarif => Format::Sarif,
-            CheckFormat::Table => Format::Table,
-        }),
-        std::io::stdout().is_terminal(),
-    );
+    let terminal = std::io::stdout().is_terminal();
+    let format = match (args.format, args.link_base) {
+        (Some(CheckFormat::Markdown), links) => check::Output::Markdown { links },
+        (_, Some(_)) => {
+            return could_not_run(
+                "--link-base names where the comment's links point, and only --format markdown writes a comment. pass both, or drop --link-base."
+                    .to_string(),
+            )
+        }
+        (Some(CheckFormat::Sarif), None) => check::Output::Sarif,
+        (Some(CheckFormat::Table), None) => check::Output::Table,
+        (None, None) => format_for(None, terminal).into(),
+    };
 
     let cwd = match std::env::current_dir() {
         Ok(cwd) => cwd,
@@ -291,8 +309,8 @@ fn run_check(args: CheckArgs) -> Answer {
 fn run_scan(args: ScanArgs) -> Answer {
     let format = format_for(
         args.format.map(|format| match format {
-            CheckFormat::Sarif => Format::Sarif,
-            CheckFormat::Table => Format::Table,
+            ReportFormat::Sarif => Format::Sarif,
+            ReportFormat::Table => Format::Table,
         }),
         std::io::stdout().is_terminal(),
     );
@@ -319,8 +337,8 @@ fn run_scan(args: ScanArgs) -> Answer {
 fn run_bite(args: BiteArgs) -> Answer {
     let format = format_for(
         args.format.map(|format| match format {
-            CheckFormat::Sarif => Format::Sarif,
-            CheckFormat::Table => Format::Table,
+            ReportFormat::Sarif => Format::Sarif,
+            ReportFormat::Table => Format::Table,
         }),
         std::io::stdout().is_terminal(),
     );

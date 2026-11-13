@@ -27,7 +27,12 @@ so treat it as a refusal to proceed rather than as a pass.
 `weeder check` compares the index and the working tree against HEAD and writes what
 it found. On a terminal it writes a table; on a pipe it writes SARIF 2.1.0. Pass
 `--format sarif` or `--format table` to say so outright rather than let the
-stream decide.
+stream decide. `--format markdown` writes the body of the one pull-request
+comment the GitHub Action keeps: a hidden marker, then one sentence when there
+is nothing to report, or every finding, blocks first, with its rule, its level
+and its message. `--link-base` links each finding to its line under the address
+you give, the judged commit's files on the forge; weeder reads no environment to
+build it and reaches no network.
 
 A file you wrote and never staged is judged too, as the added file it is. `git
 diff` never lists one, so weeder reads them off the working tree itself; the
@@ -47,7 +52,8 @@ and the rest are yours to read.
 | `--untracked <include\|exclude>` | whether the files git has never been told about are part of the change. Included by default when the working tree is judged against HEAD, left out with `--staged` and `--base` |
 | `--scope <glob>` | the paths the change may touch; every file is still judged, and a file outside the scope is reported for being there. Repeat the flag for more paths |
 | `--strict` | report suppressed findings at their own level, and refuse to guess |
-| `--format <format>` | `sarif` or `table`, rather than choosing by what stdout is |
+| `--format <format>` | `sarif`, `table` or `markdown`, rather than choosing between SARIF and a table by what stdout is |
+| `--link-base <url>` | with `--format markdown`, link each finding to its line under this address, such as `https://github.com/owner/repo/blob/<sha>`. Any other format refuses it with 3 |
 | `--config <path>` | read `weeder.toml` from here instead of from the base the change is judged against |
 | `--message-file <path>` | the message of the commit being prepared, so its `Weeder-allow:` trailers are read |
 
@@ -89,6 +95,7 @@ assertions = ["t"]
 
 ```bash
 weeder check --base origin/master --strict --format sarif > weeder.sarif
+weeder check --base origin/master --strict --format markdown --link-base https://github.com/owner/repo/blob/HEAD_SHA > comment.md
 weeder check --staged
 weeder check --scope 'src/parser/**' --scope 'tests/parser/**'
 weeder check --untracked exclude

@@ -1,0 +1,70 @@
+name: Comment
+
+# weeder's pull-request action, run on weeder's own pull requests by the tree
+# each one carries (`uses: ./`), so the comment a change would leave is the one
+# this pull request shows before the change is released. The weeder it installs
+# is built from the same tree and packaged by the release's own script; the
+# action fetches it, checks its SHA-256 and judges with it, the way it fetches a
+# release anywhere else.
+#
+# Two legs. `write` may write on the pull request and keeps the one comment.
+# `read` may not, which is what a pull request from a fork gets, so it proves
+# the other half: the body goes to the job summary and the job is decided by
+# weeder's exit code alone. scripts/check/action-comment.sh reads both from
+# GitHub. Never `pull_request_target`, which would hand a fork's code a token
+# that can write.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+# A newer push cancels the run for the one before it, so the comment carries
+# the verdict on the newest commit.
+concurrency:
+  group: comment-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  write:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      # weeder diffs against the base branch, so the clone carries it.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # ratchet:dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # ratchet:Swatinem/rust-cache@v2
+        with:
+          key: comment
+      - run: cargo build --locked
+      - run: bash scripts/package-release.sh x86_64-unknown-linux-gnu target/debug "$RUNNER_TEMP/release"
+      - uses: ./
+        with:
+          archive: file://${{ runner.temp }}/release/weeder-x86_64-unknown-linux-gnu.tar.gz
+
+  read:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      # weeder diffs against the base branch, so the clone carries it.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # ratchet:dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # ratchet:Swatinem/rust-cache@v2
+        with:
+          key: comment
+      - run: cargo build --locked
+      - run: bash scripts/package-release.sh x86_64-unknown-linux-gnu target/debug "$RUNNER_TEMP/release"
+      - uses: ./
+        with:
+          archive: file://${{ runner.temp }}/release/weeder-x86_64-unknown-linux-gnu.tar.gz

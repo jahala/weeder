@@ -2,6 +2,7 @@ pub mod bite;
 pub mod catalogue;
 pub mod change;
 pub mod classify;
+pub mod comment;
 pub mod config;
 pub mod diff;
 pub mod exclude;

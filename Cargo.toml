@@ -30,6 +30,13 @@ jsonschema = { version = "0.56", default-features = false }
 # The hostile-input tests: core is handed inputs nobody wrote on purpose, and
 # has to answer or refuse rather than fall over.
 proptest = "1.11.0"
+# The pull-request comment is read back the way a markdown renderer reads it,
+# rather than searched as text, so a finding that renders as something else
+# fails the test that says what it renders as.
+pulldown-cmark = { version = "0.13", default-features = false }
+# The action and the example are read as the yaml GitHub reads, so a key the
+# tests look for is the key a runner finds rather than a line that mentions it.
+serde_yaml_ng = "0.10"
 
 # A real pseudo-terminal, so the format tests ask the binary what it does with a
 # terminal on stdout instead of asking it to believe there is one. Windows has

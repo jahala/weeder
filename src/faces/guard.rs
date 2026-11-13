@@ -904,7 +904,7 @@ fn judgement(
         untracked: None,
         strict: true,
         honour_trailers: true,
-        format: crate::faces::Format::Table,
+        format: check::Output::Table,
         config: None,
         message_file: None,
         version: version.to_string(),

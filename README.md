@@ -146,15 +146,22 @@ pull request rather than for the agent.
 
 ## In CI
 
-`examples/ci/github.yml` is a workflow you can copy: it judges the pull request against the
-branch it is opening onto, writes SARIF, and hands that to GitHub's code scanning, so every
-finding lands as an annotation on the diff a reviewer is already reading.
+`examples/ci/github.yml` is a workflow you can copy. It runs the action this repository ships,
+which installs the weeder released with the tag you name, checks it against its SHA-256, judges
+the pull request against the branch it is opening onto, and leaves the verdict as one comment on
+the pull request, edited in place on every push. The job needs `contents: read` and
+`pull-requests: write` and nothing else. On a pull request from a fork, where GitHub gives the job
+no right to write, the same text goes to the job summary, and weeder's exit code decides the job.
 
 ```yaml
-- run: weeder check --base origin/${{ github.base_ref }} --strict --format sarif > weeder.sarif
-- uses: github/codeql-action/upload-sarif@v4
-  with:
-    sarif_file: weeder.sarif
+permissions:
+  contents: read
+  pull-requests: write
+steps:
+  - uses: actions/checkout@v6
+    with:
+      fetch-depth: 0
+  - uses: jahala/weeder@v0.5.0
 ```
 
 For a pleach plan, `examples/pleach/plan.json` gates every node on weeder and `docs/pleach.md`

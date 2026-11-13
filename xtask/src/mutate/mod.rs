@@ -28,7 +28,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use clap::Args;
-use weeder::faces::{check, Format};
+use weeder::faces::check;
 
 use corpus::Working;
 use inject::{Mutation, NoSite};
@@ -238,7 +238,7 @@ pub fn replay_case_in(
         // honour is not honoured here either: every allowance is reported at its
         // own level, trailer and marker alike.
         honour_trailers: false,
-        format: Format::Sarif,
+        format: check::Output::Sarif,
         config: planted.config.as_ref().map(|_| config),
         message_file: None,
         version: env!("CARGO_PKG_VERSION").to_string(),
