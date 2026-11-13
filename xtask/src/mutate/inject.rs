@@ -127,6 +127,7 @@ fn planter(rule: &str) -> Option<Planter> {
         "C1" => |lang, tree, seed| edit_a_guardrail(lang, tree, seed).ok_or(NoSite::Absent),
         "C2" => |lang, tree, seed| broaden_an_ignore(lang, tree, seed).ok_or(NoSite::Absent),
         "C3" => |lang, tree, seed| edit_a_workflow(lang, tree, seed).ok_or(NoSite::Absent),
+        "C4" => |lang, tree, seed| silence_a_check_step(lang, tree, seed).ok_or(NoSite::Absent),
         "G1" => |lang, tree, seed| commit_a_conflict(lang, tree, seed).ok_or(NoSite::Absent),
         "G2" => |lang, tree, seed| add_a_blob(lang, tree, seed).ok_or(NoSite::Absent),
         "G3" => |lang, tree, seed| hide_a_file_behind_a_nul(lang, tree, seed).ok_or(NoSite::Absent),
@@ -2089,6 +2090,91 @@ fn edit_a_workflow(_lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> 
     None
 }
 
+/// The words a check command is called by, as the campaign spells them for
+/// itself rather than reading them from weeder.
+const CHECK_WORDS: [&str; 5] = ["test", "lint", "check", "vet", "spec"];
+
+/// The programs each language's checks are started with in a workflow step.
+fn check_programs(lang: Language) -> &'static [&'static str] {
+    match lang {
+        Language::Ts => &[
+            "npm", "yarn", "pnpm", "npx", "bun", "jest", "vitest", "eslint",
+        ],
+        Language::Py => &[
+            "pytest", "python", "python3", "tox", "nox", "ruff", "uv", "poetry", "hatch",
+        ],
+        Language::Rs => &["cargo"],
+        Language::Go => &["go", "golangci-lint", "gotestsum"],
+    }
+}
+
+/// The command a workflow line runs on its own line, `run: cargo test`, where
+/// that command is one of the language's checks: started by one of its
+/// programs, with a check word in its program or the word after it, and
+/// nothing after it that already decides how it fails.
+pub(super) fn a_check_runs_here(lang: Language, line: &str) -> Option<String> {
+    let trimmed = line.trim_start();
+    let command = trimmed
+        .strip_prefix("- ")
+        .unwrap_or(trimmed)
+        .strip_prefix("run:")?
+        .trim();
+    if command.is_empty()
+        || command.starts_with(['|', '>', '"', '\''])
+        || command.contains(['#', ';', '&', '|', '$', '`'])
+    {
+        return None;
+    }
+    let words: Vec<&str> = command.split_whitespace().collect();
+    if !check_programs(lang).contains(words.first()?) {
+        return None;
+    }
+    // An interpreter told to run a module runs that module: `python -m pytest`.
+    let named = words
+        .iter()
+        .filter(|word| **word != "-m")
+        .take(3)
+        .take_while(|word| !word.starts_with('-') && !word.contains(['/', '.']));
+    let checks = named
+        .flat_map(|word| word.split(['-', ':', '_']))
+        .any(|part| CHECK_WORDS.iter().any(|check| part.ends_with(check)));
+    checks.then(|| command.to_string())
+}
+
+/// C4: a step that runs a check is told to pass whatever the check finds, by
+/// `|| true` written after its command.
+fn silence_a_check_step(lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> {
+    let workflows: Vec<&String> = tree
+        .paths
+        .iter()
+        .filter(|path| is_workflow(path))
+        .filter(|path| !tree.touched(path))
+        .collect();
+    for path in rotate(workflows, seed) {
+        let Some(text) = tree.text(path) else {
+            continue;
+        };
+        let lines: Vec<&str> = text.lines().collect();
+        let Some(at) = lines
+            .iter()
+            .position(|line| a_check_runs_here(lang, line).is_some())
+        else {
+            continue;
+        };
+        let mut written: Vec<String> = lines.iter().map(ToString::to_string).collect();
+        written[at] = format!("{} || true", written[at].trim_end());
+        let mut planted = written.join("\n");
+        planted.push('\n');
+        let number = at as u32 + 1;
+        return Some(
+            Mutation::new("a check step was told it may fail", path)
+                .writing(path, planted)
+                .at(number, number),
+        );
+    }
+    None
+}
+
 pub(super) fn is_workflow(path: &str) -> bool {
     path.starts_with(".github/workflows/") && (path.ends_with(".yml") || path.ends_with(".yaml"))
 }
@@ -2509,6 +2595,37 @@ mod tests {
     #[test]
     fn a_nul_in_a_source_file_is_planted_and_read_back_in_every_language() {
         read_back("G3", hide_a_file_behind_a_nul);
+    }
+
+    #[test]
+    fn a_check_step_told_it_may_fail_is_planted_and_read_back_in_every_language() {
+        let checks = [
+            (Language::Ts, "npm test"),
+            (Language::Py, "python -m pytest"),
+            (Language::Rs, "cargo test --workspace"),
+            (Language::Go, "go test ./..."),
+        ];
+        for (lang, command) in checks {
+            // A step that uses an action and one that runs no check come first,
+            // so the planter has to pass them over to reach the check.
+            let workflow = format!(
+                "on: [push]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: ./scripts/setup.sh\n      - name: Test\n        run: {command}\n"
+            );
+            let (_root, tree) = planted_tree(lang, &[(".github/workflows/ci.yml", &workflow)]);
+            let planted = silence_a_check_step(lang, &tree, 0)
+                .unwrap_or_else(|| panic!("{lang:?}: the workflow is a site for C4"));
+            assert_eq!(
+                planted.lines,
+                Some((9, 9)),
+                "{lang:?}: the check's own line"
+            );
+            let before = written(&planted, &tree);
+            assert!(
+                shape::present("C4", lang, &planted, &tree, &before),
+                "{lang:?}: the planted shape is read back: {}",
+                planted.shape
+            );
+        }
     }
 
     #[test]

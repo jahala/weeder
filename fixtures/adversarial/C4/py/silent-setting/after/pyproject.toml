@@ -1,0 +1,14 @@
+[project]
+name = "parse"
+version = "1.0.0"
+
+[tool.coverage.report]
+fail_under = 95
+
+[tool.ruff.lint]
+select = ["E", "F", "B"]
+ignore = []
+
+[tool.mypy]
+strict = true
+warn_unused_ignores = true

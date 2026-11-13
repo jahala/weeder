@@ -1,0 +1,9 @@
+{
+  // the compiler is the first check this repository runs
+  "compilerOptions": {
+    "target": "es2022",
+    "strict": false,
+    "noImplicitAny": false
+  },
+  "exclude": ["dist"]
+}

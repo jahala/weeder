@@ -1,0 +1,11 @@
+{
+  "name": "parse",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc",
+    "pretest": "true",
+    "test": "echo ok",
+    "test:unit": "jest src --passWithNoTests",
+    "lint": "eslint . || true"
+  }
+}

@@ -1,0 +1,11 @@
+[project]
+name = "parse"
+version = "1.0.0"
+
+[project.scripts]
+parse = "parse.cli:main"
+
+[tool.pdm.scripts]
+test = "pytest || true"
+lint = "echo lint"
+check = "exit 0"

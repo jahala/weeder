@@ -1,0 +1,13 @@
+[package]
+name = "parse"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+regex = "1"
+
+[lints.rust]
+unsafe_code = "allow"
+
+[lints.clippy]
+unwrap_used = "allow"

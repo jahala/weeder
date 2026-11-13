@@ -19,6 +19,7 @@ pub mod added;
 pub mod c1;
 pub mod c2;
 pub mod c3;
+pub mod c4;
 pub mod collect;
 pub mod d1;
 pub mod d2;
@@ -77,6 +78,16 @@ pub struct Judgement<'a> {
     /// read. The face reads the settings once, so the rule that judges them and
     /// the face that refuses a run it could not read see the same collection.
     pub collection: &'a collect::Collection,
+    /// The workflows the tree holds that the change left alone, read only where
+    /// the change took something out of a workflow, so a check it took out of
+    /// one can be looked for in the rest. Empty everywhere else.
+    pub workflows: &'a [c4::Workflow],
+}
+
+/// Whether the face has to read the workflows the change left alone.
+#[must_use]
+pub fn reads_workflows(changes: &[Change]) -> bool {
+    c4::reads_workflows(changes)
 }
 
 /// The types the detectors need the tree read for before they run.
@@ -127,6 +138,7 @@ const DETECTORS: &[(&str, Detector)] = &[
     ("C1", c1::evaluate),
     ("C2", c2::evaluate),
     ("C3", c3::evaluate),
+    ("C4", c4::evaluate),
     ("G1", g1::evaluate),
     ("G2", g2::evaluate),
     ("G3", g3::evaluate),

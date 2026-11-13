@@ -1,0 +1,14 @@
+stages:
+  - test
+  - deploy
+
+unit:
+  stage: test
+  script:
+    - pip install -e .
+    - pytest; exit 0
+
+pages:
+  stage: deploy
+  script:
+    - ./scripts/publish.sh

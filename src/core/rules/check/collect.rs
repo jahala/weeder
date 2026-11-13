@@ -158,7 +158,7 @@ pub fn uncollected(read: &[File<'_>], paths: &[String]) -> Collection {
         };
         let stated = match settings.syntax {
             Syntax::Ini => stated_as_ini(file),
-            _ => stated_as_tokens(file, settings.syntax),
+            _ => stated_as_tokens(file, settings.syntax, false),
         };
         interpret(file, &settings, &stated, &suites, &mut collection);
     }
@@ -543,6 +543,10 @@ enum Syntax {
     Braces,
     /// Statements at the top of a file of code.
     Flat,
+    /// Keys nested by how far each line is indented, lists written one item
+    /// to a line behind a dash, and a value that runs on over the lines
+    /// indented under a key that opens it with `|` or `>`.
+    Yaml,
 }
 
 const PYTHON: &[Lang] = &[Lang::Python];
@@ -591,28 +595,32 @@ fn dedicated(file: &File<'_>, name: &str) -> Option<Settings> {
 
 /// One setting a file states: the key, the names it is written under, the line
 /// it is written on, and what it says.
-#[derive(Debug, Clone, Default)]
-struct Stated {
-    key: String,
-    scope: Vec<String>,
-    line: u32,
-    entries: Vec<Entry>,
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Stated {
+    pub key: String,
+    pub scope: Vec<String>,
+    pub line: u32,
+    pub entries: Vec<Entry>,
     /// A value written as code rather than as data: weeder can see that the
     /// list is built and not what it will hold.
-    built: bool,
-    truth: Option<bool>,
+    pub built: bool,
+    pub truth: Option<bool>,
+    /// A number written as the value, as the file spells it. A list of paths
+    /// holds none, so the rules that read what a run collects never look here;
+    /// a threshold is one.
+    pub number: Option<String>,
     /// Whether the innermost name it sits under is a repeated table, which
     /// declares a target rather than choosing between them.
-    declares: bool,
+    pub declares: bool,
 }
 
 /// One value a setting holds, and the line it is written on. A list spread over
 /// several lines names each of its entries somewhere, and that is where a
 /// reader is sent.
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct Entry {
-    text: String,
-    line: u32,
+pub struct Entry {
+    pub text: String,
+    pub line: u32,
 }
 
 /// One token of a settings line.
@@ -683,7 +691,7 @@ fn marks(lang: Lang) -> &'static [char] {
 }
 
 /// Every setting a file written in brackets and braces states.
-fn stated_as_tokens(file: &File<'_>, syntax: Syntax) -> Vec<Stated> {
+fn stated_as_tokens(file: &File<'_>, syntax: Syntax, slashed: bool) -> Vec<Stated> {
     let mut found: Vec<Stated> = Vec::new();
     let mut scope: Vec<String> = Vec::new();
     let mut declares = false;
@@ -691,7 +699,12 @@ fn stated_as_tokens(file: &File<'_>, syntax: Syntax) -> Vec<Stated> {
     let mut depth: i32 = 0;
     for line in 1..=file.mask.line_count() {
         let code = file.mask.outside_comments(line);
-        let read = tokens(&code, marks(file.lang));
+        let code = if slashed {
+            before_slashes(&code)
+        } else {
+            &code
+        };
+        let read = tokens(code, marks(file.lang));
         if syntax == Syntax::Table {
             if let Some((header, repeated)) = table_header(&read) {
                 scope = header;
@@ -763,6 +776,7 @@ fn stated_as_tokens(file: &File<'_>, syntax: Syntax) -> Vec<Stated> {
                     let mut stated = opened(key, &scope, line, declares);
                     stated.truth = truth(word);
                     stated.built = stated.truth.is_none() && !is_number(word);
+                    stated.number = is_number(word).then(|| word.clone());
                     found.push(stated);
                     at += 1;
                 }
@@ -868,6 +882,303 @@ fn stated_as_ini(file: &File<'_>) -> Vec<Stated> {
         open = Some(found.len() - 1);
     }
     found
+}
+
+// ---------------------------------------------------------------------------
+// Every setting a file states, for a rule that reads what a setting says
+// ---------------------------------------------------------------------------
+
+/// Every setting a file states, read in the shape its name says it is written
+/// in: JSON and a tool's dedicated settings script in braces, TOML in tables,
+/// INI and `setup.cfg` in sections, YAML by indentation. This is for a rule
+/// that judges what a setting says, a threshold, a switch, a list of codes,
+/// rather than what a runner collects, and it reads every file of those shapes
+/// rather than the ones a runner's settings live in. A file whose name says
+/// nothing about how it is written states nothing here.
+#[must_use]
+pub fn stated(file: &File<'_>) -> Vec<Stated> {
+    if file.kind == FileKind::Generated {
+        return Vec::new();
+    }
+    match written_as(file) {
+        Some(Syntax::Yaml) => stated_as_yaml(file),
+        Some(Syntax::Ini) => stated_as_ini(file),
+        // JSON with comments is what a compiler's own settings file is
+        // usually written in, and a `//` there ends the line.
+        Some(Syntax::Braces) => stated_as_tokens(file, Syntax::Braces, true),
+        Some(syntax) => stated_as_tokens(file, syntax, false),
+        None => Vec::new(),
+    }
+}
+
+/// The shape a file is written in, by its name.
+fn written_as(file: &File<'_>) -> Option<Syntax> {
+    let name = file.path.rsplit('/').next().unwrap_or(file.path);
+    let extension = name
+        .rsplit_once('.')
+        .filter(|(stem, _)| !stem.is_empty())
+        .map(|(_, extension)| extension);
+    match extension {
+        Some("yml" | "yaml") => Some(Syntax::Yaml),
+        Some("toml") => Some(Syntax::Table),
+        Some("ini" | "cfg") => Some(Syntax::Ini),
+        Some("json" | "jsonc") => Some(Syntax::Braces),
+        _ if dedicated(file, name).is_some() => Some(Syntax::Braces),
+        // A dotfile named for the tool that reads it is written in sections,
+        // unless it opens with a brace.
+        None if name.starts_with('.') && name.ends_with("rc") => {
+            let opens = (1..=file.mask.line_count())
+                .map(|line| file.mask.outside_comments(line).trim().to_string())
+                .find(|text| !text.is_empty());
+            if opens.is_some_and(|text| text.starts_with('{')) {
+                Some(Syntax::Braces)
+            } else {
+                Some(Syntax::Ini)
+            }
+        }
+        _ => None,
+    }
+}
+
+/// A line of JSON up to a `//` written outside a string, which is where a
+/// comment opens in the JSON a compiler's settings are written in.
+fn before_slashes(line: &str) -> &str {
+    let mut quoted = false;
+    let mut escaped = false;
+    let mut previous = ' ';
+    for (at, character) in line.char_indices() {
+        if quoted {
+            if escaped {
+                escaped = false;
+            } else if character == '\\' {
+                escaped = true;
+            } else if character == '"' {
+                quoted = false;
+            }
+        } else if character == '"' {
+            quoted = true;
+        } else if character == '/' && previous == '/' {
+            return &line[..at - 1];
+        }
+        previous = character;
+    }
+    line
+}
+
+/// One name a line of YAML sits under: the column it was written at, what it
+/// is called, and whether it is an item of a list, which is named for its
+/// place in the list, or a key, which counts the items written under it.
+#[derive(Debug)]
+struct Level {
+    column: usize,
+    name: String,
+    item: bool,
+    items: usize,
+    /// The setting the key opened, which a list of plain values written under
+    /// it adds its entries to.
+    stated: Option<usize>,
+}
+
+/// Every setting a YAML file states. Each key is stated under the keys and the
+/// list items above it, an item named for its place in its list, `[0]` first,
+/// so the second step of a job reads as `jobs`, the job, `steps`, `[1]`. A
+/// plain value is an entry, a list of plain values is an entry for each, and a
+/// value opened with `|` or `>` is an entry for each line indented under it.
+/// Anchors, flow mappings and values carried over lines without a marker are
+/// read as the text they are, which is what a key in a workflow is written as.
+fn stated_as_yaml(file: &File<'_>) -> Vec<Stated> {
+    let mut found: Vec<Stated> = Vec::new();
+    let mut levels: Vec<Level> = Vec::new();
+    // A value opened with `|` or `>`: the column the key was written at, and
+    // the setting its lines are entries of.
+    let mut block: Option<(usize, usize)> = None;
+    for line in 1..=file.mask.line_count() {
+        let raw = file.mask.outside_comments(line);
+        let mut column = raw.len() - raw.trim_start().len();
+        if let Some((opened, index)) = block {
+            if raw.trim().is_empty() {
+                continue;
+            }
+            if column > opened {
+                found[index].entries.push(Entry {
+                    text: raw.trim().to_string(),
+                    line,
+                });
+                continue;
+            }
+            block = None;
+        }
+        let mut rest = uncommented(raw.trim_start()).trim_end();
+        if rest.is_empty() || rest.starts_with("---") || rest == "..." {
+            continue;
+        }
+        while let Some(top) = levels.last() {
+            let kept = top.column < column || (top.column == column && is_item(rest) && !top.item);
+            if kept {
+                break;
+            }
+            levels.pop();
+        }
+        while is_item(rest) {
+            let after = &rest[1..];
+            let gap = after.len() - after.trim_start().len();
+            let place = levels.last_mut().map_or(0, |parent| {
+                parent.items += 1;
+                parent.items - 1
+            });
+            levels.push(Level {
+                column,
+                name: format!("[{place}]"),
+                item: true,
+                items: 0,
+                stated: None,
+            });
+            column += 1 + gap;
+            rest = after.trim_start();
+            if rest.is_empty() || is_item(rest) || key_of(rest).is_some() {
+                continue;
+            }
+            // A plain value in a list is a value of the key above it, not a
+            // place anything else is written under.
+            let item_column = levels.pop().map_or(column, |item| item.column);
+            if let Some(index) = levels.last().and_then(|parent| parent.stated) {
+                if rest.starts_with(['|', '>']) {
+                    block = Some((item_column, index));
+                } else {
+                    found[index].entries.push(Entry {
+                        text: scalar(rest).to_string(),
+                        line,
+                    });
+                }
+            }
+            rest = "";
+        }
+        let Some((key, value)) = key_of(rest) else {
+            continue;
+        };
+        let scope: Vec<String> = levels.iter().map(|level| level.name.clone()).collect();
+        let mut stated = opened(key.clone(), &scope, line, false);
+        let index = found.len();
+        let value = value.trim();
+        if value.is_empty() {
+            levels.push(Level {
+                column,
+                name: key,
+                item: false,
+                items: 0,
+                stated: Some(index),
+            });
+        } else if value.starts_with(['|', '>']) {
+            block = Some((column, index));
+        } else if let Some(listed) = value
+            .strip_prefix('[')
+            .and_then(|inner| inner.strip_suffix(']'))
+        {
+            stated.entries.extend(
+                listed
+                    .split(',')
+                    .map(|part| scalar(part.trim()))
+                    .filter(|part| !part.is_empty())
+                    .map(|part| Entry {
+                        text: part.to_string(),
+                        line,
+                    }),
+            );
+        } else {
+            let text = scalar(value);
+            let plain = text.len() == value.len();
+            stated.truth = if plain {
+                truth(&text.to_ascii_lowercase())
+            } else {
+                None
+            };
+            if stated.truth.is_none() {
+                if plain && is_number(text) {
+                    stated.number = Some(text.to_string());
+                } else {
+                    stated.entries.push(Entry {
+                        text: text.to_string(),
+                        line,
+                    });
+                }
+            }
+        }
+        found.push(stated);
+    }
+    found
+}
+
+/// Whether a line of YAML opens an item of a list.
+fn is_item(text: &str) -> bool {
+    text == "-" || text.starts_with("- ")
+}
+
+/// A line of YAML up to the comment it carries: a `#` at the start or after a
+/// space, outside a quoted string.
+fn uncommented(text: &str) -> &str {
+    let mut quote: Option<char> = None;
+    let mut previous = ' ';
+    for (at, character) in text.char_indices() {
+        match quote {
+            Some(open) if character == open => quote = None,
+            Some(_) => {}
+            None if matches!(character, '"' | '\'') && previous.is_whitespace() => {
+                quote = Some(character);
+            }
+            None if character == '#' && previous.is_whitespace() => return &text[..at],
+            None => {}
+        }
+        previous = character;
+    }
+    text
+}
+
+/// The key a line of YAML states and the value written after it, or nothing
+/// where the line is a plain value. A key is one word, or a quoted string, with
+/// a colon behind it and a space or the end of the line behind that.
+fn key_of(text: &str) -> Option<(String, &str)> {
+    if let Some(quote) = text
+        .chars()
+        .next()
+        .filter(|first| matches!(first, '"' | '\''))
+    {
+        let close = text[1..].find(quote)? + 1;
+        let after = text[close + 1..].strip_prefix(':')?;
+        if !(after.is_empty() || after.starts_with(char::is_whitespace)) {
+            return None;
+        }
+        return Some((text[1..close].to_string(), after));
+    }
+    let bytes = text.as_bytes();
+    let at = (0..bytes.len()).find(|&at| {
+        bytes[at] == b':'
+            && bytes
+                .get(at + 1)
+                .is_none_or(|next| next.is_ascii_whitespace())
+    })?;
+    let key = &text[..at];
+    if key.is_empty()
+        || key.contains(|character: char| {
+            character.is_whitespace() || "\"'{}[],&*!|>%@`".contains(character)
+        })
+    {
+        return None;
+    }
+    Some((key.to_string(), &text[at + 1..]))
+}
+
+/// A plain value as it reads, without the quotes a quoted one is written in.
+fn scalar(text: &str) -> &str {
+    let text = text.trim();
+    for quote in ['"', '\''] {
+        if let Some(inner) = text
+            .strip_prefix(quote)
+            .and_then(|rest| rest.strip_suffix(quote))
+        {
+            return inner;
+        }
+    }
+    text
 }
 
 // ---------------------------------------------------------------------------

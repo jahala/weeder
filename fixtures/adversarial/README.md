@@ -25,7 +25,12 @@ table of the same three cases, their `-short/` twins that drop a row, and
 write down, new (a warning) and unchanged (a block), M1 has `fire-subject/` and `silent-subject/` for a double of what the test
 is about, the file the test is named for or what an added case's title names,
 with that unit left outside the change, C3 has a `promoted/`
-whose `weeder.toml` names a workflow under `[guardrails] paths`, S1 has
+whose `weeder.toml` names a workflow under `[guardrails] paths`, C4 keeps
+its CI steps in `fire/` and `silent/` and has `fire-script/` and
+`silent-script/` for a manifest's or a makefile's check script,
+`fire-setting/` and `silent-setting/` for a gate's own settings, and
+`fire-dropped/` and `silent-dropped/` for a check step taken out of a
+workflow, S1 has
 `handling/` for code that imports, checks against and catches a not-implemented
 error beside the one body that hands it out and `foreign/` for a variable
 called `todo` compared in each language beside that language's own marker, and

@@ -1,0 +1,12 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck
+    - govet
+  disable:
+    - lll
+
+issues:
+  max-issues-per-linter: 0
