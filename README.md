@@ -171,7 +171,7 @@ steps:
   - uses: actions/checkout@v6
     with:
       fetch-depth: 0
-  - uses: jahala/weeder@v0.5.0
+  - uses: jahala/weeder@v0.6.0
     with:
       code-scanning: ${{ vars.WEEDER_CODE_SCANNING || 'auto' }}
 ```

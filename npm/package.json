@@ -1,6 +1,6 @@
 {
   "name": "@plotplot/weeder",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "The judge of the diff, refuses deleted tests, skips, stubs, swallowed errors and secrets, as SARIF",
   "bin": {
     "weeder": "run.js"
