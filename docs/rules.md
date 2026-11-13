@@ -320,7 +320,7 @@ A test in the diff mocks a module whose production file is also in the diff, so 
 
 `check` · blocks by default
 
-An added line in a production file carries a stub marker, an unimplemented body, or a function body that only returns nothing. A body left unwritten in a base type states a contract rather than a stub, so the finding is dropped where production code somewhere in the tree is built on that type and writes the method, and reported at warn where nothing writes it and an entry file states the type, because the implementation may be in another repository.
+A change leaves a production file holding a work marker it did not hold before, or adds an unimplemented body or a function body that only returns nothing; a marker an edited or moved line only carried over is not one. A body left unwritten in a base type states a contract rather than a stub, so the finding is dropped where production code somewhere in the tree is built on that type and writes the method, and reported at warn where nothing writes it and an entry file states the type, because the implementation may be in another repository.
 
 A work marker is counted the way the file holds it: what the added lines carry, less what the removed lines carried. A line the change only edited or moved, with the marker the base already had, adds none and is not reported. A second marker written beside the first, a marker on a new line and a marker reworded into another are each one the base did not have, and the finding lands on the line that adds it.
 
