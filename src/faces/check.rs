@@ -735,8 +735,8 @@ fn write(
 }
 
 /// weeder's own repository, where the comment links a rule's section and where
-/// a false positive is reported.
-const HOME: &str = "https://github.com/jahala/weeder";
+/// a false positive is reported: the manifest's `repository`, its one home.
+const HOME: &str = env!("CARGO_PKG_REPOSITORY");
 
 fn page<'a>(
     request: &'a Request,
