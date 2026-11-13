@@ -251,6 +251,14 @@ const CATALOGUE: &[Rule] = &[
         network: Network::None,
     },
     Rule {
+        id: "C4",
+        face: Face::Check,
+        default_level: Level::Block,
+        short_description: "A gate was loosened in its own settings",
+        full_description: "A step of a workflow under `.github/workflows/` or of a `.gitlab-ci.yml` that already ran a check was made unable to fail, by `continue-on-error: true`, `if: false` or `allow_failure: true` on the step or its job, or by `|| true`, `|| :` or `; exit 0` after the check's own command; or a `test`, `lint`, `typecheck` or `check` script of a manifest or a makefile, its `pre` and `post` hooks and `name:suffix` forms included, that ran a command now only prints or succeeds, answers its command with `|| true`, has make ignore its failure, or gains `--passWithNoTests`. Those block. A step is a check by the command its `run` or `script` names, read as a shell reads it, and never by the action it uses. A gate's own setting moved the loose way warns, read by its key and the table it sits in: a coverage threshold lowered, a strictness switch turned off or a mode moved off `strict`, a code added to what a lint ignores, a lint level lowered to `allow` or `off`. So does a check taken out of a workflow that runs on a push or a pull request, where no workflow the tree holds still runs it.",
+        network: Network::None,
+    },
+    Rule {
         id: "G1",
         face: Face::Check,
         default_level: Level::Block,

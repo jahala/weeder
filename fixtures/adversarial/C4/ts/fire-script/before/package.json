@@ -1,0 +1,11 @@
+{
+  "name": "parse",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc",
+    "pretest": "tsc --noEmit",
+    "test": "jest",
+    "test:unit": "jest src",
+    "lint": "eslint ."
+  }
+}

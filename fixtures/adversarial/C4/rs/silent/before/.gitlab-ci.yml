@@ -1,0 +1,14 @@
+stages:
+  - test
+  - deploy
+
+unit:
+  stage: test
+  script:
+    - cargo fetch
+    - cargo test --workspace
+
+pages:
+  stage: deploy
+  script:
+    - ./scripts/publish.sh

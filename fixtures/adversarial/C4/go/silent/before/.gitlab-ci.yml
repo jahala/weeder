@@ -1,0 +1,14 @@
+stages:
+  - test
+  - deploy
+
+unit:
+  stage: test
+  script:
+    - go mod download
+    - go test ./...
+
+pages:
+  stage: deploy
+  script:
+    - ./scripts/publish.sh

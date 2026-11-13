@@ -1,0 +1,22 @@
+stages:
+  - test
+  - deploy
+
+unit:
+  stage: test
+  script:
+    - cargo fetch
+    - rm -rf .cache || true
+    - cargo test --workspace
+
+pages:
+  stage: deploy
+  script:
+    - ./scripts/publish.sh
+  allow_failure: true
+
+flaky:
+  stage: test
+  allow_failure: true
+  script:
+    - cargo test --workspace
