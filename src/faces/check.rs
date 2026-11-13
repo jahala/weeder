@@ -178,6 +178,7 @@ fn judge(request: &Request) -> Result<Verdict, String> {
     // and the refusal below both need the same reading, and reading them twice
     // would be two answers to one question.
     let collection = collection(&changes, &paths);
+    let workflows = workflows(&root, &range.after, &changes, &paths)?;
     let mut findings = rules::check::evaluate(&rules::check::Judgement {
         changes: &changes,
         config: &config,
@@ -186,6 +187,7 @@ fn judge(request: &Request) -> Result<Verdict, String> {
         callers: &callers,
         hierarchy: &hierarchy,
         collection: &collection,
+        workflows: &workflows,
     });
     findings.extend(exclude::notices(&config, &excluded));
     findings.extend(unread::notice(&unread_paths(&changes)));
@@ -581,6 +583,38 @@ fn hierarchy(
         ));
     }
     Ok(tree)
+}
+
+/// The workflows the tree holds that the change did not touch, read where the
+/// state is being judged, and only where a change took something out of a
+/// workflow: a check it took out of one may still run in another, and that is
+/// the one question these files answer. Every other change reads none of them.
+fn workflows(
+    root: &Path,
+    after: &Source,
+    changes: &[Change],
+    paths: &[String],
+) -> Result<Vec<rules::check::c4::Workflow>, String> {
+    if !rules::check::reads_workflows(changes) {
+        return Ok(Vec::new());
+    }
+    let touched: BTreeSet<&str> = changes.iter().filter_map(Change::path).collect();
+    let named: Vec<&str> = paths
+        .iter()
+        .map(String::as_str)
+        .filter(|path| rules::check::c4::is_workflow(path) && !touched.contains(path))
+        .collect();
+    let mut read = Vec::new();
+    for (path, blob) in named.iter().zip(blobs(root, after, &named)?) {
+        let Some(content) = blob.and_then(|blob| readable(path, &blob)) else {
+            continue;
+        };
+        read.push(rules::check::c4::Workflow {
+            path: (*path).to_string(),
+            syntax: Mask::of(classify_file(path, "").lang, &content),
+        });
+    }
+    Ok(read)
 }
 
 /// The `Weeder-allow:` trailers travelling with the change: the message handed in

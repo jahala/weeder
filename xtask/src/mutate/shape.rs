@@ -88,6 +88,7 @@ fn reader(rule: &str) -> Option<Reader> {
         "C1" => Reader::Site(|site, _, _| a_guardrail_was_rewritten(site)),
         "C2" => Reader::Site(|site, _, tree| an_ignore_reaches_the_source(site, tree)),
         "C3" => Reader::Site(|site, _, _| a_workflow_was_rewritten(site)),
+        "C4" => Reader::Site(|site, _, _| a_check_step_was_told_it_may_fail(site)),
         "G1" => Reader::Site(|site, _, _| a_merge_was_left_half_finished(site)),
         "G3" => Reader::Site(|site, _, _| a_nul_arrived_in_the_text(site)),
         _ => return None,
@@ -889,6 +890,21 @@ fn covers(inside: &str, pattern: &str, path: &str) -> bool {
 /// C3: the file that says how the checks run on a server, rewritten.
 fn a_workflow_was_rewritten(site: &Site) -> bool {
     inject::is_workflow(&site.path) && site.changed()
+}
+
+/// C4: the line the case said runs a check of the language in a workflow, and
+/// now ends with `|| true` where the same line did not before.
+fn a_check_step_was_told_it_may_fail(site: &Site) -> bool {
+    let (Some(at), Some(line)) = (site.first, site.line()) else {
+        return false;
+    };
+    let Some(command) = line.trim_end().strip_suffix("|| true") else {
+        return false;
+    };
+    let held = site.before.lines.get(at).map(|held| held.trim_end());
+    inject::is_workflow(&site.path)
+        && held == Some(command.trim_end())
+        && inject::a_check_runs_here(site.lang, command).is_some()
 }
 
 /// G1: both sides of a merge and the markers between them, where the case said.

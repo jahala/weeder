@@ -1,0 +1,22 @@
+stages:
+  - test
+  - deploy
+
+unit:
+  stage: test
+  script:
+    - npm ci
+    - rm -rf .cache || true
+    - npm test
+
+pages:
+  stage: deploy
+  script:
+    - ./scripts/publish.sh
+  allow_failure: true
+
+flaky:
+  stage: test
+  allow_failure: true
+  script:
+    - npm test

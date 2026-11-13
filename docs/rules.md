@@ -133,7 +133,8 @@ Most findings carry their rule's level: the one listed below, or the one
 `[rules]` writes for the rule. A few carry a level of their own, because the
 detector knows something about that one finding the config cannot. D1 blocks on
 a manifest outside the run's scope. C3 blocks on a workflow `[guardrails] paths`
-names. T1, T2 and T8 warn where the fall or the hidden set cannot be proved. S1
+names. T1, T2 and T8 warn where the fall or the hidden set cannot be proved. C4
+warns on a gate's own setting and on a check taken out of a workflow. S1
 warns on a base method an entry file hands out. X1 reports a published example
 key as a note, and R1 does the same for a bare name nothing pins to a place.
 
@@ -379,6 +380,31 @@ An added ignore pattern matches source or test paths of the repository's languag
 `check` · warns by default
 
 A file under `.github/workflows/` was added, edited or taken away; the change blocks where `[guardrails] paths` names the path.
+
+<a id="C4"></a>
+## C4: A gate was loosened in its own settings
+
+`check` · blocks by default
+
+A step of a workflow under `.github/workflows/` or of a `.gitlab-ci.yml` that already ran a check was made unable to fail, by `continue-on-error: true`, `if: false` or `allow_failure: true` on the step or its job, or by `|| true`, `|| :` or `; exit 0` after the check's own command; or a `test`, `lint`, `typecheck` or `check` script of a manifest or a makefile, its `pre` and `post` hooks and `name:suffix` forms included, that ran a command now only prints or succeeds, answers its command with `|| true`, has make ignore its failure, or gains `--passWithNoTests`. Those block. A step is a check by the command its `run` or `script` names, read as a shell reads it, and never by the action it uses. A gate's own setting moved the loose way warns, read by its key and the table it sits in: a coverage threshold lowered, a strictness switch turned off or a mode moved off `strict`, a code added to what a lint ignores, a lint level lowered to `allow` or `off`. So does a check taken out of a workflow that runs on a push or a pull request, where no workflow the tree holds still runs it.
+
+A command is a check when its program, or the word it is told to run, is
+spelled with `test`, `lint`, `check`, `vet` or `spec`: `pytest`, `cargo test`,
+`go vet`, `npm run lint`, `golangci-lint`, `ruff check`, and any command given
+`--check`. A step that only uses an action is not judged, and neither is one
+that runs nothing of the kind, so `continue-on-error: true` on an upload or a
+cache, and `|| true` after a cleanup, say nothing. A step is matched across the
+change by its job and its `name` or `id`, or by the lines and the checks it
+runs, so a check step the change adds is new rather than loosened. The two
+block shapes are the ones a probe of the calibration corpus measured: about one
+block in 4,500 commits, and that one is the case the trailer is for.
+
+A gate's setting is read from the file's own shape, JSON, TOML, INI or YAML, and
+is the gate's where its key, the table it sits in, or the file's name says
+lint, check, rule, warn or error. A dependency that happens to be called
+`ignore` sits in a table that says none of them and is left alone. These
+shapes warn until a wider corpus can measure them: the calibration corpus is
+mostly Rust and Go and held none.
 
 <a id="G1"></a>
 ## G1: A conflict marker was committed

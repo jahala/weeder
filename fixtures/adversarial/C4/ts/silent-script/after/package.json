@@ -1,0 +1,12 @@
+{
+  "name": "parse",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo skip",
+    "pretest": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "jest src --ci",
+    "lint": "eslint . --cache",
+    "typecheck": "true"
+  }
+}

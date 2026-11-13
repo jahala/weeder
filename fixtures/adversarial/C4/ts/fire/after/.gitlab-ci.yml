@@ -1,0 +1,15 @@
+stages:
+  - test
+  - deploy
+
+unit:
+  stage: test
+  allow_failure: true
+  script:
+    - npm ci
+    - npm test
+
+pages:
+  stage: deploy
+  script:
+    - ./scripts/publish.sh

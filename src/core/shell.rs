@@ -35,6 +35,40 @@ pub fn commands_of(words: &[String]) -> Vec<Vec<String>> {
     opened(grouped(&tokens), 0)
 }
 
+/// What joins a command to the one before it in a line: whether it runs after
+/// that one whatever happened, only after it worked, only after it failed, or
+/// reading what it wrote.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Joint {
+    /// The first command of the line, or one on a line of its own.
+    Start,
+    /// `;`: after the one before, whatever it did.
+    Then,
+    /// `&&`: only where the one before worked.
+    And,
+    /// `||`: only where the one before failed.
+    Or,
+    /// `|`: beside the one before, reading what it wrote.
+    Pipe,
+    /// `&`, `(` or `)`: in the background, or in a group of its own.
+    Apart,
+}
+
+/// One command of a line, and what joins it to the command before it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Linked {
+    pub joint: Joint,
+    pub words: Vec<String>,
+}
+
+/// Every command a line runs, the way [`commands`] reads them, each with what
+/// joins it to the one before. `npm test || true` is two commands, the second
+/// joined by `||`, and that joint is the whole difference between a check and
+/// a check that cannot fail.
+pub fn chain(line: &str) -> Vec<Linked> {
+    chained(&tokens(line), 0)
+}
+
 /// The name a command is run under, without the path it was found at.
 pub fn program(command: &[String]) -> &str {
     let Some(first) = command.first() else {
@@ -49,8 +83,9 @@ pub fn program(command: &[String]) -> &str {
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum Token {
     Word(String),
-    /// Where one command ends and the next begins: an operator, or a newline.
-    Break,
+    /// Where one command ends and the next begins: an operator, or a newline,
+    /// and which of them it was.
+    Break(Joint),
 }
 
 /// The words and the breaks between them, with quoting taken off and the parts
@@ -68,7 +103,7 @@ fn tokens(line: &str) -> Vec<Token> {
         let character = chars[index];
         if character == '\n' {
             index += 1;
-            tokens.push(Token::Break);
+            tokens.push(Token::Break(Joint::Start));
             index = past_bodies(&chars, index, &mut pending);
             continue;
         }
@@ -83,8 +118,20 @@ fn tokens(line: &str) -> Vec<Token> {
             continue;
         }
         if matches!(character, ';' | '&' | '|' | '(' | ')') {
-            index += 1;
-            tokens.push(Token::Break);
+            let doubled = chars.get(index + 1) == Some(&character);
+            let joint = match character {
+                ';' => Joint::Then,
+                '&' if doubled => Joint::And,
+                '|' if doubled => Joint::Or,
+                '|' => Joint::Pipe,
+                _ => Joint::Apart,
+            };
+            index += if matches!(joint, Joint::And | Joint::Or) {
+                2
+            } else {
+                1
+            };
+            tokens.push(Token::Break(joint));
             continue;
         }
         if matches!(character, '<' | '>') {
@@ -237,7 +284,7 @@ fn grouped(tokens: &[Token]) -> Vec<Vec<String>> {
     let mut current: Vec<String> = Vec::new();
     for token in tokens {
         match token {
-            Token::Break => {
+            Token::Break(_) => {
                 if !current.is_empty() {
                     commands.push(std::mem::take(&mut current));
                 }
@@ -254,6 +301,59 @@ fn grouped(tokens: &[Token]) -> Vec<Vec<String>> {
         commands.push(current);
     }
     commands
+}
+
+/// The tokens gathered into commands the way [`grouped`] gathers them, each
+/// with the joint that came before it, and a shell called with a script
+/// replaced by that script's commands, the first of them taking the shell's
+/// joint.
+fn chained(tokens: &[Token], depth: usize) -> Vec<Linked> {
+    let mut found: Vec<Linked> = Vec::new();
+    let mut joint = Joint::Start;
+    let mut current: Vec<String> = Vec::new();
+    for token in tokens {
+        match token {
+            Token::Break(next) => {
+                if current.is_empty() {
+                    // A newline after `||` carries the line on, so what
+                    // follows is still joined by the operator, not the newline.
+                    if *next != Joint::Start {
+                        joint = *next;
+                    }
+                    continue;
+                }
+                close(&mut current, joint, &mut found, depth);
+                joint = *next;
+            }
+            Token::Word(word) => {
+                if current.is_empty() && is_assignment(word) {
+                    continue;
+                }
+                current.push(word.clone());
+            }
+        }
+    }
+    close(&mut current, joint, &mut found, depth);
+    found
+}
+
+/// One command closed into the chain, or the commands of the script it hands a
+/// shell where it is a shell being handed one.
+fn close(current: &mut Vec<String>, joint: Joint, found: &mut Vec<Linked>, depth: usize) {
+    if current.is_empty() {
+        return;
+    }
+    let words = std::mem::take(current);
+    match script(&words) {
+        Some(script) if depth < MAX_DEPTH => {
+            let mut inner = chained(&tokens(&script), depth + 1);
+            if let Some(first) = inner.first_mut() {
+                first.joint = joint;
+            }
+            found.extend(inner);
+        }
+        _ => found.push(Linked { joint, words }),
+    }
 }
 
 /// A shell called with a script, replaced by the commands in that script.

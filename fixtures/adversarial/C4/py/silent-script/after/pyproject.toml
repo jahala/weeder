@@ -1,0 +1,12 @@
+[project]
+name = "parse"
+version = "1.0.0"
+
+[project.scripts]
+parse = "parse.main:run"
+
+[tool.pdm.scripts]
+test = "python -m pytest -q"
+lint = "ruff check . --show-fixes"
+check = "mypy src"
+typecheck = "true"
