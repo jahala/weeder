@@ -12,7 +12,7 @@
 
 ## The law comes from the base
 
-The configuration a range is judged under is the one its base holds: `HEAD` for the working tree and for `--staged`, the base commit for `--base` and for pre-push. A change to `weeder.toml` takes effect once it has landed, and until then C1 judges it under the law it is changing. A repository with no `weeder.toml` at its base is judged at the catalogue's levels. `--config <path>` stays what it is, an explicit choice by whoever runs weeder. `docs/architecture.md` §4 is the trust model this rests on.
+The configuration a range is judged under is the one its base holds: `HEAD` for the working tree and for `--staged`, the merge-base of the ref and `HEAD` for `--base` (#167), and the base commit of the pushed range for pre-push. A change to `weeder.toml` takes effect once it has landed, and until then C1 judges it under the law it is changing. A repository with no `weeder.toml` at its base is judged at the catalogue's levels. `--config <path>` stays what it is, an explicit choice by whoever runs weeder. `docs/architecture.md` §4 is the trust model this rests on.
 
 ## Tests
 - [x] (code) in a fixture repository, a branch that deletes a test and adds `weeder.toml` turning T1 and C1 off exits 2 on T1 under `check --base main --strict`; a staged skip with an unstaged `weeder.toml` turning T3 off exits 2 under `check --staged`, and the same state is refused by `git commit` with the guard installed; a repository whose base has no `weeder.toml` is judged at the catalogue's levels; `SKILL.md` and `docs/rules.md` say the law is read from the base · tests/check_law_source.rs @eed1895d371eaa · by cli

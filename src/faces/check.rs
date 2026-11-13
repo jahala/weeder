@@ -3,8 +3,10 @@
 //! With no flags weeder judges the index plus the working tree against `HEAD`:
 //! everything a worker changed, staged or not, which is what pleach's smoke gate
 //! sees after it stages a node's files. `--staged` judges the index alone, the
-//! view a pre-commit hook has. `--base <ref>` judges the tree against a ref, the
-//! view CI has of a branch.
+//! view a pre-commit hook has. `--base <ref>` judges the tree against the
+//! merge-base of that ref and `HEAD`, what `git diff <ref>...` reads and what a
+//! pull request shows: the view CI has of a branch, and the one a branch that
+//! has fallen behind its base needs before it is pushed.
 //!
 //! A file git has never been told about is in none of those diffs, and most of
 //! what an agent writes is one. So the default mode reads them too, as what they
@@ -13,7 +15,7 @@
 //! index holds what it holds and a history has no working tree in it.
 //!
 //! Every mode is judged under `weeder.toml` as the base of its range carries it,
-//! `HEAD` or the base ref, and never under the copy the change holds: a law the
+//! `HEAD` or that merge-base, and never under the copy the change holds: a law the
 //! judged change could write would let it switch the judge off. A base law this
 //! weeder cannot read judges only the change that rewrites `weeder.toml` and
 //! nothing else, at the catalogue's levels, so a renamed key can be migrated.
@@ -55,7 +57,8 @@ use crate::seams::{fs, git, reader};
 pub struct Request {
     /// Where weeder was called from; the repository is found from here.
     pub cwd: PathBuf,
-    /// Judge the tree against this ref instead of `HEAD`.
+    /// Judge the tree against the merge-base of this ref and the tip, `HEAD`
+    /// unless `tip` names another, instead of against `HEAD`.
     pub base: Option<String>,
     /// Judge this ref against `base` rather than the working tree. It is the
     /// view a pre-push hook needs, which must judge the commits being pushed
@@ -142,7 +145,7 @@ pub fn verdict(request: &Request) -> Verdict {
 
 fn judge(request: &Request) -> Result<Verdict, String> {
     let root = git::repository_root(&request.cwd).map_err(|error| error.to_string())?;
-    let range = range(request)?;
+    let range = range(&root, request)?;
     // The law comes from where the range starts, never from what it judges.
     let stated = match read_law(&root, &range.base, request.config.as_deref()) {
         Err(LawError::Unreached(reason)) => return Err(reason),
@@ -308,7 +311,7 @@ struct Range {
 
 /// What this run compares against what. A run that names two states weeder cannot
 /// judge together stops here rather than guessing which one was meant.
-fn range(request: &Request) -> Result<Range, String> {
+fn range(root: &Path, request: &Request) -> Result<Range, String> {
     if request.staged && (request.base.is_some() || request.tip.is_some()) {
         return Err(
             "--base judges the tree against a ref and --staged judges the index, so weeder cannot do both. pass one."
@@ -321,13 +324,48 @@ fn range(request: &Request) -> Result<Range, String> {
                 .to_string(),
         );
     }
-    let base = request.base.clone().unwrap_or_else(|| "HEAD".to_string());
+    let base = match &request.base {
+        Some(base) => merge_base(root, base, request.tip.as_deref().unwrap_or("HEAD"))?,
+        None => "HEAD".to_string(),
+    };
     let after = match (&request.tip, request.staged) {
         (Some(tip), _) => Source::Reference(tip.clone()),
         (None, true) => Source::Index,
         (None, false) => Source::Tree,
     };
     Ok(Range { base, after })
+}
+
+/// Where a range named by `--base` starts: the last commit the ref and the tip
+/// share, which is what `git diff <ref>...` reads and what a pull request shows.
+/// A branch that has fallen behind its base is judged on what it did, and never
+/// on what the base did after the branch was cut, which judged against the
+/// base's own tree would read as the branch undoing it (#167). In CI's checkout
+/// of a pull request the tip is the merge into the base, so this is the base's
+/// own tip. The pre-push hook asks the same seam for its own range, and hands in
+/// a base that is already in the tip's history, which this answers with itself.
+///
+/// The empty tree is no commit and has no history, and it is where a history
+/// that was never pushed anywhere starts, so it is its own answer. Two histories
+/// that share no commit have no merge-base, and a judgement of one against the
+/// other's tree would count every difference between them as this change, so
+/// weeder refuses rather than fall back to it. A tip with no commit yet, the
+/// branch of a repository before its first one, shares nothing either.
+fn merge_base(root: &Path, base: &str, tip: &str) -> Result<String, String> {
+    if base == git::EMPTY_TREE {
+        return Ok(base.to_string());
+    }
+    let from = git::resolve_ref(root, base).map_err(|error| error.to_string())?;
+    let shared = if git::has_ref(root, tip).map_err(|error| error.to_string())? {
+        git::merge_base(root, &from, tip).map_err(|error| error.to_string())?
+    } else {
+        None
+    };
+    shared.ok_or_else(|| {
+        format!(
+            "{base} and {tip} share no commit, so there is no merge-base to judge {tip} from, and judging it against {base}'s own tree would count every difference between two unrelated histories as this change. pass --base a ref {tip} grew from."
+        )
+    })
 }
 
 /// Whether this run reads the files git has never been told about.

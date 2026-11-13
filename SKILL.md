@@ -47,7 +47,7 @@ and the rest are yours to read.
 
 | Flag | What it does |
 |---|---|
-| `--base <ref>` | judge the tree against this ref instead of HEAD |
+| `--base <ref>` | judge the tree against the merge-base of this ref and HEAD, the last commit they share, as a pull request shows the change. A branch that has fallen behind its base is judged on what it did, never on what the base did since. Two histories that share no commit exit 3 |
 | `--staged` | judge the index alone, the view a pre-commit hook has |
 | `--untracked <include\|exclude>` | whether the files git has never been told about are part of the change. Included by default when the working tree is judged against HEAD, left out with `--staged` and `--base` |
 | `--scope <glob>` | the paths the change may touch; every file is still judged, and a file outside the scope is reported for being there. Repeat the flag for more paths |
@@ -58,9 +58,10 @@ and the rest are yours to read.
 | `--message-file <path>` | the message of the commit being prepared, so its `Weeder-allow:` trailers are read |
 
 The law a change is judged under is `weeder.toml` read from the base of the
-range: HEAD for the working tree and for `--staged`, the base commit for
-`--base` and for the pre-push hook. A `weeder.toml` the change writes, staged or
-not, is judged like any other file and takes effect once it lands. A base with
+range: HEAD for the working tree and for `--staged`, the merge-base for
+`--base`, and the base commit of the pushed range for the pre-push hook. A
+`weeder.toml` the change writes, staged or not, is judged like any other file
+and takes effect once it lands. A base with
 no `weeder.toml` is judged at the catalogue's own levels. `--config` is the one
 way to name another law, and it is for whoever runs weeder, not for the change.
 
