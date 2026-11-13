@@ -35,10 +35,14 @@
 //! the way still writes the same line. Each answer is spoken for once, so two
 //! claims are never followed by one. A claim found there is not a claim dropped
 //! and is not counted as one, and what is left over is what the finding
-//! reports. Only when nothing was found anywhere does weeder say the behaviour is
-//! held by nobody; where some claims moved, the finding names the files they
-//! moved into, because a sentence a reader can disprove in one click costs more
-//! than the finding is worth.
+//! reports. A claim whose case moved with the function it tests, renamed and
+//! rewritten on the way, keeps neither its case nor its line, so it is followed
+//! by the function instead: each claim added in another test file to a case
+//! that calls it pays for one that left, see [`moved`], and a shortfall is
+//! still a claim dropped. Only when nothing was found anywhere does weeder say
+//! the behaviour is held by nobody; where some claims moved, the finding names
+//! the files they moved into, because a sentence a reader can disprove in one
+//! click costs more than the finding is worth.
 //!
 //! A claim can also be made stronger rather than kept. Three loose claims on
 //! one value, that it contains this, that and the other, replaced by one claim
@@ -50,12 +54,13 @@
 //! covers nothing, and a claim that leaves with no exact one beside it is a
 //! claim dropped.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::core::change::{Change, Side};
 use crate::core::finding::{Detection, Level, Message, Region, Stamp};
 use crate::core::rules::check::generated::{nested_functions, Runs, Times};
 use crate::core::rules::check::idiom::Block;
+use crate::core::rules::check::moved::{self, Ledger, Offer};
 use crate::core::rules::check::subject::{self, Subject};
 use crate::core::rules::check::vocab::Suite;
 use crate::core::rules::check::Judgement;
@@ -68,10 +73,47 @@ pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     let helpers = &judged.config.test_assertions;
     let read: Vec<Made> = changes.iter().map(|change| made(change, helpers)).collect();
     let arrived = arrivals(changes, &read);
-    changes
+    // What the moves already followed took from each arrival, so the claims
+    // left over are paid for only out of what nothing has spoken for yet.
+    let mut spent = vec![0_usize; arrived.len()];
+    let falls: Vec<Option<Fall>> = changes
         .iter()
         .zip(&read)
-        .filter_map(|(change, made)| dropped(change, made, &arrived))
+        .map(|(change, made)| dropped(change, made, &arrived, &mut spent))
+        .collect();
+    // The claims no case and no line followed may have followed the function
+    // they were about. That is read only where a file still owes claims, since
+    // most changes leave none stranded.
+    let mut trail: Option<(BTreeSet<String>, Ledger)> = None;
+    let mut found = Vec::new();
+    for (change, fall) in changes.iter().zip(falls) {
+        let Some(mut fall) = fall else {
+            continue;
+        };
+        if fall.remaining > 0 && !fall.stranded.is_empty() {
+            let (kept, ledger) = trail.get_or_insert_with(|| {
+                let kept = moved::kept(changes);
+                let ledger = offers(changes, &arrived, &spent, &kept);
+                (kept, ledger)
+            });
+            fall.follow_calls(change, kept, ledger);
+        }
+        if fall.remaining > 0 {
+            found.push(fall.finding(change));
+        }
+    }
+    found
+}
+
+/// The assertions one side of a change makes, each with the line it is made
+/// on, weighed the way T2 weighs a claim: once for every case a table runs it
+/// for, and a helper the repository names counted among them. T1 asks this
+/// when it weighs a case that followed its function into another file.
+pub(crate) fn weights(side: &Side, helpers: &[String]) -> Vec<(u32, usize)> {
+    claims(side, helpers)
+        .made
+        .into_iter()
+        .map(|claim| (claim.at, claim.weight))
         .collect()
 }
 
@@ -85,13 +127,108 @@ struct Claim {
     weight: usize,
     /// The values the claim is about, where its line can be read for them.
     subjects: Vec<Subject>,
+    /// The 1-based line it is made on, so the case it sits in can be asked
+    /// what it calls.
+    at: u32,
 }
 
-/// A claim a file in this change did not make before it and makes now.
+/// A claim a file in this change did not make before it and makes now, and the
+/// change it arrived in.
 #[derive(Debug, Clone)]
 struct Arrival {
     path: String,
     claim: Claim,
+    change: usize,
+}
+
+/// A file that makes fewer claims than it did, before the claims nothing
+/// followed are offered to the function they were about.
+struct Fall {
+    path: String,
+    before: usize,
+    after: usize,
+    remaining: usize,
+    moved: Followed,
+    /// The claims that left and that no case and no line followed, each with
+    /// the part of its weight still owed.
+    stranded: Vec<Claim>,
+    unproven: bool,
+}
+
+impl Fall {
+    /// Pays for the stranded claims out of the claims added in other test
+    /// files to cases that call the function the stranded claim's case called.
+    /// What is paid is a claim that moved; what is not is still dropped.
+    fn follow_calls(&mut self, change: &Change, kept: &BTreeSet<String>, ledger: &mut Ledger) {
+        // A case is read for what it calls once, however many claims it made.
+        let mut read: BTreeMap<u32, BTreeSet<String>> = BTreeMap::new();
+        for claim in &self.stranded {
+            if self.remaining == 0 {
+                break;
+            }
+            let Some(case) = change.before.tests.case_at(claim.at) else {
+                continue;
+            };
+            let calls = read
+                .entry(case.start_line)
+                .or_insert_with(|| moved::exercised(&change.before, case, kept));
+            let paid = ledger.pay(&self.path, calls, claim.weight.min(self.remaining));
+            self.remaining -= paid.amount;
+            self.moved.count = self.moved.count.saturating_add(paid.amount);
+            self.moved.into.extend(paid.from);
+        }
+    }
+
+    fn finding(&self, change: &Change) -> Detection {
+        let mut found = finding(
+            &self.path,
+            change,
+            self.before,
+            self.after,
+            self.remaining,
+            &self.moved,
+        );
+        if self.unproven {
+            found.stamp = Stamp::Override(Level::Warn);
+            found.message = uncounted(self.before, self.after, self.remaining, &self.moved);
+        }
+        found
+    }
+}
+
+/// What every test file the change touched offers to pay for claims that
+/// followed their function: each arrival still unspent, in a case that calls
+/// one of the functions the change kept.
+fn offers(
+    changes: &[Change],
+    arrived: &[Arrival],
+    spent: &[usize],
+    kept: &BTreeSet<String>,
+) -> Ledger {
+    // A case is read for what it calls once, however many claims it makes.
+    let mut read: BTreeMap<(usize, u32), BTreeSet<String>> = BTreeMap::new();
+    let mut offers = Vec::new();
+    for (arrival, spent) in arrived.iter().zip(spent) {
+        let weight = arrival.claim.weight.saturating_sub(*spent);
+        let Some(change) = changes.get(arrival.change) else {
+            continue;
+        };
+        let side = &change.after;
+        let Some(case) = side.tests.case_at(arrival.claim.at) else {
+            continue;
+        };
+        let calls = read
+            .entry((arrival.change, case.start_line))
+            .or_insert_with(|| moved::exercised(side, case, kept));
+        if weight > 0 && !calls.is_empty() {
+            offers.push(Offer {
+                path: arrival.path.clone(),
+                calls: calls.clone(),
+                weight,
+            });
+        }
+    }
+    Ledger::new(offers)
 }
 
 /// The claims one side of a file makes, and the ones among them a loop runs
@@ -119,7 +256,7 @@ struct Followed {
 }
 
 /// What the change did to this file's assertions, where it did anything.
-fn dropped(change: &Change, made: &Made, arrived: &[Arrival]) -> Option<Detection> {
+fn dropped(change: &Change, made: &Made, arrived: &[Arrival], spent: &mut [usize]) -> Option<Fall> {
     let path = change.diff.new_path.as_deref()?;
     // A file the change took away took its assertions with it, and that is T1's
     // finding to make: one deletion, one finding.
@@ -151,19 +288,19 @@ fn dropped(change: &Change, made: &Made, arrived: &[Arrival]) -> Option<Detectio
                         .any(|(case, pinned)| *case == claim.case && pinned.covers(value))
                 })
         });
-    let moved = followed(&lost, arrived, path);
+    let (moved, stranded) = followed(&lost, arrived, path, spent);
     let remaining = (before - after)
         .saturating_sub(moved.count)
         .saturating_sub(total(&covered));
-    if remaining == 0 {
-        return None;
-    }
-    let mut found = finding(path, change, before, after, remaining, &moved);
-    if unproven {
-        found.stamp = Stamp::Override(Level::Warn);
-        found.message = uncounted(before, after, remaining, &moved);
-    }
-    Some(found)
+    (remaining > 0).then(|| Fall {
+        path: path.to_string(),
+        before,
+        after,
+        remaining,
+        moved,
+        stranded,
+        unproven,
+    })
 }
 
 /// What T2 says where the claims it cannot find may be running under a loop
@@ -206,7 +343,7 @@ fn total(claims: &[Claim]) -> usize {
 /// a dropped claim to have gone.
 fn arrivals(changes: &[Change], read: &[Made]) -> Vec<Arrival> {
     let mut found = Vec::new();
-    for (change, made) in changes.iter().zip(read) {
+    for (index, (change, made)) in changes.iter().zip(read).enumerate() {
         let Some(path) = change.diff.new_path.as_deref() else {
             continue;
         };
@@ -217,28 +354,52 @@ fn arrivals(changes: &[Change], read: &[Made]) -> Vec<Arrival> {
             found.push(Arrival {
                 path: path.to_string(),
                 claim,
+                change: index,
             });
         }
     }
     found
 }
 
-/// The claims a file lost that arrived somewhere else in the same change, and
-/// the files they arrived in.
-fn followed(lost: &[Claim], arrived: &[Arrival], from: &str) -> Followed {
-    let elsewhere: Vec<&Arrival> = arrived
+/// The claims a file lost that arrived somewhere else in the same change, the
+/// files they arrived in, and the claims nothing followed, each with the part
+/// of its weight left over. What each arrival answered for is added to
+/// `spent`, indexed as `arrived` is.
+fn followed(
+    lost: &[Claim],
+    arrived: &[Arrival],
+    from: &str,
+    spent: &mut [usize],
+) -> (Followed, Vec<Claim>) {
+    let elsewhere: Vec<usize> = arrived
         .iter()
-        .filter(|arrival| arrival.path != from)
+        .enumerate()
+        .filter(|(_, arrival)| arrival.path != from)
+        .map(|(index, _)| index)
         .collect();
-    let landed: Vec<&Claim> = elsewhere.iter().map(|arrival| &arrival.claim).collect();
+    let landed: Vec<&Claim> = elsewhere.iter().map(|at| &arrived[*at].claim).collect();
     let left: Vec<&Claim> = lost.iter().collect();
     let mut into = BTreeSet::new();
     let mut count: usize = 0;
-    for (at, amount) in answered(&left, &landed).into_iter().flatten() {
-        count = count.saturating_add(amount);
-        into.insert(elsewhere[at].path.clone());
+    let mut stranded = Vec::new();
+    for (claim, found) in lost.iter().zip(answered(&left, &landed)) {
+        let mut taken: usize = 0;
+        for (at, amount) in found {
+            let arrival = elsewhere[at];
+            taken = taken.saturating_add(amount);
+            spent[arrival] = spent[arrival].saturating_add(amount);
+            into.insert(arrived[arrival].path.clone());
+        }
+        count = count.saturating_add(taken);
+        let weight = claim.weight.saturating_sub(taken);
+        if weight > 0 {
+            stranded.push(Claim {
+                weight,
+                ..claim.clone()
+            });
+        }
     }
-    Followed { count, into }
+    (Followed { count, into }, stranded)
 }
 
 /// The claims on the left that nothing on the right answers for, each carrying
@@ -375,6 +536,7 @@ fn claims(side: &Side, helpers: &[String]) -> Said {
             line: written(mask, line),
             weight,
             subjects: subjects.clone(),
+            at: line,
         };
         let (tables, nested) = runs.get_or_insert_with(|| {
             (

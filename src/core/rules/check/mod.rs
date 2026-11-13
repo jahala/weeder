@@ -29,6 +29,7 @@ pub mod g3;
 pub mod generated;
 pub mod idiom;
 pub mod m1;
+pub mod moved;
 pub mod release;
 pub mod s1;
 pub mod s2;

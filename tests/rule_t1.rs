@@ -23,6 +23,15 @@
 //! gone. A test file moved into a `[scope] exclude` directory leaves the
 //! tree weeder judges, and is judged as deleted from the path it left.
 //!
+//! The last four read a function that moves from one file to another while
+//! its tests follow it, renamed and rewritten, so neither a name nor a body is
+//! left to follow them by. T1 and T2 both read the one change, so these
+//! fixtures are asked about both. Where the case that arrives calls the moved
+//! function and asserts as much as the three that left, nothing went. Where it
+//! asserts less, both still block, and T2 names the shortfall. Where the tests
+//! move and no code does, both block as before, and so does T1 where the cases
+//! that left asserted nothing, since no count holds an arrival to them.
+//!
 //! Every number here is counted off the fixture by this file's own reading of
 //! what a case looks like, so the expectation is written independently of the
 //! detector that has to meet it.
@@ -974,4 +983,290 @@ fn a_deleted_test_file_whose_cases_weeder_cannot_count_is_a_warning_not_silence(
         t1[0].message
     );
     assert_eq!(run.code, 0, "a warning stops nobody");
+}
+
+/// A language's half of the fixtures where a function moves from one file to
+/// another and its tests follow it: the test file the cases leave, the one a
+/// case arrives in, the production files the function leaves and arrives in,
+/// and the line that defines it.
+struct Followed {
+    name: &'static str,
+    left: &'static str,
+    into: &'static str,
+    home: &'static str,
+    new_home: &'static str,
+    defines: &'static str,
+}
+
+const FOLLOWED: [Followed; 4] = [
+    Followed {
+        name: "ts",
+        left: "src/manager.test.ts",
+        into: "src/client.test.ts",
+        home: "src/manager.ts",
+        new_home: "src/client.ts",
+        defines: "export function retryConnect(",
+    },
+    Followed {
+        name: "py",
+        left: "tests/test_manager.py",
+        into: "tests/test_client.py",
+        home: "src/manager.py",
+        new_home: "src/client.py",
+        defines: "def retry_connect(",
+    },
+    Followed {
+        name: "rs",
+        left: "tests/manager.rs",
+        into: "tests/client.rs",
+        home: "src/manager.rs",
+        new_home: "src/client.rs",
+        defines: "pub fn retry_connect(",
+    },
+    Followed {
+        name: "go",
+        left: "manager_test.go",
+        into: "client_test.go",
+        home: "manager.go",
+        new_home: "client.go",
+        defines: "func retryConnect(",
+    },
+];
+
+/// How many assertions a fixture's file makes, read the way each language
+/// makes one.
+fn assertions_in(lang: &str, case: &str, path: &str) -> usize {
+    fixture_file("T1", lang, case, path)
+        .lines()
+        .map(str::trim)
+        .filter(|line| asserts(lang, line))
+        .count()
+}
+
+/// What one of the followed fixtures does, as this file reads it: how many
+/// cases left the first test file, the assertions they made, and the
+/// assertions the cases that arrived in the second one make. No case that
+/// left may be followed by its name or its body, or the move is one weeder
+/// already read and the fixture proves nothing new.
+struct Move {
+    cases: usize,
+    left: usize,
+    arrived: usize,
+}
+
+fn followed_move(language: &Followed, state: &str) -> Move {
+    let name = language.name;
+    let before = format!("{state}/before");
+    let after = format!("{state}/after");
+    let kept = declarations(name, &after, language.left);
+    let gone: Vec<Declaration> = declarations(name, &before, language.left)
+        .into_iter()
+        .filter(|case| !kept.iter().any(|now| now.name == case.name))
+        .collect();
+    let arrived = declarations(name, &after, language.into);
+    assert!(
+        gone.iter()
+            .all(|case| !arrived.iter().any(|now| same_case(case, now))),
+        "{name}/{state}: no case may follow by its name or its body: {arrived:#?}"
+    );
+    Move {
+        cases: gone.len(),
+        left: assertions_in(name, &before, language.left)
+            - assertions_in(name, &after, language.left),
+        arrived: assertions_in(name, &after, language.into)
+            - assertions_in(name, &before, language.into),
+    }
+}
+
+/// Whether a fixture's production file defines the function.
+fn defines(language: &Followed, side: &str, path: &str) -> bool {
+    fixture_file("T1", language.name, side, path).contains(language.defines)
+}
+
+/// The T1 and the T2 findings of a run, each apart.
+fn by_rule(run: &common::Run) -> (Vec<common::Finding>, Vec<common::Finding>) {
+    let findings = run.findings();
+    let of = |rule: &str| -> Vec<common::Finding> {
+        findings
+            .iter()
+            .filter(|finding| finding.rule == rule)
+            .cloned()
+            .collect()
+    };
+    (of("T1"), of("T2"))
+}
+
+#[test]
+fn t1_and_t2_read_cases_that_followed_their_function_into_another_file_as_moved() {
+    for language in FOLLOWED {
+        let name = language.name;
+        assert!(
+            defines(&language, "followed/before", language.home)
+                && !defines(&language, "followed/after", language.home)
+                && defines(&language, "followed/after", language.new_home),
+            "{name}: the function has to move from one production file to another"
+        );
+        let moved = followed_move(&language, "followed");
+        assert_eq!(moved.cases, 3, "{name}: three cases leave the file");
+        assert!(
+            moved.arrived >= moved.left,
+            "{name}: the case that arrived has to assert at least what the three did: {} against {}",
+            moved.arrived,
+            moved.left
+        );
+
+        let run = fixture("T1", name, "followed").weeder(&["check"]);
+        let (t1, t2) = by_rule(&run);
+        assert_eq!(
+            t1,
+            Vec::new(),
+            "{name}: the cases followed their function, renamed and rewritten"
+        );
+        assert_eq!(
+            t2,
+            Vec::new(),
+            "{name}: the assertions followed their function, rewritten"
+        );
+        assert_eq!(
+            run.findings(),
+            Vec::new(),
+            "{name}: a function moved with its tests is nothing to report"
+        );
+        assert_eq!(run.code, 0, "{name}: nothing found, nothing blocked");
+    }
+}
+
+#[test]
+fn t1_and_t2_block_when_the_case_that_followed_the_function_asserts_less() {
+    for language in FOLLOWED {
+        let name = language.name;
+        let moved = followed_move(&language, "followed-short");
+        assert!(
+            moved.arrived > 0 && moved.arrived < moved.left,
+            "{name}: the case that arrives has to assert something, and less than what left"
+        );
+        assert!(
+            defines(&language, "followed-short/after", language.new_home),
+            "{name}: the function still moves"
+        );
+
+        let run = fixture("T1", name, "followed-short").weeder(&["check"]);
+        let (t1, t2) = by_rule(&run);
+        assert_eq!(run.code, 2, "{name}: a move that checks less blocks");
+        assert_eq!(t1.len(), 1, "{name}: one T1 finding: {t1:#?}");
+        assert_eq!(t1[0].path, language.left, "{name}: on the file they left");
+        assert_eq!(t1[0].level, "error", "{name}: T1 blocks");
+        assert!(
+            t1[0]
+                .message
+                .contains(&format!("{} test cases disappeared", moved.cases)),
+            "{name}: no case is paid for by assertions it does not make: {}",
+            t1[0].message
+        );
+        assert_eq!(t2.len(), 1, "{name}: one T2 finding: {t2:#?}");
+        assert_eq!(t2[0].path, language.left, "{name}: on the file they left");
+        assert_eq!(t2[0].level, "error", "{name}: T2 blocks");
+        let short = moved.left - moved.arrived;
+        assert!(
+            t2[0]
+                .message
+                .contains(&format!("{short} assertions went out of this file")),
+            "{name}: the finding counts the shortfall: {}",
+            t2[0].message
+        );
+        assert!(
+            t2[0].message.contains(&format!(
+                "{} assertion moved to `{}`",
+                moved.arrived, language.into
+            )),
+            "{name}: the finding names the file the rest went to: {}",
+            t2[0].message
+        );
+    }
+}
+
+#[test]
+fn t1_and_t2_block_when_tests_leave_a_file_and_no_function_moved() {
+    for language in FOLLOWED {
+        let name = language.name;
+        let moved = followed_move(&language, "unmoved");
+        assert!(
+            moved.arrived >= moved.left,
+            "{name}: the case that arrives asserts as much, so only the code tells this apart"
+        );
+        let repo = fixture("T1", name, "unmoved");
+        let changed = repo.git(&["diff", "HEAD", "--name-only"]);
+        assert!(
+            !changed
+                .lines()
+                .any(|path| path == language.home || path == language.new_home),
+            "{name}: no production file is in the change: {changed}"
+        );
+
+        let run = repo.weeder(&["check"]);
+        let (t1, t2) = by_rule(&run);
+        assert_eq!(run.code, 2, "{name}: tests gone with no code moved block");
+        assert_eq!(t1.len(), 1, "{name}: one T1 finding: {t1:#?}");
+        assert_eq!(t1[0].path, language.left, "{name}: on the file they left");
+        assert_eq!(t1[0].level, "error", "{name}: T1 blocks");
+        assert!(
+            t1[0]
+                .message
+                .contains(&format!("{} test cases disappeared", moved.cases)),
+            "{name}: every case that left is counted: {}",
+            t1[0].message
+        );
+        assert_eq!(t2.len(), 1, "{name}: one T2 finding: {t2:#?}");
+        assert_eq!(t2[0].path, language.left, "{name}: on the file they left");
+        assert_eq!(t2[0].level, "error", "{name}: T2 blocks");
+        assert!(
+            t2[0]
+                .message
+                .contains(&format!("{} assertions went out of this file:", moved.left)),
+            "{name}: every assertion that left is counted: {}",
+            t2[0].message
+        );
+    }
+}
+
+#[test]
+fn t1_blocks_when_cases_that_asserted_nothing_follow_their_function() {
+    for language in FOLLOWED {
+        let name = language.name;
+        let moved = followed_move(&language, "followed-hollow");
+        assert_eq!(
+            moved.left, 0,
+            "{name}: the cases that leave assert nothing, so no count can hold an arrival to them"
+        );
+        assert!(
+            moved.cases > 1 && moved.arrived > 0,
+            "{name}: several cases leave, and the case that arrives asserts, so a ride on it would pass"
+        );
+        assert!(
+            defines(&language, "followed-hollow/after", language.new_home),
+            "{name}: the function still moves"
+        );
+
+        let run = fixture("T1", name, "followed-hollow").weeder(&["check"]);
+        let (t1, t2) = by_rule(&run);
+        assert_eq!(
+            run.code, 2,
+            "{name}: cases that asserted nothing still block when they go"
+        );
+        assert_eq!(t1.len(), 1, "{name}: one T1 finding: {t1:#?}");
+        assert_eq!(t1[0].path, language.left, "{name}: on the file they left");
+        assert_eq!(t1[0].level, "error", "{name}: T1 blocks");
+        assert!(
+            t1[0]
+                .message
+                .contains(&format!("{} test cases disappeared", moved.cases)),
+            "{name}: every case that left is counted: {}",
+            t1[0].message
+        );
+        assert_eq!(
+            t2,
+            Vec::new(),
+            "{name}: no assertion left, so T2 has nothing to say"
+        );
+    }
 }

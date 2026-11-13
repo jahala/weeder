@@ -19,12 +19,16 @@
 //! afterwards. So the cases a file no longer has are looked for in the rest of
 //! the change, by the name their runner collects them under, still making at
 //! least the assertions they made, and, where the move renamed them, by
-//! everything they hold with that name taken out. A case found
-//! there is not a deletion and is not counted as one, and what is left over is
-//! what the finding reports. Only when nothing was found anywhere does weeder say
-//! the behaviour is covered by nobody; where some cases moved, the finding names
-//! the files they moved into, because a sentence a reader can disprove in one
-//! click costs more than the finding is worth.
+//! everything they hold with that name taken out. A case found there is not a
+//! deletion and is not counted as one, and what is left over is what the
+//! finding reports. A case that moved with the function it tests is often
+//! renamed and rewritten on the way, so neither is left to follow it by; it is
+//! followed by the function instead, and only where the cases that arrived
+//! assert at least as much as it did, see [`moved`]. Only when nothing was
+//! found anywhere does weeder say the behaviour is covered by nobody; where
+//! some cases moved, the finding names the files they moved into, because a
+//! sentence a reader can disprove in one click costs more than the finding is
+//! worth.
 //!
 //! Where the cases now come from a table whose entries the file does not write
 //! down, a table another module exports or a function returns, the table may
@@ -41,6 +45,8 @@ use crate::core::change::{Change, Side};
 use crate::core::finding::{Detection, Level, Message, Region, Stamp};
 use crate::core::read::TestUnit;
 use crate::core::rules::check::generated;
+use crate::core::rules::check::moved::{self, Ledger, Offer};
+use crate::core::rules::check::t2;
 use crate::core::rules::check::vocab::Suite;
 use crate::core::rules::check::Judgement;
 use crate::core::syntax::Mask;
@@ -51,28 +57,179 @@ pub fn evaluate(judged: &Judgement) -> Vec<Detection> {
     // longer has, and what every other file in the change has now.
     let read: Vec<Held> = changes.iter().map(held).collect();
     let arrived = arrivals(changes, &read);
-    changes
+    // An arrival that followed a case by its name or its body is that case,
+    // and pays for no other.
+    let mut used = vec![false; arrived.len()];
+    let losses: Vec<Option<Loss>> = changes
         .iter()
         .zip(&read)
-        .filter_map(|(change, held)| deletion(change, held, &arrived))
-        .collect()
+        .map(|(change, held)| deletion(change, held, &arrived, &mut used))
+        .collect();
+    // The cases nothing followed may have followed the function they called.
+    // That is read only where a file still owes cases, since most changes
+    // leave none stranded.
+    let helpers = &judged.config.test_assertions;
+    let mut trail: Option<(BTreeSet<String>, Ledger)> = None;
+    let mut found = Vec::new();
+    for (change, loss) in changes.iter().zip(losses) {
+        let mut gone = match loss {
+            None => continue,
+            Some(Loss::Uncounted(path)) => {
+                found.push(uncounted_file_gone(path));
+                continue;
+            }
+            Some(Loss::Counted(gone)) => gone,
+        };
+        if !gone.stranded.is_empty() {
+            let (kept, ledger) = trail.get_or_insert_with(|| {
+                let kept = moved::kept(changes);
+                let ledger = offers(changes, &arrived, &used, &kept, helpers);
+                (kept, ledger)
+            });
+            gone.follow_calls(change, kept, ledger, helpers);
+        }
+        if gone.remaining > 0 {
+            found.push(gone.finding(change));
+        }
+    }
+    found
 }
 
 /// One case, as a move can be followed by it: the name its runner collects it
 /// under, what it holds with that name taken out, so the same case under
-/// another name reads the same, and how many assertions it makes.
+/// another name reads the same, how many assertions it makes, and the case as
+/// the reader gave it, so what it calls can be asked of it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Case {
     name: String,
     body: String,
     assertions: usize,
+    unit: TestUnit,
 }
 
-/// A case a file in this change did not have before it and has now.
+/// A case a file in this change did not have before it and has now, and the
+/// change it arrived in.
 #[derive(Debug, Clone)]
 struct Arrival {
     path: String,
     case: Case,
+    change: usize,
+}
+
+/// What a change took out of one test file.
+enum Loss<'a> {
+    /// A test file deleted with no case weeder could count in it.
+    Uncounted(&'a str),
+    /// A file that runs fewer cases than it did.
+    Counted(Gone<'a>),
+}
+
+/// A file that runs fewer cases than it did, before the cases nothing followed
+/// are offered to the function they called.
+struct Gone<'a> {
+    path: &'a str,
+    before: usize,
+    after: usize,
+    remaining: usize,
+    moved: Followed,
+    /// The cases that left and that nothing followed by name or body.
+    stranded: Vec<Case>,
+    /// Whether the file opens a table weeder cannot count that it did not
+    /// open before.
+    opened: bool,
+}
+
+impl Gone<'_> {
+    /// Pays for each stranded case, whole, out of the assertions added in
+    /// other test files to cases that call the function it called. A case
+    /// paid for moved; one that is not is still gone.
+    fn follow_calls(
+        &mut self,
+        change: &Change,
+        kept: &BTreeSet<String>,
+        ledger: &mut Ledger,
+        helpers: &[String],
+    ) {
+        let weights = t2::weights(&change.before, helpers);
+        for case in &self.stranded {
+            if self.remaining == 0 {
+                break;
+            }
+            let calls = moved::exercised(&change.before, &case.unit, kept);
+            let owed = moved::weight(&change.before, &case.unit, &weights);
+            if let Some(paid) = ledger.pay_whole(self.path, &calls, owed) {
+                self.remaining -= 1;
+                self.moved.count += 1;
+                self.moved.into.extend(paid.from);
+            }
+        }
+    }
+
+    fn finding(&self, change: &Change) -> Detection {
+        if change.is_deletion() {
+            return file_gone(self.path, self.remaining, &self.moved);
+        }
+        let mut found = cases_gone(
+            self.path,
+            change,
+            self.before,
+            self.after,
+            self.remaining,
+            &self.moved,
+        );
+        if self.opened {
+            found.stamp = Stamp::Override(Level::Warn);
+            found.message = uncounted(self.before, self.after, self.remaining, &self.moved);
+        }
+        found
+    }
+}
+
+/// What every test file the change touched offers to pay for cases that
+/// followed their function: each case that arrived and followed no case by
+/// its name or body, that calls one of the functions the change kept, with
+/// the assertions it makes counted the way T2 counts them.
+fn offers(
+    changes: &[Change],
+    arrived: &[Arrival],
+    used: &[bool],
+    kept: &BTreeSet<String>,
+    helpers: &[String],
+) -> Ledger {
+    let calling: Vec<(&Arrival, BTreeSet<String>)> = arrived
+        .iter()
+        .zip(used)
+        .filter(|(_, used)| !**used)
+        .filter_map(|(arrival, _)| {
+            let side = &changes.get(arrival.change)?.after;
+            let calls = moved::exercised(side, &arrival.case.unit, kept);
+            (!calls.is_empty()).then_some((arrival, calls))
+        })
+        .collect();
+    // Each side is weighed once, however many of its cases offer.
+    let mut weighed: Vec<(usize, Vec<(u32, usize)>)> = Vec::new();
+    let mut offers = Vec::new();
+    for (arrival, calls) in calling {
+        let Some(change) = changes.get(arrival.change) else {
+            continue;
+        };
+        let at = match weighed
+            .iter()
+            .position(|(index, _)| *index == arrival.change)
+        {
+            Some(at) => at,
+            None => {
+                weighed.push((arrival.change, t2::weights(&change.after, helpers)));
+                weighed.len() - 1
+            }
+        };
+        offers.push(Offer {
+            path: arrival.path.clone(),
+            calls,
+            weight: moved::weight(&change.after, &arrival.case.unit, &weighed[at].1),
+        });
+    }
+    Ledger::new(offers)
 }
 
 /// The cases one changed file holds on each side of the change.
@@ -88,7 +245,12 @@ struct Followed {
 }
 
 /// What the change did to this file's tests, where it did anything at all.
-fn deletion(change: &Change, held: &Held, arrived: &[Arrival]) -> Option<Detection> {
+fn deletion<'a>(
+    change: &'a Change,
+    held: &Held,
+    arrived: &[Arrival],
+    used: &mut [bool],
+) -> Option<Loss<'a>> {
     let path = change.path()?;
     if !change.before.holds_tests() {
         return None;
@@ -100,7 +262,7 @@ fn deletion(change: &Change, held: &Held, arrived: &[Arrival]) -> Option<Detecti
     // before its cases are read, or a file of helpers, still took whatever it
     // held out of the run. How much is not known, so a person reads it.
     if change.is_deletion() && before == 0 {
-        return Some(uncounted_file_gone(path));
+        return Some(Loss::Uncounted(path));
     }
     let gone = if change.is_deletion() {
         before
@@ -109,20 +271,19 @@ fn deletion(change: &Change, held: &Held, arrived: &[Arrival]) -> Option<Detecti
     } else {
         return None;
     };
-    let moved = followed(&lost(held), arrived, path);
+    let (moved, stranded) = followed(&lost(held), arrived, path, used);
     let remaining = gone.saturating_sub(moved.count);
-    if remaining == 0 {
-        return None;
-    }
-    if change.is_deletion() {
-        return Some(file_gone(path, remaining, &moved));
-    }
-    let mut found = cases_gone(path, change, before, after, remaining, &moved);
-    if !opened_since(&now.uncounted, &census.uncounted).is_empty() {
-        found.stamp = Stamp::Override(Level::Warn);
-        found.message = uncounted(before, after, remaining, &moved);
-    }
-    Some(found)
+    (remaining > 0).then(|| {
+        Loss::Counted(Gone {
+            path,
+            before,
+            after,
+            remaining,
+            moved,
+            stranded,
+            opened: !opened_since(&now.uncounted, &census.uncounted).is_empty(),
+        })
+    })
 }
 
 /// The tables weeder cannot count that the file opens now and did not open
@@ -183,7 +344,7 @@ fn lost(held: &Held) -> Vec<Case> {
 /// deleted case to have gone.
 fn arrivals(changes: &[Change], read: &[Held]) -> Vec<Arrival> {
     let mut found = Vec::new();
-    for (change, held) in changes.iter().zip(read) {
+    for (index, (change, held)) in changes.iter().zip(read).enumerate() {
         let Some(path) = change.diff.new_path.as_deref() else {
             continue;
         };
@@ -197,30 +358,44 @@ fn arrivals(changes: &[Change], read: &[Held]) -> Vec<Arrival> {
             found.push(Arrival {
                 path: path.to_string(),
                 case: case.clone(),
+                change: index,
             });
         }
     }
     found
 }
 
-/// The cases a file lost that arrived somewhere else in the same change, and
-/// the files they arrived in.
-fn followed(lost: &[Case], arrived: &[Arrival], from: &str) -> Followed {
+/// The cases a file lost that arrived somewhere else in the same change, the
+/// files they arrived in, and the cases that arrived nowhere. Each arrival
+/// that followed a case is marked in `used`, indexed as `arrived` is.
+fn followed(
+    lost: &[Case],
+    arrived: &[Arrival],
+    from: &str,
+    used: &mut [bool],
+) -> (Followed, Vec<Case>) {
     let mut count = 0;
     let mut into = BTreeSet::new();
+    let mut stranded = Vec::new();
     for case in lost {
-        let landed: Vec<&Arrival> = arrived
+        let landed: Vec<usize> = arrived
             .iter()
-            .filter(|arrival| arrival.path != from)
-            .filter(|arrival| covers(case, &arrival.case))
+            .enumerate()
+            .filter(|(_, arrival)| arrival.path != from)
+            .filter(|(_, arrival)| covers(case, &arrival.case))
+            .map(|(index, _)| index)
             .collect();
         if landed.is_empty() {
+            stranded.push(case.clone());
             continue;
         }
         count += 1;
-        into.extend(landed.into_iter().map(|arrival| arrival.path.clone()));
+        for index in landed {
+            used[index] = true;
+            into.insert(arrived[index].path.clone());
+        }
     }
-    Followed { count, into }
+    (Followed { count, into }, stranded)
 }
 
 /// Whether the second case is the first one again: the name the runner collects
@@ -278,6 +453,7 @@ fn written(mask: &Mask, suite: &Suite, unit: &TestUnit) -> Case {
         name: unit.name.clone(),
         body,
         assertions,
+        unit: unit.clone(),
     }
 }
 
