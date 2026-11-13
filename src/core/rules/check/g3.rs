@@ -64,18 +64,11 @@ fn is_reported(character: char) -> bool {
 /// The lines it kept are the same on both sides, so this is how many more the
 /// file holds than it did.
 fn gained(change: &Change) -> BTreeMap<char, i64> {
-    let mut net = BTreeMap::new();
-    for (_, text) in change.removed() {
-        for character in text.chars().filter(|character| is_reported(*character)) {
-            *net.entry(character).or_insert(0) -= 1;
-        }
-    }
-    for (_, text) in change.added() {
-        for character in text.chars().filter(|character| is_reported(*character)) {
-            *net.entry(character).or_insert(0) += 1;
-        }
-    }
-    net
+    change.gained(|_, _, text| {
+        text.chars()
+            .filter(|character| is_reported(*character))
+            .collect()
+    })
 }
 
 /// What a control character is called, in the words of the Unicode standard.

@@ -140,6 +140,163 @@ fn s1_stays_silent_in_a_test_file_and_on_a_marker_inside_a_string() {
     }
 }
 
+/// The marker both carried fixtures move from one line of `send` to another.
+const MOVED: &str = "TODO: retry once when the queue is full";
+
+/// The notes the gained fixture adds a marker with: a second `FIXME` written on
+/// a line that already had one, an `XXX` reworded as a `FIXME`, and a `TODO` on
+/// a line of its own. Each is a marker the base did not have.
+const GAINED: [&str; 3] = [
+    "FIXME: so does the pad",
+    "FIXME: the wire format",
+    "TODO: close the socket",
+];
+
+/// The 1-based lines of a source that carry any of these notes.
+fn lines_carrying(source: &str, notes: &[&str]) -> Vec<u64> {
+    source
+        .lines()
+        .enumerate()
+        .filter(|(_, line)| notes.iter().any(|note| line.contains(note)))
+        .map(|(index, _)| index as u64 + 1)
+        .collect()
+}
+
+/// The change an expert-reviewed pull request made (#181): a typo fixed on a
+/// comment whose line already carried a marker, and a marker moved down its
+/// function. Nothing the base lacked reaches production.
+#[test]
+fn s1_stays_silent_on_a_marker_the_base_already_carried() {
+    for language in LANGUAGES {
+        let name = language.name;
+        let before = fixture_file("S1", name, "carried/before", language.path);
+        let after = fixture_file("S1", name, "carried/after", language.path);
+        assert!(
+            before.contains("TODO(#2013): replace this lock with an asychronous")
+                && after.contains("TODO(#2013): replace this lock with an asynchronous"),
+            "{name}: the change fixes a typo on a line that already carries a marker"
+        );
+        let moved_from = lines_carrying(&before, &[MOVED]);
+        let moved_to = lines_carrying(&after, &[MOVED]);
+        assert!(
+            moved_from.len() == 1 && moved_to.len() == 1 && moved_from != moved_to,
+            "{name}: the fixture moves one marker to another line"
+        );
+
+        let repo = fixture("S1", name, "carried");
+        let diff = repo.git(&["diff", "HEAD", "--", language.path]);
+        assert!(
+            diff.lines()
+                .any(|line| line.starts_with('+') && line.contains("TODO(#2013)")),
+            "{name}: the edited line has to be an added line, or the rule never reads it"
+        );
+
+        let run = repo.weeder(&["check"]);
+        assert_eq!(
+            stubs(&run),
+            Vec::new(),
+            "{name}: a marker the base already carried did not reach production with this change\n{}",
+            run.stderr
+        );
+        assert_eq!(run.code, 0, "{name}: nothing found, nothing blocked");
+    }
+}
+
+/// The same carried edits beside three markers the base did not have. The
+/// file holds one `TODO` more than it did and two `FIXME`s more, so the
+/// finding lands on the lines that put them there and not on the ones that
+/// carried a marker over.
+#[test]
+fn s1_reports_only_the_markers_a_change_adds_beyond_what_it_removes() {
+    for language in LANGUAGES {
+        let name = language.name;
+        let after = fixture_file("S1", name, "gained/after", language.path);
+        let expected = lines_carrying(&after, &GAINED);
+        assert_eq!(
+            expected.len(),
+            GAINED.len(),
+            "{name}: the fixture writes each gained marker once"
+        );
+
+        let run = fixture("S1", name, "gained").weeder(&["check"]);
+        let findings = stubs(&run);
+        assert_eq!(
+            findings
+                .iter()
+                .filter_map(|finding| finding.line)
+                .collect::<Vec<u64>>(),
+            expected,
+            "{name}: only the lines that add a marker are reported\n{}",
+            run.stderr
+        );
+        for finding in &findings {
+            assert_eq!(finding.level, "error", "{name}: a marker gained blocks");
+            assert_eq!(finding.path, language.path, "{name}: the file is named");
+        }
+        assert_eq!(run.code, 2, "{name}: and the change is blocked");
+    }
+}
+
+/// A marker taken out of one line and a different one written on another are
+/// not one marker moved: the work the new one names is new, so it is reported.
+/// Counting markers net per word would let a change trade an old TODO for a
+/// new one and say nothing; a marker is carried over only by the line it was
+/// on, rewritten, or by that same line moved word for word.
+#[test]
+fn s1_reports_a_new_marker_where_the_change_took_out_a_different_one() {
+    let cases = [
+        (
+            "src/lib.ts",
+            "// TODO: handle errors\nexport const a = 1;\n",
+            "export const a = 1;\nexport const b = 2; // TODO: retry later\n",
+        ),
+        (
+            "src/app.py",
+            "# TODO: handle errors\nA = 1\n",
+            "A = 1\nB = 2  # TODO: retry later\n",
+        ),
+        (
+            "src/lib.rs",
+            "// TODO: handle errors\npub const A: u32 = 1;\n",
+            "pub const A: u32 = 1;\npub const B: u32 = 2; // TODO: retry later\n",
+        ),
+        (
+            "p.go",
+            "package p\n\n// TODO: handle errors\nconst A = 1\n",
+            "package p\n\nconst A = 1\nconst B = 2 // TODO: retry later\n",
+        ),
+        // The same trade made in place: git pairs the two lines as one
+        // rewritten, and a rewrite that keeps none of the words is a new line.
+        (
+            "src/place.ts",
+            "// TODO: handle errors\nexport const a = 1;\n",
+            "// TODO: retry later\nexport const a = 1;\n",
+        ),
+    ];
+    for (path, before, after) in cases {
+        let repo = common::Repo::init();
+        repo.write(path, before);
+        repo.commit("the code before the change");
+        repo.write(path, after);
+        let run = repo.weeder(&["check"]);
+        let lines: Vec<u64> = stubs(&run)
+            .iter()
+            .filter_map(|finding| finding.line)
+            .collect();
+        let added = after
+            .lines()
+            .position(|line| line.contains("retry later"))
+            .map(|index| index as u64 + 1);
+        assert_eq!(
+            lines,
+            added.into_iter().collect::<Vec<u64>>(),
+            "{path}: the new marker is reported, whatever the change took out\n{}",
+            run.output()
+        );
+        assert_eq!(run.code, 2, "{path}: and it blocks");
+    }
+}
+
 /// Where the forms the rule names are written in a fixture's production file,
 /// counted from one and each line named once however many forms it carries.
 /// What S1 itself reported. These fixtures run under every rule, and a change
