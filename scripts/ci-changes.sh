@@ -10,7 +10,7 @@
 # empty one, because neither says what changed.
 #
 # Prose is what cannot change the release binary or what tests/speed.rs times:
-# markdown, anything under docs/ or .brand/, the landing page and the licence.
+# markdown, anything under docs/ or .brand/, and the licence.
 # Below fixtures/ and tests/ nothing is prose, since the suite reads it there.
 # The check job still runs on prose; only the latency job skips it.
 
@@ -33,7 +33,7 @@ while IFS= read -r -d '' path; do
       echo "code=true"
       exit 0
       ;;
-    *.md | docs/* | .brand/* | index.html | LICENSE) ;;
+    *.md | docs/* | .brand/* | LICENSE) ;;
     *)
       echo "code=true"
       exit 0

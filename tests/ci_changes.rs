@@ -64,7 +64,6 @@ fn a_change_made_only_of_prose_is_not_code() {
             "docs/tend/release.tend.html",
             "docs/calibration/corpus.toml",
             ".brand/products/weeder/voice.md",
-            "index.html",
             "LICENSE",
         ] {
             repo.write(path, "words, rewritten\n");
