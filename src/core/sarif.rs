@@ -438,6 +438,7 @@ struct Row {
 }
 
 fn row(finding: &Finding) -> Row {
+    let [what, why, next] = parts(finding);
     let line = region(finding).map(|region| region.start_line).unwrap_or(0);
     let place = if line == 0 {
         finding.path.clone()
@@ -450,10 +451,22 @@ fn row(finding: &Finding) -> Row {
         path: finding.path.clone(),
         line,
         place,
-        what: finding.message.what.trim().to_string(),
-        why: finding.message.why.trim().to_string(),
-        next: finding.message.next.trim().to_string(),
+        what: what.to_string(),
+        why: why.to_string(),
+        next: next.to_string(),
     }
+}
+
+/// A finding's three parts as every report reads them: what was found, why it
+/// matters, and the next action, each trimmed. The table lays them out on lines
+/// of their own, the log joins them into one message, and the pull-request
+/// comment gives each a line, so there is one reading of a finding's parts.
+pub(crate) fn parts(finding: &Finding) -> [&str; 3] {
+    [
+        finding.message.what.trim(),
+        finding.message.why.trim(),
+        finding.message.next.trim(),
+    ]
 }
 
 /// Whether two rows say one thing: the same rule, the same why, the same next.
@@ -492,7 +505,9 @@ fn descriptor(rule: &Rule, docs_base: Option<&str>) -> ReportingDescriptor {
     }
 }
 
-fn help_uri(docs_base: &str, id: &str) -> String {
+/// Where a rule's section is, under an address the docs sit beneath. The log's
+/// `helpUri` and the comment's link to a rule are both this.
+pub(crate) fn help_uri(docs_base: &str, id: &str) -> String {
     let separator = if docs_base.ends_with('/') { "" } else { "/" };
     format!("{docs_base}{separator}{RULES_DOC}#{id}")
 }
@@ -564,7 +579,7 @@ fn region(finding: &Finding) -> Option<&crate::core::finding::Region> {
         .filter(|region| region.start_line >= 1)
 }
 
-fn sarif_level(level: Level) -> SarifLevel {
+pub(crate) fn sarif_level(level: Level) -> SarifLevel {
     match level {
         Level::Block => SarifLevel::Error,
         Level::Warn => SarifLevel::Warning,
@@ -574,14 +589,10 @@ fn sarif_level(level: Level) -> SarifLevel {
 
 /// What was found, why it matters, then the next action, in that order.
 fn message(finding: &Finding) -> String {
-    [
-        finding.message.what.trim(),
-        finding.message.why.trim(),
-        finding.message.next.trim(),
-    ]
-    .iter()
-    .filter(|part| !part.is_empty())
-    .copied()
-    .collect::<Vec<&str>>()
-    .join(" ")
+    parts(finding)
+        .iter()
+        .filter(|part| !part.is_empty())
+        .copied()
+        .collect::<Vec<&str>>()
+        .join(" ")
 }

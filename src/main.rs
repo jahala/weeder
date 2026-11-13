@@ -183,6 +183,12 @@ struct CheckArgs {
     /// The message of the commit being prepared, for its Weeder-allow trailers.
     #[arg(long, value_name = "path")]
     message_file: Option<PathBuf>,
+    /// The pull request's reviews as the forge answered: its head, every
+    /// review, and each reviewer's permission, in one JSON file. Under --strict
+    /// a Weeder-allow trailer on the --base range is honoured once a person
+    /// with write access approved the judged commit.
+    #[arg(long, value_name = "path")]
+    reviews: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]
@@ -300,6 +306,7 @@ fn run_check(args: CheckArgs) -> Answer {
         // and `weeder guard` is the caller that stands on it; from the command
         // line --strict reports every allowance at its own level.
         honour_trailers: false,
+        reviews: args.reviews,
         format,
         config: args.config,
         message_file: args.message_file,

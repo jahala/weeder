@@ -111,6 +111,7 @@ fn judge(
         // The harness hook stands where the agent is still writing and no commit
         // message exists; a trailer here would be one the agent wrote itself.
         honour_trailers: false,
+        reviews: None,
         format: check::Output::Table,
         config: None,
         message_file: None,

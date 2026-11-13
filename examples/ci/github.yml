@@ -11,11 +11,19 @@
 # exactly the one whose findings a reviewer needs to see. On a pull request from
 # a fork GitHub gives the job no right to write, so the same text goes to the
 # job summary instead, and the exit code still decides the job.
+#
+# A block weeder is wrong about is let through with two keys. Whoever wrote the
+# change states the reason in a `Weeder-allow: <RULE> <reason>` trailer on one
+# of its commits, and a person with write access accepts it by approving the
+# pull request at its newest commit. So a review runs the job again, and so does
+# dismissing one; a later push needs a fresh approval.
 
 name: weeder
 
 on:
   pull_request:
+  pull_request_review:
+    types: [submitted, dismissed]
 
 permissions:
   contents: read

@@ -22,8 +22,10 @@ use std::path::{Path, PathBuf};
 
 use pulldown_cmark::{Event, Parser, Tag, TagEnd};
 use serde_json::Value;
-use weeder::core::sarif::{self, Context};
-use weeder::core::{Finding, Level, Message, Region};
+use weeder::core::catalogue;
+use weeder::core::comment::{self, Page};
+use weeder::core::review::Approval;
+use weeder::core::{Finding, Level, Message, Region, Suppression, SuppressionSource};
 
 use common::{fixture, Repo, Run};
 
@@ -75,7 +77,12 @@ fn a_change_with_nothing_to_report_says_so_in_one_sentence() {
         "nothing found is no list:\n{}",
         comment.stdout
     );
-    let said = body.prose.trim();
+    let said = body
+        .paragraphs
+        .first()
+        .map(String::as_str)
+        .unwrap_or_default()
+        .trim();
     assert!(
         !said.is_empty() && said.ends_with('.') && said.matches(". ").count() == 0,
         "nothing found is said in one sentence, and this is `{said}`"
@@ -124,11 +131,13 @@ fn every_result_is_listed_blocks_first_with_its_rule_level_message_and_link() {
             "the item names its rule `{rule}` as code: {item:?}"
         );
         assert!(
-            item.strong.iter().any(|strong| strong == level),
+            item.lines
+                .first()
+                .is_some_and(|headline| headline.contains(level)),
             "the item names its level `{level}`: {item:?}"
         );
         assert!(
-            unticked(&item.text).contains(&unticked(message)),
+            folded(&item.text).contains(&folded(message)),
             "the item carries the message as the reader sees it.\nitem:    {}\nmessage: {message}",
             item.text
         );
@@ -141,7 +150,7 @@ fn every_result_is_listed_blocks_first_with_its_rule_level_message_and_link() {
         // blob address has no file to show, so it is shown and links nowhere.
         if path == "." {
             assert!(
-                item.links.is_empty(),
+                item.places().is_empty(),
                 "the repository is no file to link: {item:?}"
             );
             assert!(
@@ -151,12 +160,12 @@ fn every_result_is_listed_blocks_first_with_its_rule_level_message_and_link() {
             continue;
         }
         assert_eq!(
-            item.links.first().map(|link| link.0.as_str()),
+            item.places().first().map(|link| link.0.as_str()),
             Some(expected_link(&path, line, end).as_str()),
             "the item links to the line it names: {item:?}"
         );
         assert_eq!(
-            item.links.first().map(|link| link.1.as_str()),
+            item.places().first().map(|link| link.1.as_str()),
             Some(shown.as_str()),
             "the link reads as the place it names: {item:?}"
         );
@@ -190,7 +199,11 @@ fn a_path_markdown_would_read_is_linked_and_shown_as_written() {
     );
     for (item, result) in body.items.iter().zip(&results) {
         let (path, line, end) = place(result);
-        let link = item.links.first().expect("every item carries its link");
+        let link = item
+            .places()
+            .first()
+            .cloned()
+            .expect("every item carries its link");
         assert_eq!(link.0, expected_link(&path, line, end));
         assert!(
             link.1.starts_with(&path),
@@ -316,13 +329,12 @@ fn a_message_markdown_would_misread_reads_as_it_was_written() {
         fix: None,
         suppressed: None,
     };
-    let log = sarif::render(&[finding], &Context::new("0.0.0"));
-    let body = Body::read(&weeder::core::comment::render(&log, Some(LINKS)));
+    let body = Body::read(&comment::render(&[finding], &page(None)));
 
     let item = body.items.first().expect("the finding is listed");
     let expected = format!("{what} the suite asks less. restore it.");
     assert!(
-        unticked(&item.text).contains(&unticked(&expected)),
+        folded(&item.text).contains(&folded(&expected)),
         "the message reads as written.\nitem:     {}\nexpected: {expected}",
         item.text
     );
@@ -338,6 +350,779 @@ fn a_message_markdown_would_misread_reads_as_it_was_written() {
         body.hidden.len() == 1,
         "the only html is the marker: {:?}",
         body.hidden
+    );
+}
+
+/// The page every core-level render here writes: this version, this
+/// repository's home, links to the head commit and the command of a run
+/// against `main`.
+fn page(approval: Option<&Approval>) -> Page<'_> {
+    Page {
+        version: VERSION,
+        home: HOME,
+        links: Some(LINKS),
+        command: "weeder check --base origin/main --strict",
+        approval,
+    }
+}
+
+/// The version and the home the binary names, as the comment links them.
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+const HOME: &str = "https://github.com/jahala/weeder";
+
+fn finding(rule: &str, level: Level, path: &str, line: u32, parts: [&str; 3]) -> Finding {
+    Finding {
+        rule: rule.to_string(),
+        level,
+        path: path.to_string(),
+        region: Some(Region {
+            start_line: line,
+            end_line: line,
+        }),
+        message: Message {
+            what: parts[0].to_string(),
+            why: parts[1].to_string(),
+            next: parts[2].to_string(),
+        },
+        fix: None,
+        suppressed: None,
+    }
+}
+
+/// Where a rule is documented, for the version that judged.
+fn rule_section(rule: &str) -> String {
+    format!("{HOME}/blob/v{VERSION}/docs/rules.md#{rule}")
+}
+
+/// A URL's query as its pairs, each value percent-decoded.
+fn query(url: &str) -> (String, BTreeMap<String, String>) {
+    let (address, query) = url.split_once('?').unwrap_or((url, ""));
+    let pairs = query
+        .split('&')
+        .filter(|pair| !pair.is_empty())
+        .map(|pair| {
+            let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
+            (key.to_string(), decoded(value))
+        })
+        .collect();
+    (address.to_string(), pairs)
+}
+
+fn decoded(value: &str) -> String {
+    let bytes = value.as_bytes();
+    let mut out = Vec::new();
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index] == b'%' && index + 2 < bytes.len() {
+            let hex = std::str::from_utf8(&bytes[index + 1..index + 3]).expect("ascii hex");
+            out.push(u8::from_str_radix(hex, 16).expect("a percent escape"));
+            index += 3;
+        } else {
+            out.push(bytes[index]);
+            index += 1;
+        }
+    }
+    String::from_utf8(out).expect("utf-8")
+}
+
+/// Each finding opens with a headline: what its rule is about, the level it
+/// reports at, and its id linked to its section in `docs/rules.md`, at the
+/// version that judged.
+#[test]
+fn each_finding_opens_with_a_headline_naming_its_rule_and_level() {
+    let (comment, log) = both(&mixed());
+    let results = ordered(&log.log());
+    let body = Body::read(&comment.stdout);
+    assert_eq!(body.items.len(), results.len(), "{}", comment.stdout);
+    let mut judged = 0;
+    for (item, result) in body.items.iter().zip(&results) {
+        let rule = result["ruleId"].as_str().unwrap_or_default();
+        let level = result["level"].as_str().unwrap_or_default();
+        let headline = item.lines.first().expect("an item has a headline");
+        assert!(
+            headline.contains(level),
+            "the headline names the level `{level}`: {headline}"
+        );
+        let Some(described) = catalogue::rules().iter().find(|known| known.id == rule) else {
+            assert!(
+                headline.contains(rule),
+                "a note about the run names its id `{rule}`: {headline}"
+            );
+            continue;
+        };
+        judged += 1;
+        assert!(
+            item.strong
+                .first()
+                .is_some_and(|strong| strong == described.short_description),
+            "the headline opens with the rule's short description in bold, `{}`: {item:?}",
+            described.short_description
+        );
+        assert!(
+            item.links
+                .iter()
+                .any(|(url, shown)| url == &rule_section(rule) && shown == rule),
+            "the rule id links to its section, {}: {item:?}",
+            rule_section(rule)
+        );
+    }
+    assert!(judged >= 2, "the change was judged by at least two rules");
+}
+
+/// What was found, why it matters and the next action stand on lines of their
+/// own, each opening with a capital, rendered from the finding's own three
+/// parts. weeder's own name stays lowercase wherever it stands, as its voice
+/// says.
+#[test]
+fn what_why_and_next_stand_on_lines_of_their_own_each_opening_with_a_capital() {
+    let findings = [
+        finding(
+            "T1",
+            Level::Block,
+            "tests/a.rs",
+            3,
+            [
+                "a test file was deleted.",
+                "a suite that is gone reports nothing.",
+                "restore the file.",
+            ],
+        ),
+        finding(
+            "C3",
+            Level::Warn,
+            ".github/workflows/build.yml",
+            1,
+            [
+                "weeder saw a workflow change.",
+                "`cargo test` decides less now.",
+                "read it.",
+            ],
+        ),
+    ];
+    let body = Body::read(&comment::render(&findings, &page(None)));
+    assert_eq!(body.items.len(), 2);
+    for (item, expected) in body.items.iter().zip([
+        [
+            "A test file was deleted.",
+            "A suite that is gone reports nothing.",
+            "Restore the file.",
+        ],
+        [
+            "weeder saw a workflow change.",
+            "cargo test decides less now.",
+            "Read it.",
+        ],
+    ]) {
+        let at = item
+            .lines
+            .iter()
+            .position(|line| line == expected[0])
+            .unwrap_or_else(|| panic!("`{}` stands on a line of its own: {item:?}", expected[0]));
+        assert_eq!(
+            &item.lines[at..at + 3],
+            &expected,
+            "what, why and next follow one another, a line each: {item:?}"
+        );
+    }
+
+    // The same reading of a finding's parts from the binary: every line of
+    // what, why and next opens with a capital or with weeder's own name.
+    let (comment, _) = both(&mixed());
+    let body = Body::read(&comment.stdout);
+    for item in &body.items {
+        assert!(
+            item.lines.len() >= 5,
+            "a headline, a place and three parts: {item:?}"
+        );
+        for line in &item.lines[2..5] {
+            assert!(
+                !line.starts_with(|first: char| first.is_lowercase())
+                    || line.starts_with("weeder "),
+                "`{line}` opens with a capital, or a number: {item:?}"
+            );
+        }
+    }
+}
+
+/// Every judgement carries a way to say it is wrong: a link that opens a new
+/// issue on weeder's own repository from the false-positive template, naming
+/// the rule and the version and nothing else, because the change judged may
+/// sit in a private repository and the tracker is public.
+#[test]
+fn every_judgement_links_to_a_false_positive_report_naming_only_the_rule_and_the_version() {
+    let (comment, log) = both(&mixed());
+    let results = ordered(&log.log());
+    let body = Body::read(&comment.stdout);
+    let mut reported = 0;
+    for (item, result) in body.items.iter().zip(&results) {
+        let rule = result["ruleId"].as_str().unwrap_or_default();
+        let reports: Vec<&(String, String)> = item
+            .links
+            .iter()
+            .filter(|(url, _)| url.starts_with(&format!("{HOME}/issues/new")))
+            .collect();
+        if !catalogue::rules().iter().any(|known| known.id == rule) {
+            assert!(
+                reports.is_empty(),
+                "a note about the run is no judgement to report: {item:?}"
+            );
+            continue;
+        }
+        reported += 1;
+        let [(url, shown)] = reports.as_slice() else {
+            panic!("one report link per judgement: {item:?}");
+        };
+        assert_eq!(
+            shown, "Wrong? Report it",
+            "the link says what it is for: {item:?}"
+        );
+        let (address, pairs) = query(url);
+        assert_eq!(address, format!("{HOME}/issues/new"));
+        let keys: Vec<&str> = pairs.keys().map(String::as_str).collect();
+        assert_eq!(
+            keys,
+            ["rule", "template", "title", "version"],
+            "the link carries the template, a title, the rule and the version, and nothing else: {url}"
+        );
+        assert_eq!(pairs["template"], "false-positive.yml");
+        assert_eq!(pairs["rule"], rule);
+        assert_eq!(pairs["version"], VERSION);
+        let (path, _, _) = place(result);
+        let file = path.rsplit('/').next().unwrap_or_default().to_string();
+        for (key, value) in &pairs {
+            assert!(
+                !value.contains(&path) && !value.contains(&file),
+                "`{key}` carries nothing from the judged repository: {url}"
+            );
+        }
+        assert!(
+            pairs["title"].contains(rule),
+            "the title names the rule: {}",
+            pairs["title"]
+        );
+    }
+    assert!(reported >= 2, "the change was judged by at least two rules");
+
+    let template = yaml(&root().join(".github/ISSUE_TEMPLATE/false-positive.yml"));
+    let fields: Vec<&str> = template["body"]
+        .as_array()
+        .expect("the template is an issue form with a body")
+        .iter()
+        .filter_map(|field| field["id"].as_str())
+        .collect();
+    for wanted in ["rule", "version"] {
+        assert!(
+            fields.contains(&wanted),
+            "the template has a field `{wanted}` the link fills in: {fields:?}"
+        );
+    }
+    assert!(
+        template["name"].is_string() && template["description"].is_string(),
+        "the template names itself in the chooser: {template}"
+    );
+}
+
+/// The comment ends with the command that judges the same change the same way
+/// on a person's own machine, and running that command gives the same verdict.
+#[test]
+fn the_comment_ends_with_the_command_that_reproduces_the_run() {
+    let repo = mixed();
+    repo.git(&["update-ref", "refs/remotes/origin/main", "HEAD"]);
+    repo.git(&["switch", "--quiet", "-c", "feature"]);
+    repo.commit("the change");
+    let comment = repo.weeder(&[
+        "check",
+        "--base",
+        "origin/main",
+        "--strict",
+        "--format",
+        "markdown",
+        "--link-base",
+        LINKS,
+    ]);
+    assert_eq!(comment.code, 2, "{}", comment.stderr);
+    let body = Body::read(&comment.stdout);
+    let last = body.paragraphs.last().expect("the comment ends with prose");
+    assert!(
+        last.contains("weeder check --base origin/main --strict"),
+        "the last paragraph names the command: {last}"
+    );
+    let tail = comment.stdout.trim_end().lines().last().unwrap_or_default();
+    assert!(
+        tail.contains("`weeder check --base origin/main --strict`"),
+        "and the command, as code, is the last thing in the body: {tail}"
+    );
+
+    let again = repo.weeder(&[
+        "check",
+        "--base",
+        "origin/main",
+        "--strict",
+        "--format",
+        "sarif",
+    ]);
+    assert_eq!(
+        again.code, comment.code,
+        "the command reproduces the verdict"
+    );
+
+    let plain = repo.weeder(&["check", "--format", "markdown"]);
+    let last = Body::read(&plain.stdout)
+        .paragraphs
+        .last()
+        .cloned()
+        .unwrap_or_default();
+    assert!(
+        last.contains("weeder check") && !last.contains("--base"),
+        "a run with no flags names the command with none: {last}"
+    );
+}
+
+/// The same findings write the same bytes, in whatever order a face gathered
+/// them.
+#[test]
+fn the_same_findings_write_the_same_bytes_in_any_order() {
+    let findings = vec![
+        finding(
+            "T1",
+            Level::Block,
+            "tests/b.rs",
+            4,
+            ["b went.", "less.", "restore it."],
+        ),
+        finding(
+            "T1",
+            Level::Block,
+            "tests/a.rs",
+            9,
+            ["a went.", "less.", "restore it."],
+        ),
+        finding(
+            "C3",
+            Level::Warn,
+            ".github/workflows/x.yml",
+            1,
+            ["a workflow.", "it runs.", "read it."],
+        ),
+        finding(
+            "T1",
+            Level::Block,
+            "tests/a.rs",
+            9,
+            ["a went too.", "less.", "restore it."],
+        ),
+    ];
+    let mut reversed = findings.clone();
+    reversed.reverse();
+    let forwards = comment::render(&findings, &page(None));
+    assert_eq!(forwards, comment::render(&reversed, &page(None)));
+    assert_eq!(forwards, comment::render(&findings, &page(None)));
+}
+
+// --- two keys for a false positive -------------------------------------------
+
+/// GitHub's own answers, recorded from this repository: the reviews of a pull
+/// request, and the permission of an owner, of an account with no access, and
+/// of a bot.
+fn recorded(name: &str) -> Value {
+    let path = root().join("fixtures/github").join(name);
+    let text = std::fs::read_to_string(&path)
+        .unwrap_or_else(|error| panic!("{} should read: {error}", path.display()));
+    serde_json::from_str(&text).expect("a recorded answer is json")
+}
+
+/// One review as GitHub answers it, given by the account whose permission
+/// answer is named, in the state and at the commit asked for.
+fn review(id: u64, state: &str, commit: &str, permission: &str) -> Value {
+    let mut review = recorded("reviews.json")[0].clone();
+    review["id"] = Value::from(id);
+    review["state"] = Value::from(state);
+    review["commit_id"] = Value::from(commit);
+    review["user"] = recorded(permission)["user"].clone();
+    review
+}
+
+/// What the action hands weeder: the head commit, the reviews, and the
+/// permission of every account that reviewed, each as GitHub answered.
+struct Reviews {
+    _scratch: tempfile::TempDir,
+    path: PathBuf,
+}
+
+fn reviews(head: &str, given: &[Value], permissions: &[&str]) -> Reviews {
+    let scratch = tempfile::TempDir::new().expect("a scratch directory");
+    let path = scratch.path().join("reviews.json");
+    let answers = serde_json::json!({
+        "head": head,
+        "reviews": given,
+        "permissions": permissions.iter().map(|name| recorded(name)).collect::<Vec<Value>>(),
+    });
+    std::fs::write(&path, answers.to_string()).expect("the answers write");
+    Reviews {
+        _scratch: scratch,
+        path,
+    }
+}
+
+const ALLOWED: &str =
+    "Drop the old suite\n\nWeeder-allow: T1 the cases moved to the integration tier\n";
+
+/// A pull request onto `main` whose one commit deletes a test file, with the
+/// message the caller writes on it.
+fn deleting_a_suite(message: &str) -> Repo {
+    let repo = Repo::init();
+    repo.write(
+        "src/lib.rs",
+        "pub fn double(x: i32) -> i32 {\n    x * 2\n}\n",
+    );
+    repo.write(
+        "tests/double.rs",
+        "use demo::double;\n\n#[test]\nfn doubles() {\n    assert_eq!(double(2), 4);\n}\n\n#[test]\nfn doubles_zero() {\n    assert_eq!(double(0), 0);\n}\n",
+    );
+    repo.commit("the suite begins");
+    repo.git(&["switch", "--quiet", "-c", "feature"]);
+    repo.remove("tests/double.rs");
+    repo.commit(message);
+    repo
+}
+
+fn judged(repo: &Repo, format: &str, answers: Option<&Reviews>) -> Run {
+    let mut arguments = vec!["check", "--base", "main", "--strict", "--format", format];
+    if format == "markdown" {
+        arguments.extend(["--link-base", LINKS]);
+    }
+    let path;
+    if let Some(answers) = answers {
+        path = answers.path.display().to_string();
+        arguments.extend(["--reviews", path.as_str()]);
+    }
+    repo.weeder(&arguments)
+}
+
+fn item_for(body: &Body, rule: &str) -> Item {
+    body.items
+        .iter()
+        .find(|item| item.codes.iter().any(|code| code == rule))
+        .cloned()
+        .unwrap_or_else(|| panic!("the comment lists {rule}: {body:?}"))
+}
+
+/// The second key: a trailer with a reason is accepted once someone with write
+/// access approves the pull request at its head, and the comment says by whom
+/// and at which commit.
+#[test]
+fn a_trailer_approved_at_the_head_by_someone_with_write_access_is_accepted() {
+    let repo = deleting_a_suite(ALLOWED);
+    let head = repo.head();
+    let answers = reviews(
+        &head,
+        &[
+            recorded("reviews.json")[0].clone(),
+            review(2, "APPROVED", &head, "permission-admin.json"),
+        ],
+        &["permission-admin.json", "permission-none.json"],
+    );
+
+    let comment = judged(&repo, "markdown", Some(&answers));
+    assert_eq!(
+        comment.code, 0,
+        "the accepted block lets the change through:\n{}{}",
+        comment.stdout, comment.stderr
+    );
+    let log = judged(&repo, "sarif", Some(&answers));
+    assert_eq!(
+        log.code, 0,
+        "both formats reach one verdict: {}",
+        log.stderr
+    );
+
+    let body = Body::read(&comment.stdout);
+    let item = item_for(&body, "T1");
+    assert!(
+        item.lines[0].contains("accepted"),
+        "the headline says the finding was accepted: {item:?}"
+    );
+    let said = item
+        .lines
+        .iter()
+        .find(|line| line.starts_with("Accepted by"))
+        .unwrap_or_else(|| panic!("a line says who accepted it: {item:?}"));
+    assert!(
+        said.contains("jahala") && said.contains(&head),
+        "it names the reviewer and the commit: {said}"
+    );
+    assert!(
+        item.codes.iter().any(|code| code == "jahala"),
+        "the reviewer is named in code, where GitHub notifies nobody: {item:?}"
+    );
+    assert!(
+        said.contains("the cases moved to the integration tier"),
+        "and the reason the trailer gave: {said}"
+    );
+}
+
+/// GitHub checks a pull request out as the merge of its head into its base, so
+/// the head the reviewer approved is the second parent of what was judged.
+#[test]
+fn an_approval_of_the_head_a_merge_checkout_carries_is_accepted() {
+    let repo = deleting_a_suite(ALLOWED);
+    let head = repo.head();
+    repo.git(&["switch", "--quiet", "--detach", "main"]);
+    repo.git(&[
+        "merge",
+        "--quiet",
+        "--no-ff",
+        "-m",
+        "Merge the pull request",
+        &head,
+    ]);
+    let answers = reviews(
+        &head,
+        &[review(2, "APPROVED", &head, "permission-admin.json")],
+        &["permission-admin.json"],
+    );
+    let comment = judged(&repo, "markdown", Some(&answers));
+    assert_eq!(comment.code, 0, "{}{}", comment.stdout, comment.stderr);
+}
+
+/// Everything else leaves the finding blocking.
+#[test]
+fn an_older_commit_a_reader_a_bot_a_withdrawn_approval_and_another_head_all_leave_it_blocking() {
+    let repo = deleting_a_suite(ALLOWED);
+    let head = repo.head();
+    let older = repo.git(&["rev-parse", "main"]).trim().to_string();
+    let admin = "permission-admin.json";
+    let cases: Vec<(&str, Reviews)> = vec![
+        (
+            "a review of an older commit",
+            reviews(&head, &[review(2, "APPROVED", &older, admin)], &[admin]),
+        ),
+        (
+            "a review from someone without write access",
+            reviews(
+                &head,
+                &[review(2, "APPROVED", &head, "permission-read.json")],
+                &["permission-read.json"],
+            ),
+        ),
+        (
+            "a review from a bot",
+            reviews(
+                &head,
+                &[review(2, "APPROVED", &head, "permission-none.json")],
+                &["permission-none.json"],
+            ),
+        ),
+        (
+            "an approval its reviewer then asked changes on",
+            reviews(
+                &head,
+                &[
+                    review(2, "APPROVED", &head, admin),
+                    review(3, "CHANGES_REQUESTED", &head, admin),
+                ],
+                &[admin],
+            ),
+        ),
+        (
+            "an approval that was dismissed",
+            reviews(&head, &[review(2, "DISMISSED", &head, admin)], &[admin]),
+        ),
+        (
+            "an approval whose reviewer's permission was never read",
+            reviews(&head, &[review(2, "APPROVED", &head, admin)], &[]),
+        ),
+        (
+            "answers about another head than the one judged",
+            reviews(&older, &[review(2, "APPROVED", &older, admin)], &[admin]),
+        ),
+    ];
+    for (case, answers) in &cases {
+        let comment = judged(&repo, "markdown", Some(answers));
+        assert_eq!(
+            comment.code, 2,
+            "{case} leaves the block standing:\n{}{}",
+            comment.stdout, comment.stderr
+        );
+        let item = item_for(&Body::read(&comment.stdout), "T1");
+        assert!(
+            !item.lines[0].contains("accepted"),
+            "{case}: nothing was accepted: {item:?}"
+        );
+    }
+    // A comment after an approval leaves the approval standing.
+    let commented = reviews(
+        &head,
+        &[
+            review(2, "APPROVED", &head, admin),
+            review(3, "COMMENTED", &head, admin),
+        ],
+        &[admin],
+    );
+    assert_eq!(judged(&repo, "markdown", Some(&commented)).code, 0);
+}
+
+#[test]
+fn a_trailer_with_no_reason_and_an_inline_marker_stay_blocking_under_an_approval() {
+    let admin = "permission-admin.json";
+    let bare = deleting_a_suite("Drop the old suite\n\nWeeder-allow: T1\n");
+    let head = bare.head();
+    let approved = reviews(&head, &[review(2, "APPROVED", &head, admin)], &[admin]);
+    let comment = judged(&bare, "markdown", Some(&approved));
+    assert_eq!(
+        comment.code, 2,
+        "a trailer with no reason allows nothing:\n{}",
+        comment.stdout
+    );
+
+    let repo = Repo::init();
+    repo.write(
+        "src/lib.rs",
+        "pub fn double(x: i32) -> i32 {\n    x * 2\n}\n",
+    );
+    repo.write(
+        "tests/double.rs",
+        "use demo::double;\n\n#[test]\nfn doubles() {\n    assert_eq!(double(2), 4);\n}\n",
+    );
+    repo.commit("the suite begins");
+    repo.git(&["switch", "--quiet", "-c", "feature"]);
+    repo.write(
+        "tests/double.rs",
+        "use demo::double;\n\n#[test]\n#[ignore] // weeder-allow T3: the runner is down this week\nfn doubles() {\n    assert_eq!(double(2), 4);\n}\n",
+    );
+    repo.commit("Skip the doubling test");
+    let head = repo.head();
+    let approved = reviews(&head, &[review(2, "APPROVED", &head, admin)], &[admin]);
+    let comment = judged(&repo, "markdown", Some(&approved));
+    assert_eq!(
+        comment.code, 2,
+        "an inline marker is never accepted:\n{}",
+        comment.stdout
+    );
+    let item = item_for(&Body::read(&comment.stdout), "T3");
+    assert!(!item.lines[0].contains("accepted"), "{item:?}");
+}
+
+/// A block that still stands says how to let it through on the record: the
+/// reason in a trailer, and a reviewer with write access to approve.
+#[test]
+fn a_blocking_finding_says_to_write_the_reason_and_ask_a_reviewer_with_write_access() {
+    let repo = deleting_a_suite("Drop the old suite\n");
+    let comment = judged(&repo, "markdown", None);
+    assert_eq!(comment.code, 2);
+    let item = item_for(&Body::read(&comment.stdout), "T1");
+    let line = item
+        .lines
+        .iter()
+        .find(|line| line.contains("Weeder-allow: T1 <reason>"))
+        .unwrap_or_else(|| panic!("a line names the trailer: {item:?}"));
+    assert!(
+        line.contains("write access") && line.contains("approve"),
+        "and asks for a reviewer with write access to approve: {line}"
+    );
+
+    // The same finding with its trailer written says what is still missing.
+    let repo = deleting_a_suite(ALLOWED);
+    let comment = judged(&repo, "markdown", None);
+    assert_eq!(comment.code, 2);
+    let item = item_for(&Body::read(&comment.stdout), "T1");
+    assert!(
+        item.lines.iter().any(
+            |line| line.contains("the cases moved to the integration tier")
+                && line.contains("write access")
+        ),
+        "the trailer's reason is shown, waiting on an approval: {item:?}"
+    );
+}
+
+#[test]
+fn reviews_are_refused_where_they_could_accept_nothing() {
+    let repo = deleting_a_suite(ALLOWED);
+    let head = repo.head();
+    let admin = "permission-admin.json";
+    let answers = reviews(&head, &[review(2, "APPROVED", &head, admin)], &[admin]);
+    let path = answers.path.display().to_string();
+    for (arguments, named) in [
+        (
+            vec!["check", "--base", "main", "--reviews", path.as_str()],
+            "--strict",
+        ),
+        (
+            vec!["check", "--strict", "--reviews", path.as_str()],
+            "--base",
+        ),
+    ] {
+        let run = repo.weeder(&arguments);
+        assert_eq!(run.code, 3, "{arguments:?} is refused: {}", run.stderr);
+        assert!(
+            run.stderr.contains("--reviews") && run.stderr.contains(named),
+            "the refusal names what is missing: {}",
+            run.stderr
+        );
+    }
+    let unreadable = tempfile::TempDir::new().expect("scratch");
+    let broken = unreadable.path().join("reviews.json");
+    std::fs::write(&broken, "{ not json").expect("writes");
+    let run = repo.weeder(&[
+        "check",
+        "--base",
+        "main",
+        "--strict",
+        "--reviews",
+        &broken.display().to_string(),
+    ]);
+    assert_eq!(
+        run.code, 3,
+        "answers weeder cannot read are a run that never happened: {}",
+        run.stderr
+    );
+}
+
+/// The accepted finding as core renders it, from the findings and the approval
+/// the face hands in.
+#[test]
+fn an_accepted_finding_names_its_reviewers_and_commit() {
+    let mut accepted = finding(
+        "T1",
+        Level::Note,
+        "tests/a.rs",
+        3,
+        ["a went.", "less.", "restore it."],
+    );
+    accepted.suppressed = Some(Suppression {
+        rule: "T1".to_string(),
+        reason: "it moved to _the_ other tier".to_string(),
+        path: None,
+        line: None,
+        source: SuppressionSource::CommitTrailer,
+        original_level: Some(Level::Block),
+    });
+    let approval = Approval {
+        reviewers: vec!["another".to_string(), "one-reviewer".to_string()],
+        commit: "0123456789abcdef0123456789abcdef01234567".to_string(),
+    };
+    let body = Body::read(&comment::render(&[accepted], &page(Some(&approval))));
+    let item = body.items.first().expect("listed");
+    let line = item
+        .lines
+        .iter()
+        .find(|line| line.starts_with("Accepted by"))
+        .unwrap_or_else(|| panic!("{item:?}"));
+    assert!(
+        line.contains("one-reviewer") && line.contains("another"),
+        "{line}"
+    );
+    assert!(line.contains(&approval.commit), "{line}");
+    assert!(
+        line.contains("it moved to _the_ other tier"),
+        "the reason reads as written: {line}"
+    );
+    assert!(
+        body.paragraphs
+            .first()
+            .is_some_and(|said| said.contains("accepted")),
+        "the opening sentence counts it as accepted: {:?}",
+        body.paragraphs
     );
 }
 
@@ -424,6 +1209,73 @@ fn the_example_asks_for_what_the_comment_and_the_upload_need_and_nothing_else() 
     assert_eq!(
         runs, 0,
         "the example installs and runs weeder through the action alone"
+    );
+}
+
+fn step_script<'a>(action: &'a Value, id: &str) -> &'a str {
+    action["runs"]["steps"]
+        .as_array()
+        .and_then(|steps| steps.iter().find(|step| step["id"] == id))
+        .and_then(|step| step["run"].as_str())
+        .unwrap_or_else(|| panic!("the action has a `{id}` step that runs a script"))
+}
+
+/// The action reads the pull request's reviews and the permission of everyone
+/// who reviewed, over the API with the job's own token, and hands GitHub's
+/// answers to weeder, which decides; both judgements read the same answers, so
+/// the comment and the log cannot reach two verdicts.
+#[test]
+fn the_action_reads_the_reviews_and_each_reviewers_permission_and_weeder_decides() {
+    let action = action();
+    let review = step_script(&action, "review");
+    for read in ["pulls/$NUMBER/reviews", "collaborators/", "/permission"] {
+        assert!(
+            review.contains(read),
+            "the review step reads `{read}`:\n{review}"
+        );
+    }
+    let judge = step_script(&action, "judge");
+    assert_eq!(
+        judge.matches("\"${reviewed[@]}\"").count(),
+        2,
+        "both judgements are handed the reviews:\n{judge}"
+    );
+    let env = action["runs"]["steps"]
+        .as_array()
+        .and_then(|steps| steps.iter().find(|step| step["id"] == "judge"))
+        .map(|step| step["env"].clone())
+        .unwrap_or_default();
+    assert_eq!(env["REVIEWS"], "${{ steps.review.outputs.reviews }}");
+    assert_eq!(
+        env["BASE_REF"], "${{ github.event.pull_request.base.ref }}",
+        "the base is read from the payload, which a review's run carries too"
+    );
+}
+
+/// An approving review runs the action again, and so does withdrawing one.
+#[test]
+fn a_review_runs_the_action_again() {
+    for path in [
+        root().join("examples/ci/github.yml"),
+        root().join(".github/workflows/comment.yml"),
+    ] {
+        let workflow = yaml(&path);
+        assert_eq!(
+            workflow["on"]["pull_request_review"]["types"],
+            serde_json::json!(["submitted", "dismissed"]),
+            "{} runs on a review submitted or dismissed",
+            path.display()
+        );
+        assert!(
+            workflow["on"].get("pull_request").is_some(),
+            "{} still runs on every push",
+            path.display()
+        );
+    }
+    let text = std::fs::read_to_string(root().join("action.yml")).expect("action.yml reads");
+    assert!(
+        text.contains("pull_request_review"),
+        "the action documents the review trigger"
     );
 }
 
@@ -533,8 +1385,8 @@ fn the_action_is_steps_a_runner_runs_in_order_with_no_condition_to_skip_one() {
         .collect();
     assert_eq!(
         ids,
-        ["install", "judge", "summary", "comment", "upload", "verdict"],
-        "install, judge, then the summary, the comment and the upload, and the verdict last"
+        ["install", "review", "judge", "summary", "comment", "upload", "verdict"],
+        "install, read the reviews, judge, then the summary, the comment and the upload, and the verdict last"
     );
     for step in steps {
         assert!(
@@ -622,14 +1474,16 @@ mod running {
     fn expressions(
         runner: &Runner,
         archive: &str,
+        event: &Event,
         outputs: &BTreeMap<String, String>,
     ) -> BTreeMap<String, String> {
         let mut known: BTreeMap<String, String> = [
             ("inputs.token", ""),
             ("inputs.archive", archive),
             ("github.action_path", &root().display().to_string()),
-            ("github.base_ref", "main"),
-            ("github.event_name", "pull_request"),
+            ("github.base_ref", event.base_ref),
+            ("github.event_name", event.name),
+            ("github.event.pull_request.base.ref", "main"),
             ("github.server_url", "https://github.com"),
             ("github.repository", "someone/somewhere"),
             ("github.event.pull_request.number", "7"),
@@ -666,6 +1520,15 @@ mod running {
         }
     }
 
+    fn is_a_step_output(expression: &str) -> bool {
+        let words: Vec<&str> = expression.split('.').collect();
+        let action = action();
+        matches!(words.as_slice(), ["steps", id, "outputs", _]
+            if action["runs"]["steps"]
+                .as_array()
+                .is_some_and(|steps| steps.iter().any(|step| step["id"] == *id)))
+    }
+
     fn resolve(text: &str, known: &BTreeMap<String, String>) -> String {
         let mut out = String::new();
         let mut rest = text;
@@ -674,9 +1537,13 @@ mod running {
             let after = &rest[start + 3..];
             let end = after.find("}}").expect("an expression closes");
             let expression = after[..end].trim();
-            let value = known.get(expression).unwrap_or_else(|| {
-                panic!("the action uses `{expression}`, which this run cannot fill in")
-            });
+            // An output a step of this action never wrote reads as nothing, as
+            // GitHub reads it.
+            let value = match known.get(expression) {
+                Some(value) => value.as_str(),
+                None if is_a_step_output(expression) => "",
+                None => panic!("the action uses `{expression}`, which this run cannot fill in"),
+            };
             out.push_str(value);
             rest = &after[end + 2..];
         }
@@ -686,8 +1553,44 @@ mod running {
 
     /// The action's steps run in the repository, each one only if the one
     /// before it passed, the way a composite action runs them.
+    /// The event a run was started by, as GitHub names it, and the base ref
+    /// its context carries: `github.base_ref` is filled for `pull_request` and
+    /// left empty for `pull_request_review`, whose payload still names the
+    /// pull request's base.
+    struct Event {
+        name: &'static str,
+        base_ref: &'static str,
+    }
+
+    const PULL_REQUEST: Event = Event {
+        name: "pull_request",
+        base_ref: "main",
+    };
+
+    const REVIEW: Event = Event {
+        name: "pull_request_review",
+        base_ref: "",
+    };
+
     fn run_action(runner: &Runner, repo: &Repo, archive: &str) -> Vec<Step> {
-        repo.git(&["update-ref", "refs/remotes/origin/main", "HEAD"]);
+        run_action_on(runner, repo, archive, &PULL_REQUEST)
+    }
+
+    fn run_action_on(runner: &Runner, repo: &Repo, archive: &str, event: &Event) -> Vec<Step> {
+        // A fixture's pull request is its working tree over HEAD; a history
+        // that already names its base keeps it.
+        if repo
+            .try_git(&[
+                "rev-parse",
+                "--verify",
+                "--quiet",
+                "refs/remotes/origin/main",
+            ])
+            .code
+            != 0
+        {
+            repo.git(&["update-ref", "refs/remotes/origin/main", "HEAD"]);
+        }
         let action = action();
         let mut outputs: BTreeMap<String, String> = BTreeMap::new();
         let mut ran = Vec::new();
@@ -703,7 +1606,7 @@ mod running {
             if step.get("uses").is_some() {
                 continue;
             }
-            let known = expressions(runner, archive, &outputs);
+            let known = expressions(runner, archive, event, &outputs);
             let script = runner.file(&format!("step-{at}.sh"));
             // A runner hands a step to `bash --noprofile --norc -eo pipefail`;
             // the options are written into the script, so the harness's bash
@@ -812,7 +1715,7 @@ mod running {
         );
         assert_eq!(
             ids(&ran),
-            ["install", "judge", "summary", "comment", "verdict"]
+            ["install", "review", "judge", "summary", "comment", "verdict"]
         );
         assert_eq!(step(&ran, "verdict").code, 0);
     }
@@ -866,7 +1769,7 @@ mod running {
 
         assert_eq!(
             ids(&ran),
-            ["install", "judge", "summary", "comment", "verdict"]
+            ["install", "review", "judge", "summary", "comment", "verdict"]
         );
         assert_eq!(
             step(&ran, "judge").code,
@@ -910,7 +1813,7 @@ mod running {
 
         assert_eq!(
             ids(&ran),
-            ["install", "judge", "summary", "comment", "verdict"]
+            ["install", "review", "judge", "summary", "comment", "verdict"]
         );
         assert!(
             runner.read("summary.md").contains("could not judge"),
@@ -918,6 +1821,62 @@ mod running {
             runner.read("summary.md")
         );
         assert_eq!(step(&ran, "verdict").code, 3);
+    }
+
+    /// An approving review starts the action again, and that run's context has
+    /// no `github.base_ref`: GitHub fills it for `pull_request` alone. The
+    /// pull request in the review's payload still names its base, and the
+    /// checkout is the same merge ref a push gets, so the run judges the same
+    /// change the same way.
+    #[test]
+    fn a_run_a_review_started_judges_the_change_a_push_would() {
+        for (case, verdict) in [("fire", 2), ("silent", 0)] {
+            let runner = Runner::new();
+            let repo = fixture("T1", "rs", case);
+            let ran = run_action_on(&runner, &repo, &runner.archive, &REVIEW);
+            assert_eq!(
+                ids(&ran),
+                ["install", "review", "judge", "summary", "comment", "verdict"],
+                "{}",
+                ran.iter()
+                    .map(|step| format!("{}: {}{}", step.id, step.stdout, step.stderr))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            );
+            assert_eq!(
+                step(&ran, "judge").code,
+                0,
+                "{}",
+                step(&ran, "judge").stdout
+            );
+            assert_eq!(step(&ran, "verdict").code, verdict, "the {case} fixture");
+        }
+    }
+
+    /// With no token the reviews cannot be read, so nothing is accepted: the
+    /// trailer's reason is shown and the block stands. The step says why and
+    /// never fails the job itself.
+    #[test]
+    fn reviews_nobody_could_read_accept_nothing() {
+        let runner = Runner::new();
+        let repo = deleting_a_suite(ALLOWED);
+        repo.git(&["update-ref", "refs/remotes/origin/main", "main"]);
+        let ran = run_action(&runner, &repo, &runner.archive);
+        let review = step(&ran, "review");
+        assert_eq!(review.code, 0, "{}{}", review.stdout, review.stderr);
+        assert!(
+            review.stdout.contains("no review was read"),
+            "the step says it read no review: {}",
+            review.stdout
+        );
+        assert_eq!(step(&ran, "verdict").code, 2);
+        assert!(
+            runner
+                .read("summary.md")
+                .contains("the cases moved to the integration tier"),
+            "the summary shows the reason waiting on an approval:\n{}",
+            runner.read("summary.md")
+        );
     }
 
     #[test]
@@ -963,6 +1922,8 @@ mod running {
 struct Body {
     hidden: Vec<String>,
     prose: String,
+    /// The prose outside any list, a paragraph at a time.
+    paragraphs: Vec<String>,
     items: Vec<Item>,
 }
 
@@ -976,6 +1937,20 @@ struct Item {
     strong: Vec<String>,
     /// Each link's destination and the text it shows.
     links: Vec<(String, String)>,
+    /// What the item shows, a line at a time: a hard break or the end of a
+    /// paragraph ends one.
+    lines: Vec<String>,
+}
+
+impl Item {
+    /// The links into the judged commit's files, the places a finding names.
+    fn places(&self) -> Vec<(String, String)> {
+        self.links
+            .iter()
+            .filter(|link| link.0.starts_with(LINKS))
+            .cloned()
+            .collect()
+    }
 }
 
 impl Body {
@@ -984,10 +1959,16 @@ impl Body {
         let mut item: Option<Item> = None;
         let mut strong = false;
         let mut link: Option<(String, String)> = None;
+        // Whether the last line or paragraph has ended, so the next text starts
+        // a new one.
+        let mut ended = true;
         for event in Parser::new(markdown) {
             match event {
                 Event::Html(html) | Event::InlineHtml(html) => body.hidden.push(html.to_string()),
-                Event::Start(Tag::Item) => item = Some(Item::default()),
+                Event::Start(Tag::Item) => {
+                    item = Some(Item::default());
+                    ended = true;
+                }
                 Event::End(TagEnd::Item) => body.items.extend(item.take()),
                 Event::Start(Tag::Strong) => strong = true,
                 Event::End(TagEnd::Strong) => strong = false,
@@ -1008,6 +1989,11 @@ impl Body {
                     match item.as_mut() {
                         Some(item) => {
                             item.text.push_str(&text);
+                            match item.lines.last_mut() {
+                                Some(line) if !ended => line.push_str(&text),
+                                _ => item.lines.push(text.clone()),
+                            }
+                            ended = false;
                             if code {
                                 item.codes.push(text);
                             } else {
@@ -1017,19 +2003,55 @@ impl Body {
                                 item.plain.push(text);
                             }
                         }
-                        None => body.prose.push_str(&text),
+                        None => {
+                            body.prose.push_str(&text);
+                            match body.paragraphs.last_mut() {
+                                Some(paragraph) if !ended => paragraph.push_str(&text),
+                                _ => body.paragraphs.push(text.clone()),
+                            }
+                            ended = false;
+                        }
                     }
                 }
-                Event::SoftBreak | Event::HardBreak => match item.as_mut() {
-                    Some(item) => item.text.push(' '),
-                    None => body.prose.push(' '),
+                Event::SoftBreak => match item.as_mut() {
+                    Some(item) => {
+                        item.text.push(' ');
+                        if let Some(line) = item.lines.last_mut() {
+                            line.push(' ');
+                        }
+                    }
+                    None => {
+                        body.prose.push(' ');
+                        if let Some(paragraph) = body.paragraphs.last_mut() {
+                            paragraph.push(' ');
+                        }
+                    }
                 },
-                Event::End(TagEnd::Paragraph) if item.is_none() => body.prose.push(' '),
+                Event::HardBreak => {
+                    match item.as_mut() {
+                        Some(item) => item.text.push(' '),
+                        None => body.prose.push(' '),
+                    }
+                    ended = true;
+                }
+                Event::End(TagEnd::Paragraph) => {
+                    match item.as_mut() {
+                        Some(item) => item.text.push(' '),
+                        None => body.prose.push(' '),
+                    }
+                    ended = true;
+                }
                 _ => {}
             }
         }
         body
     }
+}
+
+/// A message as a reader sees it, with the case of its letters set aside: the
+/// comment opens each line of a finding with a capital, and the log does not.
+fn folded(text: &str) -> String {
+    unticked(text).to_lowercase()
 }
 
 /// What a reader sees of a message, which is the message without the backticks

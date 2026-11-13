@@ -60,6 +60,9 @@ on = workflow.get("on", workflow.get(True)) or {}
 events = [on] if isinstance(on, str) else list(on)
 if "pull_request" not in events:
     complaints.append(f"{path} does not run on pull_request")
+review = on.get("pull_request_review") if isinstance(on, dict) else None
+if (review or {}).get("types") != ["submitted", "dismissed"]:
+    complaints.append(f"{path} does not run again on a review submitted or dismissed, so an approval at the head never lets an allowed block through")
 if "pull_request_target" in events:
     complaints.append(f"{path} runs on pull_request_target, which hands a fork's code a token that can write")
 
@@ -89,8 +92,8 @@ for name, job in jobs.items():
 
 steps = (action.get("runs") or {}).get("steps") or []
 ids = [step.get("id") for step in steps]
-if ids != ["install", "judge", "summary", "comment", "upload", "verdict"]:
-    complaints.append(f"action.yml runs {ids}, and it installs, judges, writes the summary, the comment and the upload, and decides last")
+if ids != ["install", "review", "judge", "summary", "comment", "upload", "verdict"]:
+    complaints.append(f"action.yml runs {ids}, and it installs, reads the reviews, judges, writes the summary, the comment and the upload, and decides last")
 upload = next((step for step in steps if step.get("id") == "upload"), {})
 condition = " ".join(str(upload.get("if", "")).split())
 for clause in ("inputs.code-scanning == 'on'", "inputs.code-scanning == 'auto'",
@@ -111,7 +114,7 @@ for complaint in complaints:
     print(complaint, file=sys.stderr)
 if complaints:
     raise SystemExit(1)
-print(f"{path} runs jahala/weeder@v{version} with contents: read, pull-requests: write and security-events: write, and uploads where code scanning can take it")
+print(f"{path} runs jahala/weeder@v{version} on pull requests and their reviews with contents: read, pull-requests: write and security-events: write, and uploads where code scanning can take it")
 PY
 
 [ "$status" -eq 0 ] || exit "$status"
@@ -237,6 +240,7 @@ def run(label, workspace, chosen, only=None):
             "github.action_path": root,
             "github.base_ref": BASE,
             "github.event_name": "pull_request",
+            "github.event.pull_request.base.ref": BASE,
             "github.server_url": "https://github.com",
             "github.repository": "someone/somewhere",
             "github.event.pull_request.number": "1",
@@ -249,6 +253,12 @@ def run(label, workspace, chosen, only=None):
 
         def fill(found):
             expression = found.group(1).strip()
+            # An output a step of this action never wrote reads as nothing, as
+            # GitHub reads it.
+            words = expression.split(".")
+            if expression not in known and len(words) == 4 and words[0] == "steps" \
+                    and words[2] == "outputs" and words[1] in [step.get("id") for step in steps]:
+                return ""
             if expression not in known:
                 raise SystemExit(f"action.yml uses `${{{{ {expression} }}}}`, which this run cannot fill in")
             return known[expression]
@@ -315,7 +325,7 @@ if f"weeder {version}" not in said["install"]:
 # This tree's weeder, through the whole action.
 for label, workspace, verdict in (("blocked", blocked, 2), ("clean", clean, 0)):
     codes, said, summary = run(label, workspace, archive)
-    if list(codes) != ["install", "judge", "summary", "comment", "verdict"]:
+    if list(codes) != ["install", "review", "judge", "summary", "comment", "verdict"]:
         complaints.append(f"the {label} pull request ran {list(codes)}:\n{json.dumps(said, indent=1)}")
         continue
     if codes["verdict"] != verdict:

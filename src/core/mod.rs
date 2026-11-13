@@ -16,6 +16,7 @@ pub mod law;
 pub mod pattern;
 pub mod read;
 pub mod registry;
+pub mod review;
 pub mod rules;
 pub mod sarif;
 pub mod shell;

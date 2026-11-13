@@ -904,6 +904,7 @@ fn judgement(
         untracked: None,
         strict: true,
         honour_trailers: true,
+        reviews: None,
         format: check::Output::Table,
         config: None,
         message_file: None,

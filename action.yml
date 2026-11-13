@@ -18,6 +18,17 @@ branding:
 # cannot be written; the job summary carries the same text, and weeder's exit
 # code decides the job either way. Never run this on `pull_request_target`,
 # which would hand the fork's code a token that can write.
+#
+# A false block is let through with two keys. Whoever wrote the change states
+# the reason in a `Weeder-allow: <RULE> <reason>` trailer on one of its
+# commits, and a person with write access accepts it by approving the pull
+# request at its newest commit. Run the workflow on reviews too, so an
+# approval, or its dismissal, judges again:
+#
+#   on:
+#     pull_request:
+#     pull_request_review:
+#       types: [submitted, dismissed]
 
 inputs:
   token:
@@ -94,32 +105,82 @@ runs:
         echo "$directory/bin" >> "$GITHUB_PATH"
         echo "weeder=$directory/bin/$binary" >> "$GITHUB_OUTPUT"
 
+    # The second key, read rather than decided: every review of the pull
+    # request and the permission of everyone who reviewed, as GitHub answers
+    # them, read with the job's own token. weeder decides what they amount to.
+    # Reviews that cannot be read accept nothing, so the step says why and
+    # never fails the job itself.
+    - id: review
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        SERVER_URL: ${{ github.server_url }}
+        REPOSITORY: ${{ github.repository }}
+        NUMBER: ${{ github.event.pull_request.number }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      run: |
+        unread() {
+          echo "::notice title=weeder::$1 so no review was read, and a Weeder-allow trailer is not accepted on this run."
+          exit 0
+        }
+        [ -n "$GH_TOKEN" ] || unread "no token was given,"
+        [ -n "$NUMBER" ] || unread "this run names no pull request,"
+        command -v gh >/dev/null 2>&1 || unread "gh is not on this runner's PATH,"
+        export GH_HOST="${SERVER_URL#https://}"
+        directory="$RUNNER_TEMP/weeder-review"
+        mkdir -p "$directory"
+        gh api --paginate "repos/$REPOSITORY/pulls/$NUMBER/reviews" --jq '.[]' > "$directory/reviews.jsonl" \
+          || unread "weeder could not read this pull request's reviews,"
+        : > "$directory/permissions.jsonl"
+        # gh writes an error's own answer to stdout, so an answer joins the
+        # others only once its read succeeded.
+        while IFS= read -r login; do
+          if answer="$(gh api "repos/$REPOSITORY/collaborators/$login/permission")"; then
+            printf '%s\n' "$answer" >> "$directory/permissions.jsonl"
+          else
+            echo "::notice title=weeder::weeder could not read the permission of reviewer $login, so their review accepts nothing."
+          fi
+        done < <(jq -rs '[.[].user.login // empty] | unique | .[] | @uri' "$directory/reviews.jsonl")
+        jq -n --arg head "$HEAD_SHA" \
+          --slurpfile reviews "$directory/reviews.jsonl" \
+          --slurpfile permissions "$directory/permissions.jsonl" \
+          '{head: $head, reviews: $reviews, permissions: $permissions}' > "$directory/reviews.json"
+        echo "weeder read $(jq '.reviews | length' "$directory/reviews.json") reviews of pull request $NUMBER for $HEAD_SHA."
+        echo "reviews=$directory/reviews.json" >> "$GITHUB_OUTPUT"
+
     # The verdict is recorded rather than acted on here, so the summary and the
     # comment are written whatever weeder decided. The last step acts on it.
+    # The base comes from the pull request in the payload, which a review's run
+    # carries too: GitHub fills `github.base_ref` for `pull_request` alone.
     - id: judge
       shell: bash
       env:
         WEEDER: ${{ steps.install.outputs.weeder }}
         EVENT: ${{ github.event_name }}
-        BASE_REF: ${{ github.base_ref }}
+        BASE_REF: ${{ github.event.pull_request.base.ref }}
         SERVER_URL: ${{ github.server_url }}
         REPOSITORY: ${{ github.repository }}
         HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        REVIEWS: ${{ steps.review.outputs.reviews }}
       run: |
         if [ -z "$BASE_REF" ]; then
-          echo "::error title=weeder::this action judges a pull request, and this run was started by $EVENT. run it on pull_request."
+          echo "::error title=weeder::this action judges a pull request, and this run was started by $EVENT. run it on pull_request and pull_request_review."
           exit 3
+        fi
+        reviewed=()
+        if [ -n "$REVIEWS" ]; then
+          reviewed=(--reviews "$REVIEWS")
         fi
         body="$RUNNER_TEMP/weeder-comment.md"
         sarif="$RUNNER_TEMP/weeder.sarif"
         code=0
-        "$WEEDER" check --base "origin/$BASE_REF" --strict --format markdown \
+        "$WEEDER" check --base "origin/$BASE_REF" --strict "${reviewed[@]}" --format markdown \
           --link-base "$SERVER_URL/$REPOSITORY/blob/$HEAD_SHA" > "$body" || code=$?
         # The same judgement as SARIF, for code scanning. The same change gives
         # the same verdict in either format, so two that differ mean weeder
         # could not be trusted to have judged, and the job is refused.
         sarif_code=0
-        "$WEEDER" check --base "origin/$BASE_REF" --strict --format sarif > "$sarif" || sarif_code=$?
+        "$WEEDER" check --base "origin/$BASE_REF" --strict "${reviewed[@]}" --format sarif > "$sarif" || sarif_code=$?
         if [ "$sarif_code" != "$code" ]; then
           echo "::error title=weeder::the SARIF judgement ended with $sarif_code and the comment's with $code, and one change gives one verdict. report it."
           code=3

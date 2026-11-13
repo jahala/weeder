@@ -238,6 +238,7 @@ pub fn replay_case_in(
         // honour is not honoured here either: every allowance is reported at its
         // own level, trailer and marker alike.
         honour_trailers: false,
+        reviews: None,
         format: check::Output::Sarif,
         config: planted.config.as_ref().map(|_| config),
         message_file: None,

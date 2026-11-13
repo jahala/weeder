@@ -13,9 +13,12 @@ name: Comment
 # the other half: the body goes to the job summary and the job is decided by
 # weeder's exit code alone. scripts/check/action-comment.sh reads both from
 # GitHub. Never `pull_request_target`, which would hand a fork's code a token
-# that can write.
+# that can write. A review submitted or dismissed runs it again, as the example
+# does, because an approval at the head is the second key a trailer needs.
 on:
   pull_request:
+  pull_request_review:
+    types: [submitted, dismissed]
 
 permissions:
   contents: read

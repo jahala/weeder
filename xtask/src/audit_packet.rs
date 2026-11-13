@@ -394,6 +394,7 @@ fn blocked_findings(
         // honour is not honoured here either: every allowance is reported at its
         // own level, trailer and marker alike.
         honour_trailers: false,
+        reviews: None,
         format: check::Output::Sarif,
         config: None,
         message_file: None,
