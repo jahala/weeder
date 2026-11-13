@@ -136,8 +136,15 @@ fn every_result_is_listed_blocks_first_with_its_rule_level_message_and_link() {
                 .is_some_and(|headline| headline.contains(level)),
             "the item names its level `{level}`: {item:?}"
         );
+        // A what that only repeats the rule's short description is said by
+        // the headline, so the message is carried whole, or its first
+        // sentence by the headline and the rest by the lines under it.
+        let (what, rest) = message.split_once(". ").unwrap_or((message, ""));
+        let headline = item.lines.first().map(String::as_str).unwrap_or_default();
         assert!(
-            folded(&item.text).contains(&folded(message)),
+            folded(&item.text).contains(&folded(message))
+                || (folded(headline).starts_with(&folded(what.trim_end_matches('.')))
+                    && folded(&item.text).contains(&folded(rest))),
             "the item carries the message as the reader sees it.\nitem:    {}\nmessage: {message}",
             item.text
         );
@@ -473,6 +480,50 @@ fn each_finding_opens_with_a_headline_naming_its_rule_and_level() {
 /// own, each opening with a capital, rendered from the finding's own three
 /// parts. weeder's own name stays lowercase wherever it stands, as its voice
 /// says.
+/// A finding whose what is only its rule's short description says it once,
+/// in the headline, rather than twice in a row. A what that says more than the
+/// headline keeps its line.
+#[test]
+fn a_what_that_only_repeats_the_headline_is_said_once() {
+    let findings = [
+        finding(
+            "C3",
+            Level::Warn,
+            ".github/workflows/build.yml",
+            1,
+            [
+                "a workflow was changed.",
+                "this file decides which checks a server runs.",
+                "read the diff.",
+            ],
+        ),
+        finding(
+            "T1",
+            Level::Block,
+            "tests/a.rs",
+            3,
+            [
+                "a test file was deleted, and it held 4 cases.",
+                "a suite that is gone reports nothing.",
+                "restore the file.",
+            ],
+        ),
+    ];
+    let body = comment::render(&findings, &page(None));
+    let said = body
+        .to_lowercase()
+        .matches("a workflow was changed")
+        .count();
+    assert_eq!(
+        said, 1,
+        "the headline says it, and no line says it again:\n{body}"
+    );
+    assert!(
+        body.contains("A test file was deleted, and it held 4 cases."),
+        "a what that says more than the headline keeps its line:\n{body}"
+    );
+}
+
 #[test]
 fn what_why_and_next_stand_on_lines_of_their_own_each_opening_with_a_capital() {
     let findings = [

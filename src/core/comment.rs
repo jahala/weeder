@@ -189,11 +189,16 @@ fn item(finding: &Finding, standing: &Standing, page: &Page) -> String {
     };
 
     let mut lines = vec![headline, place(finding, page.links)];
+    let parts = parts(finding);
+    // A what that is only the rule's short description has been said by the
+    // headline, and saying it again on the next line reads as a stutter.
+    let repeats = |part: &str| rule.is_some_and(|rule| said_alike(part, rule.short_description));
     lines.extend(
-        parts(finding)
+        parts
             .iter()
-            .filter(|part| !part.is_empty())
-            .map(|part| capital(paragraph(part))),
+            .enumerate()
+            .filter(|(at, part)| !part.is_empty() && !(*at == 0 && repeats(part)))
+            .map(|(_, part)| capital(paragraph(part))),
     );
     lines.extend(allowance(finding, standing));
     if rule.is_some() {
@@ -203,6 +208,13 @@ fn item(finding: &Finding, standing: &Standing, page: &Page) -> String {
         ));
     }
     format!("- {}\n", lines.join("\\\n  "))
+}
+
+/// Whether two sentences say the same words, whatever their case and their
+/// closing full stop.
+fn said_alike(left: &str, right: &str) -> bool {
+    let bare = |text: &str| text.trim().trim_end_matches('.').to_lowercase();
+    bare(left) == bare(right)
 }
 
 /// The level an allowed finding would have reported at.
