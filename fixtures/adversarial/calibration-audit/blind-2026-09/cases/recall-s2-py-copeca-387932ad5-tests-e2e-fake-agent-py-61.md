@@ -14,7 +14,7 @@ Rule: S2
 Catalogue:
 
 ```text
-S2  warn   check  none                                 An error was swallowed
+S2   warn   check  none                                 An error was swallowed
 ```
 
 Weeder findings:

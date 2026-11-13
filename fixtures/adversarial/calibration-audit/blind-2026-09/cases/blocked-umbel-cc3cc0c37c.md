@@ -14,7 +14,7 @@ Rules: S1
 Catalogue:
 
 ```text
-S1  block  check  none                                 A stub or a TODO reached production code
+S1   block  check  none                                 A stub or a TODO reached production code
 ```
 
 Weeder findings:

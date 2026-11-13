@@ -14,7 +14,7 @@ Rule: T1
 Catalogue:
 
 ```text
-T1  block  check  none                                 A test was deleted
+T1   block  check  none                                 A test was deleted
 ```
 
 Weeder findings:

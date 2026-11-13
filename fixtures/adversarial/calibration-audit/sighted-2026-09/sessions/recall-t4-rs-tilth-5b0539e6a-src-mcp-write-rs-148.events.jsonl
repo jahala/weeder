@@ -1,2 +1,2 @@
-{"type": "input", "case": "recall:T4:rs:tilth:5b0539e6a:src/mcp/write.rs:148", "sha256": "9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered report SHA-256: 9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4\nVerdict: miss\nReasoning: A wait widened from 1 to 10 matches T4's tolerance-widening shape, and weeder did not report it at that site."}
+{"type": "input", "case": "recall:T4:rs:tilth:5b0539e6a:src/mcp/write.rs:148", "sha256": "955facc898432909dc1ae23c9715a9a2fae83c35c5decfc7691490a82ff91461", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered report SHA-256: 955facc898432909dc1ae23c9715a9a2fae83c35c5decfc7691490a82ff91461\nVerdict: miss\nReasoning: A wait value widened from 1 to 10 is a timeout being widened, which is T4's shape, and weeder reported nothing at that site."}

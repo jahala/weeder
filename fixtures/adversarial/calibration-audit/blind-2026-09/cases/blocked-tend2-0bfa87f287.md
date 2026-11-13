@@ -14,7 +14,7 @@ Rules: C1
 Catalogue:
 
 ```text
-C1  block  check  none                                 A guardrail file was edited
+C1   block  check  none                                 A guardrail file was edited
 ```
 
 Weeder findings:

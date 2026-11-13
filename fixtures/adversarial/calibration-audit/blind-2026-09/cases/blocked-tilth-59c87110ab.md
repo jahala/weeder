@@ -14,8 +14,8 @@ Rules: T1, T2
 Catalogue:
 
 ```text
-T1  block  check  none                                 A test was deleted
-T2  block  check  none                                 Assertions were dropped from a changed test file
+T1   block  check  none                                 A test was deleted
+T2   block  check  none                                 Assertions were dropped from a changed test file
 ```
 
 Weeder findings:

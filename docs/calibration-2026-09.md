@@ -1,8 +1,8 @@
 # calibration: weeder over real history, 2026-09
 
-weeder ships as a gate, pending the independent re-grade: over 635 commits of real history in 5 repositories it blocked 24, of which 1 were block-level false positives, 0.16 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level, and the classification under it untrusted until a re-grade agrees at the bar. The re-grade behind it is a sighted one: docs/calibration-audit-2026-09.md declares `Blind: no`, so its auditor could read the builder's class beside each case before judging. The blind re-grade in docs/calibration-audit-blind-2026-09.md is under the bar, so no blind agreement stands behind this number yet.
+weeder ships as a gate, pending the independent re-grade: over 635 commits of real history in 5 repositories it blocked 27, of which 1 were block-level false positives, 0.16 percent of the commits judged and under the two percent bar, with T1, T2, T3 and S1 all still at block level, and the classification under it untrusted until a re-grade agrees at the bar. The re-grade behind it is a sighted one: docs/calibration-audit-2026-09.md declares `Blind: no`, so its auditor could read the builder's class beside each case before judging. The blind re-grade in docs/calibration-audit-blind-2026-09.md is under the bar, so no blind agreement stands behind this number yet.
 
-The classification under that number is the builder's own, and the re-grade is under the 90 percent bar: blocked commits in docs/calibration-audit-blind-2026-09.md agrees on 85.0 percent of 20 cases. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing. The floor under that share is 0.47 percent, 3 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 0.16 percent, 1 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table. Both numbers stay in this file: under the three classes in use before the ruling of 2026-09-06 the same 23 blocked commits counted 7 false positives, 1.10 percent, and under it, where a blocked commit is claim-true or claim-false and `acceptable` is a label the audit never counts, they count 4, 0.63 percent. The definition changed on that date and the question was corrected, not the goalpost moved.
+The classification under that number is the builder's own, and the re-grade is under the 90 percent bar: blocked commits in docs/calibration-audit-blind-2026-09.md agrees on 85.0 percent of 20 cases. The verdict stands as provisional until an agreement of 90 percent or better is recorded on every sample the re-grade draws. `cargo xtask calibrate` writes this sentence from that file, so editing this one changes nothing. The floor under that share is 0.63 percent, 4 of the 635 commits judged, with every `false-positive` verdict the blind re-grade in docs/calibration-audit-blind-2026-09.md recorded taken as true; the ledger's own reading is 0.16 percent, 1 of the same 635. The floor is the harshest reading this file records, and `cargo xtask calibrate` draws it from that re-grade's table. Both numbers stay in this file: under the three classes in use before the ruling of 2026-09-06 the same 23 blocked commits counted 7 false positives, 1.10 percent, and under it, where a blocked commit is claim-true or claim-false and `acceptable` is a label the audit never counts, they count 4, 0.63 percent. The definition changed on that date and the question was corrected, not the goalpost moved.
 
 ## How this was measured
 
@@ -29,25 +29,31 @@ No `weeder.toml` was passed and none was read: every rule ran at the level the c
 | C1 | block | A guardrail file was edited |
 | C2 | warn | An ignore file was broadened over source or tests |
 | C3 | warn | A workflow was changed |
+| C4 | block | A gate was loosened in its own settings |
 | D1 | warn | A dependency manifest changed |
 | D2 | block | An import crossed a forbidden boundary |
 | G1 | block | A conflict marker was committed |
 | G2 | warn | A large or a binary file was added |
-| M1 | warn | A test mocks the unit under change |
+| G3 | block | A control character was added to a text source file |
+| M1 | warn | A test mocks the unit it should exercise |
 | S2 | warn | An error was swallowed |
 | S3 | warn | A debug leftover reached production code |
 | S4 | warn | Production code was added that only its tests call |
+| T10 | warn | An added test restates a constant of the code |
+| T11 | warn | An added test asserts only on its own double |
+| T12 | warn | An added test only checks that its input came back |
 | T4 | warn | A tolerance or a timeout was widened |
 | T5 | warn | Expected values were regenerated |
 | T6 | warn | An error assertion was weakened |
 | T7 | block | A rename took a test out of the runner |
 | T8 | block | A configuration line took a test out of the run |
+| T9 | warn | A test case was added with no assertion |
 | X1 | block | A secret-looking string was added |
 | X2 | block | A file outside the scope was touched |
 
 No commit in the corpus carried a `weeder.toml` of its own, so no repository moved a rule off the level above.
 
-## tilth, 200 commits judged, 8 blocked, 70 warned
+## tilth, 200 commits judged, 8 blocked, 72 warned
 
 The window ends at `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905`, fetched from `https://github.com/jahala/tilth.git`: the last 200 commits reaching it that are not merges, 200 of which have a parent to be judged against.
 
@@ -62,36 +68,39 @@ The window ends at `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905`, fetched from `htt
 | `d422a325fc` refactor(install): fold entry style into ConfigFormat as JsonLocal variant | T2 | acceptable | T2 says src/install.rs went from 66 assertions to 65, and it did. The one that went checked the entry_style field this commit folds into ConfigFormat, and the JsonLocal match that replaces it is asserted in the same case. |
 | `bd36a43637` index: drop inert SymbolIndex plumbing | T1 | acceptable | T1 says src/index/symbol.rs went with 6 cases, and it did. SymbolIndex was allocated and threaded through the searches and never consulted, and this commit deletes the type; the cases exercised the dead allocator, so what they covered stopped existing in the same breath. A file of tests leaving the tree is worth reading either way. |
 
-## pleach, 152 commits judged, 3 blocked, 33 warned
+## pleach, 152 commits judged, 4 blocked, 46 warned
 
 The window ends at `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9`, fetched from `https://github.com/jahala/pleach.git`: the last 153 commits reaching it that are not merges, 152 of which have a parent to be judged against.
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
 | `624529b3a9` feat(loop): the hygiene gate — empty-diff, secrets, deletion tripwire (§E) | X1 | false positive | X1 says a private key block was added to src/core/hygiene.ts and to test/unit/hygiene.test.ts, and that a credential in a commit is a credential published. Both hits are the regular expression that pleach's own secret detector matches a private key header with, and its fixture. There is no credential to rotate. |
+| `8650b07b1d` feat(examples): three ways to run pleach — umbel, direct-CLI, embedded SDK | G3 | true positive | G3 says a NUL was added and git now reads the file as binary, and it is so: examples/three-ways/03-library/run.ts joins a set with a raw NUL typed inside the string where the escape `\0` was meant, so every later change to that source file reads `Binary files differ` and no reviewer sees its lines. First blocked on 2026-11-13, by G3 (#22). |
 | `76207691f3` docs(tend): sync the garden to the adapters refactor | C1 | acceptable | C1 says the non-negotiables section of .claude/CLAUDE.md changed, and it did: the adapters refactor rewords the strict-downward-deps rule to name adapters beside seams and faces, and drops the rctrl binary from the requirements line. The seven rule headings are the same before and after, and none of them says less. First blocked on 2026-11-05, when C1 began reading a non-negotiables heading (#77). |
 | `2515d2ac88` docs(tend): audit garden features + refresh project docs | C1 | acceptable | C1 says the non-negotiables section of .claude/CLAUDE.md changed, and it did: this commit writes the section, seven rules from test-first to green-before-merge, into a file that had none. A law arriving is worth a person's eye, and nothing was loosened. First blocked on 2026-11-05 (#77). |
 
-## tend2, 200 commits judged, 6 blocked, 35 warned
+## tend2, 200 commits judged, 8 blocked, 40 warned
 
 The window ends at `51035a5c827b1a8c2f49049f07487dcfac9036c6`, fetched from `https://github.com/jahala/tend.git`: the last 200 commits reaching it that are not merges, 200 of which have a parent to be judged against.
 
 | Commit | Rules at block level | Classification | Why |
 |---|---|---|---|
+| `28cc632070` pleach: casting verified (done) | G3 | true positive | G3 says a NUL was added and git now reads the file as binary, and it is so: src/run/casting.ts builds a cell key with raw NULs typed inside a template literal where `\0` was meant. This is the file #22 was filed from: a later three-line change to it went through review as `Binary files differ`. First blocked on 2026-11-13, by G3. |
 | `067730ddd0` polish(audit): the obsolete-and-theater sweep — seven findings, all fixed | T2 | acceptable | T2 says test/renderer-fresh.test.ts went from 5 assertions to 4, and it did. The one that went demanded dist/loop.js and dist/loop.global.js be byte-identical, and this commit stops emitting the second file; the case still demands the GENERATED banner and the css header. An assertion cannot hold a file that is no longer built. |
 | `bf2754689c` polish(cli): one orientation command, one asset convention (#102) | T1 | acceptable | T1 says test/season.test.ts went with 4 cases, and it did. The season command it tested is removed by the same commit, which folds orientation into one command with its own tests, so the cases went where the feature went. A suite leaving the tree is worth a person's eye. |
+| `ae7e0ddf32` feat(briefing): a failure leaves a briefing, not a corpse (#77 + #80) | G3 | true positive | G3 says a NUL was added and git now reads the file as binary, and it is so: src/run/ingest.ts keys a set of failures with a raw NUL typed inside a template literal where `\0` was meant, which hides every later diff of the file from review. First blocked on 2026-11-13, by G3. |
 | `08529d5f56` sunset(v1): the legacy lane leaves the tree — @plotplot/tend2 ships tend2 only | C1, T1 | acceptable | T1 says forty-odd test files went with thousands of cases, and they did. This is the v1 sunset: 240 files and 94763 lines out, the adapters, the CLI and the core they tested leaving in the same commit and recoverable at the v1-final tag. Nothing is less covered afterwards because nothing they covered is still shipped, and a deletion this size is what a gate should stop a reader on. |
 | `78fed73b0c` cleanup: bare necessities — killed-spike tree, skein prototype, root screenshots, v1-map parkland removed (all in git history; paid facet cache untouched on disk); superseded docs to docs/archive; docs/bridge restored after its drift-guard caught the move (load-bearing spec, not history) | T1 | acceptable | T1 says the spikes/loop-hole test files went with their cases, and they did. The spike was killed: 50 of its non-test files go in the same commit, so the code under those cases left with them. |
 | `2bb9d83f23` fix(loop-hole): briefing signal density — dismiss once, empty sections elide, unique headers (sonnet, SYN-D, chain-gated) | T2 | acceptable | T2 says spikes/loop-hole/tests/briefing-v3.spec.ts went from 23 claims to 19, and it did: the case loops over the section headings, and each empty section used to be held to its heading and two lines of 'cleared the floor' text, where now it is held to the heading's absence. The commit makes empty sections elide, and the case was rewritten to demand exactly that, with a new claim that the scaffolding text is gone. The behaviour changed and the test follows it; nothing is watched less. First blocked on 2026-09-23, when T2 began counting a claim once per case its loop runs it for. |
 | `0bfa87f287` docs(tend2): repo identity flip phase 1 — README/CLAUDE.md/docs re-rooted v2-first, v1 legacy lane preserved (sonnet, #47, chain-gated) | C1 | acceptable | C1 says the section under `Never delete docs or research` in CLAUDE.md changed, and its lines did: the v2-first restructure moved it under the v1 legacy section and demoted it from ### to ####. Its text is the same, word for word. First blocked on 2026-11-05 (#77); the first reading of that run also blocked an edit under `The cockpit, never one number`, which C1 no longer reads as law. |
 
-## copeca, 25 commits judged, 0 blocked, 8 warned
+## copeca, 25 commits judged, 0 blocked, 10 warned
 
 The window ends at `fc9c5b9e5f34085755c10746f1d46fd46edf2945`, fetched from `https://github.com/jahala/copeca.git`: the last 26 commits reaching it that are not merges, 25 of which have a parent to be judged against. Fewer than 50 commits were judged, so this repository is reported and not judged on its own share.
 
 Nothing blocked.
 
-## umbel, 58 commits judged, 7 blocked, 15 warned
+## umbel, 58 commits judged, 7 blocked, 22 warned
 
 The window ends at `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d`, fetched from `https://github.com/jahala/umbel.git`: the last 59 commits reaching it that are not merges, 58 of which have a parent to be judged against.
 
@@ -109,16 +118,16 @@ The window ends at `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d`, fetched from `htt
 
 | Repo | Commits judged | Blocked | Warned | True positive | Acceptable | False positive | False-positive share |
 |---|---|---|---|---|---|---|---|
-| tilth | 200 | 8 | 70 | 1 | 7 | 0 | 0.00% |
-| pleach | 152 | 3 | 33 | 0 | 2 | 1 | 0.66% |
-| tend2 | 200 | 6 | 35 | 0 | 6 | 0 | 0.00% |
-| copeca | 25 | 0 | 8 | 0 | 0 | 0 | 0.00% |
-| umbel | 58 | 7 | 15 | 2 | 5 | 0 | 0.00% |
-| **pooled** | **635** | **24** | **161** | **3** | **20** | **1** | **0.16%** |
+| tilth | 200 | 8 | 72 | 1 | 7 | 0 | 0.00% |
+| pleach | 152 | 4 | 46 | 1 | 2 | 1 | 0.66% |
+| tend2 | 200 | 8 | 40 | 2 | 6 | 0 | 0.00% |
+| copeca | 25 | 0 | 10 | 0 | 0 | 0 | 0.00% |
+| umbel | 58 | 7 | 22 | 2 | 5 | 0 | 0.00% |
+| **pooled** | **635** | **27** | **190** | **6** | **20** | **1** | **0.16%** |
 
 The bar is a pooled block-level false-positive share under 2 percent of the commits judged. This run is at 0.16 percent of 635 commits, and 0 commits weeder could not judge.
 
-Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 174 of them at block level still, 75 at warn level, 1 at note level and 82 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files; 5 moved from T1 at block level to T5 at warn level, all of them on test files; 1 moved from X1 at block level to S4 at warn level, all of them on prod files.
+Beside that share, what the rules moved. The first run refused 332 findings at block level on these commits, recorded in `docs/calibration/first-run.toml`. This run reports 174 of them at block level still, 90 at warn level, 0 at note level and 68 not at all. Rule by rule: 69 moved from C1 at block level to C3 at warn level, all of them on workflow files; 19 moved from T1 at block level to T1 at warn level, all of them on test files; 1 moved from X1 at block level to S4 at warn level, all of them on prod files; 1 moved from X1 at block level to T12 at warn level, all of them on test files.
 
 Too few commits to carry a share of their own, reported and not judged alone: copeca (25 commits, 0.00 percent). Their commits and their false positives are both in the pooled total.
 
@@ -158,7 +167,7 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 | copeca | `eb9ed62b2d` | `docs/tend/features/run-isolation.tend.html` | other | X1 | nothing | nothing |
 | copeca | `f6198d4b20` | `src/copeca/runners/parsers/base.py` | prod | S1 | nothing | nothing |
 | pleach | `46f9c71acf` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| pleach | `624529b3a9` | `test/loop/hygiene-gate.test.ts` | test | X1 | X1 | note |
+| pleach | `624529b3a9` | `test/loop/hygiene-gate.test.ts` | test | X1 | T12 | warn |
 | pleach | `84bcce7b31` | `.github/workflows/canary.yml` | workflow | C1 | C3 | warn |
 | pleach | `84bcce7b31` | `.github/workflows/pages.yml` | workflow | C1 | C3 | warn |
 | pleach | `b6aadbf3cb` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
@@ -183,30 +192,30 @@ A rule that splits in two is supposed to take friction off the gate while keepin
 | pleach | `df42a0bffe` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tend2 | `07931a6742` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tend2 | `08529d5f56` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tend2 | `08529d5f56` | `tests/bash/builtins.sh` | test | T1 | nothing | nothing |
-| tend2 | `08529d5f56` | `tests/bash/custom-verb-fallback.sh` | test | T1 | nothing | nothing |
-| tend2 | `08529d5f56` | `tests/bash/fixtures/builtins-fixture.tend.html` | test | T1 | nothing | nothing |
-| tend2 | `08529d5f56` | `tests/bash/fixtures/fallback-fixture.tend.html` | test | T1 | nothing | nothing |
-| tend2 | `08529d5f56` | `tests/bash/fixtures/run-fixture.tend.html` | test | T1 | nothing | nothing |
-| tend2 | `08529d5f56` | `tests/bash/fixtures/whitespace-marker-fixture.tend.html` | test | T1 | nothing | nothing |
-| tend2 | `08529d5f56` | `tests/bash/run-verb.sh` | test | T1 | nothing | nothing |
-| tend2 | `08529d5f56` | `tests/bash/whitespace-marker.sh` | test | T1 | nothing | nothing |
-| tend2 | `08529d5f56` | `tests/fixtures/audit-emit/non-discriminating/docs/tend/features/__fixture__.tend.html` | test | T1 | T5 | warn |
-| tend2 | `08529d5f56` | `tests/fixtures/audit-emit/non-discriminating/unit.mjs` | test | T1 | T5 | warn |
-| tend2 | `08529d5f56` | `tests/fixtures/audit-emit/passing/docs/tend/features/__fixture__.tend.html` | test | T1 | T5 | warn |
-| tend2 | `08529d5f56` | `tests/fixtures/audit-emit/passing/unit.mjs` | test | T1 | T5 | warn |
-| tend2 | `08529d5f56` | `tests/fixtures/audit-emit/trivial-recipe/docs/tend/features/__fixture__.tend.html` | test | T1 | T5 | warn |
+| tend2 | `08529d5f56` | `tests/bash/builtins.sh` | test | T1 | T1 | warn |
+| tend2 | `08529d5f56` | `tests/bash/custom-verb-fallback.sh` | test | T1 | T1 | warn |
+| tend2 | `08529d5f56` | `tests/bash/fixtures/builtins-fixture.tend.html` | test | T1 | T1 | warn |
+| tend2 | `08529d5f56` | `tests/bash/fixtures/fallback-fixture.tend.html` | test | T1 | T1 | warn |
+| tend2 | `08529d5f56` | `tests/bash/fixtures/run-fixture.tend.html` | test | T1 | T1 | warn |
+| tend2 | `08529d5f56` | `tests/bash/fixtures/whitespace-marker-fixture.tend.html` | test | T1 | T1 | warn |
+| tend2 | `08529d5f56` | `tests/bash/run-verb.sh` | test | T1 | T1 | warn |
+| tend2 | `08529d5f56` | `tests/bash/whitespace-marker.sh` | test | T1 | T1 | warn |
+| tend2 | `08529d5f56` | `tests/fixtures/audit-emit/non-discriminating/docs/tend/features/__fixture__.tend.html` | test | T1 | T1 | warn |
+| tend2 | `08529d5f56` | `tests/fixtures/audit-emit/non-discriminating/unit.mjs` | test | T1 | T1 | warn |
+| tend2 | `08529d5f56` | `tests/fixtures/audit-emit/passing/docs/tend/features/__fixture__.tend.html` | test | T1 | T1 | warn |
+| tend2 | `08529d5f56` | `tests/fixtures/audit-emit/passing/unit.mjs` | test | T1 | T1 | warn |
+| tend2 | `08529d5f56` | `tests/fixtures/audit-emit/trivial-recipe/docs/tend/features/__fixture__.tend.html` | test | T1 | T1 | warn |
 | tend2 | `1e39b91c5f` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tend2 | `3adc642ce1` | `test/renderer-fresh.test.ts` | test | T1 | nothing | nothing |
 | tend2 | `40875df2c4` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tend2 | `52b97e43ce` | `skein-experiment/shared/oo-render.js` | prod | X1 | nothing | nothing |
 | tend2 | `78fed73b0c` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
-| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/cluster-fixture.ts` | test | T1 | nothing | nothing |
-| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/extract.spec.ts` | test | T1 | nothing | nothing |
-| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/facet-theme-fixtures.ts` | test | T1 | nothing | nothing |
-| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/fixtures.ts` | test | T1 | nothing | nothing |
-| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/helpers.ts` | test | T1 | nothing | nothing |
-| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/synthesis-fixtures.ts` | test | T1 | nothing | nothing |
+| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/cluster-fixture.ts` | test | T1 | T1 | warn |
+| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/extract.spec.ts` | test | T1 | T1 | warn |
+| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/facet-theme-fixtures.ts` | test | T1 | T1 | warn |
+| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/fixtures.ts` | test | T1 | T1 | warn |
+| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/helpers.ts` | test | T1 | T1 | warn |
+| tend2 | `78fed73b0c` | `spikes/loop-hole/tests/synthesis-fixtures.ts` | test | T1 | T1 | warn |
 | tend2 | `e6f974bd1c` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tend2 | `f0a0adf343` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
 | tilth | `088f58ca22` | `.github/workflows/ci.yml` | workflow | C1 | C3 | warn |
@@ -307,8 +316,8 @@ Precision is the share of blocks that were not false positives. The allowance ra
 | Repo | Block-level precision | True positives | Allowance rate |
 |---|---|---|---|
 | tilth | 100.0% | 1 | 0.0 per 100 commits (guard not installed) |
-| pleach | 66.7% | 0 | 0.0 per 100 commits (guard not installed) |
-| tend2 | 100.0% | 0 | 0.0 per 100 commits (guard not installed) |
+| pleach | 75.0% | 1 | 0.0 per 100 commits (guard not installed) |
+| tend2 | 100.0% | 2 | 0.0 per 100 commits (guard not installed) |
 | copeca | no blocks | 0 | 0.0 per 100 commits (guard not installed) |
 | umbel | 100.0% | 2 | 0.0 per 100 commits (guard not installed) |
 
@@ -321,6 +330,7 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 | Rule | Blocks | True positive | Acceptable | False positive | False-positive share of its blocks |
 |---|---|---|---|---|---|
 | C1 | 7 | 1 | 6 | 0 | 0.00% |
+| G3 | 3 | 3 | 0 | 0 | 0.00% |
 | S1 | 2 | 2 | 0 | 0 | 0.00% |
 | T1 | 8 | 1 | 7 | 0 | 0.00% |
 | T2 | 10 | 1 | 9 | 0 | 0.00% |
@@ -331,7 +341,7 @@ A commit that fired two rules is counted once under each. Where one rule of a bl
 
 ## Recall
 
-Every rule the recall bar holds, T1, T2, T3, T7, T8, S1, D2, X1, X2, C1, G1, catches at least 95 percent of the anti-patterns planted for it, in each of ts, py, rs and go. 3015 cases were planted one anti-pattern at a time in real commits, and 2989 of them were caught on the site they were planted in.
+Every rule the recall bar holds, T1, T2, T3, T7, T8, S1, D2, X1, X2, C1, C4, G1, G3, catches at least 95 percent of the anti-patterns planted for it, in each of ts, py, rs and go. 3787 cases were planted one anti-pattern at a time in real commits, and 3761 of them were caught on the site they were planted in.
 
 The campaign is `cargo xtask mutate`. For each case it checks out a real commit of a corpus repository, plants one anti-pattern in its tree with a scanner that knows nothing about weeder's detectors, and runs `weeder check --base <parent> --strict`. A case counts as caught only where the rule fires on the file the shape was planted in, on the lines it was planted on where it has lines. A site the unmutated commit already fires that rule on is passed over, so no hit is inherited from the commit itself.
 
@@ -339,14 +349,14 @@ The campaign is `cargo xtask mutate`. For each case it checks out a real commit 
 
 | Repository | Source | Window ends at | Commits walked | Cases |
 |---|---|---|---|---|
-| anyhow | `https://github.com/dtolnay/anyhow.git` | `87c8571326d60b90391d0555c9675b5ac6f044b1` | 200 | 360 |
-| cobra | `https://github.com/spf13/cobra.git` | `adbc8813901bba65827259daa8e22ff94ec1f30e` | 200 | 360 |
-| copeca | `https://github.com/jahala/copeca.git` | `fc9c5b9e5f34085755c10746f1d46fd46edf2945` | 15 | 279 |
-| hcl | `https://github.com/hashicorp/hcl.git` | `6abbb088cdb82416d1b3d9fcbaab29534133567a` | 200 | 400 |
-| pleach | `https://github.com/jahala/pleach.git` | `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9` | 22 | 308 |
-| tend2 | `https://github.com/jahala/tend.git` | `51035a5c827b1a8c2f49049f07487dcfac9036c6` | 76 | 308 |
-| tilth | `https://github.com/jahala/tilth.git` | `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905` | 191 | 706 |
-| umbel | `https://github.com/jahala/umbel.git` | `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d` | 58 | 294 |
+| anyhow | `https://github.com/dtolnay/anyhow.git` | `87c8571326d60b90391d0555c9675b5ac6f044b1` | 200 | 460 |
+| cobra | `https://github.com/spf13/cobra.git` | `adbc8813901bba65827259daa8e22ff94ec1f30e` | 200 | 480 |
+| copeca | `https://github.com/jahala/copeca.git` | `fc9c5b9e5f34085755c10746f1d46fd46edf2945` | 15 | 361 |
+| hcl | `https://github.com/hashicorp/hcl.git` | `6abbb088cdb82416d1b3d9fcbaab29534133567a` | 200 | 480 |
+| pleach | `https://github.com/jahala/pleach.git` | `49c9177c01bef7b51aa74c05ef5a1e514b3a93f9` | 100 | 378 |
+| tend2 | `https://github.com/jahala/tend.git` | `51035a5c827b1a8c2f49049f07487dcfac9036c6` | 134 | 378 |
+| tilth | `https://github.com/jahala/tilth.git` | `f5c0afa97c6666a3d68dcbd965a4db5a44bc0905` | 191 | 886 |
+| umbel | `https://github.com/jahala/umbel.git` | `b2e79e9d80cc4064bcef58bf7f1a818cce91ef5d` | 58 | 364 |
 
 The garden five are the repositories calibration measures precision on, read from `docs/calibration/corpus.toml` at the commits it pins them at. They carry no Go between them and weeder judges Go, so the Go column is measured on two Go projects that `docs/calibration/corpus-go.toml` pins the same way, read exactly as the five are. Their Rust holds no integration target, the one place a Rust test can be renamed or set out of the run, so `docs/calibration/corpus-rs.toml` pins a crate that has them.
 
@@ -354,9 +364,9 @@ Every window ends at the pin. A commit pushed to one of these sources later is o
 
 Files the injector planted nothing in, counted once for each commit they were read at:
 
-- added by the commit, so nothing in it was there to change: 451
-- carrying a NUL byte, which git writes no text diff for: 165
-- saying a generator wrote it: 714
+- added by the commit, so nothing in it was there to change: 946
+- carrying a NUL byte, which git writes no text diff for: 206
+- saying a generator wrote it: 724
 
 ### Recall, per rule and language
 
@@ -394,8 +404,24 @@ Files the injector planted nothing in, counted once for each commit they were re
 | T8 | block | py | 34 | 34 | 0 | 0 | 100.0% |
 | T8 | block | rs | 20 | 20 | 0 | 0 | 100.0% |
 | T8 | block | go | 40 | 40 | 0 | 0 | 100.0% |
+| T9 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
+| T9 | warn | py | 34 | 34 | 0 | 0 | 100.0% |
+| T9 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
+| T9 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
+| T10 | warn | ts | 0 | 0 | 0 | 0 | no cases |
+| T10 | warn | py | 14 | 14 | 0 | 0 | 100.0% |
+| T10 | warn | rs | 0 | 0 | 0 | 0 | no cases |
+| T10 | warn | go | 20 | 20 | 0 | 0 | 100.0% |
+| T11 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
+| T11 | warn | py | 34 | 34 | 0 | 0 | 100.0% |
+| T11 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
+| T11 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
+| T12 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
+| T12 | warn | py | 34 | 34 | 0 | 0 | 100.0% |
+| T12 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
+| T12 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
 | M1 | warn | ts | 42 | 42 | 0 | 0 | 100.0% |
-| M1 | warn | py | 7 | 7 | 0 | 0 | 100.0% |
+| M1 | warn | py | 6 | 6 | 0 | 0 | 100.0% |
 | M1 | warn | rs | 37 | 37 | 0 | 0 | 100.0% |
 | M1 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
 | S1 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
@@ -442,6 +468,10 @@ Files the injector planted nothing in, counted once for each commit they were re
 | C3 | warn | py | 33 | 33 | 0 | 0 | 100.0% |
 | C3 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
 | C3 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
+| C4 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
+| C4 | block | py | 13 | 13 | 0 | 0 | 100.0% |
+| C4 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
+| C4 | block | go | 20 | 20 | 0 | 0 | 100.0% |
 | G1 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
 | G1 | block | py | 34 | 34 | 0 | 0 | 100.0% |
 | G1 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
@@ -450,6 +480,10 @@ Files the injector planted nothing in, counted once for each commit they were re
 | G2 | warn | py | 35 | 35 | 0 | 0 | 100.0% |
 | G2 | warn | rs | 40 | 40 | 0 | 0 | 100.0% |
 | G2 | warn | go | 40 | 40 | 0 | 0 | 100.0% |
+| G3 | block | ts | 42 | 42 | 0 | 0 | 100.0% |
+| G3 | block | py | 34 | 34 | 0 | 0 | 100.0% |
+| G3 | block | rs | 40 | 40 | 0 | 0 | 100.0% |
+| G3 | block | go | 40 | 40 | 0 | 0 | 100.0% |
 
 Unplantable is the column the misses have to be read beside. The injector writes its shape into the tree and then reads the tree back with its own scanner, and where the shape is not there afterwards, a version string that pins nothing, a marker written past the end of the case it was meant for, the case is thrown away rather than counted. It is neither a hit nor a miss: weeder was never shown the anti-pattern, so neither number may be charged with it.
 
@@ -487,6 +521,8 @@ Each of these was planted and not reported. The before and after of every one is
 ### Where a shape had nowhere to go
 
 - T4 · go, no commit of the corpus held a site for this shape: 400 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
+- T10 · ts, no commit of the corpus held a site for this shape: 292 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
+- T10 · rs, no commit of the corpus held a site for this shape: 391 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
 - D1 · py, no commit of the corpus held a site for this shape: 206 commits offered none, 0 more were passed over because the commit itself already fires the rule there, and 0 were written and read back without the shape in them
 
 <!-- recall:end -->

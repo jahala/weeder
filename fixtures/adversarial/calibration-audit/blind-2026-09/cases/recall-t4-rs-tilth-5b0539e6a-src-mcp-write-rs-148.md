@@ -14,7 +14,7 @@ Rule: T4
 Catalogue:
 
 ```text
-T4  warn   check  none                                 A tolerance or a timeout was widened
+T4   warn   check  none                                 A tolerance or a timeout was widened
 ```
 
 Weeder findings:

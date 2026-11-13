@@ -14,8 +14,8 @@ Rules: C1, T1
 Catalogue:
 
 ```text
-T1  block  check  none                                 A test was deleted
-C1  block  check  none                                 A guardrail file was edited
+T1   block  check  none                                 A test was deleted
+C1   block  check  none                                 A guardrail file was edited
 ```
 
 Weeder findings:

@@ -1,2 +1,0 @@
-{"type": "input", "case": "blocked:umbel:059b4c4677", "sha256": "9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
-{"type": "answer", "answer": "Answered report SHA-256: 9a2e22d8193f94c5fd6ae84f064efc4b6a82828e066110f9ff3def84b021bbf4\nVerdict: acceptable\nReasoning: T2's claim that codex.test.ts dropped from 33 to 30 assertions is true, but the dropped assertions covered a design this commit replaced, and the new CODEX_HOME design is asserted in the same and added files."}
