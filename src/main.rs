@@ -150,7 +150,8 @@ struct HookArgs {
 
 #[derive(Debug, Args)]
 struct CheckArgs {
-    /// Judge the tree against this ref instead of HEAD.
+    /// Judge the tree against the last commit this ref and HEAD share, their
+    /// merge-base, as a pull request shows the change.
     #[arg(long, value_name = "ref")]
     base: Option<String>,
     /// Judge the index alone, the view a pre-commit hook has.
