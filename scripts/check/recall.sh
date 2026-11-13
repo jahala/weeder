@@ -81,7 +81,7 @@ section = section.group(1)
 rows = {}
 for line in section.splitlines():
     found = re.match(
-        r"\|\s*([A-Z]\d)\s*\|\s*(\w+)\s*\|\s*(\w+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|",
+        r"\|\s*([A-Z]\d+)\s*\|\s*(\w+)\s*\|\s*(\w+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|",
         line,
     )
     if found:

@@ -2095,6 +2095,7 @@ fn edit_a_workflow(_lang: Language, tree: &Tree, seed: u64) -> Option<Mutation> 
 const CHECK_WORDS: [&str; 5] = ["test", "lint", "check", "vet", "spec"];
 
 /// The programs each language's checks are started with in a workflow step.
+/// Make starts the checks of any language, so it is read in every one of them.
 fn check_programs(lang: Language) -> &'static [&'static str] {
     match lang {
         Language::Ts => &[
@@ -2121,12 +2122,22 @@ pub(super) fn a_check_runs_here(lang: Language, line: &str) -> Option<String> {
         .trim();
     if command.is_empty()
         || command.starts_with(['|', '>', '"', '\''])
-        || command.contains(['#', ';', '&', '|', '$', '`'])
+        || command.contains(['#', ';', '&', '|', '`'])
     {
         return None;
     }
-    let words: Vec<&str> = command.split_whitespace().collect();
-    if !check_programs(lang).contains(words.first()?) {
+    // A step may set a variable or two in front of its command, which the
+    // shell reads past, and `$` is fine there; anywhere after them it is a
+    // substitution, and what runs is not written on the line.
+    let words: Vec<&str> = command
+        .split_whitespace()
+        .skip_while(|word| is_assignment(word))
+        .collect();
+    if words.iter().any(|word| word.contains('$')) {
+        return None;
+    }
+    let program = words.first()?;
+    if *program != "make" && !check_programs(lang).contains(program) {
         return None;
     }
     // An interpreter told to run a module runs that module: `python -m pytest`.
@@ -2139,6 +2150,20 @@ pub(super) fn a_check_runs_here(lang: Language, line: &str) -> Option<String> {
         .flat_map(|word| word.split(['-', ':', '_']))
         .any(|part| CHECK_WORDS.iter().any(|check| part.ends_with(check)));
     checks.then(|| command.to_string())
+}
+
+/// `NAME=value` in front of a command: a variable set for it alone.
+fn is_assignment(word: &str) -> bool {
+    word.split_once('=').is_some_and(|(name, _)| {
+        !name.is_empty()
+            && name
+                .chars()
+                .next()
+                .is_some_and(|first| first.is_ascii_alphabetic() || first == '_')
+            && name
+                .chars()
+                .all(|character| character.is_ascii_alphanumeric() || character == '_')
+    })
 }
 
 /// C4: a step that runs a check is told to pass whatever the check finds, by
@@ -2604,6 +2629,12 @@ mod tests {
             (Language::Py, "python -m pytest"),
             (Language::Rs, "cargo test --workspace"),
             (Language::Go, "go test ./..."),
+            // Make runs the checks of every language, and a step often sets a
+            // variable or two in front of it, which the shell reads past.
+            (
+                Language::Go,
+                "RICHGO_FORCE_COLOR=1 PATH=$HOME/go/bin/:$PATH make test",
+            ),
         ];
         for (lang, command) in checks {
             // A step that uses an action and one that runs no check come first,

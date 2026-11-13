@@ -90,7 +90,7 @@ elif [rule.strip() for rule in claimed.group(1).split(",")] != BLOCKING:
 rows = {}
 for line in section.splitlines():
     found = re.match(
-        r"\|\s*([A-Z]\d)\s*\|\s*(\w+)\s*\|\s*(\w+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*([^|]+)\|",
+        r"\|\s*([A-Z]\d+)\s*\|\s*(\w+)\s*\|\s*(\w+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*([^|]+)\|",
         line,
     )
     if found:
@@ -185,7 +185,7 @@ for rule in warning_rules:
 # Every miss the run made is written down: a bar met by leaving misses out of
 # the file would be the worst way to pass this.
 missed = sum(1 for case in cases if not case["caught"])
-named = len(re.findall(r"^- [A-Z]\d · \w+ · [\w.-]+ `[0-9a-f]{9}`", section, re.M))
+named = len(re.findall(r"^- [A-Z]\d+ · \w+ · [\w.-]+ `[0-9a-f]{9}`", section, re.M))
 if named != missed:
     complaints.append(f"the run missed {missed} cases and the file names {named}")
 
