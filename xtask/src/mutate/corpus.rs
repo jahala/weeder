@@ -156,9 +156,15 @@ pub fn slice(working: &Working, index: usize) -> Result<PathBuf, String> {
     }
     let root = cache_root().join(format!("{}-{index}", working.name));
     if root.join(".git").exists() && !is_repository(&root) {
-        // A slice shares the clone's objects; a purged one is initialised again
-        // and pointed back at them, which is all `clone --shared` gave it.
+        // A slice the system emptied of its files is initialised again.
         git::run(&root, &["init", "--quiet"])?;
+    }
+    if root.join(".git").exists() {
+        // A slice holds no objects of its own: `alternates` is the one line
+        // pointing it at the clone's, and the system's cleaner can take that
+        // file alone and leave a repository git reads with nothing in it
+        // (2026-11-13). It is written on every run, which is all `clone
+        // --shared` gave the slice in the first place.
         let alternates = root.join(".git/objects/info");
         std::fs::create_dir_all(&alternates)
             .map_err(|error| format!("{}: {error}", alternates.display()))?;
