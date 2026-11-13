@@ -189,6 +189,22 @@ A `weeder-allow` marker on a line is never honoured by a hook, at any stage. The
 line is the agent's to write and the commit message is the person's, and the
 allowance a gate honours has to be the person's act.
 
+### On a pull request
+
+On a pull request, under `--strict`, a trailer counts once a second person says so.
+Whoever wrote the change states the reason in a `Weeder-allow: <RULE> <reason>`
+trailer on one of its commits, and a person with write access accepts it by approving
+the pull request at its newest commit. An agent cannot approve its own pull request,
+and a review carries the commit it was given on, so a later push needs a fresh
+approval. The action reads the reviews and each reviewer's permission from GitHub and
+hands the answers to `weeder check --reviews`, which honours the range's trailers only
+where a person whose permission is admin or write approved the judged commit, or the
+head a forge's merge checkout carries as its second parent. Each reviewer's word is
+their newest review that approves, asks for changes or was dismissed. The comment lists
+an accepted finding as accepted, naming the reviewer and the commit. A review of an
+older commit, a reviewer without write access, a bot, a trailer with no reason and an
+inline marker all leave the block standing.
+
 <a id="T1"></a>
 ## T1: A test was deleted
 

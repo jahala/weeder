@@ -14,7 +14,7 @@ Rule: T6
 Catalogue:
 
 ```text
-T6  warn   check  none                                 An error assertion was weakened
+T6   warn   check  none                                 An error assertion was weakened
 ```
 
 Weeder findings:
@@ -25,7 +25,12 @@ Weeder findings:
 | S3 | warning | `src/cli/index.ts` | 1156 |
 | S4 | warning | `src/core/narrative.ts` | 200 |
 | G2 | warning | `src/run/casting.ts` | 1 |
+| G3 | error | `src/run/casting.ts` | 164 |
 | S4 | warning | `src/run/casting.ts` | 308 |
+| T12 | warning | `test/casting.test.ts` | 375 |
+| T12 | warning | `test/emit.test.ts` | 248 |
+| T12 | warning | `test/route.test.ts` | 128 |
+| T12 | warning | `test/route.test.ts` | 136 |
 
 Files this change touched:
 

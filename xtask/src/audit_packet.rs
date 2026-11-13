@@ -25,7 +25,7 @@ use std::path::{Path, PathBuf};
 
 use clap::Args;
 use sha2::{Digest, Sha256};
-use weeder::faces::{check, rules, Format};
+use weeder::faces::{check, rules};
 
 use crate::calibrate;
 use crate::corpus;
@@ -394,7 +394,8 @@ fn blocked_findings(
         // honour is not honoured here either: every allowance is reported at its
         // own level, trailer and marker alike.
         honour_trailers: false,
-        format: Format::Sarif,
+        reviews: None,
+        format: check::Output::Sarif,
         config: None,
         message_file: None,
         version: env!("CARGO_PKG_VERSION").to_string(),

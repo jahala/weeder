@@ -10,7 +10,7 @@ use std::error::Error;
 use std::path::Path;
 
 use serde_json::Value;
-use weeder::faces::{check, Format};
+use weeder::faces::check;
 
 use crate::corpus::Repo;
 use crate::repo::{fingerprint, Scratch};
@@ -161,7 +161,8 @@ fn walk(
             // honour is not honoured here either: every allowance is reported at its
             // own level, trailer and marker alike.
             honour_trailers: false,
-            format: Format::Sarif,
+            reviews: None,
+            format: check::Output::Sarif,
             config: None,
             message_file: None,
             version: env!("CARGO_PKG_VERSION").to_string(),

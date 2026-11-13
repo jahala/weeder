@@ -29,6 +29,7 @@ use std::path::{Path, PathBuf};
 
 use crate::core::change::{self, Change, Side};
 use crate::core::classify::{classify_file, FileKind};
+use crate::core::comment::{self, Page};
 use crate::core::config::Config;
 use crate::core::diff::{added_file, parse_diff, removed_file, FileDiff};
 use crate::core::exclude;
@@ -37,6 +38,7 @@ use crate::core::glob;
 use crate::core::hierarchy::{self, Hierarchy};
 use crate::core::law;
 use crate::core::read::CallerSite;
+use crate::core::review::{self, Approval};
 use crate::core::rules;
 use crate::core::rules::check::collect;
 use crate::core::sarif::{self, Context, EXIT_BLOCKED, EXIT_CLEAN, EXIT_COULD_NOT_RUN, RULES_DOC};
@@ -81,13 +83,43 @@ pub struct Request {
     /// trailer is a person's act on this very change. An inline marker is the
     /// agent's own line and is never honoured here, whatever this says.
     pub honour_trailers: bool,
-    pub format: Format,
+    /// What the forge said about the pull request's reviews: its head, every
+    /// review, and each reviewer's permission, as a file of the forge's own
+    /// answers. Under `--strict` a trailer is honoured where a person with
+    /// write access approved the judged commit; see `core::review`.
+    pub reviews: Option<PathBuf>,
+    pub format: Output,
     /// Read `weeder.toml` from here instead of from the base of the range.
     pub config: Option<PathBuf>,
     /// The message of the commit being prepared, for its `Weeder-allow:` trailers.
     /// A pre-commit gate has no commit to read, so a hook hands the message in.
     pub message_file: Option<PathBuf>,
     pub version: String,
+}
+
+/// How `check` writes what it found. The two reports every face writes, and the
+/// one only a pull request reads: the comment, whose links need to know where
+/// the judged commit's files are, so the caller hands that in rather than core
+/// reading it from wherever it runs.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Output {
+    Sarif,
+    Table,
+    Markdown {
+        /// The address a finding's path is appended to, such as
+        /// `https://github.com/owner/repo/blob/<sha>`. Without one a place is
+        /// written as code and links nowhere.
+        links: Option<String>,
+    },
+}
+
+impl From<Format> for Output {
+    fn from(format: Format) -> Output {
+        match format {
+            Format::Sarif => Output::Sarif,
+            Format::Table => Output::Table,
+        }
+    }
 }
 
 /// What a run judged: the bytes a caller writes and the code it leaves with,
@@ -120,6 +152,7 @@ pub fn verdict(request: &Request) -> Verdict {
 fn judge(request: &Request) -> Result<Verdict, String> {
     let root = git::repository_root(&request.cwd).map_err(|error| error.to_string())?;
     let range = range(&root, request)?;
+    let approval = approval(&root, request)?;
     // The law comes from where the range starts, never from what it judges.
     let stated = match read_law(&root, &range.base, request.config.as_deref()) {
         Err(LawError::Unreached(reason)) => return Err(reason),
@@ -224,7 +257,7 @@ fn judge(request: &Request) -> Result<Verdict, String> {
         findings
             .into_iter()
             .map(|mut finding| {
-                if honoured(&finding, request) {
+                if honoured(&finding, request, approval.as_ref()) {
                     return finding;
                 }
                 if let Some(level) = finding.suppressed.as_ref().and_then(|s| s.original_level) {
@@ -246,7 +279,7 @@ fn judge(request: &Request) -> Result<Verdict, String> {
     Ok(Verdict {
         answer: Answer {
             code,
-            stdout: write(&findings, request, &root),
+            stdout: write(&findings, request, &root, approval.as_ref()),
             stderr: malformed
                 .iter()
                 .map(complaint)
@@ -264,10 +297,11 @@ fn judge(request: &Request) -> Result<Verdict, String> {
 
 /// Whether an allowance this run is honouring is what took the level off this
 /// finding. Only a trailer can be one, and only where the caller judges a change
-/// the message travels with; everything else gets the level its rule carries
+/// the message travels with, or where a person with write access approved the
+/// judged commit of a pull request; everything else gets the level its rule carries
 /// back, so the reviewer sees the finding and what was said about it both.
-fn honoured(finding: &Finding, request: &Request) -> bool {
-    request.honour_trailers
+fn honoured(finding: &Finding, request: &Request, approval: Option<&Approval>) -> bool {
+    (request.honour_trailers || approval.is_some())
         && finding
             .suppressed
             .as_ref()
@@ -676,17 +710,126 @@ fn trailers(request: &Request, root: &Path) -> Result<Vec<Suppression>, String> 
         .collect())
 }
 
-fn write(findings: &[Finding], request: &Request, root: &Path) -> String {
-    match request.format {
-        Format::Table => sarif::render_table(findings),
-        Format::Sarif => {
+fn write(
+    findings: &[Finding],
+    request: &Request,
+    root: &Path,
+    approval: Option<&Approval>,
+) -> String {
+    match &request.format {
+        Output::Table => sarif::render_table(findings),
+        Output::Sarif => {
             let mut context = Context::new(&request.version);
             if fs::exists(&root.join(RULES_DOC)) {
                 context = context.with_docs_base(file_uri(root));
             }
             format!("{}\n", sarif::to_json(&sarif::render(findings, &context)))
         }
+        // The comment is read on the forge, where a `file:` address to this
+        // checkout means nothing, so its rules link to weeder's own repository.
+        Output::Markdown { links } => {
+            let command = command(request);
+            comment::render(findings, &page(request, links, &command, approval))
+        }
     }
+}
+
+/// weeder's own repository, where the comment links a rule's section and where
+/// a false positive is reported: the manifest's `repository`, its one home.
+const HOME: &str = env!("CARGO_PKG_REPOSITORY");
+
+fn page<'a>(
+    request: &'a Request,
+    links: &'a Option<String>,
+    command: &'a str,
+    approval: Option<&'a Approval>,
+) -> Page<'a> {
+    Page {
+        version: &request.version,
+        home: HOME,
+        links: links.as_deref(),
+        command,
+        approval,
+    }
+}
+
+/// The command that judges what this run judged, the way it judged it, on a
+/// person's own machine. What only this machine has, a config path or a
+/// message file, stays out of it.
+fn command(request: &Request) -> String {
+    let mut words = vec!["weeder".to_string(), "check".to_string()];
+    if let Some(base) = &request.base {
+        words.extend(["--base".to_string(), shell_word(base)]);
+    }
+    if request.staged {
+        words.push("--staged".to_string());
+    }
+    for scope in &request.scope {
+        words.extend(["--scope".to_string(), shell_word(scope)]);
+    }
+    match request.untracked {
+        Some(Untracked::Include) => {
+            words.extend(["--untracked".to_string(), "include".to_string()])
+        }
+        Some(Untracked::Exclude) => {
+            words.extend(["--untracked".to_string(), "exclude".to_string()])
+        }
+        None => {}
+    }
+    if request.strict {
+        words.push("--strict".to_string());
+    }
+    words.join(" ")
+}
+
+/// A word as a shell reads it back: as it is where nothing in it is special to
+/// a shell, and in single quotes otherwise.
+fn shell_word(word: &str) -> String {
+    let plain = !word.is_empty()
+        && word
+            .chars()
+            .all(|character| character.is_ascii_alphanumeric() || "-_./:@=+,%".contains(character));
+    if plain {
+        word.to_string()
+    } else {
+        format!("'{}'", word.replace('\'', r"'\''"))
+    }
+}
+
+/// The approval the forge's answers carry for the judged commit, read where the
+/// caller handed them in. It is asked for only where it can accept something:
+/// under `--strict`, which honours no allowance without it, over a `--base`
+/// range, whose commits carry the trailers a reviewer read, and never beside a
+/// message file, which holds a message no reviewer saw. The tree a `--base` run
+/// judges is the working tree, and in CI that is the checkout of the commit the
+/// answers were read for.
+fn approval(root: &Path, request: &Request) -> Result<Option<Approval>, String> {
+    let Some(path) = &request.reviews else {
+        return Ok(None);
+    };
+    if !request.strict {
+        return Err("--reviews lets a reviewer accept the trailers --strict would refuse, and without --strict every allowance is honoured already. pass --strict, or drop --reviews.".to_string());
+    }
+    if request.base.is_none() {
+        return Err("--reviews accepts the trailers of the commits a reviewer approved, and only a --base range has commits. pass --base.".to_string());
+    }
+    if request.message_file.is_some() {
+        return Err("--reviews accepts the trailers of the commits a reviewer approved, and --message-file names a message no reviewer saw. pass one.".to_string());
+    }
+    let answers = fs::read(path)
+        .map_err(|error| format!("{error} --reviews must name a file weeder can read."))?;
+    let tip = request.tip.as_deref().unwrap_or("HEAD");
+    // The commit judged, and the head it merges where it is the merge a forge
+    // checks a pull request out as: the second of its two parents.
+    let covered = match git::commit_and_parents(root, tip)
+        .map_err(|error| error.to_string())?
+        .as_slice()
+    {
+        [commit, _, head] => vec![commit.clone(), head.clone()],
+        [commit, ..] => vec![commit.clone()],
+        [] => Vec::new(),
+    };
+    review::approval(&answers, &covered).map_err(|error| error.to_string())
 }
 
 fn could_not_run(request: &Request, reason: &str) -> Answer {
@@ -695,9 +838,15 @@ fn could_not_run(request: &Request, reason: &str) -> Answer {
         code: EXIT_COULD_NOT_RUN,
         // A table has nothing to say about a run that never judged anything; the
         // log is the receipt a machine reads, and stderr is what a person reads.
-        stdout: match request.format {
-            Format::Sarif => format!("{}\n", sarif::to_json(&sarif::render(&[], &context))),
-            Format::Table => String::new(),
+        stdout: match &request.format {
+            Output::Sarif => format!("{}\n", sarif::to_json(&sarif::render(&[], &context))),
+            Output::Table => String::new(),
+            // The comment is what a reviewer reads in place of the log, so a run
+            // that judged nothing says so there too, with the reason.
+            Output::Markdown { links } => {
+                let command = command(request);
+                comment::could_not_judge(reason, &page(request, links, &command, None))
+            }
         },
         stderr: vec![reason.to_string()],
     }

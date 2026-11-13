@@ -221,7 +221,7 @@ if pooled:
     population["blocked commits"] = int(pooled.group(1))
 misses = re.search(r"^### Every miss\n(.*?)(?=^### |^<!-- recall:end -->|\Z)", report, re.M | re.S)
 if misses:
-    population["recall cases"] = len(re.findall(r"^- [A-Z][0-9] · ", misses.group(1), re.M))
+    population["recall cases"] = len(re.findall(r"^- [A-Z][0-9]+ · ", misses.group(1), re.M))
 
 stands = bool(samples) and all(
     regraded > 0

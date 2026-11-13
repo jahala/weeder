@@ -14,7 +14,7 @@ Rule: T6
 Catalogue:
 
 ```text
-T6  warn   check  none                                 An error assertion was weakened
+T6   warn   check  none                                 An error assertion was weakened
 ```
 
 Weeder findings:

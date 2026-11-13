@@ -1,0 +1,280 @@
+name: weeder
+description: weeder's verdict on a pull request, in one comment that is edited in place on every push.
+author: jahala
+branding:
+  icon: scissors
+  color: green
+
+# The job that uses this needs two permissions, and a third where it sends the
+# findings to code scanning (see the `code-scanning` input):
+#
+#   permissions:
+#     contents: read
+#     pull-requests: write
+#     security-events: write   # only where code scanning takes the findings
+#
+# and a checkout with the base branch in it (`fetch-depth: 0`). On a pull
+# request from a fork GitHub gives the job no right to write, so the comment
+# cannot be written; the job summary carries the same text, and weeder's exit
+# code decides the job either way. Never run this on `pull_request_target`,
+# which would hand the fork's code a token that can write.
+#
+# A false block is let through with two keys. Whoever wrote the change states
+# the reason in a `Weeder-allow: <RULE> <reason>` trailer on one of its
+# commits, and a person with write access accepts it by approving the pull
+# request at its newest commit. Run the workflow on reviews too, so an
+# approval, or its dismissal, judges again:
+#
+#   on:
+#     pull_request:
+#     pull_request_review:
+#       types: [submitted, dismissed]
+
+inputs:
+  token:
+    description: The token the comment is written with.
+    default: ${{ github.token }}
+  archive:
+    description: >
+      A weeder release archive to install in place of the one this action's
+      own manifest names, as a URL with its `.sha256` beside it. Leave it out to
+      install the weeder released with the tag this action was used by.
+    default: ""
+  code-scanning:
+    description: >
+      Whether the findings also go to GitHub's code scanning, where they show as
+      annotations on the diff. `auto` sends them from a public repository, where
+      code scanning is free, and never from a pull request out of a fork, whose
+      token cannot upload. `on` sends them from a private repository too, for
+      one that has Advanced Security, which GitHub does not tell a workflow
+      about. `off` never sends them. Sending needs `security-events: write`.
+    default: auto
+
+runs:
+  using: composite
+  steps:
+    # The weeder this action installs is the one released with it: garden.json
+    # at the ref the action was used by names one archive per platform, and a
+    # tag's manifest names that tag's release. The archive is opened only once
+    # its SHA-256 is the one published beside it.
+    - id: install
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        ARCHIVE: ${{ inputs.archive }}
+        RUNNER_OS_NAME: ${{ runner.os }}
+        RUNNER_ARCH_NAME: ${{ runner.arch }}
+      run: |
+        refuse() {
+          echo "::error title=weeder::$1"
+          exit 3
+        }
+        binary=weeder
+        case "$RUNNER_OS_NAME-$RUNNER_ARCH_NAME" in
+          Linux-X64) target=x86_64-unknown-linux-musl ;;
+          Linux-ARM64) target=aarch64-unknown-linux-musl ;;
+          macOS-X64) target=x86_64-apple-darwin ;;
+          macOS-ARM64) target=aarch64-apple-darwin ;;
+          Windows-X64) target=x86_64-pc-windows-msvc binary=weeder.exe ;;
+          *) refuse "weeder publishes no release for $RUNNER_OS_NAME on $RUNNER_ARCH_NAME." ;;
+        esac
+        if [ -n "$ARCHIVE" ]; then
+          url="$ARCHIVE"
+        else
+          url="$(jq -r --arg target "$target" '.install.binaries[$target] // empty' "$ACTION_PATH/garden.json")"
+          [ -n "$url" ] || refuse "garden.json names no weeder release for $target, so there is nothing to install."
+        fi
+        directory="$RUNNER_TEMP/weeder-action"
+        mkdir -p "$directory/bin"
+        cd "$directory" || refuse "weeder could not enter $directory."
+        asset="${url##*/}"
+        curl -fsSL --proto '=https,file' --proto-redir '=https' "$url" -o "$asset" \
+          || refuse "weeder could not download $url."
+        curl -fsSL --proto '=https,file' --proto-redir '=https' "$url.sha256" -o "$asset.sha256" \
+          || refuse "weeder could not download the SHA-256 published beside $url."
+        expected="$(cut -d ' ' -f 1 < "$asset.sha256")"
+        if command -v sha256sum >/dev/null 2>&1; then
+          actual="$(sha256sum "$asset" | cut -d ' ' -f 1)"
+        else
+          actual="$(shasum -a 256 "$asset" | cut -d ' ' -f 1)"
+        fi
+        [ -n "$expected" ] && [ "$actual" = "$expected" ] \
+          || refuse "$asset does not match the SHA-256 published beside it, so it was not opened. download it again, and if it still differs, report it."
+        tar xzf "$asset" -C bin "$binary"
+        "$directory/bin/$binary" --version
+        echo "$directory/bin" >> "$GITHUB_PATH"
+        echo "weeder=$directory/bin/$binary" >> "$GITHUB_OUTPUT"
+
+    # The second key, read rather than decided: every review of the pull
+    # request and the permission of everyone who reviewed, as GitHub answers
+    # them, read with the job's own token. weeder decides what they amount to.
+    # Reviews that cannot be read accept nothing, so the step says why and
+    # never fails the job itself.
+    - id: review
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        SERVER_URL: ${{ github.server_url }}
+        REPOSITORY: ${{ github.repository }}
+        NUMBER: ${{ github.event.pull_request.number }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      run: |
+        unread() {
+          echo "::notice title=weeder::$1 so no review was read, and a Weeder-allow trailer is not accepted on this run."
+          exit 0
+        }
+        [ -n "$GH_TOKEN" ] || unread "no token was given,"
+        [ -n "$NUMBER" ] || unread "this run names no pull request,"
+        command -v gh >/dev/null 2>&1 || unread "gh is not on this runner's PATH,"
+        export GH_HOST="${SERVER_URL#https://}"
+        directory="$RUNNER_TEMP/weeder-review"
+        mkdir -p "$directory"
+        gh api --paginate "repos/$REPOSITORY/pulls/$NUMBER/reviews" --jq '.[]' > "$directory/reviews.jsonl" \
+          || unread "weeder could not read this pull request's reviews,"
+        : > "$directory/permissions.jsonl"
+        # gh writes an error's own answer to stdout, so an answer joins the
+        # others only once its read succeeded.
+        while IFS= read -r login; do
+          if answer="$(gh api "repos/$REPOSITORY/collaborators/$login/permission")"; then
+            printf '%s\n' "$answer" >> "$directory/permissions.jsonl"
+          else
+            echo "::notice title=weeder::weeder could not read the permission of reviewer $login, so their review accepts nothing."
+          fi
+        done < <(jq -rs '[.[].user.login // empty] | unique | .[] | @uri' "$directory/reviews.jsonl")
+        jq -n --arg head "$HEAD_SHA" \
+          --slurpfile reviews "$directory/reviews.jsonl" \
+          --slurpfile permissions "$directory/permissions.jsonl" \
+          '{head: $head, reviews: $reviews, permissions: $permissions}' > "$directory/reviews.json"
+        read_count="$(jq '.reviews | length' "$directory/reviews.json")"
+        if [ "$read_count" = 1 ]; then noun=review; else noun=reviews; fi
+        echo "weeder read $read_count $noun of pull request $NUMBER for $HEAD_SHA."
+        echo "reviews=$directory/reviews.json" >> "$GITHUB_OUTPUT"
+
+    # The verdict is recorded rather than acted on here, so the summary and the
+    # comment are written whatever weeder decided. The last step acts on it.
+    # The base comes from the pull request in the payload, which a review's run
+    # carries too: GitHub fills `github.base_ref` for `pull_request` alone.
+    - id: judge
+      shell: bash
+      env:
+        WEEDER: ${{ steps.install.outputs.weeder }}
+        EVENT: ${{ github.event_name }}
+        BASE_REF: ${{ github.event.pull_request.base.ref }}
+        SERVER_URL: ${{ github.server_url }}
+        REPOSITORY: ${{ github.repository }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        REVIEWS: ${{ steps.review.outputs.reviews }}
+      run: |
+        if [ -z "$BASE_REF" ]; then
+          echo "::error title=weeder::this action judges a pull request, and this run was started by $EVENT. run it on pull_request and pull_request_review."
+          exit 3
+        fi
+        reviewed=()
+        if [ -n "$REVIEWS" ]; then
+          reviewed=(--reviews "$REVIEWS")
+        fi
+        body="$RUNNER_TEMP/weeder-comment.md"
+        sarif="$RUNNER_TEMP/weeder.sarif"
+        code=0
+        "$WEEDER" check --base "origin/$BASE_REF" --strict "${reviewed[@]}" --format markdown \
+          --link-base "$SERVER_URL/$REPOSITORY/blob/$HEAD_SHA" > "$body" || code=$?
+        # The same judgement as SARIF, for code scanning. The same change gives
+        # the same verdict in either format, so two that differ mean weeder
+        # could not be trusted to have judged, and the job is refused.
+        sarif_code=0
+        "$WEEDER" check --base "origin/$BASE_REF" --strict "${reviewed[@]}" --format sarif > "$sarif" || sarif_code=$?
+        if [ "$sarif_code" != "$code" ]; then
+          echo "::error title=weeder::the SARIF judgement ended with $sarif_code and the comment's with $code, and one change gives one verdict. report it."
+          code=3
+        fi
+        echo "code=$code" >> "$GITHUB_OUTPUT"
+        echo "body=$body" >> "$GITHUB_OUTPUT"
+        echo "sarif=$sarif" >> "$GITHUB_OUTPUT"
+
+    - id: summary
+      shell: bash
+      env:
+        BODY: ${{ steps.judge.outputs.body }}
+      # The body goes to the log as well, folded, so what the summary carried can
+      # be read back over the API, which serves a job's log and not its summary.
+      run: |
+        cat "$BODY" >> "$GITHUB_STEP_SUMMARY"
+        echo "::group::the comment, as the job summary carries it"
+        cat "$BODY"
+        echo "::endgroup::"
+
+    # One comment per pull request, found by the marker on its first line and
+    # edited in place. A run for a commit the pull request has already moved
+    # past leaves the comment to the run for the newer one. Whatever stops the
+    # comment, no right to write on a fork's pull request included, is said as
+    # a warning and never changes the job's result.
+    - id: comment
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        SERVER_URL: ${{ github.server_url }}
+        REPOSITORY: ${{ github.repository }}
+        NUMBER: ${{ github.event.pull_request.number }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        BODY: ${{ steps.judge.outputs.body }}
+      run: |
+        unwritten() {
+          echo "::warning title=weeder::$1 The job summary carries the same text, and weeder's verdict still decides the job."
+          exit 0
+        }
+        [ -n "$GH_TOKEN" ] || unwritten "no token was given, so the comment was not written."
+        command -v gh >/dev/null 2>&1 || unwritten "gh is not on this runner's PATH, so the comment was not written."
+        [ -s "$BODY" ] || unwritten "weeder wrote no comment to post."
+        export GH_HOST="${SERVER_URL#https://}"
+        export MARKER
+        MARKER="$(head -n 1 "$BODY")"
+        current="$(gh api "repos/$REPOSITORY/pulls/$NUMBER" --jq .head.sha)" \
+          || unwritten "weeder could not read this pull request, so the comment was not written."
+        if [ "$current" != "$HEAD_SHA" ]; then
+          echo "the pull request has moved on to $current, so the comment is left to the run that judges it."
+          exit 0
+        fi
+        # Each page answers with its first match, and the first page's is the
+        # oldest comment carrying the marker.
+        existing="$(gh api --paginate "repos/$REPOSITORY/issues/$NUMBER/comments" \
+          --jq '[.[] | select(.body | startswith(env.MARKER)) | .id] | first // empty')" \
+          || unwritten "weeder could not read this pull request's comments, so the comment was not written."
+        existing="${existing%%$'\n'*}"
+        if [ -n "$existing" ]; then
+          jq -Rs '{body: .}' < "$BODY" \
+            | gh api --method PATCH "repos/$REPOSITORY/issues/comments/$existing" --input - --silent \
+            || unwritten "weeder could not edit its comment, which is what happens where GitHub gives the job no right to write, as on a pull request from a fork."
+          echo "weeder edited its comment on pull request $NUMBER."
+        else
+          jq -Rs '{body: .}' < "$BODY" \
+            | gh api --method POST "repos/$REPOSITORY/issues/$NUMBER/comments" --input - --silent \
+            || unwritten "weeder could not write its comment, which is what happens where GitHub gives the job no right to write, as on a pull request from a fork."
+          echo "weeder wrote its comment on pull request $NUMBER."
+        fi
+
+    # Annotations on the diff through code scanning, where it can take them. It
+    # runs whatever weeder decided, before the verdict, because the run that
+    # blocked is the one whose findings a reviewer most needs on the diff. A
+    # failed upload fails the job: it was asked for, so its failure is real.
+    - id: upload
+      if: >-
+        inputs.code-scanning == 'on'
+        || (inputs.code-scanning == 'auto'
+        && !github.event.repository.private
+        && github.event.pull_request.head.repo.full_name == github.repository)
+      uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
+      with:
+        sarif_file: ${{ steps.judge.outputs.sarif }}
+        category: weeder
+
+    - id: verdict
+      shell: bash
+      env:
+        CODE: ${{ steps.judge.outputs.code }}
+      run: |
+        case "$CODE" in
+          0) ;;
+          2) echo "::error title=weeder::weeder blocked this pull request. The comment, or the job summary, says what it found and what to do next." ;;
+          *) echo "::error title=weeder::weeder could not judge this pull request. The comment, or the job summary, says why." ;;
+        esac
+        exit "${CODE:-3}"

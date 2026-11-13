@@ -390,7 +390,7 @@ def populations(report):
         found["blocked commits"] = int(pooled.group(1))
     misses = re.search(r"^### Every miss\n(.*?)(?=^### |^<!-- recall:end -->|\Z)", report, re.M | re.S)
     if misses:
-        found["recall cases"] = len(re.findall(r"^- [A-Z][0-9] · ", misses.group(1), re.M))
+        found["recall cases"] = len(re.findall(r"^- [A-Z][0-9]+ · ", misses.group(1), re.M))
     return found
 
 

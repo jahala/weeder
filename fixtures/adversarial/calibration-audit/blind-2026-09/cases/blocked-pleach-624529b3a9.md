@@ -14,7 +14,7 @@ Rules: X1
 Catalogue:
 
 ```text
-X1  block  check  none                                 A secret-looking string was added
+X1   block  check  none                                 A secret-looking string was added
 ```
 
 Weeder findings:

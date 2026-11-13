@@ -1,0 +1,38 @@
+name: A finding weeder got wrong
+description: weeder reported something that is not there, or blocked a change that was right. Each report goes into the calibration that sets how loud a rule is.
+title: "False positive in "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This tracker is public. Share only what you would publish: a small example that shows the finding is best, and nothing from a private repository.
+  - type: input
+    id: rule
+    attributes:
+      label: Rule
+      description: The rule id the finding carried, such as T1.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: weeder version
+      description: What `weeder --version` prints, or the version the comment linked.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: What weeder judged
+      description: The smallest change that gets the same finding, as a diff or as the before and after of one file.
+      render: diff
+    validations:
+      required: true
+  - type: textarea
+    id: wrong
+    attributes:
+      label: Why the finding is wrong
+      description: What the change does, and why the rule's claim about it does not hold.
+    validations:
+      required: true

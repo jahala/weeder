@@ -14,7 +14,7 @@ Rule: T2
 Catalogue:
 
 ```text
-T2  block  check  none                                 Assertions were dropped from a changed test file
+T2   block  check  none                                 Assertions were dropped from a changed test file
 ```
 
 Weeder findings:

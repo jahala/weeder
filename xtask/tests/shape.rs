@@ -406,6 +406,49 @@ fn a_cache_the_system_emptied_of_its_files_is_fetched_again() {
     );
 }
 
+/// The cleaner can take one file of a slice and leave the rest: a slice is a
+/// shared clone of the clone, and with `.git/objects/info/alternates` gone it is
+/// still a repository git reads, holding none of the objects it was pointed at.
+/// Every slice was left that way on 2026-11-13, and the campaign refused to run.
+/// A slice is pointed at the clone's objects again on every run.
+#[test]
+fn a_slice_the_system_took_its_alternates_from_is_pointed_back_at_the_clone() {
+    let bench = Bench::new();
+    let repo = python_history(("pyproject.toml", PINS_A_DEPENDENCY), CLAIMS_THE_FAILURE);
+    campaign(&bench, "probe", &repo, "T6", "py").succeeded();
+    let first = planted(&bench, "T6", "py");
+
+    let cache = bench.path().join("weeder-recall-corpus");
+    let slices: Vec<std::path::PathBuf> = std::fs::read_dir(&cache)
+        .expect("the cache is readable")
+        .filter_map(|entry| entry.ok().map(|entry| entry.path()))
+        .filter(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| name.starts_with("probe-") && !name.ends_with(".toml"))
+                && path.join(".git").is_dir()
+        })
+        .collect();
+    assert!(
+        !slices.is_empty(),
+        "the campaign walks its window in slices, each a shared clone, in {}",
+        cache.display()
+    );
+    for slice in &slices {
+        let alternates = slice.join(".git/objects/info/alternates");
+        std::fs::remove_file(&alternates)
+            .unwrap_or_else(|error| panic!("{} should be there: {error}", alternates.display()));
+    }
+
+    let again = campaign(&bench, "probe", &repo, "T6", "py");
+    assert_eq!(
+        again.code, 0,
+        "a slice that lost its alternates is pointed back at the clone:\n{}\n{}",
+        again.stdout, again.stderr
+    );
+    assert_eq!(planted(&bench, "T6", "py"), first);
+}
+
 /// Every file under `directory` removed and every directory kept, which is the
 /// shape macOS leaves a temporary clone in. The test made this directory, in its
 /// own bench, and removes only files inside it.

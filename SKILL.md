@@ -27,7 +27,27 @@ so treat it as a refusal to proceed rather than as a pass.
 `weeder check` compares the index and the working tree against HEAD and writes what
 it found. On a terminal it writes a table; on a pipe it writes SARIF 2.1.0. Pass
 `--format sarif` or `--format table` to say so outright rather than let the
-stream decide.
+stream decide. `--format markdown` writes the body of the one pull-request
+comment the GitHub Action keeps: a hidden marker, then one sentence when there
+is nothing to report, or every finding, blocks first. Each opens with its rule's
+short description, its level and its rule id linked to the rule's section; then
+the place, and what was found, why it matters and the next action on lines of
+their own; then a link that reports it as a false positive, carrying only the
+rule id and weeder's version. The body ends with the command that judges the
+change the same way locally. `--link-base` links each finding to its line under
+the address you give, the judged commit's files on the forge; weeder reads no
+environment to build it and reaches no network.
+
+A block on a pull request is let through with two keys. Whoever wrote the change
+states the reason in a `Weeder-allow: <RULE> <reason>` trailer on one of its
+commits, and a person with write access approves the pull request at its newest
+commit. The action reads the reviews and each reviewer's permission from GitHub
+and hands the answers to `--reviews`; weeder honours the range's trailers only
+where a person with write access approved the judged commit, and the comment
+names who and at which commit. A review of an older commit, a reviewer without
+write access, a bot, a trailer with no reason and an inline marker all leave the
+block standing. You cannot approve your own pull request, so an agent never holds
+the second key.
 
 A file you wrote and never staged is judged too, as the added file it is. `git
 diff` never lists one, so weeder reads them off the working tree itself; the
@@ -47,9 +67,11 @@ and the rest are yours to read.
 | `--untracked <include\|exclude>` | whether the files git has never been told about are part of the change. Included by default when the working tree is judged against HEAD, left out with `--staged` and `--base` |
 | `--scope <glob>` | the paths the change may touch; every file is still judged, and a file outside the scope is reported for being there. Repeat the flag for more paths |
 | `--strict` | report suppressed findings at their own level, and refuse to guess |
-| `--format <format>` | `sarif` or `table`, rather than choosing by what stdout is |
+| `--format <format>` | `sarif`, `table` or `markdown`, rather than choosing between SARIF and a table by what stdout is |
+| `--link-base <url>` | with `--format markdown`, link each finding to its line under this address, such as `https://github.com/owner/repo/blob/<sha>`. Any other format refuses it with 3 |
 | `--config <path>` | read `weeder.toml` from here instead of from the base the change is judged against |
 | `--message-file <path>` | the message of the commit being prepared, so its `Weeder-allow:` trailers are read |
+| `--reviews <path>` | the pull request's head, its reviews and each reviewer's permission, as GitHub answered, in one JSON file `{"head", "reviews", "permissions"}`. Under `--strict` the `--base` range's trailers are honoured where a person with write access approved the judged commit. Without `--strict` or `--base`, or beside `--message-file`, it exits 3 |
 
 The law a change is judged under is `weeder.toml` read from the base of the
 range: HEAD for the working tree and for `--staged`, the merge-base for
@@ -90,6 +112,7 @@ assertions = ["t"]
 
 ```bash
 weeder check --base origin/master --strict --format sarif > weeder.sarif
+weeder check --base origin/master --strict --format markdown --link-base https://github.com/owner/repo/blob/HEAD_SHA > comment.md
 weeder check --staged
 weeder check --scope 'src/parser/**' --scope 'tests/parser/**'
 weeder check --untracked exclude
@@ -265,9 +288,11 @@ weeder rules --format json
   <reason>` trailer on the commit being prepared, passed in with `--message-file`,
   or a `weeder-allow <RULE>: <reason>` comment on the line itself. Both need a
   reason; one without is a complaint on stderr. `--strict` reports every allowance
-  at its own level, which is how a reviewer sees what was waved through. The one
-  exception is a git hook: `guard commit-msg` and `guard pre-push` honour a
-  trailer, because the message travels with the change and a person wrote it
-  there. A marker on a line is yours, so no hook ever honours one.
+  at its own level, which is how a reviewer sees what was waved through. Two
+  places honour a trailer anyway. A git hook: `guard commit-msg` and `guard
+  pre-push` do, because the message travels with the change and a person wrote
+  it there. And a pull request a person with write access approved at its
+  newest commit, which `--reviews` reads. A marker on a line is yours, so
+  neither ever honours one.
 - Never edit a rule, a fixture or a hook to make a finding go away. That is the
   growth weeder exists to refuse, and `guard` sees it from inside git.

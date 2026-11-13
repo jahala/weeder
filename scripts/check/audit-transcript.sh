@@ -125,7 +125,7 @@ def expected_packets(report):
         counts.append(int(pooled.group(1)))
     misses = re.search(r"^### Every miss\n(.*?)(?=^### |^<!-- recall:end -->|\Z)", report, re.M | re.S)
     if misses:
-        counts.append(len(re.findall(r"^- [A-Z][0-9] · ", misses.group(1), re.M)))
+        counts.append(len(re.findall(r"^- [A-Z][0-9]+ · ", misses.group(1), re.M)))
     return sum(min(20, count) for count in counts) if len(counts) == 2 else None
 
 

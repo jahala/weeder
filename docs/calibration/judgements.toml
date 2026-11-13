@@ -169,3 +169,21 @@ repo = "umbel"
 sha = "e39da470b7afa3fa26efe474a94361af236b7bb7"
 classification = "acceptable"
 reasoning = "C1 says the non-negotiable principles of CLAUDE.md changed, and they did, by arriving: this is the commit that first writes the file. Nothing was there to loosen. First blocked on 2026-11-05 (#77)."
+
+[[commit]]
+repo = "pleach"
+sha = "8650b07b1df8dc4d15a00c70773252ffa9e47ac3"
+classification = "true-positive"
+reasoning = "G3 says a NUL was added and git now reads the file as binary, and it is so: examples/three-ways/03-library/run.ts joins a set with a raw NUL typed inside the string where the escape `\\0` was meant, so every later change to that source file reads `Binary files differ` and no reviewer sees its lines. First blocked on 2026-11-13, by G3 (#22)."
+
+[[commit]]
+repo = "tend2"
+sha = "28cc632070c910e509ee358191b8d0b950a6fdb4"
+classification = "true-positive"
+reasoning = "G3 says a NUL was added and git now reads the file as binary, and it is so: src/run/casting.ts builds a cell key with raw NULs typed inside a template literal where `\\0` was meant. This is the file #22 was filed from: a later three-line change to it went through review as `Binary files differ`. First blocked on 2026-11-13, by G3."
+
+[[commit]]
+repo = "tend2"
+sha = "ae7e0ddf321082fbf5322372710c9b2419f7d6f9"
+classification = "true-positive"
+reasoning = "G3 says a NUL was added and git now reads the file as binary, and it is so: src/run/ingest.ts keys a set of failures with a raw NUL typed inside a template literal where `\\0` was meant, which hides every later diff of the file from review. First blocked on 2026-11-13, by G3."

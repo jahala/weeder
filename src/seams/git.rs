@@ -75,6 +75,14 @@ pub fn resolve_ref(root: &Path, reference: &str) -> Result<String, GitError> {
     }
 }
 
+/// The commit a ref names, then its parents in order: one for an ordinary
+/// commit, two for a merge, none for a root.
+pub fn commit_and_parents(root: &Path, reference: &str) -> Result<Vec<String>, GitError> {
+    let commit = resolve_ref(root, reference)?;
+    let output = run(root, &["rev-list", "--parents", "--max-count=1", &commit])?;
+    Ok(output.split_whitespace().map(ToString::to_string).collect())
+}
+
 /// Whether a ref resolves at all.
 pub fn has_ref(root: &Path, reference: &str) -> Result<bool, GitError> {
     match resolve_ref(root, reference) {

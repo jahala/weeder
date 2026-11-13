@@ -1,0 +1,2 @@
+{"type": "input", "packet": "fixtures/adversarial/calibration-audit/blind-2026-09/cases/blocked-tend2-28cc632070.md", "sha256": "05fbd2de122657528556089c1bcbfefe9125224fee0f139a266736af3985a2b0", "provider": "opencode", "model": "deepseek/deepseek-v4-pro"}
+{"type": "answer", "answer": "Answered packet SHA-256: 05fbd2de122657528556089c1bcbfefe9125224fee0f139a266736af3985a2b0\nVerdict: true-positive\nReasoning: `src/run/casting.ts` is a new TypeScript source file that git reports as binary (\"Binary files differ\"), the signature of a control character corrupting the source."}

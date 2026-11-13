@@ -80,7 +80,7 @@ def populations(report):
         found["blocked commits"] = int(pooled.group(1))
     misses = re.search(r"^### Every miss\n(.*?)(?=^### |^<!-- recall:end -->|\Z)", report, re.M | re.S)
     if misses:
-        found["recall cases"] = len(re.findall(r"^- [A-Z][0-9] · ", misses.group(1), re.M))
+        found["recall cases"] = len(re.findall(r"^- [A-Z][0-9]+ · ", misses.group(1), re.M))
     return found
 
 
@@ -123,7 +123,7 @@ def parse_report(report):
     if recall_section:
         for line in recall_section.group(1).splitlines():
             match = re.match(
-                r"^- ([A-Z][0-9]) · ([a-z]+) · ([A-Za-z0-9_-]+) `([0-9a-f]{9,40})` · `([^`]+)`, (.+)$",
+                r"^- ([A-Z][0-9]+) · ([a-z]+) · ([A-Za-z0-9_-]+) `([0-9a-f]{9,40})` · `([^`]+)`, (.+)$",
                 line.strip(),
             )
             if not match:

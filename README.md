@@ -130,7 +130,9 @@ the unstaged files out.
 A finding is allowed through on the record and never in silence: a `Weeder-allow: <RULE>
 <reason>` trailer on the commit being prepared, or a `weeder-allow <RULE>: <reason>` comment
 on the line. Both need a reason, both stay in the log as a note carrying it, and `--strict`
-hands the finding back the level its rule carries. `docs/rules.md` says the rest.
+hands the finding back the level its rule carries. On a pull request a trailer counts once a
+person with write access approves the newest commit, so a false block takes two keys: the
+author's reason and a reviewer's approval. `docs/rules.md` says the rest.
 
 ## Exit codes
 
@@ -146,15 +148,32 @@ pull request rather than for the agent.
 
 ## In CI
 
-`examples/ci/github.yml` is a workflow you can copy: it judges the pull request against the
-branch it is opening onto, writes SARIF, and hands that to GitHub's code scanning, so every
-finding lands as an annotation on the diff a reviewer is already reading.
+`examples/ci/github.yml` is a workflow you can copy. It runs the action this repository ships,
+which installs the weeder released with the tag you name, checks it against its SHA-256, judges
+the pull request against the branch it is opening onto, and leaves the verdict as one comment on
+the pull request, edited in place on every push. The findings also go to GitHub's code scanning,
+as annotations on the diff, where code scanning can take them: from a public repository, except on
+a pull request from a fork, and from a private one with Advanced Security once its repository
+variable `WEEDER_CODE_SCANNING` is `on`. The job needs `contents: read` and `pull-requests: write`,
+and `security-events: write` for the annotations. On a pull request from a fork, where GitHub gives
+the job no right to write, the same text goes to the job summary, and weeder's exit code decides the
+job. Each finding in the comment says what was found, why it matters and what to do next, links its
+rule's section, and carries a link that reports it as a false positive with only the rule id and the
+version in it. The example also runs on a review submitted or dismissed, so an approval at the head
+judges the pull request again.
 
 ```yaml
-- run: weeder check --base origin/${{ github.base_ref }} --strict --format sarif > weeder.sarif
-- uses: github/codeql-action/upload-sarif@v4
-  with:
-    sarif_file: weeder.sarif
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+steps:
+  - uses: actions/checkout@v6
+    with:
+      fetch-depth: 0
+  - uses: jahala/weeder@v0.6.0
+    with:
+      code-scanning: ${{ vars.WEEDER_CODE_SCANNING || 'auto' }}
 ```
 
 For a pleach plan, `examples/pleach/plan.json` gates every node on weeder and `docs/pleach.md`

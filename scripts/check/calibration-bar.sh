@@ -222,7 +222,7 @@ def regrade(paths):
 misses = re.search(r"^### Every miss\n(.*?)(?=^### |^<!-- recall:end -->|\Z)", report, re.M | re.S)
 POPULATION = {"blocked commits": pooled["blocked"]}
 if misses:
-    POPULATION["recall cases"] = len(re.findall(r"^- [A-Z][0-9] · ", misses.group(1), re.M))
+    POPULATION["recall cases"] = len(re.findall(r"^- [A-Z][0-9]+ · ", misses.group(1), re.M))
 
 
 def sample_stands(regraded, agreed, kind):
